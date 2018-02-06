@@ -34,7 +34,7 @@ namespace LC {
 	GLuint VBOUtil::loadImage(const QString fileName,bool mirroredHor,bool mirroredVert){
 		QImage img;
 		if( ! img.load( fileName ) ){
-			printf("ERROR: loading %s\n",fileName.toAscii().constData());
+			printf("ERROR: loading %s\n",fileName.toUtf8().constData());
 			return INT_MAX;
 		}
 		if(mirroredHor==true||mirroredVert)
@@ -80,7 +80,7 @@ namespace LC {
 			QString fileName=filaNames[i];//"data/textures/0"+QString::number(i+1)+"_terrain.jpg";
 			QImage img;
 			if( ! img.load( fileName ) ){
-				printf("ERROR: loading %s\n",fileName.toAscii().constData());
+				printf("ERROR: loading %s\n",fileName.toUtf8().constData());
 				return 0;
 			}
 
@@ -97,7 +97,7 @@ namespace LC {
 				printf("ERROR: GL_formatted_image\n");
 				return 0;
 			}
-			printf("img[%d] %d %d %s\n",i,img.width(), img.height(),fileName.toAscii().constData());
+			printf("img[%d] %d %d %s\n",i,img.width(), img.height(),fileName.toUtf8().constData());
 			//Upload pixel data.
 			glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, img.width(), img.height(), 1, GL_RGBA, GL_UNSIGNED_BYTE, GL_formatted_image.bits());
 		}
@@ -122,7 +122,7 @@ namespace LC {
 				case GL_INVALID_FRAMEBUFFER_OPERATION:  error="INVALID_FRAMEBUFFER_OPERATION";  break;
 				}
 
-				printf("GL_%s - %s\n",error.c_str(),sourceTag.toAscii().constData());
+				printf("GL_%s - %s\n",error.c_str(),sourceTag.toUtf8().constData());
 				err=glGetError();
 			}
 		}

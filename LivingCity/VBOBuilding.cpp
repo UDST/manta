@@ -495,7 +495,7 @@ namespace LC {
 				facadeScale.push_back(QVector3D(1.0f,1.0f,0));
 			else{
 				facadeScale.push_back(QVector3D(scaleS[1].toFloat(),scaleS[2].toFloat(),0));
-				//printf("Scale %s -->%f %f\n",list[lE].toAscii().constData(),scaleS[1].toFloat(),scaleS[2].toFloat());
+				//printf("Scale %s -->%f %f\n",list[lE].toUtf8().constData(),scaleS[1].toFloat(),scaleS[2].toFloat());
 			}
 		}
 

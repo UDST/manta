@@ -82,7 +82,7 @@ namespace LC {
 	}//
 
 	void errorLine(QString text, int lN) {
-		printf("\nERROR Line[%d]: %s\n", text.toAscii().constData(), lN);
+		printf("\nERROR Line[%d]: %s\n", text.toUtf8().constData(), lN);
 		exit(0);
 	}
 
@@ -100,7 +100,7 @@ namespace LC {
 		QString fileName = "data/Dynameq/sf_final_ctrl.dqt";
 		QFile cntFile(fileName); // Create a file handle for the file named
 		if (!cntFile.open(QIODevice::ReadOnly | QIODevice::Text)) { // Open the file
-			printf("Can't open file '%s'\n", fileName.toAscii().constData());
+			printf("Can't open file '%s'\n", fileName.toUtf8().constData());
 			return;
 		}
 		QTextStream stream(&cntFile); // Set the stream to read from myFile

@@ -87,11 +87,11 @@ namespace LC {
 
 			//printf("fN %d\n",fN);
 			QString modelFile=fileNames[fN];
-			printf("loading OBJ tree mode... %s\n",modelFile.toAscii().constData());
+			printf("loading OBJ tree mode... %s\n",modelFile.toUtf8().constData());
 			nv::Model	*modelT;
 			modelT = new nv::Model;
-			if (!modelT->loadModelFromFile(modelFile.toAscii().constData())) {
-				printf("Error loading OBJ tree model %s\n",modelFile.toAscii().constData());
+			if (!modelT->loadModelFromFile(modelFile.toUtf8().constData())) {
+				printf("Error loading OBJ tree model %s\n",modelFile.toUtf8().constData());
 				return;
 			}
 			//printf("2\n");

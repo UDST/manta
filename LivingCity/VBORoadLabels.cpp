@@ -84,7 +84,7 @@ namespace LC {
 			VBOText::addText(rendManager,"road_labels",label.toLower(),(p0+p1)/2.0f,dir,-per,dW*2.0f,true);//dW*2.0f);
 
 			//return;
-			//printf("label %s p0 dir %f %f %f per %f %f %f\n",label.toAscii().constData(),p0.x(),p0.y(),p0.z(),dir.x(),dir.y(),dir.z(),per.x(),per.y(),per.z());
+			//printf("label %s p0 dir %f %f %f per %f %f %f\n",label.toUtf8().constData(),p0.x(),p0.y(),p0.z(),dir.x(),dir.y(),dir.z(),per.x(),per.y(),per.z());
 		}
 		
 
