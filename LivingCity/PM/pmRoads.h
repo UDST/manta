@@ -35,7 +35,7 @@
 #ifndef MTC_CLIENT_PROCEDURAL_ROADS_MACHINE_H
 #define MTC_CLIENT_PROCEDURAL_ROADS_MACHINE_H
 
-#include "..\misctools\misctools.h"
+#include "../misctools/misctools.h"
 //
 #include "..\Geometry\placeTypeInstances.h"
 #include <process.h>

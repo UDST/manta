@@ -35,7 +35,7 @@
 #ifndef MTC_CLIENT_MAIN_PROCEURAL_MACHINE_H
 #define MTC_CLIENT_MAIN_PROCEURAL_MACHINE_H
 
-#include "..\misctools\misctools.h"
+#include "../misctools/misctools.h"
 //
 #include "..\Geometry\client_geometry.h"
 #include "..\Geometry\placeTypeInstances.h"

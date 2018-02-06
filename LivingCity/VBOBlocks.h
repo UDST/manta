@@ -26,8 +26,8 @@
 
 #include <QVector3d>
 #include <QDir>
-#include "misctools\misctools.h"
-#include "Geometry\block.h"
+#include "misctools/misctools.h"
+#include "Geometry/block.h"
 #include "VBOUtil.h"
 
 #ifndef Q_MOC_RUN

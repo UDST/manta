@@ -26,8 +26,8 @@
 
 #include <vector>
 
-#include "misctools\misctools.h"
-#include "Geometry\block.h"
+#include "misctools/misctools.h"
+#include "Geometry/block.h"
 #include "VBOModel.h"
 
 namespace LC {

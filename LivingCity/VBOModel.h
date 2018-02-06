@@ -28,8 +28,8 @@
 #include "qmatrix4x4.h"
 #include <vector>
 
-#include "misctools\misctools.h"
-#include "nvModel\nvModel.h"
+#include "misctools/misctools.h"
+#include "nvModel/nvModel.h"
 #include "VBOUtil.h"
 
 namespace LC {

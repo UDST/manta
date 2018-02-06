@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "misctools\misctools.h"
-#include "RoadGraph\roadGraph.h"
+#include "misctools/misctools.h"
+#include "RoadGraph/roadGraph.h"
 #include "VBOUtil.h"
 
 
