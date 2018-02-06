@@ -24,6 +24,7 @@
 
 #include "LC_camera_3d.h"
 #include "qfile.h"
+#include <math.h>
 
 namespace LC {
 
@@ -48,7 +49,7 @@ namespace LC {
 		float new_y;
 		float new_z;
 
-		float c = cos(angle);
+        float c = cos(angle);
 		float s = sin(angle);
 
 		new_x  = (x*x*(1-c) + c)	* view.x();
@@ -114,14 +115,14 @@ namespace LC {
 
 		float f = 1.0f / tan (fovy * (0.00872664625f));//PI/360
 
-		double m[16]=
+        float m[16]=
 		{	 f/aspect,	0,								0,									0,
 					0,	f,								0,						 			0,
 			        0,	0,		(zfar+znear)/(znear-zfar),		(2.0f*zfar*znear)/(znear-zfar),
 			        0,	0,		    				   -1,									0
 
 		};
-		pMatrix=QMatrix4x4(m);
+        pMatrix=QMatrix4x4(m);
 	}
 
 	void Camera3D::moveKey(int typeMode,float factor){

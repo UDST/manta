@@ -34,7 +34,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <malloc.h>
 #include <assert.h>
 
 
@@ -55,18 +54,11 @@
 #include <boost/geometry/multi/multi.hpp>
 #endif
 #if defined(_WIN32) || defined(linux) || defined(__CYGWIN__)
-
-//#include <winsock.h>
 #include <windows.h>
-
 #else
-
 #include <unistd.h>
-#include <bstring.h>
-
 #endif
 
-#include "windows.h"
 #include <GL/glu.h>
 
 /*
