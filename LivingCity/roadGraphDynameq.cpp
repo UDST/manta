@@ -143,7 +143,7 @@ namespace LC {
 		QString line;
 
 		if (!baseFile.open(QIODevice::ReadOnly | QIODevice::Text)){ // Open the file
-			printf("Can't open file '%s'\n",fileName.toAscii().constData());
+			printf("Can't open file '%s'\n",fileName.toUtf8().constData());
 			return;
 		}
 		QTextStream stream( &baseFile ); // Set the stream to read from myFile

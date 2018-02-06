@@ -40,6 +40,8 @@
 #include <QVector3D>
 #include <vector>
 
+#include <iostream>
+
 namespace LC {
 
 	enum t_land_use {
@@ -72,19 +74,19 @@ namespace LC {
 		QVariant & operator [](QString i) {return g[i];}
 
 		static QVector3D getQVector3D(QString i){
-			if(!g.contains(i)){printf("Global does not contain type %s\n",i.toAscii().constData());return QVector3D();}
+            if(!g.contains(i)){printf("Global does not contain type %s\n", i.toUtf8().constData());return QVector3D();}
 			return g[i].value<QVector3D>();}
 		static float getFloat(QString i){
-			if(!g.contains(i)){printf("Global does not contain type %s\n",i.toAscii().constData());return 0;}
+            if(!g.contains(i)){printf("Global does not contain type %s\n",i.toUtf8().constData());return 0;}
 			return g[i].toFloat();}
 		static float getDouble(QString i){
-			if(!g.contains(i)){printf("Global does not contain type %s\n",i.toAscii().constData());return 0;}
+            if(!g.contains(i)){printf("Global does not contain type %s\n",i.toUtf8().constData());return 0;}
 			return g[i].toDouble();}
 		static int getInt(QString i){
-			if(!g.contains(i)){printf("Global does not contain type %s\n",i.toAscii().constData());return 0;}
+            if(!g.contains(i)){printf("Global does not contain type %s\n",i.toUtf8().constData());return 0;}
 			return g[i].toInt();}
 		static bool getBool(QString i){
-			if(!g.contains(i)){printf("Global does not contain type %s\n",i.toAscii().constData());return false;}
+            if(!g.contains(i)){printf("Global does not contain type %s\n",i.toUtf8().constData());return false;}
 			return g[i].toBool();}
 
 	private:

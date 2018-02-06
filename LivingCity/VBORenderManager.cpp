@@ -169,7 +169,7 @@ namespace LC {
 		QHash<QString,renderGrid>::iterator statcIt;
 		// 1.1 iterate over geoNames
 		for (statcIt = geoName2StaticRender.begin(); statcIt != geoName2StaticRender.end(); ++statcIt){
-			printf("Render: %s\n",statcIt.key().toAscii().constData());
+			printf("Render: %s\n",statcIt.key().toUtf8().constData());
 			// 1.1.1 iterate over textures
 			renderGrid::iterator i;
 			for (i = statcIt.value().begin(); i != statcIt.value().end(); ++i){
@@ -226,7 +226,7 @@ namespace LC {
 		if(nameToTexId.contains(texName)){
 			texId=nameToTexId[texName];
 		}else{
-			printf("load img %s\n",texName.toAscii().constData());
+			printf("load img %s\n",texName.toUtf8().constData());
 			texId=VBOUtil::loadImage(texName);
 			nameToTexId[texName]=texId;
 		}
@@ -621,7 +621,7 @@ namespace LC {
 			geoName2StaticRender.remove(geoName);
 		}else{
 			if(warning==true)
-				printf("ERROR: Remove Geometry %s but it did not exist\n",geoName.toAscii().constData());
+				printf("ERROR: Remove Geometry %s but it did not exist\n",geoName.toUtf8().constData());
 			return false;
 		}
 
@@ -637,7 +637,7 @@ namespace LC {
 				renderVAO(i.value(),false);
 			}
 		}else{
-			printf("ERROR: Render Geometry %s but it did not exist\n",geoName.toAscii().constData());
+			printf("ERROR: Render Geometry %s but it did not exist\n",geoName.toUtf8().constData());
 			return;
 		}
 	}//
@@ -664,7 +664,7 @@ namespace LC {
 		for(int i=0;i<nameToVectorModels[name].size();i++){
 			VBOModel_StreetElements::renderOneStreetElement(program,nameToVectorModels[name][i]);
 		}
-		printf("name %s --> %d\n",name.toAscii().constData(),nameToVectorModels[name].size());
+		printf("name %s --> %d\n",name.toUtf8().constData(),nameToVectorModels[name].size());
 	}//
 	void VBORenderManager::removeAllStreetElementName(QString name){
 		nameToVectorModels[name].clear();

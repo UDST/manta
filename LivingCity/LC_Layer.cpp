@@ -266,13 +266,13 @@ namespace LC {
 	}
 
 	void Layer::loadLayer(QString& fileName){
-		layerData=cv::imread(fileName.toAscii().constData(),0);//load one channel
+		layerData=cv::imread(fileName.toUtf8().constData(),0);//load one channel
 		// update image
 		updateTexFromData();
 	}//
 	
 	void Layer::saveLayer(QString& fileName){
-		cv::imwrite( fileName.toAscii().constData(), layerData );
+		cv::imwrite( fileName.toUtf8().constData(), layerData );
 	}//
 
 	void Layer::smoothLayer(){

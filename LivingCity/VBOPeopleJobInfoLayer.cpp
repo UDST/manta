@@ -438,7 +438,7 @@ namespace LC {
 		QString fileName="data/peopleJobLayers.txt";
 		QFile file(fileName);
 		if(!file.open(QIODevice::WriteOnly)) {
-			printf("ERROR: Not possible to read %s\n",fileName.toAscii().constData());
+			printf("ERROR: Not possible to read %s\n",fileName.toUtf8().constData());
 			return;
 		}
 		
@@ -470,7 +470,7 @@ namespace LC {
 		QString fileName="data/peopleJobLayers.txt";
 		QFile file(fileName);
 		if(!file.open(QIODevice::ReadOnly)) {
-			printf("ERROR: Not possible to read %s\n",fileName.toAscii().constData());
+			printf("ERROR: Not possible to read %s\n",fileName.toUtf8().constData());
 			return;
 		}
 		QTextStream in(&file);

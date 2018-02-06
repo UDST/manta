@@ -60,7 +60,7 @@ namespace LC {
 	void loadTextFile(QString fileName,std::string& str){
 		QFile file(fileName);
 		if(!file.open(QIODevice::ReadOnly)) {
-			printf("ERROR: loadTexFile: %s\n", file.errorString().toAscii().constData());
+			printf("ERROR: loadTexFile: %s\n", file.errorString().toUtf8().constData());
 			//QMessageBox::information(0, "error", file.errorString());
 		}
 
@@ -71,7 +71,7 @@ namespace LC {
 			text+=line+"\n"; 
 		}
 		file.close();
-		str=std::string(text.toAscii().constData());
+		str=std::string(text.toUtf8().constData());
 	}//
 
 	uint loadShader(std::string& source,uint mode){
@@ -150,9 +150,9 @@ namespace LC {
 		int index=programIdVectorIndex[programId];
 		if(!nameToLocation[index].contains(name)){
 			if(isAtt)
-				nameToLocation[index][name]=glGetAttribLocation(programId,name.toAscii().constData());
+				nameToLocation[index][name]=glGetAttribLocation(programId,name.toUtf8().constData());
 			else
-				nameToLocation[index][name]=glGetUniformLocation(programId,name.toAscii().constData());
+				nameToLocation[index][name]=glGetUniformLocation(programId,name.toUtf8().constData());
 		}
 		return nameToLocation[index][name];
 	}//*/
