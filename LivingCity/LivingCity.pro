@@ -1,3 +1,7 @@
+QT += core gui opengl
+
+INCLUDEPATH += /opt/local/include/GL/ /opt/local/include/
+
 RESOURCES += \
     LC_UrbanMain_.qrc \
     LC_UrbanMain.qrc
