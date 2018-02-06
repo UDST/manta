@@ -36,8 +36,8 @@
 #include <qvariant.h>
 
 #include <QTextStream>
-#include "..\misctools\polygon_3D.h"
-#include "..\misctools\misctools.h"
+#include "../misctools/polygon_3D.h"
+#include "../misctools/misctools.h"
 
 namespace LC {
 

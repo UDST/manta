@@ -27,7 +27,7 @@
 #include "glew.h"
 #include "qstring.h"
 #include "qvector3d.h"
-#include "RoadGraph\roadGraph.h"
+#include "RoadGraph/roadGraph.h"
 
 namespace LC {
 

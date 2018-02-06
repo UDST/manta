@@ -30,7 +30,6 @@
 #pragma once
 
 #include <vector>
-#include "BaseTsd.h"
 
 #define ushort unsigned short
 #define uint unsigned int

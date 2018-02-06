@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "misctools\misctools.h"
-#include "Geometry\placeTypeInstances.h"
+#include "misctools/misctools.h"
+#include "Geometry/placeTypeInstances.h"
 
 
 namespace LC {

@@ -29,7 +29,7 @@
 #include "VBORenderManager.h"
 #include "LC_camera_3d.h"
 
-#include "Geometry\client_geometry.h"
+#include "Geometry/client_geometry.h"
 #include "VBORoadGraph.h"
 #include "VBOBlocks.h"
 #include "VBOVegetation.h"
@@ -37,8 +37,8 @@
 
 #include "LC_GLWidget3D_Shadows.h"
 
-#include "traffic\cudaTrafficSimulator.h"
-#include "bTraffic\bTrafficSimulator.h"
+#include "traffic/cudaTrafficSimulator.h"
+#include "bTraffic/bTrafficSimulator.h"
 
 namespace LC {
 	static const int M_NORMAL=0;

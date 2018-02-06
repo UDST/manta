@@ -35,7 +35,7 @@
 #include <qtimer.h>
 
 #include "pmMain.h"
-#include "..\misctools\misctools.h"
+#include "../misctools/misctools.h"
 
 namespace LC {
 
