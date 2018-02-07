@@ -35,10 +35,6 @@
 #include "BaseTsd.h"//for U64
 #include "bTrafficConstants.h"
 
-#define ushort unsigned short
-#define uint unsigned int
-#define uchar unsigned char
-
 #define DEBUG_TRAFFIC 0
 
 ///////////////////////////////
@@ -109,7 +105,7 @@ LC::BEdgesDataCUDA edgesData;
 LC::BEdgesDataCUDA* edgesData_d;
 
 
-ULONG64 *laneMap_d[2];
+unsigned long *laneMap_d[2];
 uint laneMapSizeL;
 BTrafficPeopleCUDA pC;
 BTrafficPeopleCUDA* pC_d;
@@ -130,7 +126,7 @@ void allocateAndCopy(std::vector<T>& vec, void** pointer){
 	if (cudaSuccess != err)fprintf(stderr, "ac1 Cuda error: %s.\n", cudaGetErrorString(err));
 }
 
-void bInitCUDA(ushort _maxWidthL, LC::BTrafficPeople& people, LC::BEdgesData& _edgesData, std::vector<ULONG64>(&laneMapL)[2]){//, std::vector<LC::intersectionData>& intersections){
+void bInitCUDA(ushort _maxWidthL, LC::BTrafficPeople& people, LC::BEdgesData& _edgesData, std::vector<unsigned long>(&laneMapL)[2]){//, std::vector<LC::intersectionData>& intersections){
 	printf("bInitCUDA\n");
 	maxWidthL=_maxWidthL;
 	cudaError err;
@@ -183,7 +179,7 @@ void bInitCUDA(ushort _maxWidthL, LC::BTrafficPeople& people, LC::BEdgesData& _e
 	
 
 	//laneMap
-	size_t sizeL = laneMapL[0].size() * sizeof(ULONG64);
+	size_t sizeL = laneMapL[0].size() * sizeof(unsigned long);
 	err=cudaMalloc((void **) &laneMap_d[0], sizeL);   // Allocate array on device
 	if ( cudaSuccess != err )fprintf( stderr, "Cuda error: %s.\n",cudaGetErrorString( err) );
 	//err=cudaMemcpy(laneMap_d,laneMapL.data(),sizeL,cudaMemcpyHostToDevice);
@@ -266,8 +262,8 @@ void bFinishCUDA(void){
 	 const ushort maxWidthL,
 	 BTrafficPeopleCUDA& people,
 	 LC::BEdgesDataCUDA& edgesData,
-	 ULONG64* laneMapR,//,
-	 ULONG64* laneMapW
+	 unsigned long* laneMapR,//,
+	 unsigned long* laneMapW
 	 //std::vector<intersectionData>& intersections,
 	 //std::vector<uchar>& trafficLights
 	 ){
@@ -317,7 +313,7 @@ void bFinishCUDA(void){
 			 ushort initShiftL = (ushort)numOfCellsL*0.25f; //(~half of road)
 
 			 //bool placed = false;
-			 ULONG64 laneL;
+			 unsigned long laneL;
 			 ushort b;
 			 ushort lN = 0;// edgesData.numLinesB[firstEdge] - 1;//just right LANE !!!!!!!
 			 if (DEBUG_TRAFFIC == 1) printf("   1.2 Person: %d TRY put in first edge--> %u numOfCellsL %u n %u\n", p, firstEdge, numOfCellsL, numOfCells);
@@ -400,17 +396,17 @@ void bFinishCUDA(void){
 	 /*if (readFirstMap == true){
 		 simulationSt.mapToReadShiftL = 0;
 		 simulationSt.mapToWriteShiftL = halfLaneMapL;
-		 err = cudaMemset(&laneMap_d[halfLaneMapL], -1, halfLaneMapL*sizeof(ULONG64));//clean second half
+		 err = cudaMemset(&laneMap_d[halfLaneMapL], -1, halfLaneMapL*sizeof(unsigned long));//clean second half
 		 if ( cudaSuccess != err )fprintf( stderr, "Cuda error M0: %s.\n",cudaGetErrorString( err) );
 	 }else{
 		 simulationSt.mapToReadShiftL = halfLaneMapL;
 		 simulationSt.mapToWriteShiftL = 0;
-		err = cudaMemset(&laneMap_d[0], -1, halfLaneMapL*sizeof(ULONG64));//clean first half
+		err = cudaMemset(&laneMap_d[0], -1, halfLaneMapL*sizeof(unsigned long));//clean first half
 		 if (cudaSuccess != err)fprintf(stderr, "Cuda error M1: %s.\n", cudaGetErrorString(err));
 	 }*/
 	 simulationSt.currentTime = currentTime;
 	 simulationSt.cArray = readFirstMap;//read
-	 err = cudaMemset(&laneMap_d[!readFirstMap][0], -1, laneMapSizeL*sizeof(ULONG64));//clean write
+	 err = cudaMemset(&laneMap_d[!readFirstMap][0], -1, laneMapSizeL*sizeof(unsigned long));//clean write
 	 if (cudaSuccess != err)fprintf(stderr, "Cuda error M1: %s.\n", cudaGetErrorString(err));
 
 	 readFirstMap = !readFirstMap;//next iteration invert use

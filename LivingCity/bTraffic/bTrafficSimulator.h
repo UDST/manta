@@ -69,7 +69,7 @@ namespace LC {
 		void clearSimulator();
 
 		// Lanes
-		std::vector<ULONG64> laneMapL[2];
+		std::vector<unsigned long> laneMapL[2];
 		BEdgesData edgesData;
 		BIntersectionsData intersec;
 		BStopsData stops;

@@ -39,7 +39,7 @@ namespace LC {
 	public:
 		static void createLaneMap(
 			RoadGraph &inRoadGraph, 
-			std::vector<ULONG64>(&laneMapL)[2],
+			std::vector<unsigned long>(&laneMapL)[2],
 			BEdgesData& edgesData,
 			std::map<uint,RoadGraph::roadGraphEdgeDesc_BI>& laneMapNumToEdgeDesc,
 			std::map<RoadGraph::roadGraphEdgeDesc_BI,uint>& edgeDescToLaneMapNum,

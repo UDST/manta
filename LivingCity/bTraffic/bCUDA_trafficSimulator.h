@@ -33,7 +33,7 @@
 
 extern void bExampleCUDA(void); //CUDA example
 
-extern void bInitCUDA(ushort _maxWidthL, LC::BTrafficPeople& people, LC::BEdgesData& edgesData, std::vector<ULONG64> (&laneMapL)[2]);// , std::vector<LC::intersectionData>& intersections);
+extern void bInitCUDA(ushort _maxWidthL, LC::BTrafficPeople& people, LC::BEdgesData& edgesData, std::vector<unsigned long> (&laneMapL)[2]);// , std::vector<LC::intersectionData>& intersections);
 extern void bGetDataCUDA(LC::BTrafficPeople& people);// , std::vector<uchar>& trafficLights);
 extern void bFinishCUDA(void);
 extern void bSimulateTrafficCUDA(float currentTime, uint numPeople);// , uint numIntersections);

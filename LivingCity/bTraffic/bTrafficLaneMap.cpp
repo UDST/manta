@@ -42,7 +42,7 @@ namespace LC {
 
 		void BTrafficLaneMap::createLaneMap(
 			RoadGraph &inRoadGraph,
-			std::vector<ULONG64>(&laneMapL)[2], //std::vector<ULONG64>& laneMapL,
+			std::vector<unsigned long>(&laneMapL)[2], //std::vector<unsigned long>& laneMapL,
 			BEdgesData& edgesData,
 			std::map<uint,RoadGraph::roadGraphEdgeDesc_BI>& laneMapNumToEdgeDesc,
 			std::map<RoadGraph::roadGraphEdgeDesc_BI,uint>& edgeDescToLaneMapNum,
@@ -104,9 +104,9 @@ namespace LC {
 
 			//laneMapL.resize(maxWidthL*tNumLanes * 2);//2 to keep both maps
 			laneMapL[0].resize(maxWidthL*tNumLanes);
-			memset(laneMapL[0].data(), -1, laneMapL[0].size()*sizeof(ULONG64));
+			memset(laneMapL[0].data(), -1, laneMapL[0].size()*sizeof(unsigned long));
 			laneMapL[1].resize(maxWidthL*tNumLanes);
-			memset(laneMapL[1].data(), -1, laneMapL[0].size()*sizeof(ULONG64));
+			memset(laneMapL[1].data(), -1, laneMapL[0].size()*sizeof(unsigned long));
 			//memset(laneMapL.data(),-1,laneMap.size()*sizeof (unsigned char));//set FF
 
 			////printf("aa\n");

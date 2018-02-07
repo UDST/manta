@@ -33,7 +33,7 @@
 
 #include "roadGraphDynameq.h"
 #include "global.h"
-#include "bTraffic\bTrafficIntersection.h"
+#include "bTraffic/bTrafficIntersection.h"
 
 
 namespace LC {
@@ -244,7 +244,8 @@ namespace LC {
 			i.next();
 			float x=nodes[i.key()]["x-coordinate"].toFloat();
 			float y=nodes[i.key()]["y-coordinate"].toFloat();
-			updateMinMax2(QVector3D(x,y,0),minBox,maxBox);
+            QVector3D min_max_v(x,y,0);
+            updateMinMax2(min_max_v,minBox,maxBox);
 		}
 		printf("MinBox %f %f MaxBox %f %f--> %f %f\n",minBox.x(),minBox.y(),maxBox.x(),maxBox.y(),maxBox.x()-minBox.x(),maxBox.y()-minBox.y());
 		// set up world
@@ -271,7 +272,8 @@ namespace LC {
 
 		//resize terrain
 		glWidget3D->vboRenderManager.changeTerrainDimensions(sqSideSz*2+400.0f,200);
-		glWidget3D->vboRenderManager.vboTerrain.loadTerrain(QString("data/sfo.png"));
+        QString sfo_path("data/sfo.png");
+        glWidget3D->vboRenderManager.vboTerrain.loadTerrain(sfo_path);
 		printf("Resize Terrain %f\n",sqSideSz);
 
 		// add nodes

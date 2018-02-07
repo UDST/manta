@@ -30,6 +30,9 @@
 #include <QDebug>
 #include <QKeyEvent>
 #include "qmath.h"
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
+#include <GLUT/glut.h>
 
 #include "roadGraphDynameq.h"
 //test
@@ -824,12 +827,30 @@ namespace LC {
 		winY = (float)viewport[3] - (float)y;
 		glReadPixels( x, int(winY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winZ );
 
-		gluUnProject( winX, winY, winZ,myCam->mvMatrix.data(), myCam->pMatrix.data(), viewport, &posX, &posY, &posZ);
+        const float *data_matrix = myCam->mvMatrix.data();
+        double data_matrix_double[16];
+        for(uint i = 0; i < 16; i++) {
+            data_matrix_double[i] = *data_matrix;
+            data_matrix++;
+        }
+
+        const float *p_data_matrix = myCam->pMatrix.data();
+        double p_data_matrix_double[16];
+        for(uint i = 0; i < 16; i++) {
+            p_data_matrix_double[i] = *p_data_matrix;
+            p_data_matrix++;
+        }
+
+        gluUnProject( winX, winY, winZ, data_matrix_double, p_data_matrix_double,
+                      viewport, &posX, &posY, &posZ);
+//        GLKVector3 win_vec(winX, winY, winZ);
+//        GLKMathUnproject(win_vec);
 
 		result->setX(posX);
 		result->setY(posY);
 		result->setZ(posZ);
 		return true;
+        /*
 		///////////////////////////////////////////////////////////
 		///////////////////////////////////////////////////////////
 		{
@@ -845,10 +866,12 @@ namespace LC {
 			winX = (float)x;
 			winY = (float)viewport[3] - (float)y;
 
-			GLdouble wx, wy, wz;  /*  returned world x, y, z coords  */
-			GLdouble wx2, wy2, wz2;  /*  returned world x, y, z coords  */
-			gluUnProject( winX, winY, 0.0f, myCam->mvMatrix.data(), myCam->pMatrix.data(), viewport, &wx, &wy, &wz);
-			gluUnProject( winX, winY, 1.0f, myCam->mvMatrix.data(), myCam->pMatrix.data(), viewport, &wx2, &wy2, &wz2);
+            GLdouble wx, wy, wz;  //  returned world x, y, z coords
+            GLdouble wx2, wy2, wz2;  //  returned world x, y, z coords
+            gluUnProject( winX, winY, 0.0f, myCam->mvMatrix.data(), myCam->pMatrix.data(),
+                          viewport, &wx, &wy, &wz);
+            gluUnProject( winX, winY, 1.0f, myCam->mvMatrix.data(), myCam->pMatrix.data(),
+                          viewport, &wx2, &wy2, &wz2);
 			double f = wz / ( wz2 - wz );
 			double x2d = wx - f * (wx2 - wx );
 			double y2d = wy - f * (wy2 - wy );	
@@ -857,6 +880,7 @@ namespace LC {
 			result->setZ(0);
 			return true;
 		}
+        */
 	}//
 
 	bool LCGLWidget3D::generateGeometry(int flag){

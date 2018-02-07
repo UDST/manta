@@ -77,7 +77,7 @@ namespace LC {
 		//float znear=1500.0;
 
 		float f = 1.0f / tan (fov * (M_PI / 360.0));
-		double m[16]=
+        float m[16]=
 		{	f/aspect,	0,								0,									0,
 		0,			f,								0,						 			0,
 		0,			0,		(zfar+znear)/(znear-zfar),		(2.0f*zfar*znear)/(znear-zfar),
@@ -164,7 +164,7 @@ namespace LC {
 		float znear=1200.0f;// FIX
 
 		float f = 1.0f / tan (fov * (M_PI / 360.0));
-		double m[16]=
+        float m[16]=
 		{	f/aspect,	0,								0,									0,
 			0,			f,								0,						 			0,
 			0,			0,		(zfar+znear)/(znear-zfar),		(2.0f*zfar*znear)/(znear-zfar),

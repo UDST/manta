@@ -31,7 +31,7 @@
 
 namespace LC {
 
-	LCUrbanMain::LCUrbanMain(QWidget *parent, Qt::WFlags flags) : QMainWindow(parent, flags) {
+    LCUrbanMain::LCUrbanMain(QWidget *parent, Qt::WindowFlags flags) : QMainWindow(parent, flags) {
 		ui.setupUi(this);	
 
 		glWidget3D= new LCGLWidget3D(this);
@@ -307,7 +307,7 @@ namespace LC {
 		ui.parcelAreaGroupBox->setTitle(
 			"Area: " 
 			+ QString::number(parcel_area_mean)
-			+ " m2 ± "
+			+ " m2 ï¿½ "
 			+ QString::number(parcel_area_deviation)
 			+ " %"
 			);
@@ -326,7 +326,7 @@ namespace LC {
 		ui.parcelAreaGroupBox->setTitle(
 			"Area: " 
 			+ QString::number(parcel_area_mean)
-			+ " m2 ± "
+			+ " m2 ï¿½ "
 			+ QString::number(parcel_area_deviation)
 			+ " %"
 			);
@@ -405,7 +405,7 @@ namespace LC {
 		ui.BuildingHeightGroupBox->setTitle(
 			"Num Floors: " 
 			+ QString::number(building_height_mean)
-			+ " ± "
+			+ " ï¿½ "
 			+ QString::number(building_height_deviation)
 			+ " %"
 			);
@@ -425,7 +425,7 @@ namespace LC {
 		ui.BuildingHeightGroupBox->setTitle(
 			"Num Floors: " 
 			+ QString::number(building_height_mean)
-			+ " ± "
+			+ " ï¿½ "
 			+ QString::number(building_height_deviation)
 			+ " %"
 			);

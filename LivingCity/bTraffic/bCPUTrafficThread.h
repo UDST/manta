@@ -62,7 +62,7 @@ namespace LC {
 		BTrafficPeople& _people,
 		BEdgesData& _edgesData,
 		BIntersectionsData& _intersections,
-		std::vector<ULONG64>(&_laneMapL)[2]
+		std::vector<unsigned long>(&_laneMapL)[2]
 		);
 
 		// Simulate
@@ -85,7 +85,7 @@ namespace LC {
 		BTrafficPeople* people;
 		BEdgesData* edgesData;
 		BIntersectionsData* intersections;
-		ULONG64* laneMapL[2];
+		unsigned long* laneMapL[2];
 	};
 
 	
