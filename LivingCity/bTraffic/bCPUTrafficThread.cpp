@@ -75,7 +75,7 @@ namespace LC {
 		BTrafficPeople& _people,
 		BEdgesData& _edgesData,
 		BIntersectionsData& _intersections,
-		std::vector<ULONG64>(&_laneMapL)[2]
+		std::vector<unsigned long>(&_laneMapL)[2]
 		) 
 		{
 			this->threadId = threadId;
@@ -115,7 +115,7 @@ namespace LC {
 	inline T mRound(T num, T round){
 		return (num + round - 1)&(~(round - 1));
 	}//
-	/*inline uchar firstDifV(ULONG64 laneL){
+	/*inline uchar firstDifV(unsigned long laneL){
 		if (laneL & 0xFF00000000000000)return laneL >> 56;
 		if (laneL & 0x00FF000000000000)return laneL >> 48;
 		if (laneL & 0x0000FF0000000000)return laneL >> 40;
@@ -126,7 +126,7 @@ namespace LC {
 		return laneL;
 	}//*/
 
-	inline uchar firstDifByte(ULONG64 laneL){
+	inline uchar firstDifByte(unsigned long laneL){
 		/*unsigned long index;
 		//no necessary to check if all 1s (already checked before)
 		_BitScanForward64(&index, !laneL);//Search the mask data from least significant bit (LSB) to the most significant bit (MSB) for a set bit (1).
@@ -150,8 +150,8 @@ namespace LC {
 		const ushort maxWidthL,
 		BTrafficPeople& people,
 		BEdgesData& edgesData,
-		ULONG64* laneMapR,//,
-		ULONG64* laneMapW,
+		unsigned long* laneMapR,//,
+		unsigned long* laneMapW,
 		BIntersectionsData& intersec
 		//std::vector<uchar>& trafficLights
 		){
@@ -238,7 +238,7 @@ namespace LC {
 				}*/
 				ushort cEdgeLengthCL = ((cEdgeLengthC + 7) & ~7u) / 8;//round up
 				ushort LtoCheck = std::min<ushort>(cEdgeLengthCL, 1);
-				ULONG64 laneL = laneMapR[maxWidthL*(firstEdge + 0) + LtoCheck];//get byte of edge (proper line)
+				unsigned long laneL = laneMapR[maxWidthL*(firstEdge + 0) + LtoCheck];//get byte of edge (proper line)
 				if ((laneL & 0xFFFFFFFF00000000) == 0xFFFFFFFF00000000) {
 					laneMapWC[(maxWidthL*(firstEdge + 0) + LtoCheck) * 8 + 5] = 0x01;// (uchar)(trafficPersonVec[p].v * 3);//speed in m/s *3 (to keep more precision
 					laneMapRC[(maxWidthL*(firstEdge + 0) + LtoCheck) * 8 + 5] = 0x01;// also in read to avoid put two in the same place
@@ -261,7 +261,7 @@ namespace LC {
 		//////////////////////////////////////////////////////
 		// rought formula to check distance
 		//float dToCheck = (v*v) / (2.0f*0.8f*gC);//calculate cells to check
-		/*ULONG64 laneL;
+		/*unsigned long laneL;
 		ushort dToCheckL = (ushort((v*v) / (2.0f*0.8f*gC) + s_0C) / 8);//calculate cells to check (break+minDist) hyperphysics.phy-astr.gsu.edu/hbase/crstp.html#c2
 		dToCheckL = dToCheckL > 1 ? dToCheckL : 2;//at least 2 long
 		if ((p == 0 && DEBUG_1CAR)) printf("\n   2 Person: %d Moving v %f--> posInLaneC %f cEdgeLengthC %u (round) %u dToCheckL %u\n", p, v, posInLaneC, cEdgeLengthC, mRound<ushort>(cEdgeLengthC, 8) / 8, dToCheckL);

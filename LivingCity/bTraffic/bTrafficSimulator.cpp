@@ -239,14 +239,14 @@ namespace LC {
 		ushort i = stops.intersNumber[sN];
 		if (currentTime > intersec.nextEvent[i] && intersec.numIn[i] > 1) {
 			if (DEBUG_INTERSEC_STOP==1)printf("Check Intersction %d Stop %d\n", i, sN);
-			ULONG64 req = (intersec.req[i]);
+			unsigned long req = (intersec.req[i]);
 			if (req == 0x00) //none demand
 				return;
 			if (DEBUG_INTERSEC_STOP == 1)printf("i %u sN %u --> %016llX\n", i, sN, req);
 			for (int cI = 0; cI < intersec.numIn[i] + 1; cI++) {//one whole loop in all IN
 				stops.state[sN] = (stops.state[sN] + 1) % intersec.numIn[i];//
 				ushort nIN = stops.state[sN];
-				ULONG64 traff = req&(ULONG64(0xFF) << (nIN * 8));
+				unsigned long traff = req&(unsigned long(0xFF) << (nIN * 8));
 				if (traff != 0x00) {
 					intersec.trafficLight[i] = traff;
 					intersec.nextEvent[i] = currentTime+ deltaEvent;
@@ -273,14 +273,14 @@ namespace LC {
 			intersec.nextEvent[i] = currentTime + phaseTime;
 			return;
 			if (DEBUG_INTERSEC_STOP == 1)printf("Check Intersction %d Stop %d\n", i, sN);
-			ULONG64 req = (intersec.req[i]);
+			unsigned long req = (intersec.req[i]);
 			if (req == 0x00) //none demand
 				return;
 			if (DEBUG_INTERSEC_STOP == 1)printf("i %u sN %u --> %016llX\n", i, sN, req);
 			for (int cI = 0; cI < intersec.numIn[i] + 1; cI++) {//one whole loop in all IN
 				//stops.state[sN] = (stops.state[sN] + 1) % intersec.numIn[i];// !!!
 				ushort nIN;// = stops.state[sN]; 201711
-				ULONG64 traff = req&(ULONG64(0xFF) << (nIN * 8));
+				unsigned long traff = req&(unsigned long(0xFF) << (nIN * 8));
 				if (traff != 0x00) {
 					intersec.trafficLight[i] = traff;
 					intersec.nextEvent[i] = currentTime + deltaEvent;
@@ -375,15 +375,15 @@ namespace LC {
 		//uint mapToReadShift;
 		//uint mapToWriteShift;
 		//uint halfLaneMapL = laneMapL[.size() / 2;//it is multiple of 2
-		memset((uchar*)&laneMapL[0].data()[0], 0xFF, laneMapL[0].size()*sizeof(ULONG64));//clean all
-		memset((uchar*)&laneMapL[1].data()[0], 0xFF, laneMapL[1].size()*sizeof(ULONG64));//clean all
+		memset((uchar*)&laneMapL[0].data()[0], 0xFF, laneMapL[0].size()*sizeof(unsigned long));//clean all
+		memset((uchar*)&laneMapL[1].data()[0], 0xFF, laneMapL[1].size()*sizeof(unsigned long));//clean all
 		//std::fill(laneMapL[0].begin(), laneMapL[0].end(), 0xFFFFFFFFFFFFFFFF);
 		//std::fill(laneMapL[1].begin(), laneMapL[1].end(), 0xFFFFFFFFFFFFFFFF);
 		printf("**START: current time: %f --> end time %f\n", currentTime, endTime);
 		{
 			uint32_t i = 0x01234567;
 			printf("-->Little endian %d\n", (*((uint8_t*)(&i))) == 0x67);
-			printf("-->ULONG64 size %d\n", sizeof(ULONG64));
+			printf("-->unsigned long size %d\n", sizeof(unsigned long));
 			printf("laneMapL size %d  maxWidthL %d\n", laneMapL[0].size(), maxWidthL);
 			ushort cEdge = 0;
 			ushort cEdgeLengthC = edgesData.lengthC[cEdge];
@@ -417,7 +417,7 @@ namespace LC {
 			// 1. clean memory
 			simulationSt.currentTime = currentTime;
 			simulationSt.cArray = readFirstMap;//read
-			memset((uchar*)&laneMapL[!readFirstMap].data()[0], 0xFF, laneMapL[!readFirstMap].size()*sizeof(ULONG64));//clean write
+			memset((uchar*)&laneMapL[!readFirstMap].data()[0], 0xFF, laneMapL[!readFirstMap].size()*sizeof(unsigned long));//clean write
 			readFirstMap = !readFirstMap;//next iteration invert use
 
 			

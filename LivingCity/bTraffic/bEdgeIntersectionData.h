@@ -31,10 +31,6 @@
 
 #include <vector>
 
-#define ushort unsigned short
-#define uint unsigned int
-#define uchar unsigned char
-
 #define S_TOSTART	0x00
 #define S_MOVE		0x01
 #define S_PASSINT	0x02
@@ -103,7 +99,7 @@ namespace LC {
 		std::vector<uchar>	numPhases;
 		std::vector<uchar>	curPhase;
 
-		std::vector<ULONG64> phases;
+        std::vector<unsigned long> phases;
 		std::vector<uchar>	 phaseTime;//note that it is *2
 	};
 
@@ -112,8 +108,8 @@ namespace LC {
 
 	struct BIntersectionsData{
 
-		std::vector<ULONG64> req;
-		std::vector<ULONG64> trafficLight;
+        std::vector<unsigned long> req;
+        std::vector<unsigned long> trafficLight;
 		// common
 		std::vector<uchar> numIn;
 		std::vector<uchar> type;
@@ -130,11 +126,11 @@ namespace LC {
 		}//
 
 		void resetReq() {
-			memset((uchar*)(&req[0]), 0, req.size()*sizeof(ULONG64));
+            memset((uchar*)(&req[0]), 0, req.size()*sizeof(unsigned long));
 		}//
 
 		void resetTraff() {
-			memset((uchar*)(&trafficLight[0]), 0x00, trafficLight.size()*sizeof(ULONG64));
+            memset((uchar*)(&trafficLight[0]), 0x00, trafficLight.size()*sizeof(unsigned long));
 		}//
 	};
 }

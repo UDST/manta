@@ -196,7 +196,7 @@ namespace LC {
 				float phaseTime = phaseTimes[i].split(' ', QString::SkipEmptyParts)[0].toFloat() + phaseTimes[i].split(' ', QString::SkipEmptyParts)[1].toFloat();
 				qDebug() << phaseTimes[i] << ": " << phaseTime;
 				// Phase itself
-				ULONG64 phaseV = 0;
+				unsigned long phaseV = 0;
 				for each (QString var in phases[i]) {
 					QStringList linkP = var.split(' ', QString::SkipEmptyParts);
 					if (linkP.size() != 3) {

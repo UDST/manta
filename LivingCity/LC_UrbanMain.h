@@ -25,8 +25,8 @@
 #pragma once
 
 #include "glew.h"
-#include <QtGui/QMainWindow>
-#include "GeneratedFiles\ui_LC_UrbanMain.h"
+#include <QMainWindow>
+#include "build/ui_LC_UrbanMain.h"
 
 namespace LC {
 
@@ -45,7 +45,7 @@ public:
 	Ui::LCUrbanMain ui;
 	LCGLWidget3D* glWidget3D;
 
-	LCUrbanMain(QWidget *parent = 0, Qt::WFlags flags = 0);
+    LCUrbanMain(QWidget *parent = 0, Qt::WindowFlags flags = 0);
 	~LCUrbanMain();
 
 	void init();

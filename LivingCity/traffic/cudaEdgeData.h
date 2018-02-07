@@ -33,10 +33,6 @@
 #ifndef LC_CUDA_EDGE_DATA_H
 #define LC_CUDA_EDGE_DATA_H
 
-#define ushort unsigned short
-#define uint unsigned int
-#define uchar unsigned char
-#define uint unsigned int
 
 namespace LC {
 
