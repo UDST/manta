@@ -146,7 +146,7 @@ namespace LC {
 	**/
 	void Parcel::writeParcelContourToOBJ(QTextStream &objStream)
 	{
-		std::vector<QVector3D> points = this->parcelContour.contour;
+        std::vector<Vector3D> points = this->parcelContour.contour;
 		int size = points.size();
 
 		objStream << "g " << "Lot" << "\n";
@@ -179,7 +179,7 @@ namespace LC {
 	void Parcel::writeParcelBuildingToOBJ(QTextStream &objStream)
 	{
 		//std::vector<QVector3D> points = this->parcelContour.contour;
-		std::vector<QVector3D> points = this->parcelBuildableAreaContour.contour;
+        std::vector<Vector3D> points = this->parcelBuildableAreaContour.contour;
 		int size = points.size();
 
 		int height = this->myBuilding.numStories;

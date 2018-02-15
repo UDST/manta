@@ -185,7 +185,7 @@ namespace LC {
 					qDebug() << phaseTimes[i];
 					float phaseTime = phaseTimes[i].split(' ', QString::SkipEmptyParts)[0].toFloat() + phaseTimes[i].split(' ', QString::SkipEmptyParts)[1].toFloat();
 					maxPhase = maxPhase>phaseTime ? maxPhase : phaseTime;
-					for each (QString var in phases[i]) {
+                    for(QString var : phases[i]) {
 						qDebug() << " " << var;
 					}
 				}
@@ -197,7 +197,7 @@ namespace LC {
 				qDebug() << phaseTimes[i] << ": " << phaseTime;
 				// Phase itself
 				unsigned long phaseV = 0;
-				for each (QString var in phases[i]) {
+                for(QString var : phases[i]) {
 					QStringList linkP = var.split(' ', QString::SkipEmptyParts);
 					if (linkP.size() != 3) {
 						errorLine("phase itself " + var, -1);

@@ -24,6 +24,7 @@
 
 #include "polygon_3D.h"
 #include "qvector2d.h"
+#include <float.h>
 
 namespace LC {
 	namespace misctools {
@@ -81,9 +82,15 @@ namespace LC {
 				for(int j=0; j<contourSz; ++j){
 					int jNext = (j+1)%contourSz;
 
-					if (LC::misctools::segmentSegmentIntersectXY( QVector2D(pline[i]), QVector2D(pline[iNext]),
-						QVector2D(contour[j]), QVector2D(contour[jNext]),
-						&tPline, &tPgon, true, tmpIntPt) ) 
+                    QVector2D plinei(pline[i]);
+                    QVector2D plineinext(pline[iNext]);
+                    QVector2D contourj(contour[j]);
+                    QVector2D contourjnext(contour[jNext]);
+
+                    if (LC::misctools::segmentSegmentIntersectXY(plinei, plineinext,
+                                                                 contourj, contourjnext,
+                                                                 &tPline, &tPgon, true,
+                                                                 tmpIntPt) )
 					{
 						polylineIntersectsPolygon = true;
 

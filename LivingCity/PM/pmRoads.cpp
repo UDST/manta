@@ -949,11 +949,13 @@ namespace LC {
 			ei_source_desc = boost::source(*ei, inRoadGraph.myRoadGraph); 
 			ei_target_desc = boost::target(*ei, inRoadGraph.myRoadGraph);
 
+            QVector2D src_vector = inRoadGraph.myRoadGraph[ei_source_desc].pt.toVector2D();
+            QVector2D tgt_vector = inRoadGraph.myRoadGraph[ei_target_desc].pt.toVector2D();
+
 			//if new segment intersects other segment
-			if (LC::misctools::segmentSegmentIntersectXY(p0_2D, p1_2D,
-				inRoadGraph.myRoadGraph[ei_source_desc].pt.toVector2D(), 
-				inRoadGraph.myRoadGraph[ei_target_desc].pt.toVector2D(),
-				&tab, &tcd, true, intPt) )		
+            if (LC::misctools::segmentSegmentIntersectXY(p0_2D, p1_2D,
+                                                         src_vector, tgt_vector,
+                                                         &tab, &tcd, true, intPt))
 			{
 				distToInt = (p0 - intPt).lengthSquared();
 

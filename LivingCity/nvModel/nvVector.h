@@ -730,7 +730,7 @@ inline T normalize( const T & vec) {
     T r;
     for(int i = 0; i < vec.size(); i++) 
         sum += vec._array[i] * vec._array[i];
-    sum = T::value_type(sqrt(sum));
+    sum = typename T::value_type(sqrt(sum));
     if (sum > 0)
         for(int i = 0; i < vec.size(); i++) 
             r._array[i] = vec._array[i] / sum;

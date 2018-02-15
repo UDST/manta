@@ -229,7 +229,8 @@ namespace LC {
 			layers[l].initLayerGauss(l,numSamples,stdev,samplePosition);
 			if(initLayer==true)
 				layers[l].createRandomDistribution();
-			updateLayer(l,QVector3D(0,0,0),0);
+            QVector3D zero(0,0,0);
+            updateLayer(l, zero, 0);
 
 		}
 		//set pointers to be able to access

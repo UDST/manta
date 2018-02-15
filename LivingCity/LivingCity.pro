@@ -1,5 +1,7 @@
 QT += core gui opengl
 
+LIBS += -L/opt/local/lib -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lGLEW
+
 INCLUDEPATH += /opt/local/include/GL/ /opt/local/include/
 
 RESOURCES += \

@@ -4898,7 +4898,8 @@ void exactinit()
 
 #ifdef CPU86
 #ifdef SINGLE
-	_control87(_PC_24, _MCW_PC); /* Set FPU control word for single precision. */
+    // FIXME: cannot be set on OSX
+    // _control87(_PC_24, _MCW_PC); /* Set FPU control word for single precision. */
 #else /* not SINGLE */
 	_control87(_PC_53, _MCW_PC); /* Set FPU control word for double precision. */
 #endif /* not SINGLE */
