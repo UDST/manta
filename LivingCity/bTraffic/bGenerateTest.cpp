@@ -27,12 +27,12 @@
 *		@author igarciad
 ************************************************************************************************/
 
-#include "..\Geometry/client_geometry.h"
-#include "..\LC_UrbanMain.h"
-#include "..\LC_GLWidget3D.h"
+#include "../Geometry/client_geometry.h"
+#include "../LC_UrbanMain.h"
+#include "../LC_GLWidget3D.h"
 
 #include "bGenerateTest.h"
-#include "..\global.h"
+#include "../global.h"
 
 
 namespace LC {
@@ -152,7 +152,8 @@ namespace LC {
 
 		//resize terrain
 		glWidget3D->vboRenderManager.changeTerrainDimensions(sqSideSz * 4, 100.0f);
-		glWidget3D->vboRenderManager.vboTerrain.loadTerrain(QString("data/flat.png"));
+        QString flat_path("data/flat.png");
+        glWidget3D->vboRenderManager.vboTerrain.loadTerrain(flat_path);
 		printf("Resize Terrain %f\n",sqSideSz);
 
 		/////////////////////////////////////////

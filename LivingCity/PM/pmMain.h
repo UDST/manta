@@ -37,8 +37,8 @@
 
 #include "../misctools/misctools.h"
 //
-#include "..\Geometry\client_geometry.h"
-#include "..\Geometry\placeTypeInstances.h"
+#include "../Geometry/client_geometry.h"
+#include "../Geometry/placeTypeInstances.h"
 
 #include "pmRoads.h"
 #include "pmBlocks.h"

@@ -246,7 +246,8 @@ namespace LC {
 			for (int cI = 0; cI < intersec.numIn[i] + 1; cI++) {//one whole loop in all IN
 				stops.state[sN] = (stops.state[sN] + 1) % intersec.numIn[i];//
 				ushort nIN = stops.state[sN];
-				unsigned long traff = req&(unsigned long(0xFF) << (nIN * 8));
+                unsigned long ff = 0xFF;
+                unsigned long traff = req&(ff << (nIN * 8));
 				if (traff != 0x00) {
 					intersec.trafficLight[i] = traff;
 					intersec.nextEvent[i] = currentTime+ deltaEvent;
@@ -280,7 +281,8 @@ namespace LC {
 			for (int cI = 0; cI < intersec.numIn[i] + 1; cI++) {//one whole loop in all IN
 				//stops.state[sN] = (stops.state[sN] + 1) % intersec.numIn[i];// !!!
 				ushort nIN;// = stops.state[sN]; 201711
-				unsigned long traff = req&(unsigned long(0xFF) << (nIN * 8));
+                unsigned long ff2 = 0xFF;
+                unsigned long traff = req&(ff2 << (nIN * 8));
 				if (traff != 0x00) {
 					intersec.trafficLight[i] = traff;
 					intersec.nextEvent[i] = currentTime + deltaEvent;

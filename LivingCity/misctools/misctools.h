@@ -205,8 +205,10 @@ namespace LC {
 
 // We can conveniently use macro's to register point and ring
 //BOOST_GEOMETRY_REGISTER_POINT_3D_GET_SET (QVector3D, double, boost::geometry::cs::cartesian, x, y, z, setX, setY, setZ)
-BOOST_GEOMETRY_REGISTER_POINT_2D_GET_SET (QVector3D, double, boost::geometry::cs::cartesian, x, y, setX, setY)
-	BOOST_GEOMETRY_REGISTER_RING (LC::misctools::Loop3D)
+
+
+BOOST_GEOMETRY_REGISTER_POINT_2D_GET_SET (Vector3D, double, boost::geometry::cs::cartesian, x, y, setX, setY)
+BOOST_GEOMETRY_REGISTER_RING (LC::misctools::Loop3D)
 
 
 

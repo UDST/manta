@@ -36,9 +36,39 @@
 
 #include <vector>
 #include "qvector3d.h"
-//#include "common.h"
+#include <boost/geometry/geometry.hpp>
+#include <boost/geometry/geometries/point_xy.hpp>
+#include <boost/geometry/geometries/polygon.hpp>
+#include <boost/geometry/geometries/register/point.hpp>
+#include <boost/geometry/geometries/register/ring.hpp>
+#include <boost/geometry/multi/multi.hpp>
+#include <boost/polygon/polygon.hpp>
 
-//#include <boost/geometry/geometries/ring.hpp>
+class Vector3D : public QVector3D
+{
+public:
+    Vector3D(void)
+    {
+    }
+
+    Vector3D(const QVector3D &v)
+    {
+        *this = v;
+    }
+
+    Vector3D(const QVector2D &v)
+        : QVector3D(v)
+    {
+    }
+
+    operator boost::geometry::model::d2::point_xy<double>() const
+    {
+        boost::geometry::model::d2::point_xy<double> p;
+        // TODO
+        return p;
+    }
+};
+
 
 namespace LC {
 	namespace misctools {
@@ -48,7 +78,8 @@ namespace LC {
 * Classes and functions for geometric data
 **/
 
-struct Loop3D : std::vector<QVector3D>{
+
+struct Loop3D : std::vector<Vector3D>{
 };
 
 bool isPointWithinLoop(std::vector<QVector3D> &loop, QVector3D &pt);

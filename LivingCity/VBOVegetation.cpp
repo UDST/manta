@@ -176,7 +176,7 @@ namespace LC {
 		QVector3D segmentVector;
 		float segmentLength;
 		int numTreesAlongSegment;
-		std::vector <QVector3D> *contourPtr;
+        std::vector<Vector3D> *contourPtr;
 		for(int i=0; i<blocks.size(); ++i){
 
 			srand(blocks.at(i).randSeed);

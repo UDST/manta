@@ -23,7 +23,7 @@
 //---------------------------------------------------------------------------------------------------------------------
 
 #include "VBORenderManager.h"
-#include "triangle\triangle.c"
+#include "triangle/triangle.c"
 
 namespace LC {
 
@@ -43,7 +43,9 @@ namespace LC {
 
 	void VBORenderManager::init(){
 		// init program shader
-		program=Shader::initShader(QString("data/shaders/lc_vertex.glsl"),QString("data/shaders/lc_fragment.glsl"));
+        QString vertex_shader_path("data/shaders/lc_vertex.glsl");
+        QString fragment_shader_path("data/shaders/lc_fragment.glsl");
+        program=Shader::initShader(vertex_shader_path, fragment_shader_path);
 		glUseProgram(program);
 
 		// init
@@ -339,7 +341,7 @@ namespace LC {
 		}
 	}//
 
-	bool VBORenderManager::addStaticConvexPoly(QString geoName,std::vector<QVector3D>& pos,float zShift,bool inverseLoop,QString textureName,int shaderMode,QVector3D texScale,bool tesselate,QVector3D* color){
+    bool VBORenderManager::addStaticConvexPoly(QString geoName,std::vector<Vector3D>& pos,float zShift,bool inverseLoop,QString textureName,int shaderMode,QVector3D texScale,bool tesselate,QVector3D* color){
 
 		//printf("-- addStaticConvexPoly\n");
 		if(pos.size()<3){

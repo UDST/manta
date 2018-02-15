@@ -37,9 +37,9 @@
 
 #include "../misctools/misctools.h"
 //
-#include "..\Geometry\placeTypeInstances.h"
-#include <process.h>
-#include "..\RoadGraph\roadGraph.h"
+#include "../Geometry/placeTypeInstances.h"
+//#include <process.h>
+#include "../RoadGraph/roadGraph.h"
 
 namespace LC {
 

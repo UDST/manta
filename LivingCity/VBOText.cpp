@@ -104,7 +104,7 @@ namespace LC {
 		for(int cN=0;cN<text.size();cN++){
 			QChar c=text[cN];
 			if(charToPos.contains(c)==false){
-				printf("missing letter %c\n",c.toUtf8());
+                printf("missing letter %c\n",c.toLatin1());
 				continue;
 			}
 			QVector2D lettPos=charToPos[c];

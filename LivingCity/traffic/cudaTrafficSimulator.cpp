@@ -1250,10 +1250,10 @@ namespace LC {
 			steps++;
 			if(clientMain->ui.cudaRenderSimulationCheckBox->isChecked()==true){//G::global().getBool("cudaRenderSimulation")==true){
 				while(clientMain->ui.cudaRenderStepSpinBox->value()==0){
-					Sleep(50);
+                    sleep(50);
 					clientMain->glWidget3D->updateGL();
 					QApplication::processEvents();
-					Sleep(50);
+                    sleep(50);
 				}
 				if(steps%clientMain->ui.cudaRenderStepSpinBox->value()==0){//each "steps" steps, render
 					QString timeT;

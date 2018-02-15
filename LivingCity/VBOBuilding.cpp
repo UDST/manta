@@ -39,8 +39,9 @@ namespace LC {
 	static std::vector<QVector3D> facadeScale;
 	static std::vector<QString> windowTex;
 
-	void addTexConvexPoly(VBORenderManager& rendManager,QString geoName,QString textureName,GLenum geometryType,int shaderMode,
-		std::vector<QVector3D> pos,QVector3D col,QVector3D norm,float zShift,bool inverseLoop,bool texZeroToOne,QVector3D texScale){
+    void addTexConvexPoly(VBORenderManager& rendManager,QString geoName,QString textureName,
+                          GLenum geometryType,int shaderMode, std::vector<Vector3D> pos,
+                          QVector3D col,QVector3D norm,float zShift,bool inverseLoop,bool texZeroToOne,QVector3D texScale){
 		
 		if(pos.size()<3){
 			return;
@@ -108,7 +109,7 @@ namespace LC {
 	}//
 
 
-	void addFirstFloor(VBORenderManager& rendManager,std::vector<QVector3D>& footprint,QVector3D floorColor,float initHeight,float floorHeight){
+    void addFirstFloor(VBORenderManager& rendManager,std::vector<Vector3D>& footprint,QVector3D floorColor,float initHeight,float floorHeight){
 		
 		for(int sN=0;sN<footprint.size();sN++){
 			int ind1=sN;
@@ -128,7 +129,7 @@ namespace LC {
 		}
 	}//
 
-	void addBox(VBORenderManager& rendManager,std::vector<QVector3D>& roofOffCont,QVector3D boxColor,float initHeight,float boxSize){
+    void addBox(VBORenderManager& rendManager,std::vector<Vector3D>& roofOffCont,QVector3D boxColor,float initHeight,float boxSize){
 		addTexConvexPoly(rendManager,"building","",GL_QUADS,1|LC::mode_AdaptTerrain|LC::mode_Lighting,
 			roofOffCont,boxColor,QVector3D(0,0,1.0f),initHeight+boxSize,false,true,QVector3D(1,1,1));
 		addTexConvexPoly(rendManager,"building","",GL_QUADS,1|LC::mode_AdaptTerrain|LC::mode_Lighting,
@@ -146,22 +147,23 @@ namespace LC {
 		addFirstFloor(rendManager,roofOffCont,boxColor,initHeight,boxSize);
 	}//
 
-	void addRoof(VBORenderManager& rendManager,std::vector<QVector3D>& roofOffCont,QVector3D boxColor,float initHeight,float boxSize){
-		addTexConvexPoly(rendManager,"building","data/textures/LC/roof/roof0.jpg",GL_QUADS,2|LC::mode_AdaptTerrain|LC::mode_Lighting,
-			roofOffCont,boxColor,QVector3D(0,0,1.0f),initHeight+boxSize,false,true,QVector3D(1,1,1));
+    void addRoof(VBORenderManager& rendManager,std::vector<Vector3D>& roofOffCont,QVector3D boxColor,float initHeight,float boxSize){
+        addTexConvexPoly(rendManager,"building","data/textures/LC/roof/roof0.jpg",GL_QUADS,
+                         2|LC::mode_AdaptTerrain|LC::mode_Lighting,roofOffCont,boxColor,QVector3D(0,0,1.0f),initHeight+boxSize,false,true,QVector3D(1,1,1));
 		addTexConvexPoly(rendManager,"building","",GL_QUADS,1|LC::mode_AdaptTerrain|LC::mode_Lighting,
 			roofOffCont,boxColor,QVector3D(0,0,-1.0f),initHeight,true,true,QVector3D(1,1,1));
 		addFirstFloor(rendManager,roofOffCont,boxColor,initHeight,boxSize);
 	}//
 
-	void calculateColumnContour(std::vector<QVector3D>& currentContour,std::vector<QVector3D>& columnContour){
-		QVector3D pos1,pos2;
+    void calculateColumnContour(std::vector<Vector3D>& currentContour,
+                                std::vector<Vector3D>& columnContour){
+        Vector3D pos1,pos2;
 		for(int sN=0;sN<currentContour.size();sN++){
 			int ind1=sN;
 			int ind2=(sN+1)%currentContour.size();
 			pos1=currentContour[ind1];
 			pos2=currentContour[ind2];
-			QVector3D dirV=(pos2-pos1);
+            Vector3D dirV=(pos2-pos1);
 			float leng=(dirV).length();
 			dirV/=leng;
 			if(leng>7.0f){
@@ -339,8 +341,10 @@ namespace LC {
 
 	}//
 
-	void addColumnGeometry(VBORenderManager& rendManager,
-		std::vector<QVector3D>& columnContour,int randomFacade,QVector3D randN,float uS,float vS,float height,int numFloors,bool buildingWithWindows,QVector3D windowRandomSize){
+    void addColumnGeometry(VBORenderManager& rendManager,
+                           std::vector<Vector3D>& columnContour,int randomFacade,
+                           QVector3D randN,float uS,float vS,float height,int numFloors,
+                           bool buildingWithWindows,QVector3D windowRandomSize){
 
 		std::vector<Vertex> vert;
 
@@ -581,7 +585,7 @@ namespace LC {
 			addBox(rendManager,roofOffCont,bldgColor,firstFloorHeigh,boxSize);
 			firstFloorHeigh+=boxSize;
 			/// Add columns
-			std::vector<QVector3D> columnContour;
+            std::vector<Vector3D> columnContour;
 			calculateColumnContour(footprint.contour,columnContour);
 			
 			// add geometry

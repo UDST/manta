@@ -212,13 +212,16 @@ namespace LC {
 		// 1. Generate PEOPLE
 		timer.start();
 		std::vector<QVector2D> peopleDis;
-		sampleDistribution(numberPerGen,simPeopleJobInfoLayers.layers[1],peopleDis,QString("test/people_dist.png"));
+        QString people_dist_file("test/people_dist.png");
+        sampleDistribution(numberPerGen,simPeopleJobInfoLayers.layers[1],peopleDis,
+                           people_dist_file);
 		if(PERSON_DEBUG)printf(">> >> People %d sampled in %d ms\n",numberPerGen,timer.elapsed());
 		//////////////////////////////////
 		// 2. Generate JOBS
 		timer.restart();
 		std::vector<QVector2D> jobDis;
-		sampleDistribution(numberPerGen,simPeopleJobInfoLayers.layers[0],jobDis,QString("test/job_dist.png"));
+        QString job_dist_file("test/job_dist.png");
+        sampleDistribution(numberPerGen,simPeopleJobInfoLayers.layers[0],jobDis, job_dist_file);
 		if(PERSON_DEBUG)printf(">> >> Job %d sampled in %d ms\n",numberPerGen,timer.elapsed());
 
 		// 3. Generate PEOPLE TRAFFIC

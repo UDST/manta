@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "Geometry\building.h"
+#include "Geometry/building.h"
 
 namespace LC {
 
