@@ -185,7 +185,10 @@ namespace LC {
 		people.laneInEdge.resize(numPeople);
 		//////////////////////////////////////////
 		// init CUDA
-		bInitCUDA(maxWidthL, people, edgesData, laneMapL);// , intersections);
+        // FIXME
+        // @ffernandez: re-enable CUDA
+        /*
+        bInitCUDA(maxWidthL, people, edgesData, laneMapL);// , intersections);
 
 		QTime timer;
 		timer.start();
@@ -226,6 +229,7 @@ namespace LC {
 		}//time
 		bFinishCUDA();
 		state = 0;
+        */
 
 	}//
 

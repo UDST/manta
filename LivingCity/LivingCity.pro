@@ -1,6 +1,7 @@
 QT += core gui opengl
 
 LIBS += -L/opt/local/lib -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lGLEW
+# -L/Developer/NVIDIA/CUDA-7.5/lib -lcudart -lcublas
 
 INCLUDEPATH += /opt/local/include/GL/ /opt/local/include/
 

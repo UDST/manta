@@ -64,7 +64,8 @@ public:
     operator boost::geometry::model::d2::point_xy<double>() const
     {
         boost::geometry::model::d2::point_xy<double> p;
-        // TODO
+        p.x(this->x());
+        p.y(this->y());
         return p;
     }
 };

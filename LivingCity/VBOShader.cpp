@@ -97,6 +97,8 @@ namespace LC {
 
 	uint Shader::initShader(QString& vertFileName,QString& fragFileName){
 		//GLenum err;
+        return 0;
+
 		// read shaders
 		std::string source;
 		loadTextFile(vertFileName,source);
