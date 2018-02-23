@@ -444,12 +444,14 @@ namespace LC {
 		}
 		qDebug() << "Status: Using GLEW " << glewGetString(GLEW_VERSION);
 		//while ((err = glGetError()) != GL_NO_ERROR) qDebug() << "**4ERROR INIT: OpenGL-->" << err << endl;
-		if (glewIsSupported("GL_VERSION_4_2"))
-			printf("Ready for OpenGL 4.2\n");
-		else {
-			printf("OpenGL 4.2 not supported\n");
-			exit(1);
-		}
+
+
+//        if (glewIsSupported("GL_VERSION_4_2"))
+//			printf("Ready for OpenGL 4.2\n");
+//		else {
+//			printf("OpenGL 4.2 not supported\n");
+//			exit(1);
+//		}
 		const GLubyte* text=
 			glGetString(GL_VERSION);
 		printf("VERSION: %s\n",text);
