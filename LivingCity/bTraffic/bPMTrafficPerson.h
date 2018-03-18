@@ -33,21 +33,6 @@
 #include "../VBOPeopleJobInfoLayer.h"
 #include "../RoadGraph/roadGraph.h"
 #include <vector>
-/*
-#include "../misctools/misctools.h"
-#include <QGLWidget>
-
-#include <QtGlobal>
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-
-#include "cudaTrafficPerson.h"
-#include "RoadGraph/roadGraph.h"
-
-#include <boost/graph/dijkstra_shortest_paths.hpp>
-
-#include "../VBOPeopleJobInfoLayer.h"
-#include <random>*/
 
 namespace LC {
 	class BPMTrafficPerson{

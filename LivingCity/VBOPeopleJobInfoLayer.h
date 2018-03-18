@@ -31,8 +31,8 @@
 
 #include <qmatrix4x4.h>
 
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
+#include "highgui/highgui.hpp"
+#include "imgproc/imgproc.hpp"
 
 #include <QtCore/qmath.h>
 #include <QFile.h>

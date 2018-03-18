@@ -38,19 +38,21 @@
 
 #include <vector>
 #include <QSettings>
-
+#ifndef Q_MOC_RUN
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/properties.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/topological_sort.hpp>
 #include <boost/graph/graph_utility.hpp>
+#include <boost/graph/copy.hpp>
+#endif
 
 #include "roadGraphEdge.h"
 #include "roadGraphVertex.h"
 
 #include <QTemporaryFile>
-#include <boost/graph/copy.hpp>
+
 
 
 namespace LC {

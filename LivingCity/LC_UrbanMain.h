@@ -26,7 +26,7 @@
 
 #include "glew.h"
 #include <QMainWindow>
-#include "build/ui_LC_UrbanMain.h"
+#include "ui_LC_UrbanMain.h"
 
 namespace LC {
 

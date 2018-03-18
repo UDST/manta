@@ -29,14 +29,16 @@
 
 #pragma once
 
+#define BOOST_TT_HAS_OPERATOR_HPP_INCLUDED
+
 #include "glew.h"
 #include "qobject.h"
+#include <qthread.h>
 
 #include "bPMTrafficPerson.h"
 #include "../RoadGraph/roadGraph.h"
 #include "bEdgeIntersectionData.h"
 
-#include <qthread.h>
 
 namespace LC {
 

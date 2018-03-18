@@ -29,7 +29,7 @@
 #include "../global.h"
 #include "../LC_GLWidget3D.h"
 #include "../LC_UrbanMain.h"
-
+#include <thread>
 #define DEBUG_TRAFFIC 0
 #define DEBUG_SIMULATOR 0
 
@@ -1250,10 +1250,10 @@ namespace LC {
 			steps++;
 			if(clientMain->ui.cudaRenderSimulationCheckBox->isChecked()==true){//G::global().getBool("cudaRenderSimulation")==true){
 				while(clientMain->ui.cudaRenderStepSpinBox->value()==0){
-                    sleep(50);
+                    std::this_thread::sleep_for(std::chrono::milliseconds(50));
 					clientMain->glWidget3D->updateGL();
 					QApplication::processEvents();
-                    sleep(50);
+                    std::this_thread::sleep_for(std::chrono::milliseconds(50));
 				}
 				if(steps%clientMain->ui.cudaRenderStepSpinBox->value()==0){//each "steps" steps, render
 					QString timeT;

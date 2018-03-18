@@ -3284,11 +3284,11 @@ void internalerror()
 /*****************************************************************************/
 
 #ifdef ANSI_DECLARATORS
-void parsecommandline(int argc, char **argv, struct behavior *b)
+void parsecommandline(int argc, const char **argv, struct behavior *b)
 #else /* not ANSI_DECLARATORS */
 void parsecommandline(argc, argv, b)
 	int argc;
-char **argv;
+const char **argv;
 struct behavior *b;
 #endif /* not ANSI_DECLARATORS */
 
@@ -4899,7 +4899,7 @@ void exactinit()
 #ifdef CPU86
 #ifdef SINGLE
     // FIXME: cannot be set on OSX
-    // _control87(_PC_24, _MCW_PC); /* Set FPU control word for single precision. */
+    _control87(_PC_24, _MCW_PC); /* Set FPU control word for single precision. */
 #else /* not SINGLE */
 	_control87(_PC_53, _MCW_PC); /* Set FPU control word for double precision. */
 #endif /* not SINGLE */
@@ -15671,7 +15671,7 @@ struct behavior *b;
 #ifdef TRILIBRARY
 
 #ifdef ANSI_DECLARATORS
-void triangulate(char *triswitches, struct triangulateio *in,
+void triangulate(const char *triswitches, struct triangulateio *in,
 struct triangulateio *out, struct triangulateio *vorout)
 #else /* not ANSI_DECLARATORS */
 void triangulate(triswitches, in, out, vorout)

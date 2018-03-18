@@ -179,7 +179,7 @@ namespace LC {
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR_MIPMAP_LINEAR);//GL_LINEAR
 
 		//printf("put in texture4 layerDataConv %d %d\n",layerDataConv.cols,layerDataConv.rows);
-		gluBuild2DMipmaps(GL_TEXTURE_2D, 4, layerDataConv.cols, layerDataConv.rows, GL_BGR_EXT, GL_UNSIGNED_BYTE,  layerDataConv.ptr());
+        //gluBuild2DMipmaps(GL_TEXTURE_2D, 4, layerDataConv.cols, layerDataConv.rows, GL_BGR_EXT, GL_UNSIGNED_BYTE,  layerDataConv.ptr()); //!!!N!!!
 		glActiveTexture(GL_TEXTURE0);
 		if(DEBUG_LAYERS)printf("<<PeopleJobOneLayer::updateTexFromData()\n");
 	}//

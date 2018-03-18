@@ -22,6 +22,8 @@
 // USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //---------------------------------------------------------------------------------------------------------------------
 
+#define BOOST_TT_HAS_OPERATOR_HPP_INCLUDED
+
 #include "glew.h"
 #include <QApplication>
 #include <QDebug>
@@ -30,9 +32,9 @@
 using namespace LC;
 
 int main(int argc, char *argv[]) {
-	QApplication a(argc, argv);	
-	qDebug() << "App path : " << a.applicationDirPath();
-	LCUrbanMain w;
-	w.showMaximized();
-	return a.exec();
+  QApplication a(argc, argv);
+  qDebug() << "App path2 : " << a.applicationDirPath();
+  LCUrbanMain w;
+  w.showMaximized();
+  return a.exec();
 }

@@ -22,6 +22,8 @@
 // USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //---------------------------------------------------------------------------------------------------------------------
 
+#define BOOST_TT_HAS_OPERATOR_HPP_INCLUDED
+
 #include "BCPUTrafficThread.h"
 
 #include "bPMTrafficPerson.h"
@@ -379,13 +381,13 @@ namespace LC {
 			//float s_star;
 			//s_star = s_0 + std::max(0.0f, (v*people.T[p] + (v*(v-vFront)) / (2 * std::sqrt(people.a[p]*people.b[p]))));
 			//thirdTerm = std::pow(((s_star) / (sFront)), 2);
-			thirdTerm = std::pow(((s_0 + std::max(0.0f, (v*people.T[p] + (v*(v - vFront)) / (2 * std::sqrt(people.a[p] * people.b[p]))))) / (sFront)), 2);
+            thirdTerm = pow(((s_0 + max(0.0f, (v*people.T[p] + (v*(v - vFront)) / (2 * sqrt(people.a[p] * people.b[p]))))) / (sFront)), 2);
 		}
 
 		float dv_dt = people.a[p] * (1.0f - std::pow((v / edgesData.maxSpeedCpSec[cEdge]), 4.0f) - thirdTerm);
-		float numCToMove = std::max(0.0f, v*deltaTime + 0.5f*(dv_dt)*deltaTime*deltaTime);
+        float numCToMove = max(0.0f, v*deltaTime + 0.5f*(dv_dt)*deltaTime*deltaTime);
 		
-		v = std::max(v+ dv_dt*deltaTime,0.0f);
+        v = max(v+ dv_dt*deltaTime,0.0f);
 		if (DEBUG_TRAFFIC == 1 || (p == 0 && DEBUG_1CAR)) printf("   p[%d] v %.4f--> v %.4f (max %.4f)|| dv_dt %f numCToMove %f third %f\n", p, people.v[p], v, edgesData.maxSpeedCpSec[cEdge], dv_dt, numCToMove, thirdTerm);
 		people.v[p] = v;
 

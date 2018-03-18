@@ -28,6 +28,8 @@
  ************************************************************************************************/
 #pragma once
 
+#define BOOST_TT_HAS_OPERATOR_HPP_INCLUDED
+
 #include "bTrafficPeople.h"
 #include "bEdgeIntersectionData.h"
 

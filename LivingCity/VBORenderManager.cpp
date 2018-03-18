@@ -500,11 +500,12 @@ namespace LC {
 		//report(&mid, 1, 1, 0, 1, 0, 0);
 		//printf("-- addStaticConvexPoly31\n");
 		try{
+
 			if (tesselate == true){// from last code "p" has been removed!!
-				triangulate("ca500.0zQ", &in, &mid, (struct triangulateio *) NULL);//Q quiet
+                triangulate("ca500.0zQ", &in, &mid, (struct triangulateio *) NULL);//Q quiet
 			}
-			else{
-				triangulate("czQ", &in, &mid, (struct triangulateio *) NULL);
+            else{
+                triangulate("czQ", &in, &mid, (struct triangulateio *) NULL);
 			}
 		}catch(...){ printf("Exception occurred: triangulate\n"); }
 		//printf("-- addStaticConvexPoly4\n");

@@ -1,12 +1,36 @@
 QT += core gui opengl
+unix {
+	LIBS += -L/opt/local/lib -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lGLEW
+	# -L/Developer/NVIDIA/CUDA-7.5/lib -lcudart -lcublas
+	INCLUDEPATH += /opt/local/include/GL/ /opt/local/include/
+}
+win32{
+    # Note: OpenCV uses 2.4.12 since I compile with VS 2013 (vc12)
+    LIBS+= \
+        $$(OPENCV_BUILD)/x64/vc12/lib/opencv_core2412.lib \ # e.g., OPENCV_BUILD=D:\opencv\build
+        $$(OPENCV_BUILD)/x64/vc12/lib/opencv_imgproc2412.lib \
+        $$(OPENCV_BUILD)/x64/vc12/lib/opencv_highgui2412.lib \
+        $$(OPENCV_BUILD)/x64/vc12/lib/opencv_legacy2412.lib \
+        $$(OPENCV_BUILD)/x64/vc12/lib/opencv_ml2412.lib \
+        $$(OPENCV_BUILD)/x64/vc12/lib/opencv_photo2412.lib \
+        $$(OPENCV_BUILD)/x64/vc12/lib/opencv_video2412.lib \
+        $$PWD/glew/lib/glew32.lib \
+        $$PWD/glew/lib/OpenGL32.Lib
 
-LIBS += -L/opt/local/lib -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lGLEW
-# -L/Developer/NVIDIA/CUDA-7.5/lib -lcudart -lcublas
 
-INCLUDEPATH += /opt/local/include/GL/ /opt/local/include/
+    INCLUDEPATH += \
+        $$(OPENCV_BUILD)/include/opencv \ # e.g., OPENCV_BUILD=D:\opencv\build
+        $$(OPENCV_BUILD)/include/opencv2 \
+        $$(OPENCV_BUILD)/include \
+        $$(BOOST_ROOT) \ # e.g., BOOST_ROOT = D:\boost\boost_1_59_0
+        $$PWD/glew/include/GL
+
+    CONFIG += console # show printf in terminal
+
+}
+
 
 RESOURCES += \
-    LC_UrbanMain_.qrc \
     LC_UrbanMain.qrc
 
 FORMS += \
