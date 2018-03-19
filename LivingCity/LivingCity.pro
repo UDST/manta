@@ -1,4 +1,9 @@
 QT += core gui opengl
+
+# Project build directories
+DESTDIR     = $$PWD
+OBJECTS_DIR = $$DESTDIR/obj
+
 unix {
 	LIBS += -L/opt/local/lib -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lGLEW
 	# -L/Developer/NVIDIA/CUDA-7.5/lib -lcudart -lcublas
@@ -26,7 +31,6 @@ win32{
         $$PWD/glew/include/GL
 
     CONFIG += console # show printf in terminal
-
 }
 
 
@@ -107,7 +111,8 @@ HEADERS += \
     traffic/cudaTrafficPersonShortestPath.h \
     traffic/cudaTrafficRoutes.h \
     traffic/cudaTrafficSimulator.h \
-    triangle/triangle.h
+    triangle/triangle.h \
+    bTraffic/bCUDA_trafficSimulator.h
 
 SOURCES += \
     global.cpp \
@@ -174,5 +179,64 @@ SOURCES += \
     traffic/cudaTrafficSimulator.cpp \
     triangle/triangle.c
 
-DISTFILES += \
+OTHER_FILES += \
     bTraffic/bCUDA_trafficSimulator.cu
+
+
+###################################################################
+## CUDA
+###################################################################
+win32{
+    # Cuda sources
+    CUDA_SOURCES += bTraffic/bCUDA_trafficSimulator.cu
+
+    # Path to cuda toolkit install
+    CUDA_DIR      = "D:/CUDA"
+
+    # Path to header and libs files
+    INCLUDEPATH  += $$CUDA_DIR/include
+    QMAKE_LIBDIR += $$CUDA_DIR/lib/x64
+
+    SYSTEM_TYPE = 64            # '32' or '64', depending on your system
+
+    # libs used in your code
+    LIBS += -lcuda -lcudart
+    CUDA_LIBS += -lcuda -lcudart # LIBS
+
+    # GPU architecture
+    CUDA_ARCH     = sm_50
+
+    # Here are some NVCC flags I've always used by default.
+    NVCCFLAGS     = --use_fast_math
+
+
+    # Prepare the extra compiler configuration (taken from the nvidia forum - i'm not an expert in this part)
+    CUDA_INC = $$join(INCLUDEPATH,'" -I"','-I"','"')
+
+
+    # MSVCRT link option (static or dynamic, it must be the same with your Qt SDK link option)
+    MSVCRT_LINK_FLAG_DEBUG = "/MDd"
+    MSVCRT_LINK_FLAG_RELEASE = "/MD"
+
+    QMAKE_EXTRA_COMPILERS += cuda
+
+    # Configuration of the Cuda compiler
+    CONFIG(debug, debug|release) {
+        # Debug mode
+        cuda_d.input = CUDA_SOURCES
+        cuda_d.output = $$OBJECTS_DIR/${QMAKE_FILE_BASE}.obj
+        cuda_d.commands = $$CUDA_DIR/bin/nvcc.exe -D_DEBUG $$NVCC_OPTIONS $$CUDA_INC $$CUDA_LIBS --machine $$SYSTEM_TYPE \
+                         -arch=$$CUDA_ARCH -c -Xcompiler $$MSVCRT_LINK_FLAG_DEBUG -o ${QMAKE_FILE_OUT} ${QMAKE_FILE_NAME}
+        cuda_d.dependency_type = TYPE_C
+        QMAKE_EXTRA_COMPILERS += cuda_d
+    }
+    else {
+        # Release mode
+        cuda.input = CUDA_SOURCES
+        cuda.output = $$OBJECTS_DIR/${QMAKE_FILE_BASE}.obj
+        cuda.commands = $$CUDA_DIR/bin/nvcc.exe $$NVCC_OPTIONS $$CUDA_INC $$CUDA_LIBS --machine $$SYSTEM_TYPE \
+                       -arch=$$CUDA_ARCH -c -Xcompiler $$MSVCRT_LINK_FLAG_RELEASE -o ${QMAKE_FILE_OUT} ${QMAKE_FILE_NAME}
+        cuda.dependency_type = TYPE_C
+        QMAKE_EXTRA_COMPILERS += cuda
+    }
+}

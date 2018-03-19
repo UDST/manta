@@ -32,8 +32,12 @@
 #include "bTrafficPeople.h"
 #include "bEdgeIntersectionData.h"
 
-#include "BaseTsd.h"//for U64
+//#include "BaseTsd.h"//for U64
 #include "bTrafficConstants.h"
+
+#define ushort unsigned short
+#define uint unsigned int
+#define uchar unsigned char
 
 #define DEBUG_TRAFFIC 0
 
@@ -144,7 +148,7 @@ void bInitCUDA(ushort _maxWidthL, LC::BTrafficPeople& people, LC::BEdgesData& _e
 	allocateAndCopy(people.a, (void **)&pC.a);
 	allocateAndCopy(people.b, (void **)&pC.b);
 	allocateAndCopy(people.T, (void **)&pC.T);
-	allocateAndCopy(people.carType, (void **)&pC.carType); 
+	allocateAndCopy(people.carType, (void **)&pC.carType);
 	///nextEdge
 	allocateAndCopy(people.indTo1stEdge, (void **)&pC.indTo1stEdge);
 	allocateAndCopy(people.nextEdge, (void **)&pC.nextEdge);
@@ -176,7 +180,7 @@ void bInitCUDA(ushort _maxWidthL, LC::BTrafficPeople& people, LC::BEdgesData& _e
 	if ( cudaSuccess != err )fprintf( stderr, "Cuda error: %s.\n",cudaGetErrorString( err) );
 	err=cudaMemcpy(edgesData_d,edgesData.data(),sizeD,cudaMemcpyHostToDevice);
 	if ( cudaSuccess != err )fprintf( stderr, "Cuda error: %s.\n",cudaGetErrorString( err) );*/
-	
+
 
 	//laneMap
 	size_t sizeL = laneMapL[0].size() * sizeof(unsigned long);
@@ -232,18 +236,18 @@ void bFinishCUDA(void){
 }//
 
  void bGetDataCUDA(LC::BTrafficPeople& people){//,std::vector<uchar>& trafficLights){
-	// printf("bGetDataCUDA\n");
-	 // copy back people
-	 //
-	 //cudaMemcpy(trafficPersonVec.data(),trafficPersonVec_d,size,cudaMemcpyDeviceToHost);//cudaMemcpyHostToDevice
-	 size_t sizeA = people.active.size() * sizeof(unsigned char);
-	 cudaMemcpy(people.active.data(), pC.active, sizeA, cudaMemcpyDeviceToHost);//cudaMemcpyHostToDevice
-	 size_t size = people.currIndEdge.size() * sizeof(unsigned int);
-	 cudaMemcpy(people.currIndEdge.data(), pC.currIndEdge, size, cudaMemcpyDeviceToHost);//cudaMemcpyHostToDevice
-	 size_t sizeP = people.posInLaneC.size() * sizeof(float);
-	 cudaMemcpy(people.posInLaneC.data(), pC.posInLaneC, sizeP, cudaMemcpyDeviceToHost);//cudaMemcpyHostToDevice
-	 size_t sizeL = people.laneInEdge.size() * sizeof(unsigned char);
-	 cudaMemcpy(people.laneInEdge.data(), pC.laneInEdge, sizeL, cudaMemcpyDeviceToHost);//cudaMemcpyHostToDevice
+        // printf("bGetDataCUDA\n");
+         // copy back people
+         //
+         //cudaMemcpy(trafficPersonVec.data(),trafficPersonVec_d,size,cudaMemcpyDeviceToHost);//cudaMemcpyHostToDevice
+         size_t sizeA = people.active.size() * sizeof(unsigned char);
+         cudaMemcpy(people.active.data(), pC.active, sizeA, cudaMemcpyDeviceToHost);//cudaMemcpyHostToDevice
+         size_t size = people.currIndEdge.size() * sizeof(unsigned int);
+         cudaMemcpy(people.currIndEdge.data(), pC.currIndEdge, size, cudaMemcpyDeviceToHost);//cudaMemcpyHostToDevice
+         size_t sizeP = people.posInLaneC.size() * sizeof(float);
+         cudaMemcpy(people.posInLaneC.data(), pC.posInLaneC, sizeP, cudaMemcpyDeviceToHost);//cudaMemcpyHostToDevice
+         size_t sizeL = people.laneInEdge.size() * sizeof(unsigned char);
+         cudaMemcpy(people.laneInEdge.data(), pC.laneInEdge, sizeL, cudaMemcpyDeviceToHost);//cudaMemcpyHostToDevice
 
 	 //size_t sizeI = trafficLights.size() * sizeof(uchar);
 	 //cudaMemcpy(trafficLights.data(),trafficLights_d,sizeI,cudaMemcpyDeviceToHost);
@@ -251,23 +255,23 @@ void bFinishCUDA(void){
  /////////////////////////////////////////////////////////////////////////////////////////////////////////////
  /////////////////////////////////////////////////////////////////////////////////////////////////////////////
  __device__
-	 unsigned short usmax(unsigned short a, unsigned b){
-	 return (a < b) ? b : a;
+         unsigned short usmax(unsigned short a, unsigned b){
+         return (a < b) ? b : a;
  }//
  __global__
  void kernel_trafficSimulation(
-	 //uint p,
-	 uint numPeople,
-	 LC::SimulationSt simulationSt,
-	 const ushort maxWidthL,
-	 BTrafficPeopleCUDA& people,
-	 LC::BEdgesDataCUDA& edgesData,
-	 unsigned long* laneMapR,//,
-	 unsigned long* laneMapW
-	 //std::vector<intersectionData>& intersections,
-	 //std::vector<uchar>& trafficLights
-	 ){
-	 
+         //uint p,
+         uint numPeople,
+         LC::SimulationSt simulationSt,
+         const ushort maxWidthL,
+         BTrafficPeopleCUDA& people,
+         LC::BEdgesDataCUDA& edgesData,
+         unsigned long* laneMapR,//,
+         unsigned long* laneMapW
+         //std::vector<intersectionData>& intersections,
+         //std::vector<uchar>& trafficLights
+         ){
+
 	 int p = blockIdx.x * blockDim.x + threadIdx.x;
 	 //printf("C p %d Numpe %d\n",p,numPeople);
 	 if (p >= numPeople){//CUDA check (outside margins)
@@ -389,28 +393,28 @@ void bFinishCUDA(void){
 
 
  void bSimulateTrafficCUDA(float currentTime, uint numPeople){//, uint numIntersections){
-	 //printf("bSimulateTrafficCUDA\n");
-	 ////////////////////////////////////////////////////////////
-	 // 1. CHANGE MAP: set map to use and clean the other
-	 cudaError err;
-	 /*if (readFirstMap == true){
-		 simulationSt.mapToReadShiftL = 0;
-		 simulationSt.mapToWriteShiftL = halfLaneMapL;
-		 err = cudaMemset(&laneMap_d[halfLaneMapL], -1, halfLaneMapL*sizeof(unsigned long));//clean second half
-		 if ( cudaSuccess != err )fprintf( stderr, "Cuda error M0: %s.\n",cudaGetErrorString( err) );
-	 }else{
-		 simulationSt.mapToReadShiftL = halfLaneMapL;
-		 simulationSt.mapToWriteShiftL = 0;
-		err = cudaMemset(&laneMap_d[0], -1, halfLaneMapL*sizeof(unsigned long));//clean first half
-		 if (cudaSuccess != err)fprintf(stderr, "Cuda error M1: %s.\n", cudaGetErrorString(err));
-	 }*/
-	 simulationSt.currentTime = currentTime;
-	 simulationSt.cArray = readFirstMap;//read
-	 err = cudaMemset(&laneMap_d[!readFirstMap][0], -1, laneMapSizeL*sizeof(unsigned long));//clean write
-	 if (cudaSuccess != err)fprintf(stderr, "Cuda error M1: %s.\n", cudaGetErrorString(err));
+         //printf("bSimulateTrafficCUDA\n");
+         ////////////////////////////////////////////////////////////
+         // 1. CHANGE MAP: set map to use and clean the other
+         cudaError err;
+         /*if (readFirstMap == true){
+                 simulationSt.mapToReadShiftL = 0;
+                 simulationSt.mapToWriteShiftL = halfLaneMapL;
+                 err = cudaMemset(&laneMap_d[halfLaneMapL], -1, halfLaneMapL*sizeof(unsigned long));//clean second half
+                 if ( cudaSuccess != err )fprintf( stderr, "Cuda error M0: %s.\n",cudaGetErrorString( err) );
+         }else{
+                 simulationSt.mapToReadShiftL = halfLaneMapL;
+                 simulationSt.mapToWriteShiftL = 0;
+                err = cudaMemset(&laneMap_d[0], -1, halfLaneMapL*sizeof(unsigned long));//clean first half
+                 if (cudaSuccess != err)fprintf(stderr, "Cuda error M1: %s.\n", cudaGetErrorString(err));
+         }*/
+         simulationSt.currentTime = currentTime;
+         simulationSt.cArray = readFirstMap;//read
+         err = cudaMemset(&laneMap_d[!readFirstMap][0], -1, laneMapSizeL*sizeof(unsigned long));//clean write
+         if (cudaSuccess != err)fprintf(stderr, "Cuda error M1: %s.\n", cudaGetErrorString(err));
 
-	 readFirstMap = !readFirstMap;//next iteration invert use
-	 
+         readFirstMap = !readFirstMap;//next iteration invert use
+
 
 	 //kernel_intersectionSimulation << < numIntersections, 1 >> > (numIntersections, currentTime, intersections_d, trafficLights_d);
 	// kernel_trafficSimulation << < ceil(numPeople / 1024.0f), 1024 >> > (numPeople, simulationSt, maxWidthL, pC, edgesData_d, laneMap_d);// , /*intersections_d, trafficLights_d, */mapToReadShift, mapToWriteShift, maxWidthL);
@@ -420,94 +424,94 @@ void bFinishCUDA(void){
 	 if (cudaSuccess != err) printf("ERROR: kernel_trafficSimulation: %s.\n", cudaGetErrorString(err));
 	 cudaDeviceSynchronize();
 	 //printf("K<< \n");
-	
+
  }//
 
 
  /*__device__ void calculateGapsLC(
-		float cellSize,
-		ushort maxWidth,
-		uint mapToReadShift,
-		uchar *laneMap,
-		uchar trafficLightState,
-		ushort laneToCheck,
-		float posInMToCheck,
-		float length,
-		uchar &v_a,
-		uchar &v_b,
-		float &gap_a,
-		float &gap_b){
-		ushort numOfCells=ceil(length/cellSize);
-		ushort initShift=ceil(posInMToCheck/cellSize);
-		uchar laneChar;
-		bool found=false;
-		// CHECK FORWARD
-		//printf("initShift %u numOfCells %u\n",initShift,numOfCells);
-		for(ushort b=initShift-1;(b<numOfCells)&&(found==false);b++){//NOTE -1 to make sure there is none in at the same level
-			laneChar=laneMap[mapToReadShift+maxWidth*(laneToCheck)+b];
-			if(laneChar!=0xFF){
-				gap_a=((float)b-initShift)*cellSize;//m
-				v_a=laneChar;//laneChar is in 3*ms (to save space in array)
-				found=true;
-				break;
-			}
-		}
-		if(found==false){
-			if(trafficLightState==0x00){//red
-				//gap_a=((float)numOfCells-initShift)*cellSize;
-				//found=true;
-				gap_a=gap_b=1000.0f;//force to change to the line without vehicle
-				v_a=v_b=0xFF;
-				return;
-			}
-		}
-		if(found==false){
-			gap_a=1000.0f;
-		}
-		// CHECK BACKWARDS
-		found=false;
-		//printf("2initShift %u numOfCells %u\n",initShift,numOfCells);
-		for(int b=initShift+1;(b>=0)&&(found==false);b--){//NOTE +1 to make sure there is none in at the same level
-			laneChar=laneMap[mapToReadShift+maxWidth*(laneToCheck)+b];
-			if(laneChar!=0xFF){
-				gap_b=((float)initShift-b)*cellSize;//m
-				v_b=laneChar;//laneChar is in 3*ms (to save space in array)
-				found=true;
-				break;
-			}
-		}
-		//printf("3initShift %u numOfCells %u\n",initShift,numOfCells);
-		if(found==false){
-			gap_b=1000.0f;
-		}
+                float cellSize,
+                ushort maxWidth,
+                uint mapToReadShift,
+                uchar *laneMap,
+                uchar trafficLightState,
+                ushort laneToCheck,
+                float posInMToCheck,
+                float length,
+                uchar &v_a,
+                uchar &v_b,
+                float &gap_a,
+                float &gap_b){
+                ushort numOfCells=ceil(length/cellSize);
+                ushort initShift=ceil(posInMToCheck/cellSize);
+                uchar laneChar;
+                bool found=false;
+                // CHECK FORWARD
+                //printf("initShift %u numOfCells %u\n",initShift,numOfCells);
+                for(ushort b=initShift-1;(b<numOfCells)&&(found==false);b++){//NOTE -1 to make sure there is none in at the same level
+                        laneChar=laneMap[mapToReadShift+maxWidth*(laneToCheck)+b];
+                        if(laneChar!=0xFF){
+                                gap_a=((float)b-initShift)*cellSize;//m
+                                v_a=laneChar;//laneChar is in 3*ms (to save space in array)
+                                found=true;
+                                break;
+                        }
+                }
+                if(found==false){
+                        if(trafficLightState==0x00){//red
+                                //gap_a=((float)numOfCells-initShift)*cellSize;
+                                //found=true;
+                                gap_a=gap_b=1000.0f;//force to change to the line without vehicle
+                                v_a=v_b=0xFF;
+                                return;
+                        }
+                }
+                if(found==false){
+                        gap_a=1000.0f;
+                }
+                // CHECK BACKWARDS
+                found=false;
+                //printf("2initShift %u numOfCells %u\n",initShift,numOfCells);
+                for(int b=initShift+1;(b>=0)&&(found==false);b--){//NOTE +1 to make sure there is none in at the same level
+                        laneChar=laneMap[mapToReadShift+maxWidth*(laneToCheck)+b];
+                        if(laneChar!=0xFF){
+                                gap_b=((float)initShift-b)*cellSize;//m
+                                v_b=laneChar;//laneChar is in 3*ms (to save space in array)
+                                found=true;
+                                break;
+                        }
+                }
+                //printf("3initShift %u numOfCells %u\n",initShift,numOfCells);
+                if(found==false){
+                        gap_b=1000.0f;
+                }
 
-	}//
+        }//
 
  __device__ void calculateLaneCarShouldBe(
-		ushort curEdgeLane,
-		ushort nextEdge,
-		LC::intersectionData *intersections,
-		ushort edgeNextInters,
-		ushort edgeNumLanes,
-		ushort &initOKLanes,
-		ushort &endOKLanes){
-		initOKLanes=0;
-		endOKLanes=edgeNumLanes;
-		bool currentEdgeFound=false;
-		bool exitFound=false;
-		ushort numExitToTake=0;
-		ushort numExists=0;
-		for(int eN=intersections[edgeNextInters].totalInOutEdges-1;eN>=0;eN--){//clockwise
-			uint procEdge=intersections[edgeNextInters].edge[eN];
-			if((procEdge&0xFFFF)==curEdgeLane){//current edge
-				//if(DEBUG_TRAFFIC==1)printf("CE procEdge %05x\n",procEdge);
-				currentEdgeFound=true;
-				if(exitFound==false)
-					numExitToTake=0;
-				continue;
-			}
-			
-			
+                ushort curEdgeLane,
+                ushort nextEdge,
+                LC::intersectionData *intersections,
+                ushort edgeNextInters,
+                ushort edgeNumLanes,
+                ushort &initOKLanes,
+                ushort &endOKLanes){
+                initOKLanes=0;
+                endOKLanes=edgeNumLanes;
+                bool currentEdgeFound=false;
+                bool exitFound=false;
+                ushort numExitToTake=0;
+                ushort numExists=0;
+                for(int eN=intersections[edgeNextInters].totalInOutEdges-1;eN>=0;eN--){//clockwise
+                        uint procEdge=intersections[edgeNextInters].edge[eN];
+                        if((procEdge&0xFFFF)==curEdgeLane){//current edge
+                                //if(DEBUG_TRAFFIC==1)printf("CE procEdge %05x\n",procEdge);
+                                currentEdgeFound=true;
+                                if(exitFound==false)
+                                        numExitToTake=0;
+                                continue;
+                        }
+
+
 			if((procEdge&0x010000)==0x0){//out edge
 				//if(DEBUG_TRAFFIC==1)printf("   procEdge %05x\n",procEdge);
 				numExists++;
@@ -668,33 +672,33 @@ __device__ int cuda_qrand(){
 
  // Kernel that executes on the CUDA device
  __global__ void kernel_trafficSimulation(
-	 int numPeople,
-	 float currentTime,
-	 float cellSize,
-	 float deltaTime,
-	 LC::CUDATrafficPerson *trafficPersonVec,
-	 //ushort *nextEdgeM,
-	 LC::edgeData* edgesData,
-	 uchar *laneMap,
-	 LC::intersectionData *intersections,
-	 uchar *trafficLights,
-	 uint mapToReadShift,
-	 uint mapToWriteShift,
-	 ushort maxWidth)
+         int numPeople,
+         float currentTime,
+         float cellSize,
+         float deltaTime,
+         LC::CUDATrafficPerson *trafficPersonVec,
+         //ushort *nextEdgeM,
+         LC::edgeData* edgesData,
+         uchar *laneMap,
+         LC::intersectionData *intersections,
+         uchar *trafficLights,
+         uint mapToReadShift,
+         uint mapToWriteShift,
+         ushort maxWidth)
  {
-	 bool DEBUG_TRAFFIC=0;
-	 int p = blockIdx.x * blockDim.x + threadIdx.x;
-	 //printf("p %d Numpe %d\n",p,numPeople);
-	 if(p<numPeople){//CUDA check (inside margins)
-		 ///
-		 ///////////////////////////////
-		//2.0. check if finished
-		if(trafficPersonVec[p].active==2){
-				return;
-			}
-			///////////////////////////////
-			//2.1. check if person should still wait or should start
-			if(trafficPersonVec[p].active==0){
+         bool DEBUG_TRAFFIC=0;
+         int p = blockIdx.x * blockDim.x + threadIdx.x;
+         //printf("p %d Numpe %d\n",p,numPeople);
+         if(p<numPeople){//CUDA check (inside margins)
+                 ///
+                 ///////////////////////////////
+                //2.0. check if finished
+                if(trafficPersonVec[p].active==2){
+                                return;
+                        }
+                        ///////////////////////////////
+                        //2.1. check if person should still wait or should start
+                        if(trafficPersonVec[p].active==0){
 
 				//printf("  1. Person: %d active==0\n",p);
 				if(trafficPersonVec[p].time_departure>currentTime){//wait
@@ -711,7 +715,7 @@ __device__ int cuda_qrand(){
 						return;
 					}
 
-					
+
 					//1.3 update person edgeData
 					//if(DEBUG_TRAFFIC==1)printf("   1.3 Person: %d put in first edge %u\n",p,firstEdge);
 					//printf("edgesData %d\n",edgesData);
@@ -760,7 +764,7 @@ __device__ int cuda_qrand(){
 					trafficPersonVec[p].v=0;//trafficPersonVec[p].maxSpeedCellsPerDeltaTime;//(20000.0f*deltaTime)/cellSize;//20km/h-->cell/delta time
 					trafficPersonVec[p].LC_stateofLaneChanging=0;
 					//1.5 active car
-					
+
 					trafficPersonVec[p].active=1;
 					trafficPersonVec[p].num_steps=1;
 					trafficPersonVec[p].gas=0;
@@ -780,7 +784,7 @@ __device__ int cuda_qrand(){
 					return;
 				}
 			}
-			
+
 			///////////////////////////////
 			//2. it is moving
 			trafficPersonVec[p].num_steps++;
@@ -862,7 +866,7 @@ __device__ int cuda_qrand(){
 			// 2.1.3 update values
 			numMToMove=fmax(0.0f,trafficPersonVec[p].v*deltaTime+0.5f*(dv_dt)*deltaTime*deltaTime);
 
-			
+
 			//printf("v %.10f v d %.10f\n",trafficPersonVec[p].v,trafficPersonVec[p].v+((dv_dt/(deltaTime)/deltaTime)));
 			trafficPersonVec[p].v+=dv_dt*deltaTime;
 			if(trafficPersonVec[p].v<0){
@@ -894,7 +898,7 @@ __device__ int cuda_qrand(){
 			// COLOR
 			////////////////////////////////
 
-			
+
 			//numCellsToMove=trafficPersonVec[p].v;
 			trafficPersonVec[p].posInLaneM=trafficPersonVec[p].posInLaneM+numMToMove;
 			if(trafficPersonVec[p].posInLaneM>trafficPersonVec[p].length){//research intersection
@@ -904,9 +908,9 @@ __device__ int cuda_qrand(){
 				////////////////////////////////////////////////////////
 				// LANE CHANGING (happens when we are not reached the intersection)
 				if(trafficPersonVec[p].v>3.0f&&//at least 10km/h to try to change lane
-					trafficPersonVec[p].num_steps%10==0//just check every (10 steps) 5 seconds	
+					trafficPersonVec[p].num_steps%10==0//just check every (10 steps) 5 seconds
 					){
-					//next thing is not a traffic light 
+					//next thing is not a traffic light
 					// skip if there is one lane (avoid to do this)
 					// skip if it is the last edge
 					if(nextVehicleIsATrafficLight==false&&trafficPersonVec[p].edgeNumLanes>1&&nextEdge!=0xFFFF){
@@ -1025,10 +1029,10 @@ __device__ int cuda_qrand(){
 									leftLane=true;
 								}
 								if(rightLane==true&&trafficPersonVec[p].numOfLaneInEdge+1>=trafficPersonVec[p].edgeNumLanes){
-									
+
 								}
 								if(leftLane==true&&trafficPersonVec[p].numOfLaneInEdge==0){
-									
+
 									return;
 								}
 								//printf("M L %d R %d nL %u\n",leftLane,rightLane,trafficPersonVec[p].numOfLaneInEdge);
@@ -1049,7 +1053,7 @@ __device__ int cuda_qrand(){
 									laneToCheck=trafficPersonVec[p].numOfLaneInEdge+1;
 								}
 								if(laneToCheck>=trafficPersonVec[p].edgeNumLanes){
-									
+
 								}
 								uchar v_a,v_b;float gap_a,gap_b;
 								//printf("p %u LC 1 %u\n",p,laneToCheck);
@@ -1093,7 +1097,7 @@ __device__ int cuda_qrand(){
 
 				}
 				///////////////////////////////////////////////////////
-				
+
 				uchar vInMpS=(uchar)(trafficPersonVec[p].v*3);//speed in m/s to fit in uchar
 				ushort posInLineCells=(ushort)(trafficPersonVec[p].posInLaneM/cellSize);
 				laneMap[mapToWriteShift+maxWidth*(currentEdge+trafficPersonVec[p].numOfLaneInEdge)+posInLineCells]=vInMpS;
@@ -1107,7 +1111,7 @@ __device__ int cuda_qrand(){
 			//!!!ALWAYS CHANGE
 			//2.2.1 find next edge
 			if(nextEdge==0xFFFF){//if(curr_intersection==end_intersection){
-				
+
 				trafficPersonVec[p].active=2;//finished
 				return;
 			}
@@ -1133,7 +1137,7 @@ __device__ int cuda_qrand(){
 				//trafficPersonVec[p].nextPathEdge++;
 				trafficPersonVec[p].LC_initOKLanes=0xFF;
 				trafficPersonVec[p].LC_endOKLanes=0xFF;
-				
+
 				//2.2.3 update person edgeData
 				//trafficPersonVec[p].nextEdge=nextEdge;
 				trafficPersonVec[p].nextEdgemaxSpeedMperSec=edgesData[nextNEdge].maxSpeedMperSec;
@@ -1149,7 +1153,7 @@ __device__ int cuda_qrand(){
 
 		 ///
 	 }
-	 
+
 }//
 
 __global__ void kernel_intersectionSimulation(uint numIntersections,float currentTime,LC::intersectionData *intersections,uchar *trafficLights) {
@@ -1186,11 +1190,11 @@ __global__ void kernel_intersectionSimulation(uint numIntersections,float curren
 			 ////
 			 intersections[i].nextEvent=currentTime+deltaEvent;
 		 }
-	 
+
 
 		 //////////////////////////////////////////////////////
 	 }
-	 
+
  }//
 
 
