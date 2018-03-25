@@ -43,14 +43,14 @@
     <Filter Include="Models\nvModels">
       <UniqueIdentifier>{002ab6fd-04b0-4998-a8ba-d53815c8e772}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dynameq">
-      <UniqueIdentifier>{e1b278c8-65f5-4f1a-b894-3a11f345bfcd}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Traffic">
       <UniqueIdentifier>{7268ea49-6588-489b-baf6-c08a00d5039c}</UniqueIdentifier>
     </Filter>
     <Filter Include="Traffic B">
       <UniqueIdentifier>{d3b2c653-5d40-41a1-8dd7-0c2aa071c960}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RoadGraph Loaders">
+      <UniqueIdentifier>{e1b278c8-65f5-4f1a-b894-3a11f345bfcd}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -181,7 +181,7 @@
       <Filter>Main Files</Filter>
     </ClInclude>
     <ClInclude Include="roadGraphDynameq.h">
-      <Filter>Dynameq</Filter>
+      <Filter>RoadGraph Loaders</Filter>
     </ClInclude>
     <ClInclude Include="VBOPeopleJobInfoLayer.h">
       <Filter>VBO</Filter>
@@ -251,6 +251,9 @@
     </ClInclude>
     <ClInclude Include="GeneratedFiles\ui_LC_UrbanMain.h">
       <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="roadGraphB2018.h">
+      <Filter>RoadGraph Loaders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -401,7 +404,7 @@
       <Filter>Main Files</Filter>
     </ClCompile>
     <ClCompile Include="roadGraphDynameq.cpp">
-      <Filter>Dynameq</Filter>
+      <Filter>RoadGraph Loaders</Filter>
     </ClCompile>
     <ClCompile Include="VBOPeopleJobInfoLayer.cpp">
       <Filter>VBO</Filter>
@@ -471,6 +474,9 @@
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Release\moc_LC_UrbanMain.cpp">
       <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="roadGraphB2018.cpp">
+      <Filter>RoadGraph Loaders</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

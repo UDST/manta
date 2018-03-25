@@ -35,6 +35,7 @@
 //#include <GLUT/glut.h>
 
 #include "roadGraphDynameq.h"
+#include "roadGraphB2018.h"
 //test
 #include "bTraffic/bGenerateTest.h"
 //#include "Util.h"
@@ -531,7 +532,8 @@ void LCGLWidget3D::initializeGL() {
   if (urbanMain->ui.proceduralModelingCheckBox->isChecked()) { //read from UI
     generateGeometry(ClientGeometry::kStartFromRoads);
   } else {
-    RoadGraphDynameq::loadDynameqRoadGraph(cg.roadGraph, this);
+    //RoadGraphDynameq::loadDynameqRoadGraph(cg.roadGraph, this);
+    RoadGraphB2018::loadB2018RoadGraph(cg.roadGraph, this);
   }
 
   printf("Edge\n");
