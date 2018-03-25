@@ -45,8 +45,8 @@ namespace LC {
 	class VBORenderManager;
 	class LCUrbanMain;
 
-	class BTrafficSimulator: public QObject{
-		Q_OBJECT
+	class BTrafficSimulator : public QObject{
+    Q_OBJECT
 	public:
 		
 		BTrafficSimulator();

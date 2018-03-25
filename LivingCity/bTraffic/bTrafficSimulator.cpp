@@ -310,7 +310,7 @@ void simulateOneTrafficLightIntersectionCPU(uint sN, float currentTime,
       return;
     }
 
-    int phaseInd;
+    int phaseInd = 0;
     float phaseTime = trafficLights.phaseTime[phaseInd];
     intersec.nextEvent[i] = currentTime + phaseTime;
     return;

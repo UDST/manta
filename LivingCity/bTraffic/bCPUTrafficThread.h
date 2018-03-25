@@ -45,7 +45,7 @@ namespace LC {
 	
 
 	class BCPUTrafficThread: public QThread{
-		 Q_OBJECT
+    Q_OBJECT
 	public:
 		
 		//~BCPUTrafficThread();

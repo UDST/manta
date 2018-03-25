@@ -82,7 +82,7 @@ namespace LC {
 	}//
 
 	void errorLine(QString text, int lN) {
-		printf("\nERROR Line[%d]: %s\n", text.toUtf8().constData(), lN);
+    printf("\nERROR Line[%d]: %s\n", lN, text.toLocal8Bit().data());
 		exit(0);
 	}
 

@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>BTraffic</string>
+   <string>BTraffic Simulator</string>
   </property>
   <widget class="QWidget" name="centralwidget"/>
   <widget class="QMenuBar" name="menubar">
@@ -20,7 +20,7 @@
      <x>0</x>
      <y>0</y>
      <width>1038</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuLoad">
@@ -91,7 +91,7 @@
        <item row="0" column="0" colspan="2">
         <widget class="QCheckBox" name="proceduralModelingCheckBox">
          <property name="text">
-          <string>Procedural Modeling</string>
+          <string>Procedural Model</string>
          </property>
          <property name="checked">
           <bool>false</bool>
@@ -1096,7 +1096,16 @@
    </attribute>
    <widget class="QWidget" name="dockWidgetContents_6">
     <layout class="QGridLayout" name="gridLayout_14">
-     <property name="margin">
+     <property name="leftMargin">
+      <number>2</number>
+     </property>
+     <property name="topMargin">
+      <number>2</number>
+     </property>
+     <property name="rightMargin">
+      <number>2</number>
+     </property>
+     <property name="bottomMargin">
       <number>2</number>
      </property>
      <item row="0" column="0">
@@ -1340,7 +1349,16 @@
             <string>Demand</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_19">
-            <property name="margin">
+            <property name="leftMargin">
+             <number>4</number>
+            </property>
+            <property name="topMargin">
+             <number>4</number>
+            </property>
+            <property name="rightMargin">
+             <number>4</number>
+            </property>
+            <property name="bottomMargin">
              <number>4</number>
             </property>
             <property name="spacing">
@@ -1455,7 +1473,16 @@
             <string>Render</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_16">
-            <property name="margin">
+            <property name="leftMargin">
+             <number>4</number>
+            </property>
+            <property name="topMargin">
+             <number>4</number>
+            </property>
+            <property name="rightMargin">
+             <number>4</number>
+            </property>
+            <property name="bottomMargin">
              <number>4</number>
             </property>
             <property name="spacing">
@@ -1848,7 +1875,16 @@
      <property name="spacing">
       <number>2</number>
      </property>
-     <property name="margin">
+     <property name="leftMargin">
+      <number>2</number>
+     </property>
+     <property name="topMargin">
+      <number>2</number>
+     </property>
+     <property name="rightMargin">
+      <number>2</number>
+     </property>
+     <property name="bottomMargin">
       <number>2</number>
      </property>
      <item>
@@ -1860,7 +1896,16 @@
         <property name="spacing">
          <number>4</number>
         </property>
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -1948,7 +1993,16 @@
         <property name="spacing">
          <number>4</number>
         </property>
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
