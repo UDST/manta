@@ -173,6 +173,9 @@ namespace LC {
 			uchar prio;//Priority Template: 0=None; 1=AWSC; 2=TWSC; 3=Roundabout; 4=Merge; 11=Signalized
 			uchar type;// type Node Type : 1 = intersection, 2 = junction, 99 = virtual node
 
+      // B2018
+      uchar bType; // bType Node: 0 = Unknow 1 = motorway_junction 2 = traffic_signals 3 = stop 4 = turning_circle
+
 
 		private:
 		};						
