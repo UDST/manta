@@ -30,7 +30,7 @@ namespace LC {
 
 	Camera3D::Camera3D(){
 		sensitivity = 0.002f;
-		walk_speed = 15.0f;
+		walk_speed = 150.0f;
 
 		this->resetCamera();	
 	}//
@@ -110,8 +110,8 @@ namespace LC {
 
 	void Camera3D::updatePerspective(int width,int height){
 		float aspect=(float)width/(float)height;
-		float zfar=200000.0f;//90000.0f;
-		float znear=150.0f;
+		float zfar=300000.0f;//90000.0f;
+		float znear=200.0f;
 
 		float f = 1.0f / tan (fovy * (0.00872664625f));//PI/360
 

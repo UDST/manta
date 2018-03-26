@@ -155,6 +155,9 @@ namespace LC {
     G::boundingPolygon.push_back(QVector3D(sqSideSz, -sqSideSz, 0.0f));
     glWidget3D->vboRenderManager.changeTerrainDimensions(sqSideSz * 2 + 400.0f, 200);
 
+    QString sfo_path("data/b2018.png");
+    glWidget3D->vboRenderManager.vboTerrain.loadTerrain(sfo_path);
+
     ///////////////////////////////
     // ADD NODES
     printf(">> Process nodes");
@@ -178,6 +181,7 @@ namespace LC {
       pos += centerV;//center
       pos *= scale;
       pos += centerAfterSc;
+      pos.setX(pos.x()*-1.0f); // seems vertically rotated
 
       vertex[index] = boost::add_vertex(inRoadGraph.myRoadGraph_BI);
       inRoadGraph.myRoadGraph_BI[vertex[index]].pt = pos;

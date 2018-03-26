@@ -651,6 +651,7 @@ void LCGLWidget3D::drawScene(int drawMode) {
     if (urbanMain->ui.cudaRenderSimulationCheckBox->isChecked() == true) {
       cudaTrafficSimulator.render(vboRenderManager);
     }
+    vboRenderManager.renderStaticGeometry(QString("sky"));
   }
 
   // 3D MODE
@@ -957,9 +958,12 @@ bool LCGLWidget3D::mouseTo3D(int x, int y, QVector3D *result) {
     p_data_matrix_double[i] = *p_data_matrix;
     p_data_matrix++;
   }
-
-  /*gluUnProject( winX, winY, winZ, data_matrix_double, p_data_matrix_double,
-                    viewport, &posX, &posY, &posZ); !!!N!!!*/
+#ifdef _WIN32
+  gluUnProject( winX, winY, winZ, data_matrix_double, p_data_matrix_double,
+                    viewport, &posX, &posY, &posZ);
+#elif
+  qDebug() << "gluUnProject might not be available --> Reimplement LCGLWidget3D::mouseTo3D";
+#endif
   //        GLKVector3 win_vec(winX, winY, winZ);
   //        GLKMathUnproject(win_vec);
 
@@ -967,37 +971,6 @@ bool LCGLWidget3D::mouseTo3D(int x, int y, QVector3D *result) {
   result->setY(posY);
   result->setZ(posZ);
   return true;
-  /*
-      ///////////////////////////////////////////////////////////
-      ///////////////////////////////////////////////////////////
-      {
-          updateCamera();
-          updateGL();
-          GLint viewport[4];
-
-          // retrieve the matrices
-          glGetIntegerv(GL_VIEWPORT, viewport);
-
-          // retrieve the projected z-buffer of the origin
-          GLfloat winX,winY,winZ;
-          winX = (float)x;
-          winY = (float)viewport[3] - (float)y;
-
-          GLdouble wx, wy, wz;  //  returned world x, y, z coords
-          GLdouble wx2, wy2, wz2;  //  returned world x, y, z coords
-          gluUnProject( winX, winY, 0.0f, myCam->mvMatrix.data(), myCam->pMatrix.data(),
-                        viewport, &wx, &wy, &wz);
-          gluUnProject( winX, winY, 1.0f, myCam->mvMatrix.data(), myCam->pMatrix.data(),
-                        viewport, &wx2, &wy2, &wz2);
-          double f = wz / ( wz2 - wz );
-          double x2d = wx - f * (wx2 - wx );
-          double y2d = wy - f * (wy2 - wy );
-          result->setX(x2d);
-          result->setY(y2d);
-          result->setZ(0);
-          return true;
-      }
-      */
 }//
 
 bool LCGLWidget3D::generateGeometry(int flag) {
