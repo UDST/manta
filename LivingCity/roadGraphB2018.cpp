@@ -46,8 +46,8 @@ namespace LC {
       lon = lon / 180.0f * M_PI;
     }
     //printf("lat %.2f lon %.2f\n", lat, lon);
-    result.setX(sm_a*(lon - lon0));
-    result.setY(sm_a*log((sin(lat) + 1) / cos(lat)));
+    //result.setX(sm_a*(lon - lon0));
+    //result.setY(sm_a*log((sin(lat) + 1) / cos(lat)));
 
     result.setX(sm_a*(cos(lat) * cos(lon)));
     result.setY(sm_a*(cos(lat) * sin(lon)));
@@ -55,6 +55,17 @@ namespace LC {
     //qDebug() << result;
     return  result;
   }//
+
+  void saveSetToFile(QSet<uint64>& set, QString& filename) {
+    QFile file(filename);
+    if (file.open(QIODevice::ReadWrite)) {
+      QTextStream stream(&file);
+      QSetIterator<uint64> nA(set);
+      while (nA.hasNext()) {
+        stream << nA.next() << "\n";
+      }
+    }
+  }
 
   //////////////////////////////////////////////////////////
 
@@ -104,7 +115,7 @@ namespace LC {
     const int indexX = headers.indexOf("x");
     const int indexY = headers.indexOf("y");
     const int indexHigh = headers.indexOf("highway");
-    printf("Index %d %d %d %d\n", indexOsmid, indexX, indexY, indexHigh);
+    printf("Node Index %d %d %d %d\n", indexOsmid, indexX, indexY, indexHigh);
     while (!stream.atEnd()) {
       line = stream.readLine();
       QStringList fields = line.split(',', QString::SkipEmptyParts);
@@ -217,7 +228,7 @@ namespace LC {
     const int indexLanes = headers.indexOf("lanes");
     const int indexSpeedMH = headers.indexOf("speed_mph");
 
-    printf("Index %d %d %d %d %d %d\n", indexId, indexU, indexV, indexLen, indexLanes, indexSpeedMH);
+    printf("Link Index %d %d %d %d %d %d\n", indexId, indexU, indexV, indexLen, indexLanes, indexSpeedMH);
     qDebug() << sizeof(long);
     qDebug() << sizeof(uint64);
     QHash<int, std::pair<uint, uint>> dynEdgToEdge;
@@ -225,6 +236,9 @@ namespace LC {
     std::pair<RoadGraph::roadGraphEdgeDesc, bool> e0_pair_SIMP;
     float totalLeng = 0;
     int numEdges = 0;
+    QSet<uint64> noAvailableNodes;
+    const bool saveNoAvailableNodes = false;
+
     while (!streamL.atEnd()) {
       line = streamL.readLine();
       QStringList fields = line.split(',', QString::SkipEmptyParts);
@@ -235,10 +249,18 @@ namespace LC {
 
       int ind = fields[indexId].toInt();
 
-      uint64 start = fields[1].toLongLong();
-      uint64 end = fields[2].toLongLong();
+      uint64 start = fields[indexU].toLongLong();
+      uint64 end = fields[indexV].toLongLong();
 
       if ((!dynIndToInd.contains(start)) || (!dynIndToInd.contains(end))) {
+        if (saveNoAvailableNodes) {
+          if (!dynIndToInd.contains(start)) {
+            noAvailableNodes.insert(start);
+          }
+          if (!dynIndToInd.contains(end)) {
+            noAvailableNodes.insert(end);
+          }
+        }
         //qDebug() << "NO CONTAINS: start" << start << " end " << end;
         continue;
       }
@@ -274,10 +296,72 @@ namespace LC {
         break;
       }*/
     }
+    // Save no available nodes to file.
+    if (saveNoAvailableNodes) {
+      QString filename = "noAvailableNodes.txt";
+      saveSetToFile(noAvailableNodes, filename);    
+    }
     
+    ///////////////////////////////
+    // DEMAND
+    printf(">> Process demand\n");
+    fileName = "berkeley_2018/od.csv";
+    QFile demandFile(fileName); // Create a file handle for the file named
 
-    printf("\n*** Readed in %d --> #Nod %d #Edges %d\n", timer.elapsed(), index, dynEdgToEdge.size());
-    printf("*** Total length %.2f\n", totalLeng);
+    if (!demandFile.open(QIODevice::ReadOnly | QIODevice::Text)) { // Open the file
+      printf("Can't open file '%s'\n", fileName.toUtf8().constData());
+      return;
+    }
+    QTextStream streamD(&demandFile); // Set the stream to read
+    headers = (streamD.readLine()).split(",");
+    const int numPeopleIndex = headers.indexOf("PERNO");
+    const int origIndex = headers.indexOf("orig");
+    const int destIndex = headers.indexOf("dest");
+
+    printf("Demand Index %d %d %d\n", numPeopleIndex, origIndex, destIndex);
+    QSet<uint64> noAvailableNodesDemand;
+    const bool saveNoAvailableNodesDemand = true;
+    int totalNumPeople = 0;
+    while (!streamD.atEnd()) {
+      line = streamD.readLine();
+      QStringList fields = line.split(',', QString::SkipEmptyParts);
+      if (fields.size() < 4) {
+        qDebug() << "ERROR line " << line << " --> SKIP";
+        continue;
+      }
+
+      int numPeople = fields[numPeopleIndex].toInt();
+      totalNumPeople += numPeople;
+
+      uint64 start = fields[origIndex].toLongLong();
+      uint64 end = fields[destIndex].toLongLong();
+
+      if ((!dynIndToInd.contains(start)) || (!dynIndToInd.contains(end))) {
+        if (saveNoAvailableNodesDemand) {
+          if (!dynIndToInd.contains(start)) {
+            noAvailableNodesDemand.insert(start);
+          }
+          if (!dynIndToInd.contains(end)) {
+            noAvailableNodesDemand.insert(end);
+          }
+        }
+        //qDebug() << "NO CONTAINS: start" << start << " end " << end;
+        continue;
+      }
+
+    }
+    // Save no available nodes to file.
+    if (saveNoAvailableNodesDemand) {
+      QString filename = "noAvailableNodesDemand.txt";
+      saveSetToFile(noAvailableNodesDemand, filename);
+    }
+
+    ///////////////////////////////////////
+
+    printf("\n*** Readed in %d\n", timer.elapsed());
+    printf("       --> #Nod %d\n", index);
+    printf("       --> #Edg %d -> Total length %2.2f\n", dynEdgToEdge.size(), totalLeng);
+    printf("       --> #Peo %d\n", totalNumPeople);
     //printf("\nNodes readed in %d Nod %d Cen %d Link %d\n", timer.elapsed(), osmidToVertexLoc.size(), centroids.size(), links.size());
   }
 
