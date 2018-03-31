@@ -29,7 +29,7 @@
 #include "qthread.h"
 #include "qfiledialog.h"
 
-#include "roadGraphDynameq.h"
+#include "roadGraphDynameqLoader.h"
 
 namespace LC {
 
@@ -184,6 +184,9 @@ void LCUrbanMain::init() {
   connect(ui.bGPUSimulateButton, SIGNAL(clicked(bool)), this,
           SLOT(onBSimulateGPUPressed(bool)));
   ui.progressBar->hide();
+
+  // Hide menu
+  ui.placeTypeEditWidget->hide();
 }//
 
 /////////////////////////////////

@@ -47,7 +47,8 @@ HEADERS += \
     LC_GLWidget3D.h \
     LC_Layer.h \
     LC_UrbanMain.h \
-    roadGraphDynameq.h \
+    roadGraphDynameqLoader.h \
+    roadGraphB2018Loader.h \
     VBOBlocks.h \
     VBOBuilding.h \
     VBOGUI.h \
@@ -122,7 +123,8 @@ SOURCES += \
     LC_Layer.cpp \
     LC_main.cpp \
     LC_UrbanMain.cpp \
-    roadGraphDynameq.cpp \
+    roadGraphDynameqLoader.cpp \
+    roadGraphB2018Loader.cpp \
     VBOBlocks.cpp \
     VBOBuilding.cpp \
     VBOGUI.cpp \

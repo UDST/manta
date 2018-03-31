@@ -180,9 +180,6 @@
     <ClInclude Include="global.h">
       <Filter>Main Files</Filter>
     </ClInclude>
-    <ClInclude Include="roadGraphDynameq.h">
-      <Filter>RoadGraph Loaders</Filter>
-    </ClInclude>
     <ClInclude Include="VBOPeopleJobInfoLayer.h">
       <Filter>VBO</Filter>
     </ClInclude>
@@ -252,7 +249,10 @@
     <ClInclude Include="GeneratedFiles\ui_LC_UrbanMain.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
-    <ClInclude Include="roadGraphB2018.h">
+    <ClInclude Include="roadGraphB2018Loader.h">
+      <Filter>RoadGraph Loaders</Filter>
+    </ClInclude>
+    <ClInclude Include="roadGraphDynameqLoader.h">
       <Filter>RoadGraph Loaders</Filter>
     </ClInclude>
   </ItemGroup>
@@ -403,9 +403,6 @@
     <ClCompile Include="global.cpp">
       <Filter>Main Files</Filter>
     </ClCompile>
-    <ClCompile Include="roadGraphDynameq.cpp">
-      <Filter>RoadGraph Loaders</Filter>
-    </ClCompile>
     <ClCompile Include="VBOPeopleJobInfoLayer.cpp">
       <Filter>VBO</Filter>
     </ClCompile>
@@ -475,7 +472,10 @@
     <ClCompile Include="GeneratedFiles\Release\moc_LC_UrbanMain.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
-    <ClCompile Include="roadGraphB2018.cpp">
+    <ClCompile Include="roadGraphB2018Loader.cpp">
+      <Filter>RoadGraph Loaders</Filter>
+    </ClCompile>
+    <ClCompile Include="roadGraphDynameqLoader.cpp">
       <Filter>RoadGraph Loaders</Filter>
     </ClCompile>
   </ItemGroup>

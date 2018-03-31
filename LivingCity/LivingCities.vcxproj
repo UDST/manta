@@ -92,8 +92,8 @@
     <ClInclude Include="PM\pmMain.h" />
     <ClInclude Include="PM\pmParcels.h" />
     <ClInclude Include="PM\pmRoads.h" />
-    <ClInclude Include="roadGraphB2018.h" />
-    <ClInclude Include="roadGraphDynameq.h" />
+    <ClInclude Include="roadGraphB2018Loader.h" />
+    <ClInclude Include="roadGraphDynameqLoader.h" />
     <ClInclude Include="RoadGraph\roadGraph.h" />
     <ClInclude Include="RoadGraph\roadGraphEdge.h" />
     <ClInclude Include="RoadGraph\roadGraphVertex.h" />
@@ -237,8 +237,8 @@
     <ClCompile Include="PM\pmMain.cpp" />
     <ClCompile Include="PM\pmParcels.cpp" />
     <ClCompile Include="PM\pmRoads.cpp" />
-    <ClCompile Include="roadGraphB2018.cpp" />
-    <ClCompile Include="roadGraphDynameq.cpp" />
+    <ClCompile Include="roadGraphB2018Loader.cpp" />
+    <ClCompile Include="roadGraphDynameqLoader.cpp" />
     <ClCompile Include="RoadGraph\roadGraph.cpp" />
     <ClCompile Include="RoadGraph\roadGraphEdge.cpp" />
     <ClCompile Include="RoadGraph\roadGraphVertex.cpp" />

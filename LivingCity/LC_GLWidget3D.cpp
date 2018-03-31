@@ -34,8 +34,9 @@
 //#include <OpenGL/glu.h>
 //#include <GLUT/glut.h>
 
-#include "roadGraphDynameq.h"
-#include "roadGraphB2018.h"
+#include "roadGraphDynameqLoader.h"
+#include "roadGraphB2018Loader.h"
+
 //test
 #include "bTraffic/bGenerateTest.h"
 //#include "Util.h"
@@ -651,6 +652,7 @@ void LCGLWidget3D::drawScene(int drawMode) {
     if (urbanMain->ui.cudaRenderSimulationCheckBox->isChecked() == true) {
       cudaTrafficSimulator.render(vboRenderManager);
     }
+
     vboRenderManager.renderStaticGeometry(QString("sky"));
   }
 
@@ -958,11 +960,13 @@ bool LCGLWidget3D::mouseTo3D(int x, int y, QVector3D *result) {
     p_data_matrix_double[i] = *p_data_matrix;
     p_data_matrix++;
   }
+
 #ifdef _WIN32
-  gluUnProject( winX, winY, winZ, data_matrix_double, p_data_matrix_double,
-                    viewport, &posX, &posY, &posZ);
+  gluUnProject(winX, winY, winZ, data_matrix_double, p_data_matrix_double,
+               viewport, &posX, &posY, &posZ);
 #elif
-  qDebug() << "gluUnProject might not be available --> Reimplement LCGLWidget3D::mouseTo3D";
+  qDebug() <<
+           "gluUnProject might not be available --> Reimplement LCGLWidget3D::mouseTo3D";
 #endif
   //        GLKVector3 win_vec(winX, winY, winZ);
   //        GLKMathUnproject(win_vec);
