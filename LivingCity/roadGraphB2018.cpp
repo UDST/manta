@@ -100,8 +100,8 @@ namespace LC {
     timer.start();
     QVector2D minBox(FLT_MAX, FLT_MAX);
     QVector2D maxBox(-FLT_MAX, -FLT_MAX);
-    QHash<int, QVector2D> osmidToVertexLoc;
-    QHash<int, uchar> osmidToBType; // node type
+    QHash<uint64, QVector2D> osmidToVertexLoc;
+    QHash<uint64, uchar> osmidToBType; // node type
 
     QHash<QString, uchar> bTypeStringTobType;
     bTypeStringTobType[""] = 0;
@@ -126,7 +126,7 @@ namespace LC {
       float x = fields[indexX].toFloat();
       float y = fields[indexY].toFloat();
       //qDebug() << "x " << x << " y " << y;
-      int osmid = fields[indexOsmid].toInt();
+      uint64 osmid = fields[indexOsmid].toLongLong();
       osmidToVertexLoc[osmid] = QVector2D(x, y);
       updateMinMax2(QVector2D(x, y), minBox, maxBox);
       if (indexHigh >= fields.size()) {
@@ -145,7 +145,7 @@ namespace LC {
     const float lon0 = (maxBox.y() + minBox.y())*0.5f;
     minBox = QVector2D(FLT_MAX, FLT_MAX);
     maxBox = QVector2D(-FLT_MAX, -FLT_MAX);
-    QHash<int, QVector2D>::iterator i;
+    QHash<uint64, QVector2D>::iterator i;
     for (i = osmidToVertexLoc.begin(); i != osmidToVertexLoc.end(); ++i) {
       //printf("1 ANG: %.2f %.2f MinBox %.2f %.2f MaxBox %.2f %.2f--> %.2f %.2f\n", i.value().x(), i.value().y(), minBox.x(), minBox.y(), maxBox.x(), maxBox.y(), maxBox.x() - minBox.x(), maxBox.y() - minBox.y());
 
@@ -182,7 +182,7 @@ namespace LC {
     QHash<int, uint64> indToOsmid;
 
     for (i = osmidToVertexLoc.begin(); i != osmidToVertexLoc.end(); ++i) {
-      int ind = i.key();
+      uint64 ind = i.key();
 
       float x = osmidToVertexLoc[ind].x();
       float y = osmidToVertexLoc[ind].y();
@@ -261,7 +261,8 @@ namespace LC {
             noAvailableNodes.insert(end);
           }
         }
-        //qDebug() << "NO CONTAINS: start" << start << " end " << end;
+        qDebug() << "NO CONTAINS: start" << start << " end " << end;
+        exit(-1);
         continue;
       }
       //qDebug() << "line" << line;
