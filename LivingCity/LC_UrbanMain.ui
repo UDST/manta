@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1038</width>
-    <height>893</height>
+    <height>935</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -852,13 +852,13 @@
    <property name="minimumSize">
     <size>
      <width>240</width>
-     <height>796</height>
+     <height>860</height>
     </size>
    </property>
    <property name="maximumSize">
     <size>
      <width>240</width>
-     <height>900</height>
+     <height>860</height>
     </size>
    </property>
    <property name="floating">
@@ -884,6 +884,229 @@
      <property name="bottomMargin">
       <number>2</number>
      </property>
+     <item row="1" column="0">
+      <widget class="QDockWidget" name="editWidget_2">
+       <property name="minimumSize">
+        <size>
+         <width>171</width>
+         <height>295</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>524287</width>
+         <height>295</height>
+        </size>
+       </property>
+       <property name="windowTitle">
+        <string>Terrain Layers Edition</string>
+       </property>
+       <widget class="QWidget" name="dockWidgetContents_3">
+        <layout class="QGridLayout" name="gridLayout_15">
+         <property name="topMargin">
+          <number>5</number>
+         </property>
+         <property name="bottomMargin">
+          <number>5</number>
+         </property>
+         <item row="1" column="0">
+          <widget class="QTabWidget" name="tabWidget_4">
+           <property name="tabPosition">
+            <enum>QTabWidget::West</enum>
+           </property>
+           <property name="currentIndex">
+            <number>1</number>
+           </property>
+           <widget class="QWidget" name="tab_5">
+            <attribute name="title">
+             <string>Terrain</string>
+            </attribute>
+            <layout class="QGridLayout" name="gridLayout_23">
+             <item row="0" column="0">
+              <widget class="QGroupBox" name="groupBox_10">
+               <property name="title">
+                <string>Edit Terrain</string>
+               </property>
+               <layout class="QGridLayout" name="gridLayout_24">
+                <item row="0" column="0">
+                 <widget class="QLabel" name="terrainPaint_sizeLabel">
+                  <property name="text">
+                   <string>Size: 5%</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QSlider" name="terrainPaint_sizeSlider">
+                  <property name="maximumSize">
+                   <size>
+                    <width>16777215</width>
+                    <height>17</height>
+                   </size>
+                  </property>
+                  <property name="minimum">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <number>25</number>
+                  </property>
+                  <property name="value">
+                   <number>5</number>
+                  </property>
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="terrainPaint_changeLabel">
+                  <property name="text">
+                   <string>Change</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QSlider" name="terrainPaint_changeSlider">
+                  <property name="maximumSize">
+                   <size>
+                    <width>16777215</width>
+                    <height>17</height>
+                   </size>
+                  </property>
+                  <property name="minimum">
+                   <number>1</number>
+                  </property>
+                  <property name="value">
+                   <number>10</number>
+                  </property>
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <spacer name="verticalSpacer_8">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QWidget" name="tab_7">
+            <attribute name="title">
+             <string>Layers</string>
+            </attribute>
+            <layout class="QGridLayout" name="gridLayout_25">
+             <item row="2" column="0" colspan="2">
+              <widget class="QGroupBox" name="groupBox_15">
+               <property name="title">
+                <string>Drawing</string>
+               </property>
+               <layout class="QGridLayout" name="gridLayout_26">
+                <item row="0" column="0">
+                 <widget class="QLabel" name="terrainPaint_changeLabel_4">
+                  <property name="text">
+                   <string>Change</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QSlider" name="layer_changeSlider">
+                  <property name="maximumSize">
+                   <size>
+                    <width>16777215</width>
+                    <height>17</height>
+                   </size>
+                  </property>
+                  <property name="minimum">
+                   <number>1</number>
+                  </property>
+                  <property name="value">
+                   <number>50</number>
+                  </property>
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item row="6" column="0" colspan="2">
+              <spacer name="verticalSpacer_9">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item row="0" column="0" colspan="2">
+              <widget class="QCheckBox" name="layer_enableCheckBox">
+               <property name="text">
+                <string>Layers</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_10">
+               <property name="text">
+                <string>Layer #</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QSpinBox" name="layer_numberSpinBox"/>
+             </item>
+             <item row="3" column="0" colspan="2">
+              <widget class="QPushButton" name="layer_loadLayersButton">
+               <property name="text">
+                <string>Load Layers</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0" colspan="2">
+              <widget class="QPushButton" name="layer_saveLayersButton">
+               <property name="text">
+                <string>Save Layers</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="0" colspan="2">
+              <widget class="QPushButton" name="layer_clearLayersButton">
+               <property name="text">
+                <string>Clear Layers</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QCheckBox" name="render_2DlinesCheckBox">
+           <property name="text">
+            <string>Render Roads as Lines</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </item>
      <item row="0" column="0">
       <widget class="QTabWidget" name="tabWidget_3">
        <property name="minimumSize">
@@ -906,22 +1129,9 @@
        </property>
        <widget class="QWidget" name="tab_6">
         <attribute name="title">
-         <string>New</string>
+         <string>B2018</string>
         </attribute>
         <layout class="QGridLayout" name="gridLayout_13">
-         <item row="3" column="0">
-          <spacer name="verticalSpacer_7">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>15</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
          <item row="2" column="0">
           <widget class="QGroupBox" name="groupBox_13">
            <property name="title">
@@ -989,7 +1199,10 @@
              </widget>
             </item>
             <item row="7" column="0" colspan="2">
-             <widget class="QPushButton" name="bCPUSimulateButton">
+             <widget class="QPushButton" name="b2018CPUSimulateButton">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
               <property name="minimumSize">
                <size>
                 <width>0</width>
@@ -1029,63 +1242,6 @@
               </property>
              </widget>
             </item>
-            <item row="4" column="0" colspan="2">
-             <widget class="QPushButton" name="bCreatePeopleButton">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>11</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Create People/Routes</string>
-              </property>
-             </widget>
-            </item>
-            <item row="5" column="0">
-             <widget class="QPushButton" name="bLoadPeopleButton">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>11</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Load P/R</string>
-              </property>
-             </widget>
-            </item>
-            <item row="5" column="1">
-             <widget class="QPushButton" name="bSavePeopleButton">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>11</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Save P/R</string>
-              </property>
-             </widget>
-            </item>
             <item row="9" column="0" colspan="2">
              <widget class="Line" name="line_3">
               <property name="orientation">
@@ -1104,7 +1260,10 @@
              </widget>
             </item>
             <item row="8" column="0" colspan="2">
-             <widget class="QPushButton" name="bGPUSimulateButton">
+             <widget class="QPushButton" name="b2018GPUSimulateButton">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
@@ -1122,7 +1281,7 @@
          <item row="0" column="0">
           <widget class="QGroupBox" name="groupBox_14">
            <property name="title">
-            <string>Demand</string>
+            <string>Demand/Routes</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_19">
             <property name="leftMargin">
@@ -1140,7 +1299,83 @@
             <property name="spacing">
              <number>3</number>
             </property>
-            <item row="3" column="0">
+            <item row="6" column="0">
+             <widget class="QCheckBox" name="bRoutingDijkstraCheckBox">
+              <property name="text">
+               <string>Path Dijkstra</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0" colspan="2">
+             <widget class="QGroupBox" name="groupBox_16">
+              <property name="title">
+               <string>Random Demand</string>
+              </property>
+              <layout class="QFormLayout" name="formLayout">
+               <item row="0" column="0">
+                <widget class="QLabel" name="label_15">
+                 <property name="enabled">
+                  <bool>true</bool>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>25</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string># People:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QSpinBox" name="bNumPeopleSpinBox">
+                 <property name="enabled">
+                  <bool>true</bool>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                 <property name="minimum">
+                  <number>1</number>
+                 </property>
+                 <property name="maximum">
+                  <number>450000</number>
+                 </property>
+                 <property name="value">
+                  <number>100</number>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="0" colspan="2">
+                <widget class="QPushButton" name="bCreateRandomODButton">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>11</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>25</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Create Random OD</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item row="0" column="0">
              <widget class="QLabel" name="label_21">
               <property name="maximumSize">
                <size>
@@ -1153,45 +1388,7 @@
               </property>
              </widget>
             </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="label_15">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="text">
-               <string># People:</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1">
-             <widget class="QSpinBox" name="bNumPeopleSpinBox">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="minimum">
-               <number>1</number>
-              </property>
-              <property name="maximum">
-               <number>450000</number>
-              </property>
-              <property name="value">
-               <number>100</number>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="1">
+            <item row="0" column="1">
              <widget class="QTimeEdit" name="demandStratTimeEdit">
               <property name="time">
                <time>
@@ -1202,14 +1399,55 @@
               </property>
              </widget>
             </item>
-            <item row="4" column="0">
+            <item row="8" column="1">
+             <widget class="QPushButton" name="bSaveODRButton">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>11</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Save P/R</string>
+              </property>
+             </widget>
+            </item>
+            <item row="8" column="0">
+             <widget class="QPushButton" name="bLoadODRButton">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>11</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Load OD/R</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
              <widget class="QLabel" name="label_20">
               <property name="text">
                <string>Demand End</string>
               </property>
              </widget>
             </item>
-            <item row="4" column="1">
+            <item row="1" column="1">
              <widget class="QTimeEdit" name="demandEndTimeEdit">
               <property name="time">
                <time>
@@ -1220,23 +1458,22 @@
               </property>
              </widget>
             </item>
-            <item row="0" column="0" colspan="2">
-             <widget class="QCheckBox" name="bDynameqDemandCheckBox">
+            <item row="3" column="0" colspan="2">
+             <widget class="QPushButton" name="bLoadB2018Button">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>11</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>25</height>
+               </size>
+              </property>
               <property name="text">
-               <string>Dynameq Demand</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="0" colspan="2">
-             <widget class="QCheckBox" name="bRoutingDijkstraCheckBox">
-              <property name="text">
-               <string>Dijkstra</string>
-              </property>
-              <property name="checked">
-               <bool>false</bool>
+               <string>Load B2018 OD</string>
               </property>
              </widget>
             </item>
@@ -1267,7 +1504,7 @@
             <item row="4" column="0">
              <widget class="QLabel" name="label_7">
               <property name="text">
-               <string>Render Step</string>
+               <string>Render # Steps</string>
               </property>
              </widget>
             </item>
@@ -1311,7 +1548,7 @@
        </widget>
        <widget class="QWidget" name="tab_2">
         <attribute name="title">
-         <string>Old</string>
+         <string>EG Paper</string>
         </attribute>
         <layout class="QGridLayout" name="gridLayout_11">
          <item row="0" column="0">
@@ -1610,229 +1847,6 @@
              </widget>
             </item>
            </layout>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QDockWidget" name="editWidget_2">
-       <property name="minimumSize">
-        <size>
-         <width>171</width>
-         <height>295</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>524287</width>
-         <height>295</height>
-        </size>
-       </property>
-       <property name="windowTitle">
-        <string>Terrain Layers Edition</string>
-       </property>
-       <widget class="QWidget" name="dockWidgetContents_3">
-        <layout class="QGridLayout" name="gridLayout_15">
-         <property name="topMargin">
-          <number>5</number>
-         </property>
-         <property name="bottomMargin">
-          <number>5</number>
-         </property>
-         <item row="1" column="0">
-          <widget class="QTabWidget" name="tabWidget_4">
-           <property name="tabPosition">
-            <enum>QTabWidget::West</enum>
-           </property>
-           <property name="currentIndex">
-            <number>0</number>
-           </property>
-           <widget class="QWidget" name="tab_5">
-            <attribute name="title">
-             <string>Terrain</string>
-            </attribute>
-            <layout class="QGridLayout" name="gridLayout_23">
-             <item row="0" column="0">
-              <widget class="QGroupBox" name="groupBox_10">
-               <property name="title">
-                <string>Edit Terrain</string>
-               </property>
-               <layout class="QGridLayout" name="gridLayout_24">
-                <item row="0" column="0">
-                 <widget class="QLabel" name="terrainPaint_sizeLabel">
-                  <property name="text">
-                   <string>Size: 5%</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QSlider" name="terrainPaint_sizeSlider">
-                  <property name="maximumSize">
-                   <size>
-                    <width>16777215</width>
-                    <height>17</height>
-                   </size>
-                  </property>
-                  <property name="minimum">
-                   <number>1</number>
-                  </property>
-                  <property name="maximum">
-                   <number>25</number>
-                  </property>
-                  <property name="value">
-                   <number>5</number>
-                  </property>
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="0">
-                 <widget class="QLabel" name="terrainPaint_changeLabel">
-                  <property name="text">
-                   <string>Change</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="1">
-                 <widget class="QSlider" name="terrainPaint_changeSlider">
-                  <property name="maximumSize">
-                   <size>
-                    <width>16777215</width>
-                    <height>17</height>
-                   </size>
-                  </property>
-                  <property name="minimum">
-                   <number>1</number>
-                  </property>
-                  <property name="value">
-                   <number>10</number>
-                  </property>
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <spacer name="verticalSpacer_8">
-               <property name="orientation">
-                <enum>Qt::Vertical</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>20</width>
-                 <height>40</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-            </layout>
-           </widget>
-           <widget class="QWidget" name="tab_7">
-            <attribute name="title">
-             <string>Layers</string>
-            </attribute>
-            <layout class="QGridLayout" name="gridLayout_25">
-             <item row="2" column="0" colspan="2">
-              <widget class="QGroupBox" name="groupBox_15">
-               <property name="title">
-                <string>Drawing</string>
-               </property>
-               <layout class="QGridLayout" name="gridLayout_26">
-                <item row="0" column="0">
-                 <widget class="QLabel" name="terrainPaint_changeLabel_4">
-                  <property name="text">
-                   <string>Change</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QSlider" name="layer_changeSlider">
-                  <property name="maximumSize">
-                   <size>
-                    <width>16777215</width>
-                    <height>17</height>
-                   </size>
-                  </property>
-                  <property name="minimum">
-                   <number>1</number>
-                  </property>
-                  <property name="value">
-                   <number>50</number>
-                  </property>
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
-             </item>
-             <item row="6" column="0" colspan="2">
-              <spacer name="verticalSpacer_9">
-               <property name="orientation">
-                <enum>Qt::Vertical</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>20</width>
-                 <height>40</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item row="0" column="0" colspan="2">
-              <widget class="QCheckBox" name="layer_enableCheckBox">
-               <property name="text">
-                <string>Layers</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <widget class="QLabel" name="label_10">
-               <property name="text">
-                <string>Layer #</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QSpinBox" name="layer_numberSpinBox"/>
-             </item>
-             <item row="3" column="0" colspan="2">
-              <widget class="QPushButton" name="layer_loadLayersButton">
-               <property name="text">
-                <string>Load Layers</string>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="0" colspan="2">
-              <widget class="QPushButton" name="layer_saveLayersButton">
-               <property name="text">
-                <string>Save Layers</string>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="0" colspan="2">
-              <widget class="QPushButton" name="layer_clearLayersButton">
-               <property name="text">
-                <string>Clear Layers</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QCheckBox" name="render_2DlinesCheckBox">
-           <property name="text">
-            <string>Render Roads as Lines</string>
-           </property>
           </widget>
          </item>
         </layout>

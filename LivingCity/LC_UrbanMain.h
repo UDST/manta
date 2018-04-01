@@ -102,6 +102,8 @@ public slots:
 	void onClearLayers(bool);
 	void onLayerEnable(int);
 
+  void onProceduralModeling(int);
+
 	//--traffic
 	void onArterialEdgesSpeedSlot(int val);
 	void onSimulatePressed(bool);
@@ -110,16 +112,17 @@ public slots:
 	void onLabelPressed(bool);
 
 	//--bTraffic
-	void onDynameqDemand(int);
-	void onBSimulateCPUPressed(bool);
-	void onBSimulateGPUPressed(bool);
+	void onB2018SimulateCPUPressed(bool);
+	void onB2018SimulateGPUPressed(bool);
 
-	void onCreatePeople(bool);
+	void onCreateRandomOD(bool);
+  void onLoadB2018OD(bool);
+  void onCreateOD(bool random);
 
-	void onLoadPeople(bool);
-	void onSavePeople(bool);
+  // Load OD and Rorutes.
+	void onLoadODR(bool);
+	void onSaveODR(bool);
 
-	void onProceduralModeling(int);
 
 private:
 

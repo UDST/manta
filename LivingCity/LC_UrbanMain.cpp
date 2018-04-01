@@ -168,21 +168,27 @@ void LCUrbanMain::init() {
   connect(ui.TB_roadLabelButton, SIGNAL(clicked(bool)), this,
           SLOT(onLabelPressed(bool)));
 
-  // B TRAFFIC
-  connect(ui.bCPUSimulateButton, SIGNAL(clicked(bool)), this,
-          SLOT(onBSimulateCPUPressed(bool)));
-  connect(ui.bDynameqDemandCheckBox, SIGNAL(stateChanged(int)), this,
-          SLOT(onDynameqDemand(int)));
+  ///////////////////////////////////////////////////////
+  // B2018 TRAFFIC
 
-  connect(ui.bCreatePeopleButton, SIGNAL(clicked(bool)), this,
-          SLOT(onCreatePeople(bool)));
-  connect(ui.bLoadPeopleButton, SIGNAL(clicked(bool)), this,
-          SLOT(onLoadPeople(bool)));
-  connect(ui.bSavePeopleButton, SIGNAL(clicked(bool)), this,
-          SLOT(onSavePeople(bool)));
+
+  connect(ui.bCreateRandomODButton, SIGNAL(clicked(bool)), this,
+    SLOT(onCreateRandomOD(bool)));
+
+  connect(ui.bLoadB2018Button, SIGNAL(clicked(bool)), this,
+    SLOT(onLoadB2018OD(bool)));
+
+  connect(ui.bLoadODRButton, SIGNAL(clicked(bool)), this,
+    SLOT(onLoadODR(bool)));
+  connect(ui.bSaveODRButton, SIGNAL(clicked(bool)), this,
+    SLOT(onSaveODR(bool)));
+
   //GPU
-  connect(ui.bGPUSimulateButton, SIGNAL(clicked(bool)), this,
-          SLOT(onBSimulateGPUPressed(bool)));
+  connect(ui.b2018CPUSimulateButton, SIGNAL(clicked(bool)), this,
+    SLOT(onB2018SimulateCPUPressed(bool)));
+
+  connect(ui.b2018GPUSimulateButton, SIGNAL(clicked(bool)), this,
+          SLOT(onB2018SimulateGPUPressed(bool)));
   ui.progressBar->hide();
 
   // Hide menu
@@ -689,19 +695,11 @@ void LCUrbanMain::onLabelPressed(bool) {
   }
 }//
 
-void LCUrbanMain::onDynameqDemand(int) {
-  // when dynameq demand, we do not choose the dumber of people
-  if (ui.bDynameqDemandCheckBox->isChecked()) {
-    ui.bNumPeopleSpinBox->setEnabled(false);
-  } else {
-    ui.bNumPeopleSpinBox->setEnabled(true);
+//////////////////////////
+//////////////////////////
+//////////////////////////
 
-  }
-}//
-
-void LCUrbanMain::onBSimulateCPUPressed(bool) {
-  // create/load things if neccesary
-  onCreatePeople(true);
+void LCUrbanMain::onB2018SimulateCPUPressed(bool) {
 
   ///////////////////////////////////////
   // SIMULATION
@@ -714,9 +712,7 @@ void LCUrbanMain::onBSimulateCPUPressed(bool) {
   glWidget3D->bTrafficSimulator.simulateCPU(startTime, endTime);
 }//
 
-void LCUrbanMain::onBSimulateGPUPressed(bool) {
-  // create/load things if neccesary
-  onCreatePeople(true);
+void LCUrbanMain::onB2018SimulateGPUPressed(bool) {
 
   ///////////////////////////////////////
   // SIMULATION
@@ -729,7 +725,21 @@ void LCUrbanMain::onBSimulateGPUPressed(bool) {
   glWidget3D->bTrafficSimulator.simulateGPU(startTime, endTime);
 }//
 
-void LCUrbanMain::onCreatePeople(bool) {
+void LCUrbanMain::onCreateRandomOD(bool) {
+  onCreateOD(true);
+}
+
+void LCUrbanMain::onLoadB2018OD(bool) {
+  onCreateOD(false);
+}
+
+void LCUrbanMain::onCreateOD(bool random) {
+  
+  // Enable simulation buttons
+  ui.b2018CPUSimulateButton->setEnabled(true);
+  ui.b2018GPUSimulateButton->setEnabled(true);
+  ui.bSaveODRButton->setEnabled(true);
+
   QTime timer;
   timer.start();
 
@@ -756,8 +766,8 @@ void LCUrbanMain::onCreatePeople(bool) {
     float startDemandTime = sDemandTime.hour() + sDemandTime.minute() / 60.0f;
     float endDemandTime = eDemadTime.hour() + eDemadTime.minute() / 60.0f;
 
-    if (ui.bDynameqDemandCheckBox->isChecked() == false) {
-      printf(">>2.1 create people\n");
+    if (random) {
+      printf(">>2.1 create random people\n");
       int numPeople = ui.bNumPeopleSpinBox->value();
 
       if (glWidget3D->vboRenderManager.layers.layersEmpty() == true) {
@@ -768,11 +778,11 @@ void LCUrbanMain::onCreatePeople(bool) {
       }
 
       printf(">>2. createPeople %d\n", numPeople);
-      glWidget3D->bTrafficSimulator.createPeople(startDemandTime, endDemandTime,
+      glWidget3D->bTrafficSimulator.createRandomPeople(startDemandTime, endDemandTime,
           numPeople, glWidget3D->vboRenderManager.layers);
     } else {
       printf(">>2. createPeopleDynameq\n");
-      glWidget3D->bTrafficSimulator.createPeopleDynameq(startDemandTime,
+      glWidget3D->bTrafficSimulator.createB2018People(startDemandTime,
           endDemandTime);
     }
 
@@ -832,15 +842,15 @@ void LCUrbanMain::onCreatePeople(bool) {
   printf("<< onCreatePeople\n");
 }//
 
-void LCUrbanMain::onLoadPeople(bool) {
+void LCUrbanMain::onLoadODR(bool) {
   glWidget3D->bTrafficSimulator.people.loadFromFile();
-  printf("onLoadPeople: Loaded %d\n",
+  printf("onLoadODR: Loaded %d\n",
          glWidget3D->bTrafficSimulator.people.numPeople);
 }//
 
-void LCUrbanMain::onSavePeople(bool) {
+void LCUrbanMain::onSaveODR(bool) {
   glWidget3D->bTrafficSimulator.people.saveToFile();
-  printf("onSavePeople: Saved %d\n",
+  printf("onSaveODR: Saved %d\n",
          glWidget3D->bTrafficSimulator.people.numPeople);
 }//
 

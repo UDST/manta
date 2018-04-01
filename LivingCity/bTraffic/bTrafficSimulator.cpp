@@ -69,29 +69,28 @@ void BTrafficSimulator::init(RoadGraph *roadGraph,
   initialized = true;
 }//
 
-void BTrafficSimulator::createPeople(
+void BTrafficSimulator::createRandomPeople(
   float startTime, float endTime,
   int _numberPeople,
-  PeopleJobInfoLayers &peopleJobInfoLayers
-) {
+  PeopleJobInfoLayers &peopleJobInfoLayers) {
   if (initialized == false) {
     printf("Error: initSimulator was not called\n");
     return;
   }
 
   people.clear();
-  BPMTrafficPerson::generateTrafficPerson(startTime, endTime, _numberPeople,
+  BPMTrafficPerson::generateRandomTrafficPeople(startTime, endTime, _numberPeople,
                                           peopleJobInfoLayers, simRoadGraph->myRoadGraph_BI, people);
 }//
 
-void BTrafficSimulator::createPeopleDynameq(float startTime, float endTime) {
+void BTrafficSimulator::createB2018People(float startTime, float endTime) {
   if (initialized == false) {
     printf("Error: initSimulator was not called\n");
     return;
   }
 
   people.clear();
-  BPMTrafficPerson::generateTrafficPerson(simRoadGraph->myRoadGraph_BI, people);
+  BPMTrafficPerson::generateB2018TrafficPeople(startTime, endTime, simRoadGraph->myRoadGraph_BI, people);
 }//
 
 void BTrafficSimulator::createLaneMap() { //

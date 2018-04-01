@@ -1,26 +1,7 @@
-//---------------------------------------------------------------------------------------------------------------------
-// Copyright 2017, 2018 Purdue University, Ignacio Garcia Dorado, Daniel Aliaga
-//
-// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
-// following conditions are met:
-//
-// 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the
-// following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
-// following disclaimer in the documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote
-// products derived from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS AS IS AND ANY EXPRESS OR IMPLIED WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-// USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//---------------------------------------------------------------------------------------------------------------------
+/************************************************************************************************
+*		@desc Class to create people for B2018.
+*		@author igarciad
+************************************************************************************************/
 
 #include "bPMTrafficPerson.h"
 
@@ -31,6 +12,7 @@
 #include "qstringlist.h"
 #include <random>
 #include "../roadGraphDynameqLoader.h"
+#include "../roadGraphB2018Loader.h"
 
 #include "bTrafficConstants.h"
 
@@ -253,12 +235,11 @@ void BPMTrafficPerson::randomPerson(int p, BTrafficPeople &people,
 
 }//
 
-void BPMTrafficPerson::generateTrafficPerson(
+void BPMTrafficPerson::generateRandomTrafficPeople(
   float start_time, float end_time,
   int numberPeople, PeopleJobInfoLayers &peopleJobInfoLayers,
   RoadGraph::roadBGLGraph_BI &roadGraph,
-  BTrafficPeople &people//OUT
-) {
+  BTrafficPeople &people) {  // OUT
   people.clear();
 
   if (PERSON_DEBUG) {
@@ -310,10 +291,8 @@ void BPMTrafficPerson::generateTrafficPerson(
   }
 
   if (PERSON_DEBUG) {
-    printf("<< CUDA generateTrafficPersonJob\n");
+    printf("<< generateRandomTrafficPeople\n");
   }
-
-  //generateRoutes(roadGraph);
 }//
 
 
@@ -399,16 +378,16 @@ void BPMTrafficPerson::generateTrafficPersonFromStream(
          periodTime, densityTotalI, densityTotal, people.numPeople);
 }//
 
-void BPMTrafficPerson::generateTrafficPerson(
+void BPMTrafficPerson::generateDynameqTrafficPeople(
   RoadGraph::roadBGLGraph_BI &roadGraph,
-  BTrafficPeople &people//OUT
-) {
+  BTrafficPeople &people) {  // OUT
+
   people.clear();
   QTime timer;
   timer.start();
 
   if (RoadGraphDynameq::centroidsToVertex.size() == 0) {
-    printf("ERROR: Implsible to generate dynameq distribution without loading dynameq files first\n");
+    printf("ERROR: Imposible to generate dynameq distribution without loading dynameq files first\n");
     return;
   }
 
@@ -497,6 +476,74 @@ void BPMTrafficPerson::generateTrafficPerson(
 }
 
 
+void BPMTrafficPerson::generateB2018TrafficPeople(
+  float start_time, float end_time,
+  RoadGraph::roadBGLGraph_BI &roadGraph,
+  BTrafficPeople &people) {  // OUT
+
+  people.clear();
+  QTime timer;
+  timer.start();
+
+  if (RoadGraphB2018::demandB2018.size() == 0) {
+    printf("ERROR: Imposible to generate b2018 without loading b2018 demmand first\n");
+    return;
+  }
+
+  people.resize(RoadGraphB2018::totalNumPeople);
+  qsrand(6541799621);
+  float midTime = (start_time + end_time) / 2.0f;
+
+  int numPeople = 0;
+
+  for (int d = 0; d < RoadGraphB2018::demandB2018.size(); d++) {
+    int odNumPeople = RoadGraphB2018::demandB2018[d].num_people;
+    uint src_vertex = RoadGraphB2018::demandB2018[d].src_vertex;
+    uint tgt_vertex = RoadGraphB2018::demandB2018[d].tgt_vertex;
+
+    for (int p = 0; p < odNumPeople; p++) {
+      float goToWork = midTime + LC::misctools::genRand(start_time - midTime,
+                         end_time - start_time); //6.30-9.30 /// GOOOD ONE
+      int car_type = 0; // all normal cars??
+
+      randomPerson(numPeople, people,
+        src_vertex, tgt_vertex, goToWork, car_type);
+      numPeople++;
+    }
+
+  }
+
+  if (RoadGraphB2018::totalNumPeople != numPeople) {
+    printf("ERROR: generateB2018TrafficPeople totalNumPeople != numPeople, this should not happen.");
+    exit(-1);
+  }
+
+
+  //print histogram
+  float binLength = 0.166f;//10min
+  float startTime = 14.5f;
+  float endTime = 19.5f;
+  float numBins = ceil((endTime - startTime) / binLength);
+  std::vector<int> bins(numBins);
+  std::fill(bins.begin(), bins.end(), 0);
+
+  for (int p = 0; p < people.numPeople; p++) {
+    float t = (people.time_departure[p] / 3600.0f) - startTime;
+    int binN = t / binLength;
+    bins[binN]++;
+  }
+
+  printf("\n");
+
+  for (int binN = 0; binN < bins.size(); binN++) {
+    printf("%f %d\n", startTime + binN * binLength, bins[binN]);
+  }
+
+  printf("\n");
+
 }
+
+
+}  // namespace LC
 
 
