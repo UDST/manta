@@ -80,7 +80,7 @@ void BTrafficSimulator::createRandomPeople(
 
   people.clear();
   BPMTrafficPerson::generateRandomTrafficPeople(startTime, endTime, _numberPeople,
-                                          peopleJobInfoLayers, simRoadGraph->myRoadGraph_BI, people);
+      peopleJobInfoLayers, simRoadGraph->myRoadGraph_BI, people);
 }//
 
 void BTrafficSimulator::createB2018People(float startTime, float endTime) {
@@ -90,7 +90,8 @@ void BTrafficSimulator::createB2018People(float startTime, float endTime) {
   }
 
   people.clear();
-  BPMTrafficPerson::generateB2018TrafficPeople(startTime, endTime, simRoadGraph->myRoadGraph_BI, people);
+  BPMTrafficPerson::generateB2018TrafficPeople(startTime, endTime,
+      simRoadGraph->myRoadGraph_BI, people);
 }//
 
 void BTrafficSimulator::createLaneMap() { //

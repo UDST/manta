@@ -360,8 +360,8 @@
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)\</OutDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)\</OutDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)\</OutDir>
-    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;$(IncludePath)</IncludePath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VCInstallDir)lib\amd64;$(VCInstallDir)atlmfc\lib\amd64;$(WindowsSdkDir)lib\x64;$(IncludePath);</LibraryPath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IncludePath)</IncludePath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);</LibraryPath>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectName)_d</TargetName>
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IncludePath)</IncludePath>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectName)</TargetName>
@@ -389,15 +389,17 @@
       <Optimization>Disabled</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(BOOST_ROOT);.;D:\Qt\5.10.1\msvc2013_64\include;.\GeneratedFiles\$(ConfigurationName);D:\Qt\5.10.1\msvc2013_64\include\QtCore;D:\Qt\5.10.1\msvc2013_64\include\QtGui;D:\Qt\5.10.1\msvc2013_64\include\QtOpenGL;..\opencv\include;D:\Qt\5.10.1\msvc2013_64\include\QtXml;..\core;..\tools;..\glew\include\GL;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
+      <AdditionalIncludeDirectories>D:\boost\boost_1_59_0;.;D:\Qt\5.10.1\msvc2013_64\include\QtCore;D:\Qt\5.10.1\msvc2013_64\include\QtOpenGL;D:\Qt\5.10.1\msvc2013_64\include\QtWidgets;D:\Qt\5.10.1\msvc2013_64\include\QtGui;D:\Qt\5.10.1\msvc2013_64\include;.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);D:\opencv\build\include\opencv;D:\opencv\build\include\opencv2;D:\opencv\build\include;glew\include\GL;.\GeneratedFiles\$(ConfigurationName);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <DisableSpecificWarnings>4244</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <OutputFile>$(OutDir)\$(ProjectName)_d.exe</OutputFile>
-      <AdditionalLibraryDirectories>$(BOOST_ROOT)\lib;D:\Qt\5.10.1\msvc2013_64\lib;..\opencv\lib;..\glew\lib;..\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:\boost\boost_1_59_0\lib;D:\Qt\5.10.1\msvc2013_64\lib;D:\opencv\build\x64\vc12\lib;D:\traffic\traffic-simulator-extended\LivingCity\glew\lib;..\x64;$(CUDA_LIB_PATH);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>qtmaind.lib;Qt5Cored.lib;Qt5Guid.lib;Qt5OpenGLd.lib;opengl32.lib;glu32.lib;Core_d.lib;Tools_d.lib;ParametricBuilding_d.lib;opencv_core2412d.lib;opencv_highgui2412d.lib;opencv_imgproc2412d.lib;opencv_legacy2412d.lib;opencv_photo2412d.lib;Qt5Xmld.lib;glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Qt5Cored.lib;Qt5Guid.lib;Qt5OpenGLd.lib;Qt5Xmld.lib;Qt5Widgetsd.lib;opengl32.lib;opencv_core2412d.lib;opencv_imgproc2412d.lib;opencv_highgui2412d.lib;opencv_legacy2412d.lib;opencv_photo2412d.lib;opencv_video2412d.lib;glew32.lib;cudart.lib;Glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>libboost_serialization-vc100-mt-1_44.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

@@ -781,7 +781,7 @@ void LCUrbanMain::onCreateOD(bool random) {
       glWidget3D->bTrafficSimulator.createRandomPeople(startDemandTime, endDemandTime,
           numPeople, glWidget3D->vboRenderManager.layers);
     } else {
-      printf(">>2. createPeopleDynameq\n");
+      printf(">>2. createB2018People\n");
       glWidget3D->bTrafficSimulator.createB2018People(startDemandTime,
           endDemandTime);
     }

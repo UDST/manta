@@ -503,11 +503,11 @@ void BPMTrafficPerson::generateB2018TrafficPeople(
 
     for (int p = 0; p < odNumPeople; p++) {
       float goToWork = midTime + LC::misctools::genRand(start_time - midTime,
-                         end_time - start_time); //6.30-9.30 /// GOOOD ONE
+                       end_time - start_time); //6.30-9.30 /// GOOOD ONE
       int car_type = 0; // all normal cars??
 
       randomPerson(numPeople, people,
-        src_vertex, tgt_vertex, goToWork, car_type);
+                   src_vertex, tgt_vertex, goToWork, car_type);
       numPeople++;
     }
 
