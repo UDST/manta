@@ -478,7 +478,8 @@ void calculateGapsLC(
   // CHECK FORWARD
   //printf("initShift %u numOfCells %u\n",initShift,numOfCells);
   for (ushort b = initShift - 1; (b < numOfCells) &&
-       (found == false); b++) { //NOTE -1 to make sure there is none in at the same level
+       (found == false);
+       b++) { //NOTE -1 to make sure there is none in at the same level
     laneChar = laneMap[mapToReadShift + maxWidth * (laneToCheck) + b];
 
     if (laneChar != 0xFF) {
@@ -508,7 +509,8 @@ void calculateGapsLC(
 
   //printf("2initShift %u numOfCells %u\n",initShift,numOfCells);
   for (int b = initShift + 1; (b >= 0) &&
-       (found == false); b--) { //NOTE +1 to make sure there is none in at the same level
+       (found == false);
+       b--) { //NOTE +1 to make sure there is none in at the same level
     laneChar = laneMap[mapToReadShift + maxWidth * (laneToCheck) + b];
 
     if (laneChar != 0xFF) {

@@ -786,12 +786,12 @@ void LCUrbanMain::onCreateOD(bool random) {
           endDemandTime);
     }
 
-    printf("<<2. Create people %d ms\n", timer.elapsed());
+    printf("<<2. Create people in %d ms\n", timer.elapsed());
   } else {
     printf("<<2. Already people\n");
   }
 
-  printf("<<2. Already routes %d\n",
+  printf("<<2. Routes Size: %d (if 0 not computed yet).\n",
          glWidget3D->bTrafficSimulator.people.nextEdge.size());
 
   ////////////////////////////////////////////

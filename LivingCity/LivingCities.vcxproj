@@ -97,6 +97,7 @@
     <ClInclude Include="RoadGraph\roadGraph.h" />
     <ClInclude Include="RoadGraph\roadGraphEdge.h" />
     <ClInclude Include="RoadGraph\roadGraphVertex.h" />
+    <ClInclude Include="traffic\cudaCODE_trafficSimulator.h" />
     <ClInclude Include="traffic\cudaEdgeData.h" />
     <ClInclude Include="traffic\cudaGridPollution.h" />
     <ClInclude Include="traffic\cudaPmTrafficPersonJob.h" />
@@ -291,6 +292,7 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <CudaCompile Include="traffic\cudaCODE_trafficSimulator.cu" />
     <None Include="..\data\shaders\lc_fragment.glsl" />
     <None Include="..\data\shaders\lc_vertex.glsl" />
     <CustomBuild Include="LC_UrbanMain.qrc">

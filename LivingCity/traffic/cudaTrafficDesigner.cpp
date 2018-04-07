@@ -1,24 +1,24 @@
 //---------------------------------------------------------------------------------------------------------------------
 // Copyright 2017, 2018 Purdue University, Ignacio Garcia Dorado, Daniel Aliaga
 //
-// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
 // following conditions are met:
 //
-// 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the 
+// 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the
 // following disclaimer.
 //
-// 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
+// 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
 // following disclaimer in the documentation and/or other materials provided with the distribution.
 //
-// 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote 
+// 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote
 // products derived from this software without specific prior written permission.
 //
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS AS IS AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
-// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS AS IS AND ANY EXPRESS OR IMPLIED WARRANTIES,
+// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 // USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -42,13 +42,13 @@
 //	}//
 //
 //
-//	
+//
 //
 //	////////////////////////////////////
 //	// DRAWING
 //	void CUDATrafficDesigner::drawDrawingCircle(){
 //		float radius=LC::misctools::Global::global()->cuda_drawing_rad;
-//		const int circle_points = 100;	
+//		const int circle_points = 100;
 //		double angle;
 //		double posX, posY, posZ;
 //		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -81,19 +81,19 @@
 //		float y=mousePos.y();
 //		float z=mousePos.z();
 //		posZ=10.0f;
-//		for (int i = 0; i < circle_points; i++) {    
-//			angle = 2*M_PI*i/circle_points; 
+//		for (int i = 0; i < circle_points; i++) {
+//			angle = 2*M_PI*i/circle_points;
 //			posX = x+radius*cos(angle);
-//			posY = y+radius*sin(angle);			
-//			glVertex3f(posX, posY, posZ);				
-//	
-//		}	
-//		glEnd();	
+//			posY = y+radius*sin(angle);
+//			glVertex3f(posX, posY, posZ);
+//
+//		}
+//		glEnd();
 //		glColor4f(0.1, 0.1, 0.1,1.0f);
 //		glDisable (GL_BLEND);
 //		glLineWidth(1.0);
 //		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-//		
+//
 //	}//
 //
 //	bool polyIntersectPoly(LC::CUDATrafficDesigner::polygon& p1,LC::CUDATrafficDesigner::polygon& p2){
@@ -103,7 +103,7 @@
 //	void CUDATrafficDesigner::updateUserSelection(QVector3D& mouse3DPos){
 //		if(DESIGNER_DEBUG)printf("updateUserSelection %f %f %f\n",mouse3DPos.x(),mouse3DPos.y(),mouse3DPos.z());
 //		// 1. Create new circle
-//		const int circle_points = 20;	
+//		const int circle_points = 20;
 //		float radius=LC::misctools::Global::global()->cuda_drawing_rad;
 //		float posX,posY,posZ,angle;
 //		float x=mousePos.x();
@@ -111,14 +111,14 @@
 //		float z=mousePos.z();
 //		//posZ=10.0f;
 //		polygon tempPoly;
-//		for (int i = circle_points-1; i >=0; i--) {    
-//			angle = 2*M_PI*i/circle_points; 
+//		for (int i = circle_points-1; i >=0; i--) {
+//			angle = 2*M_PI*i/circle_points;
 //			posX = x+radius*cos(angle);
-//			posY = y+radius*sin(angle);						
+//			posY = y+radius*sin(angle);
 //			boost::geometry::append(tempPoly,mPoint (posX,posY) );
 //		}
 //		boost::geometry::append(tempPoly,tempPoly.outer()[0] );
-//		
+//
 //		// 2. Put it in the correct group
 //		std::vector<polygon>* vec;
 //		std::vector<std::vector<polygon>*> otherVec;
@@ -202,7 +202,7 @@
 //
 //		}
 //		vec->push_back(tempPoly);
-//		
+//
 //	}//
 //
 //	void renderNonConvexDes(LC::CUDATrafficDesigner::polygon& contour,
@@ -210,19 +210,19 @@
 //		{
 //			const float height=0.0f;
 //			glColor4ub(color.x(),color.y(),color.z(),alpha);
-//			//Render inside fill			
+//			//Render inside fill
 //			if((contour.outer()).size() == 3){
-//				glBegin(GL_TRIANGLES);	
-//				for(size_t i=0; i<(contour.outer()).size(); i++){	
+//				glBegin(GL_TRIANGLES);
+//				for(size_t i=0; i<(contour.outer()).size(); i++){
 //					glNormal3f(myNormal.x(), myNormal.y(), myNormal.z());
-//					glVertex3f((contour.outer())[i].x(), (contour.outer())[i].y(), height);//(contour.outer())[i].z());			
+//					glVertex3f((contour.outer())[i].x(), (contour.outer())[i].y(), height);//(contour.outer())[i].z());
 //				}
 //				glEnd();
 //			} else if((contour.outer()).size() == 4){
-//				glBegin(GL_QUADS);	
-//				for(int i=0; i<(contour.outer()).size(); i++){	
+//				glBegin(GL_QUADS);
+//				for(int i=0; i<(contour.outer()).size(); i++){
 //					glNormal3f(myNormal.x(), myNormal.y(), myNormal.z());
-//					glVertex3f((contour.outer())[i].x(), (contour.outer())[i].y(),height);// (contour.outer())[i].z());			
+//					glVertex3f((contour.outer())[i].x(), (contour.outer())[i].y(),height);// (contour.outer())[i].z());
 //				}
 //				glEnd();
 //			} else {
@@ -238,7 +238,7 @@
 //				}
 //
 //				// register callback functions
-//				gluTessCallback(tess, GLU_TESS_BEGIN, 
+//				gluTessCallback(tess, GLU_TESS_BEGIN,
 //					(void (__stdcall *)(void))glBegin);
 //				gluTessCallback(tess, GLU_TESS_VERTEX,
 //					(void (__stdcall *)(void))glVertex3dv);
@@ -263,14 +263,14 @@
 //
 //				delete [] vtxData;
 //			}
-//			
+//
 //			glColor4f(color.x()/255.0f,color.y()/255.0f,color.z()/255.0f,1.0f);
 //			glBegin(GL_LINE_LOOP);
 //			for(size_t i=0; i<(contour.outer()).size(); i++){
 //				glVertex3f((contour.outer())[i].x(),(contour.outer())[i].y(),height);
 //			}
 //			glEnd();
-//			
+//
 //		}//
 //
 //
@@ -284,7 +284,7 @@
 //		for(int b=0;b<ltPolys.size();b++){
 //			renderNonConvexDes(ltPolys[b],QVector3D(0,0,1),QVector3D(0x17,0xe5,0x17),alpha);
 //		}
-//		
+//
 //		glColor4ub(0xe5,0xde,0x17,alpha);//e5de17
 //		for(int b=0;b<mtPolys.size();b++){
 //			renderNonConvexDes(mtPolys[b],QVector3D(0,0,1),QVector3D(0xe5,0xde,0x17),alpha);
@@ -295,7 +295,7 @@
 //
 //		glColor4f(0.1, 0.1, 0.1,1.0f);
 //		glDisable (GL_BLEND);
-//		
+//
 //	}//
 //
 //	// DESIGNER
@@ -303,14 +303,14 @@
 //		RoadGraph::roadGraphEdgeIter_BI ei, eiEnd;
 //		for(boost::tie(ei, eiEnd) = boost::edges(inRoadGraph.myRoadGraph_BI);
 //			ei != eiEnd; ++ei)
-//		{	
+//		{
 //			inRoadGraph.myRoadGraph_BI[*ei].cuda_design_visited=value;
 //		}
 //	}//
 //
 //	void bsfFromEdge(RoadGraph& inRoadGraph,LC::RoadGraph::roadGraphEdgeDesc_BI& edge,int design_state,int currentDistance,int maxDistance){
-//		
-//		// check if too far or already visited 
+//
+//		// check if too far or already visited
 //		if(currentDistance>=maxDistance)
 //			return;
 //		// check not block
@@ -337,7 +337,7 @@
 //
 //
 //		if(currentDistance==0&&sameState==true){
-//			inRoadGraph.myRoadGraph_BI[edge].cuda_design_visited=0;		
+//			inRoadGraph.myRoadGraph_BI[edge].cuda_design_visited=0;
 //		}else{
 //		//if(currentDistance>0||sameState==false){
 //			currentDistance++;
@@ -367,7 +367,7 @@
 //		}
 //	}//
 //
-//	
+//
 //
 //
 //	void CUDATrafficDesigner::changeNetwork(CUDATrafficSimulator& inTrafficSimulator,int _numPasses,int _numChains,int _numSteps,CUDADesignOptions designOptions,PlaceTypesMainClass* currentPlaceTypes){
@@ -387,20 +387,20 @@
 //		{
 //			designerTrafficSimulator.simRoadGraph->myRoadGraph_BI[*ei].cuda_design_modified=0x0000;
 //		}
-//	
+//
 //		std::vector<std::vector<polygon>*> allVec;
 //		allVec.push_back(&blPolys);
 //		allVec.push_back(&ltPolys);
 //		allVec.push_back(&mtPolys);
 //		allVec.push_back(&htPolys);
-//		
+//
 //		////////////////////////////////////
 //		// 3. Call MCMC
 //		int idealNumThreads=QThread::idealThreadCount()-3;//not to use the 100%
 //		int numTheads=std::min<int>(_numChains,idealNumThreads);
 //		int numChainsToRunPerThread=std::ceil((float)_numChains/ numTheads);
 //		printf("Start MCMC with %d threads and %d chains per thread\n",numTheads,numChainsToRunPerThread);
-//		
+//
 //		threads.resize(numTheads);
 //		chains.resize(numTheads);
 //		//threadSimulators.resize(numTheads);
@@ -443,7 +443,7 @@
 //		}
 //		clientMain->ui.progressBar->show();
 //			/*printf("T: Wait\n");
-//			
+//
 //			while(true){
 //				// check if all finished
 //				bool finished=true;
@@ -472,11 +472,11 @@
 //			//clientMain->ui.progressBar->hide();
 //		//printf("T: Done\n");
 //		//allVec.clear();
-//		
-//		
-//	
+//
+//
+//
 //		printf("<<changeNetwork\n");
-//		
+//
 //	}//
 //
 //	void CUDATrafficDesigner::errorString(QString err){
@@ -484,10 +484,10 @@
 //	}//
 //
 //	/*void CUDATrafficDesigner::thredEnds(){
-//		
+//
 //	}//*/
 //
-//	
+//
 //
 //	void CUDATrafficDesigner::newResult(int threadNum){
 //		if(threadNum>=0){
@@ -544,12 +544,12 @@
 //				clientMain->ui.cudaDesignChangeNetworkButton->setEnabled(true);
 //			}
 //		}
-//			
+//
 //	}//
 //
 //	void CUDATrafficDesigner::copyResultToLeft(){
 //		//clientMain->cudaTrafficDesigner.threadSimulators[currentBestThread]
-//		
+//
 //		clientMain->mGLWidget_3D->cudaTrafficSimulator=*chains[currentBestThread]->bestSimulationState;
 //		clientMain->cg.roadGraph.myRoadGraph_BI.clear();
 //		clientMain->cg.roadGraph=*chains[currentBestThread]->bestSimulationState->simRoadGraph;//copy
@@ -561,7 +561,7 @@
 //		if(clientMain->ui.cudaUseDensityCheckBox->isChecked()==false){
 //			clientMain->ui.cudaUseDensityCheckBox->setChecked(true);
 //		}
-//		
+//
 //	}//
 //
 //	void CUDATrafficDesigner::stopDesigner(){

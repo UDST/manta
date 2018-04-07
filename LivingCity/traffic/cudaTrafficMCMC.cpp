@@ -1,24 +1,24 @@
 //---------------------------------------------------------------------------------------------------------------------
 // Copyright 2017, 2018 Purdue University, Ignacio Garcia Dorado, Daniel Aliaga
 //
-// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
 // following conditions are met:
 //
-// 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the 
+// 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the
 // following disclaimer.
 //
-// 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
+// 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
 // following disclaimer in the documentation and/or other materials provided with the distribution.
 //
-// 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote 
+// 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote
 // products derived from this software without specific prior written permission.
 //
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS AS IS AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
-// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS AS IS AND ANY EXPRESS OR IMPLIED WARRANTIES,
+// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 // USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -40,7 +40,7 @@
 //		originalSimulationState=0;
 //		candidateTrafficSimulator=0;
 //		currentSimState=0;
-//		
+//
 //	}//
 //	CUDATrafficMCMC::~CUDATrafficMCMC(){
 //	}//
@@ -122,7 +122,7 @@
 //
 //			//candidateState=0;
 //			printf("[T%d][C%d] MCMC initScore %f\n",threadNum,numChain,initialScore);
-//			
+//
 //			// 2. Over all steps
 //			for(int step=0;step<numSteps&&done==false;step++){
 //
@@ -142,7 +142,7 @@
 //					candidateScore=candidateTrafficSimulator->avgTravelTime;
 //				}
 //				//candidateScore=0;///!!!
-//				
+//
 //				printf("[T%d][C%d] Score Old %f Candidate %f\n",threadNum,numChain,currentScore,candidateScore);
 //				// 2.4 MCMC
 //				printf("[T%d][C%d] MCMC 2.4 MCMC\n",threadNum,numChain);
@@ -246,11 +246,11 @@
 //				// 2.3 calculate new score
 //				if(MCMC_DEBUG)printf("[T%d][C%d] MCMC 2.3 Evaluate",threadNum,numChain);
 //				float candidateScore;
-//			
+//
 //					evaluateNetwork(results,true,true);
 //					candidateScore=results[0];
-//		
-//				
+//
+//
 //				// 2.4 MCMC
 //				//printf("[T%d][C%d] MCMC 2.4 MCMC\n",threadNum,numChain);
 //				// 2.4.1 check if it is the best state and if it is the case, save it
@@ -258,11 +258,11 @@
 //				accCost+=results[8];
 //				//accCost+=results[8]/boost::num_edges(candidateTrafficSimulator->simRoadGraph->myRoadGraph_BI);//change of lanes
 //				//accCost+=results[7];//change of people
-//				
+//
 //				printf("-->>>[T%d][C%d] S %f %f C %f %f\n",threadNum,numChain,currentScore,candidateScore,currCost,accCost);
 //				printf("--<><> %f,%f\n",candidateScore,accCost);
-//				//best if 
-//				//best if 
+//				//best if
+//				//best if
 //				//		we have not reach the goal score and we are improving it
 //				//		we have reach the goal score and the cost is smaller
 //				if((bestScore>scoreGoal&&bestScore>candidateScore)||
@@ -281,9 +281,9 @@
 //
 //						printf("[T%d][C%d] BEST ****Emit new result %f best %f COST %f\n",threadNum,numChain,currentScore,bestScore,accCost);
 //						emit newResult(threadNum);
-//					
+//
 //				}
-//				
+//
 //				float acceptProb = computeAcceptanceProbability( currentScore, candidateScore, this->temperature );
 //				float acceptProbCost = computeAcceptanceProbability( currCost, accCost, this->temperature );
 //
@@ -331,7 +331,7 @@
 //	}//
 //
 //	void bsfFromEdgeHash(RoadGraph& inRoadGraph,LC::RoadGraph::roadGraphEdgeDesc_BI& edge,int design_state,std::set<LC::RoadGraph::roadGraphEdgeDesc_BI>& processed,std::set<LC::RoadGraph::roadGraphEdgeDesc_BI>& nextEdges,int currentDistance){
-//		
+//
 //		// check not block
 //		if(inRoadGraph.myRoadGraph_BI[edge].cuda_design_state==0)
 //			return;
@@ -394,9 +394,9 @@
 //					if(currentDistance>=inRoadGraph.myRoadGraph_BI[*Iei].cuda_design_state%10){//already with lowerlabeled
 //						continue;
 //					}
-//					
+//
 //					//inRoadGraph.myRoadGraph_BI[*Oei].cuda_design_state=design_state*10+currentDistance;//10|30+distance
-//					
+//
 //					std::pair<RoadGraph::roadGraphEdgeDesc_BI, bool> e0_pair=boost::edge(boost::target(*Iei, inRoadGraph.myRoadGraph_BI),boost::source(*Iei, inRoadGraph.myRoadGraph_BI),inRoadGraph.myRoadGraph_BI);
 //					if(e0_pair.second==false){//if there was not out
 //						inRoadGraph.myRoadGraph_BI[*Iei].cuda_design_state=(design_state+3)*10+currentDistance;//40|60+distance
@@ -415,7 +415,7 @@
 //		QTime timer;
 //		timer.start();
 //
-//		
+//
 //		////////////////////////////////////
 //		/// 1. Label edges
 //		if(MCMC_DEBUG)printf("1. Label edges\n");
@@ -430,7 +430,7 @@
 //		}
 //		for(boost::tie(ei, eiEnd) = boost::edges(candidateTrafficSimulator->simRoadGraph->myRoadGraph_BI);
 //			ei != eiEnd; ++ei)
-//		{		
+//		{
 //			p0 = candidateTrafficSimulator->simRoadGraph->myRoadGraph_BI[boost::source(*ei, candidateTrafficSimulator->simRoadGraph->myRoadGraph_BI)].pt;
 //			p1 = candidateTrafficSimulator->simRoadGraph->myRoadGraph_BI[boost::target(*ei, candidateTrafficSimulator->simRoadGraph->myRoadGraph_BI)].pt;
 //			candidateTrafficSimulator->simRoadGraph->myRoadGraph_BI[*ei].cuda_design_state=0xFFFF;
@@ -473,14 +473,14 @@
 //				edgesPerGroupExpanded[state][lT][0]=edgesPerGroup[state][lT];//depth 0 is the inner edges
 //				for(int bsfDepth=0;bsfDepth<maxDepth;bsfDepth++){
 //					int edgeN=0;
-//					for(std::set<LC::RoadGraph::roadGraphEdgeDesc_BI>::iterator it = edgesPerGroupExpanded[state][lT][bsfDepth].begin(); 
+//					for(std::set<LC::RoadGraph::roadGraphEdgeDesc_BI>::iterator it = edgesPerGroupExpanded[state][lT][bsfDepth].begin();
 //						it != edgesPerGroupExpanded[state][lT][bsfDepth].end();) { // last set is the new one to loop
 //							edgeN++;
 //							LC::RoadGraph::roadGraphEdgeDesc_BI newEdge=*it;
 //							// use edgesPerGroup to put all the edges
 //							bsfFromEdgeHash(*candidateTrafficSimulator->simRoadGraph,newEdge,state,edgesPerGroup[state][lT],edgesPerGroupExpanded[state][lT][bsfDepth+1],bsfDepth);
 //							++it;
-//					}					
+//					}
 //				}
 //			}
 //		}
@@ -497,7 +497,7 @@
 //		return acceptanceProbability;
 //	}//
 //
-//	
+//
 //	bool CUDATrafficMCMC::transferLaneInEdge(LC::RoadGraph::roadGraphEdgeDesc_BI edge,int state){
 //		// find twin
 //		std::pair<RoadGraph::roadGraphEdgeDesc_BI, bool> e_dir=boost::edge(boost::source(edge, candidateTrafficSimulator->simRoadGraph->myRoadGraph_BI),boost::target(edge, candidateTrafficSimulator->simRoadGraph->myRoadGraph_BI),candidateTrafficSimulator->simRoadGraph->myRoadGraph_BI);
@@ -528,7 +528,7 @@
 //				}
 //			}
 //			if(transferForward==true/*&&candidateTrafficSimulator->simRoadGraph->myRoadGraph_BI[e_twi.first].numberOfLanes>0*/){//note twi>0
-//				
+//
 //				candidateTrafficSimulator->simRoadGraph->myRoadGraph_BI[e_dir.first].numberOfLanes++;//note ++
 //				candidateTrafficSimulator->simRoadGraph->myRoadGraph_BI[e_dir.first].cuda_design_modified=1;
 //				if(e_twi.second==true&&candidateTrafficSimulator->simRoadGraph->myRoadGraph_BI[e_twi.first].numberOfLanes>0){
@@ -647,10 +647,10 @@
 //					if(MCMC_GENERATE)printf("  state %d NumGr %d\n",state,edgesPerGroupExpanded[state].size());
 //					for(int lT=0;lT<edgesPerGroupExpanded[state].size();lT++){
 //
-//						std::map<std::pair<int,int>,int> pairStartEndToNumber;//kind of histogram 
+//						std::map<std::pair<int,int>,int> pairStartEndToNumber;//kind of histogram
 //						//for each edge in the interior ([0])
 //						if(MCMC_GENERATE)printf("for each edge in the interior state %d group %d\n",state,lT);
-//						for (std::set<LC::RoadGraph::roadGraphEdgeDesc_BI>::iterator it=edgesPerGroupExpanded[state][lT][0].begin(); 
+//						for (std::set<LC::RoadGraph::roadGraphEdgeDesc_BI>::iterator it=edgesPerGroupExpanded[state][lT][0].begin();
 //							it!=edgesPerGroupExpanded[state][lT][0].end(); ++it){
 //								// for each person in that edge
 //								std::pair<RoadGraph::roadGraphEdgeDesc_BI, bool> e_dir=boost::edge(boost::source(*it, candidateTrafficSimulator->simRoadGraph->myRoadGraph_BI),boost::target(*it, candidateTrafficSimulator->simRoadGraph->myRoadGraph_BI),candidateTrafficSimulator->simRoadGraph->myRoadGraph_BI);
@@ -679,14 +679,14 @@
 //									++iPeople;
 //								}
 //						}
-//						
-//					
+//
+//
 //						//QMap<int,std::pair<int,int>> numberPairStartEnd;
 //						for (std::map<std::pair<int,int>,int>::iterator riI=pairStartEndToNumber.begin(); riI!=pairStartEndToNumber.end(); ++riI){
 //							topPairsPerGroup[state][lT].insert(riI->second,riI->first);
 //							//if(numD<5)
 //							//printf("Acc %d Pair %d %d\n",riI->second,riI->first.first,riI->first.second);
-//					
+//
 //						}
 //					}
 //				}
@@ -826,7 +826,7 @@
 //		///////////////////////////////////////////////////
 //		// 4. Change placetype
 //		if(changePlacetypes==true){
-//			
+//
 //			// copy current placetype
 //			candidatePlaceTypes=new PlaceTypesMainClass(*currentPlaceTypes);//copy
 //			// create new parameters
@@ -877,7 +877,7 @@
 //			// generate new roadgraph
 //			//ProceduralRoadsMachine::generateRoadNetwork(*candidatePlaceTypes, *chainTrafficSimulator->simRoadGraph);
 //
-//			
+//
 //		}//place types
 //
 //	}//
@@ -907,7 +907,7 @@
 //				for(int lT=0;lT<edgesPerGroupExpanded[state].size();lT++){
 //					//edgesPerGroupExpanded[state][lT][0]
 //					if(MCMC_DEBUG)printf("state %d group %d group0 size %d\n",state,lT,edgesPerGroupExpanded[state][lT][0].size());
-//					for(std::set<LC::RoadGraph::roadGraphEdgeDesc_BI>::iterator it = edgesPerGroupExpanded[state][lT][0].begin(); 
+//					for(std::set<LC::RoadGraph::roadGraphEdgeDesc_BI>::iterator it = edgesPerGroupExpanded[state][lT][0].begin();
 //						it != edgesPerGroupExpanded[state][lT][0].end();) { // user define by the user
 //							//LC::RoadGraph::roadGraphEdgeDesc_BI currEdge=*it;//edge to evaluate
 //							//std::pair<RoadGraph::roadGraphEdgeDesc_BI, bool> e_dir=boost::edge(boost::source(currEdge, chainTrafficSimulator->simRoadGraph->myRoadGraph_BI),boost::target(currEdge, chainTrafficSimulator->simRoadGraph->myRoadGraph_BI),chainTrafficSimulator->simRoadGraph->myRoadGraph_BI);
@@ -928,7 +928,7 @@
 //							}
 //							++it;
 //							//printf("error %f size %d\n",error,chainTrafficSimulator->simRoadGraph->myRoadGraph_BI[e_dir.first].averageUtilization.size());
-//					}	
+//					}
 //				}
 //			}
 //		}else{
@@ -939,7 +939,7 @@
 //				for(int lT=0;lT<edgesPerGroupExpanded[state].size();lT++){
 //					//edgesPerGroupExpanded[state][lT][0]
 //					if(MCMC_DEBUG)printf("state %d group %d group0 size %d\n",state,lT,edgesPerGroupExpanded[state][lT][0].size());
-//					for(std::set<LC::RoadGraph::roadGraphEdgeDesc_BI>::iterator it = edgesPerGroupExpanded[state][lT][0].begin(); 
+//					for(std::set<LC::RoadGraph::roadGraphEdgeDesc_BI>::iterator it = edgesPerGroupExpanded[state][lT][0].begin();
 //						it != edgesPerGroupExpanded[state][lT][0].end();) { // user define by the user
 //							//LC::RoadGraph::roadGraphEdgeDesc_BI currEdge=*it;//edge to evaluate
 //							//std::pair<RoadGraph::roadGraphEdgeDesc_BI, bool> e_dir=boost::edge(boost::source(currEdge, chainTrafficSimulator->simRoadGraph->myRoadGraph_BI),boost::target(currEdge, chainTrafficSimulator->simRoadGraph->myRoadGraph_BI),chainTrafficSimulator->simRoadGraph->myRoadGraph_BI);
@@ -949,7 +949,7 @@
 //									errorToZero=errorToZero+abs(candidateTrafficSimulator->simRoadGraph->myRoadGraph_BI[*it/*e_dir.first*/].averageUtilization[indexToEvaluate]);
 //									numToZero++;
 //								}
-//								
+//
 //								if(inEv==0||inEv==2){//distance to 1
 //									errorToOne=errorToOne+abs(1.0f-candidateTrafficSimulator->simRoadGraph->myRoadGraph_BI[*it/*e_dir.first*/].averageUtilization[indexToEvaluate]);
 //									numToOne++;
@@ -957,7 +957,7 @@
 //							}
 //							++it;
 //							//printf("error %f size %d\n",error,chainTrafficSimulator->simRoadGraph->myRoadGraph_BI[e_dir.first].averageUtilization.size());
-//					}	
+//					}
 //				}
 //			}
 //		}
@@ -1002,7 +1002,7 @@
 //					results[8]+=abs((float)(numCurrLan-numorigLan));//different number of lanes
 //					//printf("------ Dif %f\n",abs((float)(numCurrLan-numorigLan)));
 //				}
-//				
+//
 //			}
 //			if(MCMC_DEBUG)printf("------ diffLanes %f\n",results[8]);
 //		}

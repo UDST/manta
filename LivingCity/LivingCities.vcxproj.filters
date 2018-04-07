@@ -255,6 +255,9 @@
     <ClInclude Include="roadGraphDynameqLoader.h">
       <Filter>RoadGraph Loaders</Filter>
     </ClInclude>
+    <ClInclude Include="traffic\cudaCODE_trafficSimulator.h">
+      <Filter>Traffic</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="LC_UrbanMain.h">
@@ -490,6 +493,9 @@
   <ItemGroup>
     <CudaCompile Include="bTraffic\bCUDA_trafficSimulator.cu">
       <Filter>Traffic B</Filter>
+    </CudaCompile>
+    <CudaCompile Include="traffic\cudaCODE_trafficSimulator.cu">
+      <Filter>Traffic</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>
