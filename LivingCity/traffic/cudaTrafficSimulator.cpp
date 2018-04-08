@@ -43,7 +43,7 @@ namespace{
   //const float intersectionClearance=7.0f;
   const float intersectionClearance = 7.8f;
   bool calculatePollution = true;
-}
+}  //namespace
 
 CUDATrafficSimulator::CUDATrafficSimulator() {
   initialized = false;

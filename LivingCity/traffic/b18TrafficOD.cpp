@@ -282,11 +282,13 @@ void B18TrafficOD::loadB18TrafficPeople(
     uint tgt_vertex = RoadGraphB2018::demandB2018[d].tgt_vertex;
 
     for (int p = 0; p < odNumPeople; p++) {
-      float goToWork = midTime + LC::misctools::genRand(startTimeH - midTime,
-                       endTimeH - startTimeH); //6.30-9.30 /// GOOOD ONE
-
-      randomPerson(p, trafficPersonVec[p],
+      float goToWork = LC::misctools::genRand(startTimeH, endTimeH);/*midTime + LC::misctools::genRand(startTimeH - midTime,
+                       endTimeH - startTimeH); //6.30-9.30 /// GOOOD ONE*/
+     
+      randomPerson(numPeople, trafficPersonVec[numPeople],
                    src_vertex, tgt_vertex, goToWork);
+     // printf("go to work %.2f --> %.2f\n", goToWork, (trafficPersonVec[p].time_departure / 3600.0f));
+
       numPeople++;
     }
 
@@ -300,25 +302,29 @@ void B18TrafficOD::loadB18TrafficPeople(
 
   //print histogram
   float binLength = 0.166f;//10min
-  float startTime = 14.5f;
-  float endTime = 19.5f;
   float numBins = ceil((endTimeH - startTimeH) / binLength);
+  printf("End time %.2f  Start time %.2f --> numBins %f\n", endTimeH, startTimeH, numBins);
   std::vector<int> bins(numBins);
   std::fill(bins.begin(), bins.end(), 0);
 
   for (int p = 0; p < trafficPersonVec.size(); p++) {
+    // printf("depart %.2f\n", (trafficPersonVec[p].time_departure / 3600.0f));
     float t = (trafficPersonVec[p].time_departure / 3600.0f) - startTimeH;
+    
     int binN = t / binLength;
+    if (binN < 0 || binN >= numBins) {
+      printf("Bin out of range %d of %f\m", binN, numBins);
+    }
     bins[binN]++;
   }
 
   printf("\n");
 
   for (int binN = 0; binN < bins.size(); binN++) {
-    printf("%f %d\n", startTime + binN * binLength, bins[binN]);
+    printf("%f %d\n", startTimeH + binN * binLength, bins[binN]);
   }
 
-  printf("\n");
+  printf("loadB18TrafficPeople: People %d\n", numPeople);
 
 }
 

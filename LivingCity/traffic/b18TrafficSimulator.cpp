@@ -4,8 +4,8 @@
 #include "../LC_GLWidget3D.h"
 #include "../LC_UrbanMain.h"
 #include <thread>
-#define DEBUG_TRAFFIC 0
-#define DEBUG_SIMULATOR 0
+#define DEBUG_TRAFFIC 1
+#define DEBUG_SIMULATOR 1
 
 namespace LC {
 
@@ -1354,22 +1354,16 @@ void sampleTraffic(std::vector<CUDATrafficPerson> &trafficPersonVec,
 // reGeneratePeopleLanes-> recompute lanes (it is used in MCMC that calls those func before)
 void B18TrafficSimulator::simulateInCPU_MultiPass(int numOfPasses,
     float startTimeH, float endTimeH) {
-  //const int numOfPasses=3;
-  if (DEBUG_SIMULATOR) {
-    printf("MP generateTrafficPersonJob\n");
-  }
 
   // create lane map
   if (DEBUG_SIMULATOR) {
     printf("MP createLaneMap\n");
   }
-
   createLaneMap();
 
   if (DEBUG_SIMULATOR) {
     printf("MP Start multi pass simulation\n");
   }
-
   int weigthMode;
   float peoplePathSampling[] = {1.0f, 1.0f, 0.5f, 0.25f, 0.12f, 0.67f};
 

@@ -56,7 +56,6 @@ class B18TrafficSimulator {
   float deltaTime;
   float cellSize;
   ushort maxWidth;
-  int numberPeople;
   int threadNumber;
   float avgTravelTime;
 

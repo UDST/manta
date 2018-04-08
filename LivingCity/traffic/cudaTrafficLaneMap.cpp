@@ -34,7 +34,7 @@
 
 #include "cudaTrafficLaneMap.h"
 
-#define LANE_DEBUG 0
+#define LANE_DEBUG 1
 
 namespace LC {
 
@@ -66,7 +66,7 @@ void CUDATrafficLaneMap::createLaneMap(
     printf("  >> createLaneMap CS: %f\n", cellSize);
   }
 
-  // 1. Cretae edgesData and find requires sizes fro e
+  // 1. Cretae edgesData and find requires sizes.
   RoadGraph::roadGraphEdgeIter_BI ei, ei_end;
   int edge_count = 0;
   int tNumLanes = 0;
