@@ -63,7 +63,7 @@ void CUDATrafficLaneMap::createLaneMap(
   //////////////////////////////////////////////////////////
   // GENERATE LANE MAP
   if (LANE_DEBUG) {
-    printf("  >> createLaneMap CS: %f\n", cellSize);
+    printf("  >> createLaneMap CellSize: %.2fm\n", cellSize);
   }
 
   // 1. Cretae edgesData and find requires sizes.
@@ -77,6 +77,25 @@ void CUDATrafficLaneMap::createLaneMap(
                    4); //3 to make sure it fits
   edgeDescToLaneMapNum.clear();
   laneMapNumToEdgeDesc.clear();
+
+  // Distribution of length
+  float binLength = 1.0f;//1km
+  int numBins = 27 / binLength;//maxlength is 26km
+  std::vector<int> bins(numBins);
+  std::fill(bins.begin(), bins.end(), 0);
+  for (boost::tie(ei, ei_end) = boost::edges(inRoadGraph.myRoadGraph_BI);
+    ei != ei_end; ++ei) {
+    float length = inRoadGraph.myRoadGraph_BI[*ei].edgeLength;
+    int binN = (length / 1000.0f) / binLength;
+    //printf("l %.2f binN %d\n", length, binN);
+    if (binN < 0 || binN >= numBins) {
+      printf("ERROR: Bin out of range %d of %f\n", binN, numBins);
+    }
+    bins[binN]++;
+  }
+  for (int binN = 0; binN < bins.size(); binN++) {
+    printf("%.0fkm, %d\n", (binN * binLength+1.0f), bins[binN]);
+  }
 
   for (boost::tie(ei, ei_end) = boost::edges(inRoadGraph.myRoadGraph_BI);
        ei != ei_end; ++ei) {
@@ -118,8 +137,7 @@ void CUDATrafficLaneMap::createLaneMap(
   edgesData.resize(tNumLanes);
 
   if (LANE_DEBUG) {
-    printf("Num edges %d Num Lanes %d Max Leng %f\n", edge_count, tNumLanes,
-           maxLength);
+    printf("Num edges %d Num Lanes %d Max Leng %f\n", edge_count, tNumLanes, maxLength);
   }
 
   // 2. RESIZE LANE MAP
@@ -127,6 +145,7 @@ void CUDATrafficLaneMap::createLaneMap(
                   cellSize); // DIV/8 bitmap but NOT DEV TO PUT THE SPEED
   maxWidth = 4 * (((maxWidth - 1) / 4) + 1); //padding
 
+  printf("Total Memory %d\n", maxWidth * tNumLanes * 2);
   laneMap.resize(maxWidth * tNumLanes * 2); //2 to keep both maps
   memset(laneMap.data(), -1, laneMap.size()*sizeof(unsigned char)); //
 
