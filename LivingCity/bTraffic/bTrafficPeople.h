@@ -243,7 +243,7 @@ class BTrafficPeople {
     fileWriteArray<unsigned int>(indTo1stEdge, "data/people/indTo1stEdge.dat");
     fileWriteArray<unsigned short>(nextEdge, "data/people/nextEdge.dat");
     fileWriteArray<unsigned char>(edgeExitOut, "data/people/edgeExitOut.dat");
-    fileWriteArray<unsigned char>(edgeExitOut, "data/people/edgeExitIn.dat");
+    fileWriteArray<unsigned char>(edgeExitIn, "data/people/edgeExitIn.dat");
   }//
 
   void loadFromFile() {

@@ -46,11 +46,11 @@
     <Filter Include="Traffic">
       <UniqueIdentifier>{7268ea49-6588-489b-baf6-c08a00d5039c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Traffic B">
-      <UniqueIdentifier>{d3b2c653-5d40-41a1-8dd7-0c2aa071c960}</UniqueIdentifier>
-    </Filter>
     <Filter Include="RoadGraph Loaders">
       <UniqueIdentifier>{e1b278c8-65f5-4f1a-b894-3a11f345bfcd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Traffic B2014">
+      <UniqueIdentifier>{d3b2c653-5d40-41a1-8dd7-0c2aa071c960}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -217,34 +217,34 @@
       <Filter>VBO</Filter>
     </ClInclude>
     <ClInclude Include="bTraffic\bPMTrafficPerson.h">
-      <Filter>Traffic B</Filter>
+      <Filter>Traffic B2014</Filter>
     </ClInclude>
     <ClInclude Include="bTraffic\bTrafficDijkstra.h">
-      <Filter>Traffic B</Filter>
+      <Filter>Traffic B2014</Filter>
     </ClInclude>
     <ClInclude Include="bTraffic\bTrafficLaneMap.h">
-      <Filter>Traffic B</Filter>
+      <Filter>Traffic B2014</Filter>
     </ClInclude>
     <ClInclude Include="bTraffic\bEdgeIntersectionData.h">
-      <Filter>Traffic B</Filter>
+      <Filter>Traffic B2014</Filter>
     </ClInclude>
     <ClInclude Include="bTraffic\bTrafficJohnson.h">
-      <Filter>Traffic B</Filter>
+      <Filter>Traffic B2014</Filter>
     </ClInclude>
     <ClInclude Include="bTraffic\bTrafficPeople.h">
-      <Filter>Traffic B</Filter>
+      <Filter>Traffic B2014</Filter>
     </ClInclude>
     <ClInclude Include="bTraffic\bTrafficConstants.h">
-      <Filter>Traffic B</Filter>
+      <Filter>Traffic B2014</Filter>
     </ClInclude>
     <ClInclude Include="bTraffic\bCUDA_trafficSimulator.h">
-      <Filter>Traffic B</Filter>
+      <Filter>Traffic B2014</Filter>
     </ClInclude>
     <ClInclude Include="bTraffic\bGenerateTest.h">
-      <Filter>Traffic B</Filter>
+      <Filter>Traffic B2014</Filter>
     </ClInclude>
     <ClInclude Include="bTraffic\bTrafficIntersection.h">
-      <Filter>Traffic B</Filter>
+      <Filter>Traffic B2014</Filter>
     </ClInclude>
     <ClInclude Include="GeneratedFiles\ui_LC_UrbanMain.h">
       <Filter>Generated Files</Filter>
@@ -256,6 +256,12 @@
       <Filter>RoadGraph Loaders</Filter>
     </ClInclude>
     <ClInclude Include="traffic\cudaCODE_trafficSimulator.h">
+      <Filter>Traffic</Filter>
+    </ClInclude>
+    <ClInclude Include="traffic\b18TrafficSimulator.h">
+      <Filter>Traffic</Filter>
+    </ClInclude>
+    <ClInclude Include="traffic\b18TrafficOD.h">
       <Filter>Traffic</Filter>
     </ClInclude>
   </ItemGroup>
@@ -276,10 +282,10 @@
       <Filter>Main Files</Filter>
     </CustomBuild>
     <CustomBuild Include="bTraffic\bTrafficSimulator.h">
-      <Filter>Traffic B</Filter>
+      <Filter>Traffic B2014</Filter>
     </CustomBuild>
     <CustomBuild Include="bTraffic\bCPUTrafficThread.h">
-      <Filter>Traffic B</Filter>
+      <Filter>Traffic B2014</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
@@ -443,28 +449,28 @@
       <Filter>VBO</Filter>
     </ClCompile>
     <ClCompile Include="bTraffic\bTrafficSimulator.cpp">
-      <Filter>Traffic B</Filter>
+      <Filter>Traffic B2014</Filter>
     </ClCompile>
     <ClCompile Include="bTraffic\bPMTrafficPerson.cpp">
-      <Filter>Traffic B</Filter>
+      <Filter>Traffic B2014</Filter>
     </ClCompile>
     <ClCompile Include="bTraffic\bTrafficDijkstra.cpp">
-      <Filter>Traffic B</Filter>
+      <Filter>Traffic B2014</Filter>
     </ClCompile>
     <ClCompile Include="bTraffic\bTrafficLaneMap.cpp">
-      <Filter>Traffic B</Filter>
+      <Filter>Traffic B2014</Filter>
     </ClCompile>
     <ClCompile Include="bTraffic\bTrafficJohnson.cpp">
-      <Filter>Traffic B</Filter>
+      <Filter>Traffic B2014</Filter>
     </ClCompile>
     <ClCompile Include="bTraffic\bGenerateTest.cpp">
-      <Filter>Traffic B</Filter>
+      <Filter>Traffic B2014</Filter>
     </ClCompile>
     <ClCompile Include="bTraffic\bTrafficIntersection.cpp">
-      <Filter>Traffic B</Filter>
+      <Filter>Traffic B2014</Filter>
     </ClCompile>
     <ClCompile Include="bTraffic\bCPUTrafficThread.cpp">
-      <Filter>Traffic B</Filter>
+      <Filter>Traffic B2014</Filter>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Release\moc_bCPUTrafficThread.cpp">
       <Filter>Generated Files</Filter>
@@ -481,6 +487,12 @@
     <ClCompile Include="roadGraphDynameqLoader.cpp">
       <Filter>RoadGraph Loaders</Filter>
     </ClCompile>
+    <ClCompile Include="traffic\b18TrafficSimulator.cpp">
+      <Filter>Traffic</Filter>
+    </ClCompile>
+    <ClCompile Include="traffic\b18TrafficOD.cpp">
+      <Filter>Traffic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\data\shaders\lc_fragment.glsl">
@@ -492,7 +504,7 @@
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="bTraffic\bCUDA_trafficSimulator.cu">
-      <Filter>Traffic B</Filter>
+      <Filter>Traffic B2014</Filter>
     </CudaCompile>
     <CudaCompile Include="traffic\cudaCODE_trafficSimulator.cu">
       <Filter>Traffic</Filter>

@@ -90,10 +90,6 @@ struct CUDATrafficPerson {
   int isInIntersection;
 };
 
-/*struct CUDATrafficPersonStatus{
-
-
-};*/
 }
 
 #endif

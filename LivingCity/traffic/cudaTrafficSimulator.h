@@ -75,7 +75,7 @@ class CUDATrafficSimulator {
 
   // init data
   RoadGraph *simRoadGraph;
-  //LCUrbanMain* clientMain;
+  LCUrbanMain* clientMain;
 
   PeopleJobInfoLayers simPeopleJobInfoLayers;
 

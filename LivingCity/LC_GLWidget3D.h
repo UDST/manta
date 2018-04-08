@@ -37,8 +37,7 @@
 
 #include "LC_GLWidget3D_Shadows.h"
 
-#include "traffic/cudaTrafficSimulator.h"
-#include "bTraffic/bTrafficSimulator.h"
+#include "traffic/b18TrafficSimulator.h"
 
 namespace LC {
 	static const int M_NORMAL=0;
@@ -84,8 +83,7 @@ public:
 	VBORenderManager vboRenderManager;
 
 	//traffic
-	CUDATrafficSimulator cudaTrafficSimulator;
-	BTrafficSimulator bTrafficSimulator;
+	B18TrafficSimulator b18TrafficSimulator;
 
 	LCGLWidget3D(QWidget *parent = 0);
 	~LCGLWidget3D();	

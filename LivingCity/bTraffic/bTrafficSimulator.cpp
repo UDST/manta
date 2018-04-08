@@ -171,7 +171,7 @@ void BTrafficSimulator::simulateGPU(float _startTime, float _endTime) {
   float startTime = _startTime * 3600.0f;
   float endTime = _endTime * 3600.0f;
   state = 1;
-  clientMain->ui.progressBar->show();
+  clientMain->ui.b18ProgressBar->show();
   // init data structures
   //////////////////////////////////////////////////////////////////
   int numPeople = people.numPeople;
@@ -222,11 +222,11 @@ void BTrafficSimulator::simulateGPU(float _startTime, float _endTime) {
     bSimulateTrafficCUDA(currentTime, numPeople);
 
     //render
-    if (clientMain->ui.bRenderSimulationCheckBox->isChecked()) {
+    if (clientMain->ui.b18RenderSimulationCheckBox->isChecked()) {
       bGetDataCUDA(people);//trafficPersonVec, trafficLights);
 
-      if ((clientMain->ui.bRenderStepSpinBox->value() == 0) ||
-          (steps % clientMain->ui.bRenderStepSpinBox->value() == 0)) { //each value steps
+      if ((clientMain->ui.b18RenderStepSpinBox->value() == 0) ||
+        (steps % clientMain->ui.b18RenderStepSpinBox->value() == 0)) { //each value steps
         //printf("render cuda\n");
         clientMain->glWidget3D->updateGL();
         QCoreApplication::processEvents(QEventLoop::AllEvents, 1000);
@@ -239,7 +239,7 @@ void BTrafficSimulator::simulateGPU(float _startTime, float _endTime) {
         int timeH = currentTime / 3600.0f;
         int timeM = (currentTime - timeH * 3600.0f) / 60.0f;
         timeT.sprintf("%d:%02d", timeH, timeM);
-        clientMain->ui.bTimeLCD->display(timeT);
+        clientMain->ui.b18TimeLCD->display(timeT);
       }
     }//render
 
@@ -353,7 +353,7 @@ void BTrafficSimulator::simulateCPU(float _startTime, float _endTime) {
   float startTime = _startTime * 3600.0f;
   float endTime = _endTime * 3600.0f;
   state = 1;
-  clientMain->ui.progressBar->show();
+  clientMain->ui.b18ProgressBar->show();
   //
   int numPeople = people.numPeople;
   simulationSt.numPeopleFinished = 0;//for early finish
@@ -540,13 +540,13 @@ void BTrafficSimulator::simulateCPU(float _startTime, float _endTime) {
     }*/
 
     //render //printstate
-    if (clientMain->ui.bRenderSimulationCheckBox->isChecked()) {
+    if (clientMain->ui.b18RenderSimulationCheckBox->isChecked()) {
       {
         //printCurrentState();
       }
 
-      if ((clientMain->ui.bRenderStepSpinBox->value() == 0) ||
-          (steps % clientMain->ui.bRenderStepSpinBox->value() == 0)) { //each value steps
+      if ((clientMain->ui.b18RenderStepSpinBox->value() == 0) ||
+        (steps % clientMain->ui.b18RenderStepSpinBox->value() == 0)) { //each value steps
         //printf("render cuda\n");
         clientMain->glWidget3D->updateGL();
         QCoreApplication::processEvents(QEventLoop::AllEvents, 1000);
@@ -559,7 +559,7 @@ void BTrafficSimulator::simulateCPU(float _startTime, float _endTime) {
         int timeH = currentTime / 3600.0f;
         int timeM = (currentTime - timeH * 3600.0f) / 60.0f;
         timeT.sprintf("%d:%02d", timeH, timeM);
-        clientMain->ui.bTimeLCD->display(timeT);
+        clientMain->ui.b18TimeLCD->display(timeT);
       }
     }//render
 
@@ -601,7 +601,7 @@ void BTrafficSimulator::simulateCPU(float _startTime, float _endTime) {
 
   threads.clear();
   /////////////////////////////////////////////////////////////////
-  clientMain->ui.progressBar->hide();
+  clientMain->ui.b18ProgressBar->hide();
   state = 0;
 }//
 

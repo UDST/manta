@@ -113,6 +113,8 @@ HEADERS += \
     traffic/cudaTrafficRoutes.h \
     traffic/cudaTrafficSimulator.h \
     triangle/triangle.h \
+    traffic/b18TrafficOD.h \
+    traffic/b18TrafficSimulator.h \
     bTraffic/bCUDA_trafficSimulator.h
 
 SOURCES += \
@@ -179,7 +181,9 @@ SOURCES += \
     traffic/cudaTrafficPersonShortestPath.cpp \
     traffic/cudaTrafficRoutes.cpp \
     traffic/cudaTrafficSimulator.cpp \
-    triangle/triangle.c
+    triangle/triangle.c \
+    traffic/b18TrafficOD.cpp \
+    traffic/b18TrafficSimulator.cpp
 
 OTHER_FILES += \
     bTraffic/bCUDA_trafficSimulator.cu

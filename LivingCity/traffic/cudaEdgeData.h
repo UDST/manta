@@ -34,6 +34,10 @@
 #define LC_CUDA_EDGE_DATA_H
 
 
+#define ushort unsigned short
+#define uint unsigned int
+#define uchar unsigned char
+
 namespace LC {
 
 struct edgeData {

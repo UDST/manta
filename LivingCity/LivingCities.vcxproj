@@ -97,6 +97,8 @@
     <ClInclude Include="RoadGraph\roadGraph.h" />
     <ClInclude Include="RoadGraph\roadGraphEdge.h" />
     <ClInclude Include="RoadGraph\roadGraphVertex.h" />
+    <ClInclude Include="traffic\b18TrafficOD.h" />
+    <ClInclude Include="traffic\b18TrafficSimulator.h" />
     <ClInclude Include="traffic\cudaCODE_trafficSimulator.h" />
     <ClInclude Include="traffic\cudaEdgeData.h" />
     <ClInclude Include="traffic\cudaGridPollution.h" />
@@ -243,6 +245,8 @@
     <ClCompile Include="RoadGraph\roadGraph.cpp" />
     <ClCompile Include="RoadGraph\roadGraphEdge.cpp" />
     <ClCompile Include="RoadGraph\roadGraphVertex.cpp" />
+    <ClCompile Include="traffic\b18TrafficOD.cpp" />
+    <ClCompile Include="traffic\b18TrafficSimulator.cpp" />
     <ClCompile Include="traffic\cudaGridPollution.cpp" />
     <ClCompile Include="traffic\cudaPmTrafficPersonJob.cpp" />
     <ClCompile Include="traffic\cudaTrafficDesigner.cpp" />

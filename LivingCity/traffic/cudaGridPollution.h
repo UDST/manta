@@ -59,12 +59,13 @@ class CUDAGridPollution {
   float gridSize;
   int gridNumSide;
 
-  void initPollution();
+  void initPollution(LCUrbanMain *clientMain);
   int initialized;
 
   void addValueToGrid(float currTime,
                       std::vector<CUDATrafficPerson> &trafficPersonVec,
                       RoadGraph *simRoadGraph,
+                      LCUrbanMain *clientMain,
                       std::map<uint, RoadGraph::roadGraphEdgeDesc_BI> &laneMapNumToEdgeDesc);
   void renderPollution(int valueToRender);
 
@@ -72,6 +73,7 @@ class CUDAGridPollution {
   std::vector<float> lastPersonValue;
   std::vector<float> timeStamp;
   float maxValue;
+  LCUrbanMain *clientMain;
 
   void saveToFile(QString fileName);
   void loadSimSave(QString fileName, LCUrbanMain *clientMain);

@@ -638,19 +638,14 @@ void LCGLWidget3D::drawScene(int drawMode) {
     }
 
     // routes
-    if (urbanMain->ui.bRenderRoutesCheckBox->isChecked() == true) {
-      bTrafficSimulator.renderRoutes(vboRenderManager);
+    if (urbanMain->ui.b18RenderRoutesCheckBox->isChecked() == true) {
+      // TODO (igacarid) render routes b18TrafficSimulator.renderRoutes(vboRenderManager);
     }
 
     ////////////////////////////
     // TRAFFIC
-    if (urbanMain->ui.bRenderSimulationCheckBox->isChecked() == true) {
-      bTrafficSimulator.render(vboRenderManager);
-    }
-
-    //traffic CUDA
-    if (urbanMain->ui.cudaRenderSimulationCheckBox->isChecked() == true) {
-      cudaTrafficSimulator.render(vboRenderManager);
+    if (urbanMain->ui.b18RenderSimulationCheckBox->isChecked() == true) {
+      b18TrafficSimulator.render(vboRenderManager);
     }
 
     vboRenderManager.renderStaticGeometry(QString("sky"));
@@ -884,12 +879,6 @@ void LCGLWidget3D::keyPressEvent(QKeyEvent *e) {
 
     grabFrameBuffer().save(name + numbS + ".png");
     printf("Saved: %s\n", (name + numbS + ".png").toLatin1().constData());
-    break;
-
-  case Qt::Key_O:
-    GenerateTest::generateTest(cg.roadGraph, bTrafficSimulator.people, this);
-    vboRoadGraph.updateRoadGraph(vboRenderManager, cg.roadGraph);
-    updateGL();
     break;
   }
 }//

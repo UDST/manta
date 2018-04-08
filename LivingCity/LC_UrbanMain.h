@@ -39,8 +39,6 @@ class LCUrbanMain : public QMainWindow {
 
 protected:
 	
-	
-
 public:
 	Ui::LCUrbanMain ui;
 	LCGLWidget3D* glWidget3D;
@@ -52,11 +50,10 @@ public:
 	bool initModeActive;
 	void render(TextureManager* textureManager);
 
-	//void keyPressEvent(QKeyEvent* e);
-	//void keyReleaseEvent(QKeyEvent* e);
-	//void updateGL();
-
 public slots:
+
+  ////////////////////////////////////////
+  // PROCEDURAL MODELING
 	void cudaLanesNumArterialSlot(int val);
 	void cudaLanesNumRoadSlot(int val);
 
@@ -104,24 +101,23 @@ public slots:
 
   void onProceduralModeling(int);
 
-	//--traffic
-	void onArterialEdgesSpeedSlot(int val);
-	void onSimulatePressed(bool);
+  ////////////////////////////////////////
+  // TRAFFIC B18
 
 	//--label
-	void onLabelPressed(bool);
+	//void onB18LabelPressed(bool);
 
 	//--bTraffic
-	void onB2018SimulateCPUPressed(bool);
-	void onB2018SimulateGPUPressed(bool);
+	void onB18SimulateCPUPressed(bool);
+	void onB18SimulateGPUPressed(bool);
 
-	void onCreateRandomOD(bool);
-  void onLoadB2018OD(bool);
-  void onCreateOD(bool random);
+	void onB18CreateRandomOD(bool);
+  void onB18LoadB18OD(bool);
+  void b18CreateOD(bool random);
 
   // Load OD and Rorutes.
-	void onLoadODR(bool);
-	void onSaveODR(bool);
+	void onB18LoadODR(bool);
+	void onB18SaveODR(bool);
 
 
 private:

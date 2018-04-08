@@ -32,6 +32,7 @@
 #include "../LC_GLWidget3D.h"
 
 #include "bGenerateTest.h"
+#include "bPMTrafficPerson.h"
 #include "../global.h"
 
 

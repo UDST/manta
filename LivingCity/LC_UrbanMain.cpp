@@ -49,8 +49,8 @@ LCUrbanMain::~LCUrbanMain() {
 
 
 /**
-      * Initialize geometry and generate the entire geometry objects.
-      */
+* Initialize geometry and generate the entire geometry objects.
+*/
 void LCUrbanMain::init() {
   G::global()["figureMode"] = 0;
   G::global()["mouseState"] = M_NORMAL;
@@ -66,6 +66,9 @@ void LCUrbanMain::init() {
 
   G::global()["roadLaneWidth"] = 4.5f;
   G::global()["render_lighting"] = true;
+
+  G::global()["cuda_arterial_edges_speed_ms"] = 1000.0f * 40.0f / // 40km/h
+    3600.0f; //km/h--> m/s
 
   //------ Procedural modeling
 
@@ -123,10 +126,6 @@ void LCUrbanMain::init() {
   connect(ui.landUseParkPercentSlider, SIGNAL(valueChanged(int)),
           this, SLOT(landUseParkPercentageSlot(int)));
 
-  // GUI
-  //connect(ui.action2D, SIGNAL(triggered()), this, SLOT(onRender2DSlot()));
-  //connect(ui.action3D, SIGNAL(triggered()), this, SLOT(onRender3DSlot()));
-
   // TERRAIN
   connect(ui.terrainPaint_sizeSlider, SIGNAL(valueChanged(int)), this,
           SLOT(updateTerrainLabels(int)));
@@ -152,11 +151,7 @@ void LCUrbanMain::init() {
   connect(ui.layer_clearLayersButton, SIGNAL(clicked(bool)), this,
           SLOT(onClearLayers(bool)));
 
-  // TRAFFIC
-  connect(ui.cudaCPUSimulateButton, SIGNAL(clicked(bool)), this,
-          SLOT(onSimulatePressed(bool)));
-  connect(ui.ArterialEdgesSpeedSlider, SIGNAL(valueChanged(int)), this,
-          SLOT(onArterialEdgesSpeedSlot(int)));
+
   ////////////////////////////////////////////////////////
   // TOOL BAR
   ui.topDock->setTitleBarWidget(new QWidget());
@@ -169,27 +164,28 @@ void LCUrbanMain::init() {
           SLOT(onLabelPressed(bool)));
 
   ///////////////////////////////////////////////////////
-  // B2018 TRAFFIC
+  // B18 TRAFFIC
+  connect(ui.b18CPUSimulateButton, SIGNAL(clicked(bool)), this,
+    SLOT(onB18SimulateCPUPressed(bool)));
+  connect(ui.b18GPUSimulateButton, SIGNAL(clicked(bool)), this,
+    SLOT(onB18SimulateGPUPressed(bool)));
 
+  connect(ui.b18CreateRandomODButton, SIGNAL(clicked(bool)), this,
+    SLOT(onB18CreateRandomOD(bool)));
 
-  connect(ui.bCreateRandomODButton, SIGNAL(clicked(bool)), this,
-    SLOT(onCreateRandomOD(bool)));
+  connect(ui.b18LoadB18Button, SIGNAL(clicked(bool)), this,
+    SLOT(onB18LoadB18OD(bool)));
 
-  connect(ui.bLoadB2018Button, SIGNAL(clicked(bool)), this,
-    SLOT(onLoadB2018OD(bool)));
+  connect(ui.b18LoadODRButton, SIGNAL(clicked(bool)), this,
+    SLOT(onB18LoadODR(bool)));
+  connect(ui.b18SaveODRButton, SIGNAL(clicked(bool)), this,
+    SLOT(onB18SaveODR(bool)));
 
-  connect(ui.bLoadODRButton, SIGNAL(clicked(bool)), this,
-    SLOT(onLoadODR(bool)));
-  connect(ui.bSaveODRButton, SIGNAL(clicked(bool)), this,
-    SLOT(onSaveODR(bool)));
+  ui.b18ProgressBar->hide();
 
-  //GPU
-  connect(ui.b2018CPUSimulateButton, SIGNAL(clicked(bool)), this,
-    SLOT(onB2018SimulateCPUPressed(bool)));
-
-  connect(ui.b2018GPUSimulateButton, SIGNAL(clicked(bool)), this,
-          SLOT(onB2018SimulateGPUPressed(bool)));
-  ui.progressBar->hide();
+  ///////////////////////////////////////////////////////
+  // B2015 TRAFFIC
+  
 
   // Hide menu
   ui.placeTypeEditWidget->hide();
@@ -623,85 +619,36 @@ void LCUrbanMain::onLayerEnable(int) {
 // TRAFFIC
 //////////////////////////////////////
 
-void LCUrbanMain::onArterialEdgesSpeedSlot(int val) {
-  G::global()["cuda_arterial_edges_speed_ms"] = 1000.0f * val /
-      3600.0f; //km/h--> m/s
-  ui.ArterialEdgesSpeedGroupBox->setTitle(
-    "Arterial Speed: "
-    + QString::number(val)
-    + " km/h"
-  );
 
-  if (!initModeActive) {
-    //glWidget3D->generateGeometry(ClientGeometry::kStartFromRoads);
-    glWidget3D->generateGeometry(ClientGeometry::kJustRoads);
-    glWidget3D->updateGL();
-  }
-}//
-
-void LCUrbanMain::onSimulatePressed(bool) {
-  /////////////////////////
-  printf(">>People and layers\n");
-  int numPeople = ui.cudaNumPeopleSpinBox->value();
-
-  //if(glWidget3D->infoLayers.layers.size()<=0)
-  //	glWidget3D->infoLayers.initInfoLayer();
-  printf(">>Init simulator\n");
-
-  float deltaTime =
-    ui.cudaDeltaTimeSpinBox->value(); //LC::misctools::Global::global()->cuda_delta_time;
-  float cellSize = ui.cudaCellSizeSpinBox->value(); //meter
-
-  printf(">>onSimulatePressed deltaTime %f cellSize %f numPeople %d\n", deltaTime,
-         cellSize, numPeople);
-  //exit(0);
-
-  glWidget3D->cudaTrafficSimulator.initSimulator(deltaTime, cellSize,
-      &glWidget3D->cg.roadGraph, numPeople, glWidget3D->vboRenderManager.layers,
-      this);
-
-  //////////////////////////
-
-  //if(ui.cudaCPUSimulateButton==(QPushButton*)QObject::sender()){
-  printf(">>CUDACPUSimulatePressed\n");
-  int numPasses = ui.cudaShortestPathNumPassesSpinBox->value();
-  glWidget3D->cudaTrafficSimulator.simulateInCPU_MultiPass(numPasses);
-  /*}else{
-                      printf(">>CUDAGPUSimulatePressed\n");
-                      printf(">>Make calls\n");
-                      if(mGLWidget_3D->cudaTrafficSimulator.trafficPersonVec.size()!=numPeople)
-                              mGLWidget_3D->cudaTrafficSimulator.generateTrafficPersonJob();
-                      else
-                              mGLWidget_3D->cudaTrafficSimulator.resetPeopleJobANDintersections();
-
-                      mGLWidget_3D->cudaTrafficSimulator.createLaneMap();
-                      mGLWidget_3D->cudaTrafficSimulator.generateCarPaths();
-                      mGLWidget_3D->cudaTrafficSimulator.simulateInGPU();
-                      //mGLWidget_3D->cudaTrafficSimulator.calculateAndDisplayTrafficDensity();
-              }*/
-
-  //calculate density automatically
-  //CUDATimeSliderSlot(ui.cudaTimeSlider->value());//update timeSlider
-  printf("<<CUDACPUSimulatePressed\n");
-}//
-
-
-
-void LCUrbanMain::onLabelPressed(bool) {
+/*void LCUrbanMain::onLabelPressed(bool) {
   if (ui.TB_roadLabelButton->isChecked() == true) {
     //generate labels
     VBORoadLabels::updateRoadLabels(glWidget3D->vboRenderManager,
                                     glWidget3D->cg.roadGraph);
   }
-}//
+}// */
 
 //////////////////////////
 //////////////////////////
 //////////////////////////
 
-void LCUrbanMain::onB2018SimulateCPUPressed(bool) {
+void LCUrbanMain::onB18SimulateCPUPressed(bool) {
 
   ///////////////////////////////////////
+  // SIMULATION
+  // time
+  QTime sTime = ui.b18StratTimeEdit->time();
+  QTime eTime = ui.b18EndTimeEdit->time();
+  float startTimeH = sTime.hour() + sTime.minute() / 60.0f;
+  float endTimeH = eTime.hour() + eTime.minute() / 60.0f;
+
+  int numPasses = ui.b18ShortestPathNumPassesSpinBox->value();
+  glWidget3D->b18TrafficSimulator.simulateInCPU_MultiPass(numPasses, startTimeH, endTimeH);
+}//
+
+void LCUrbanMain::onB18SimulateGPUPressed(bool) {
+
+  /*///////////////////////////////////////
   // SIMULATION
   // time
   QTime sTime = ui.stratTimeEdit->time();
@@ -709,48 +656,34 @@ void LCUrbanMain::onB2018SimulateCPUPressed(bool) {
   float startTime = sTime.hour() + sTime.minute() / 60.0f;
   float endTime = eTime.hour() + eTime.minute() / 60.0f;
   //simulate
-  glWidget3D->bTrafficSimulator.simulateCPU(startTime, endTime);
+  glWidget3D->bTrafficSimulator.simulateGPU(startTime, endTime);*/
 }//
 
-void LCUrbanMain::onB2018SimulateGPUPressed(bool) {
-
-  ///////////////////////////////////////
-  // SIMULATION
-  // time
-  QTime sTime = ui.stratTimeEdit->time();
-  QTime eTime = ui.endTimeEdit->time();
-  float startTime = sTime.hour() + sTime.minute() / 60.0f;
-  float endTime = eTime.hour() + eTime.minute() / 60.0f;
-  //simulate
-  glWidget3D->bTrafficSimulator.simulateGPU(startTime, endTime);
-}//
-
-void LCUrbanMain::onCreateRandomOD(bool) {
-  onCreateOD(true);
+void LCUrbanMain::onB18CreateRandomOD(bool) {
+  b18CreateOD(/*random=*/true);
 }
 
-void LCUrbanMain::onLoadB2018OD(bool) {
-  onCreateOD(false);
+void LCUrbanMain::onB18LoadB18OD(bool) {
+  b18CreateOD(/*random=*/false);
 }
 
-void LCUrbanMain::onCreateOD(bool random) {
+void LCUrbanMain::b18CreateOD(bool random) {
   
   // Enable simulation buttons
-  ui.b2018CPUSimulateButton->setEnabled(true);
-  ui.b2018GPUSimulateButton->setEnabled(true);
-  ui.bSaveODRButton->setEnabled(true);
+  ui.b18CPUSimulateButton->setEnabled(true);
+  ui.b18GPUSimulateButton->setEnabled(true);
+  ui.b18SaveODRButton->setEnabled(true);
 
   QTime timer;
   timer.start();
 
   /////////////////////////////////////////////
   // INIT
-  if (glWidget3D->bTrafficSimulator.initialized == false) {
-    //float deltaTime = ui.bDeltaTimeSpinBox->value();
-    //float cellSize = ui.bCellSizeSpinBox->value();
+  if (glWidget3D->b18TrafficSimulator.initialized == false) {
+    float deltaTime = ui.b18DeltaTimeSpinBox->value();
+    float cellSize = ui.b18CellSizeSpinBox->value();
     printf(">>1. Init simulator\n");
-    glWidget3D->bTrafficSimulator.init(&glWidget3D->cg.roadGraph,
-                                       this); //deltaTime, cellSize,
+    glWidget3D->b18TrafficSimulator.initSimulator(deltaTime, cellSize, &glWidget3D->cg.roadGraph, this); //
     printf("<<1. Init simulator %d ms\n", timer.elapsed());
   } else {
     printf("<<1. Already initiated\n");
@@ -758,17 +691,17 @@ void LCUrbanMain::onCreateOD(bool random) {
 
   ////////////////////////////////////////////
   // CREATE PEOPLE
-  if (glWidget3D->bTrafficSimulator.people.numPeople <= 0) {
+  if (glWidget3D->b18TrafficSimulator.trafficPersonVec.size() <= 0) {
     printf(">>2. create people\n");
     timer.restart();
-    QTime sDemandTime = ui.demandStratTimeEdit->time();
-    QTime eDemadTime = ui.demandEndTimeEdit->time();
+    QTime sDemandTime = ui.b18DemandStratTimeEdit->time();
+    QTime eDemadTime = ui.b18DemandEndTimeEdit->time();
     float startDemandTime = sDemandTime.hour() + sDemandTime.minute() / 60.0f;
     float endDemandTime = eDemadTime.hour() + eDemadTime.minute() / 60.0f;
 
     if (random) {
       printf(">>2.1 create random people\n");
-      int numPeople = ui.bNumPeopleSpinBox->value();
+      int numPeople = ui.b18NumPeopleSpinBox->value();
 
       if (glWidget3D->vboRenderManager.layers.layersEmpty() == true) {
         printf(">>2.Layers empty--> Try to load from file\n");
@@ -778,12 +711,11 @@ void LCUrbanMain::onCreateOD(bool random) {
       }
 
       printf(">>2. createPeople %d\n", numPeople);
-      glWidget3D->bTrafficSimulator.createRandomPeople(startDemandTime, endDemandTime,
+      glWidget3D->b18TrafficSimulator.createRandomPeople(startDemandTime, endDemandTime,
           numPeople, glWidget3D->vboRenderManager.layers);
     } else {
       printf(">>2. createB2018People\n");
-      glWidget3D->bTrafficSimulator.createB2018People(startDemandTime,
-          endDemandTime);
+      glWidget3D->b18TrafficSimulator.createB2018People(startDemandTime, endDemandTime);
     }
 
     printf("<<2. Create people in %d ms\n", timer.elapsed());
@@ -791,10 +723,7 @@ void LCUrbanMain::onCreateOD(bool random) {
     printf("<<2. Already people\n");
   }
 
-  printf("<<2. Routes Size: %d (if 0 not computed yet).\n",
-         glWidget3D->bTrafficSimulator.people.nextEdge.size());
-
-  ////////////////////////////////////////////
+  /*////////////////////////////////////////////
   // CREATE MAP
   if (glWidget3D->bTrafficSimulator.laneMapL[0].size() <= 0) {
     printf(">>3. Create lane map\n");
@@ -837,25 +766,25 @@ void LCUrbanMain::onCreateOD(bool random) {
   } else {
     printf("<<4. Already routes %d\n",
            glWidget3D->bTrafficSimulator.people.nextEdge.size());
-  }
+  */
 
   printf("<< onCreatePeople\n");
 }//
 
-void LCUrbanMain::onLoadODR(bool) {
-  glWidget3D->bTrafficSimulator.people.loadFromFile();
+void LCUrbanMain::onB18LoadODR(bool) {
+  glWidget3D->b18TrafficSimulator.loadODFromFile();
   printf("onLoadODR: Loaded %d\n",
-         glWidget3D->bTrafficSimulator.people.numPeople);
+    glWidget3D->b18TrafficSimulator.trafficPersonVec.size());
 }//
 
-void LCUrbanMain::onSaveODR(bool) {
-  glWidget3D->bTrafficSimulator.people.saveToFile();
+void LCUrbanMain::onB18SaveODR(bool) {
+  glWidget3D->b18TrafficSimulator.saveODToFile();
   printf("onSaveODR: Saved %d\n",
-         glWidget3D->bTrafficSimulator.people.numPeople);
+    glWidget3D->b18TrafficSimulator.trafficPersonVec.size());
 }//
 
 void LCUrbanMain::onProceduralModeling(int) {
-  glWidget3D->bTrafficSimulator.clearSimulator();//clear people
+  glWidget3D->b18TrafficSimulator.trafficPersonVec.clear();//clear people
 
   if (ui.proceduralModelingCheckBox->isChecked() == true) {
     glWidget3D->generateGeometry(ClientGeometry::kStartFromRoads);

@@ -35,13 +35,15 @@
 
 namespace LC {
 
-LCUrbanMain *clientMain;
+namespace{
+  LCUrbanMain *clientMain;
 
-//const float s_0=1.5f*4.12f;// ALWAYS USED
-const float s_0 = 1.5f * 5.7f; //REMOVED !!!!
-//const float intersectionClearance=7.0f;
-const float intersectionClearance = 7.8f;
-bool calculatePollution = true;
+  //const float s_0=1.5f*4.12f;// ALWAYS USED
+  const float s_0 = 1.5f * 5.7f; //REMOVED !!!!
+  //const float intersectionClearance=7.0f;
+  const float intersectionClearance = 7.8f;
+  bool calculatePollution = true;
+}
 
 CUDATrafficSimulator::CUDATrafficSimulator() {
   initialized = false;
@@ -58,8 +60,7 @@ void CUDATrafficSimulator::initSimulator(
   RoadGraph *originalRoadGraph,
   int _numberPeople,
   PeopleJobInfoLayers &peopleJobInfoLayers,
-  LCUrbanMain *urbanMain
-) {
+  LCUrbanMain *urbanMain) {
   deltaTime = _deltaTime;
   cellSize = _cellSize;
 
@@ -211,6 +212,7 @@ void CUDATrafficSimulator::simulateInGPU(){
 //////////////////////////////////////////////////
 
 
+namespace {
 
 // calculate if the car will turn left center or right (or the same)
 void calculateLaneCarShouldBe(
@@ -868,7 +870,7 @@ void simulateOnePersonCPU(
 
   ///////////////////////////////
   // COLOR
-  if (clientMain->ui.cudaRenderSimulationCheckBox->isChecked()) {
+  if (clientMain->ui.b18RenderSimulationCheckBox->isChecked()) {
     //if(G::global().getInt("cuda_carInfoRendering_type")==0){
     //qsrand(p);
     trafficPersonVec[p].color = p <<
@@ -1370,6 +1372,8 @@ void sampleTraffic(std::vector<CUDATrafficPerson> &trafficPersonVec,
   }//for people
 }//
 
+} //namespace 
+
 // numOfPasses-> define if just disjktra or iterative
 // reGeneratePeopleLanes-> recompute lanes (it is used in MCMC that calls those func before)
 void CUDATrafficSimulator::simulateInCPU_MultiPass(int numOfPasses,
@@ -1600,23 +1604,23 @@ void CUDATrafficSimulator::simulateInCPU() {
     if (calculatePollution == true &&
         (((float)((int)currentTime)) == (currentTime)) &&
         ((int)currentTime % ((int)60 * 6)) == 0) { //each 6 min
-      cudaGridPollution.addValueToGrid(currentTime, trafficPersonVec, simRoadGraph,
+      cudaGridPollution.addValueToGrid(currentTime, trafficPersonVec, simRoadGraph, clientMain,
                                        laneMapNumToEdgeDesc);
     }
 
     currentTime += deltaTime;
     steps++;
 
-    if (clientMain->ui.cudaRenderSimulationCheckBox->isChecked() ==
+    if (clientMain->ui.b18RenderSimulationCheckBox->isChecked() ==
         true) { //G::global().getBool("cudaRenderSimulation")==true){
-      while (clientMain->ui.cudaRenderStepSpinBox->value() == 0) {
+      while (clientMain->ui.b18RenderStepSpinBox->value() == 0) {
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
         clientMain->glWidget3D->updateGL();
         QApplication::processEvents();
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
       }
 
-      if (steps % clientMain->ui.cudaRenderStepSpinBox->value() ==
+      if (steps % clientMain->ui.b18RenderStepSpinBox->value() ==
           0) { //each "steps" steps, render
         QString timeT;
         int timeH = currentTime / 3600.0f;

@@ -23,23 +23,23 @@
 //---------------------------------------------------------------------------------------------------------------------
 
 #include "cudaGridPollution.h"
-#include "Geometry/client_geometry.h"
-#include "client_main.h"
+#include "../global.h"
+#include "../LC_GLWidget3D.h"
+#include "../LC_UrbanMain.h"
 
 namespace LC {
-
-extern ClientGeometry *cgPtr;
-extern ClientMain *clientMain;
 
 CUDAGridPollution::CUDAGridPollution() {
   initialized = false;
 }//
 
-void CUDAGridPollution::initPollution() {
+void CUDAGridPollution::initPollution(LCUrbanMain *_clientMain) {
   this->gridSize = 250.0f;
-  this->gridNumSide = ceil(LC::misctools::Global::global()->worldWidth /
+  float worldWidth = G::global().getFloat("worldWidth");
+  this->gridNumSide = ceil(worldWidth /
                            gridSize);
   printf("**>> gridNumSide %d\n", gridNumSide);
+  clientMain = _clientMain;
   maxValue = -FLT_MAX;
   initialized = true;
 }//
@@ -50,9 +50,10 @@ CUDAGridPollution::~CUDAGridPollution() {
 void CUDAGridPollution::addValueToGrid(float currTime,
                                        std::vector<CUDATrafficPerson> &trafficPersonVec,
                                        RoadGraph *simRoadGraph,
+                                       LCUrbanMain *_clientMain,
                                        std::map<uint, RoadGraph::roadGraphEdgeDesc_BI> &laneMapNumToEdgeDesc) {
   if (initialized == false) {
-    initPollution();
+    initPollution(_clientMain);
   }
 
   //printf(">>A\n");
@@ -114,20 +115,22 @@ void CUDAGridPollution::addValueToGrid(float currTime,
                                           simRoadGraph->myRoadGraph_BI)].pt;
       }
 
+      float worldWidth = G::global().getFloat("worldWidth");
+      float roadLaneWidth = G::global().getFloat("roadLaneWidth");
       QVector3D dir = (p1 - p0).normalized();
       QVector3D per = (QVector3D::crossProduct(QVector3D(0, 0, 1.0f),
                        dir).normalized());
-      float perShift = -0.5f * LC::misctools::Global::global()->roadLaneWidth *
+      float perShift = -0.5f * roadLaneWidth *
                        (1 + 2 * trafficPersonVec[p].numOfLaneInEdge);
       QVector3D v = p0 + dir * posInLaneM + perShift *
                     per; // center of the back of the car
 
-      xIndex = (v.x() + LC::misctools::Global::global()->worldWidth / 2.0f) /
+      xIndex = (v.x() + worldWidth / 2.0f) /
                gridSize;
       xIndex = xIndex > 0 ? xIndex : 0;
       xIndex = xIndex >= gridNumSide ? gridNumSide - 1 : xIndex;
 
-      yIndex = (v.y() + LC::misctools::Global::global()->worldWidth / 2.0f) /
+      yIndex = (v.y() + worldWidth / 2.0f) /
                gridSize;
       yIndex = yIndex > 0 ? yIndex : 0;
       yIndex = yIndex >= gridNumSide ? gridNumSide - 1 : yIndex;
@@ -159,11 +162,13 @@ void CUDAGridPollution::renderPollution(int valueToRender) {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   std::vector<float> toRender = gridTimeValues[valueToRender];
 
+  float worldWidth = G::global().getFloat("worldWidth");
+
   for (int gY = 0; gY < gridNumSide; gY++) {
     for (int gX = 0; gX < gridNumSide; gX++) {
       int index = gY * gridNumSide + gX;
-      float x = gX * gridSize - LC::misctools::Global::global()->worldWidth / 2.0f;
-      float y = gY * gridSize - LC::misctools::Global::global()->worldWidth / 2.0f;
+      float x = gX * gridSize - worldWidth / 2.0f;
+      float y = gY * gridSize - worldWidth / 2.0f;
       float rC, gC, bC;
       float valueToRender = 1.0f - (toRender[index] / (maxValue *
                                     0.25f)); //0.75 REMOVE!!!!
@@ -195,13 +200,14 @@ void CUDAGridPollution::saveToFile(QString fileName) {
   QFile file(fileName);
 
   if (!file.open(QIODevice::WriteOnly)) {
-    printf("ERROR: Not possible to read %s\n", fileName.toAscii().constData());
+    printf("ERROR: Not possible to read %s\n", fileName.toLatin1().constData());
     return;
   }
 
   QTextStream out(&file);
   out << "NumTimeStamps:" << timeStamp.size() << ";";
-  out << "WorldWidth:" << LC::misctools::Global::global()->worldWidth << ";";
+  float worldWidth = G::global().getFloat("worldWidth");
+  out << "WorldWidth:" << worldWidth << ";";
   out << "gridSize:" << this->gridSize << ";";
   out << "gridNumSide:" << this->gridNumSide << ";";
   out << "\n";
@@ -222,17 +228,18 @@ void CUDAGridPollution::saveToFile(QString fileName) {
   printf("<<CUDAGridPollution::saveToFile\n");
 }//
 
-void CUDAGridPollution::loadSimSave(QString fileName) {
+void CUDAGridPollution::loadSimSave(QString fileName, LCUrbanMain *_clientMain) {
+  clientMain = _clientMain;
   printf(">>CUDAGridPollution::loadSimSave\n");
   fileName = "data/schedule.txt";
   QFile file(fileName);
 
   if (!file.open(QIODevice::ReadOnly)) {
-    printf("ERROR: Not possible to read %s\n", fileName.toAscii().constData());
+    printf("ERROR: Not possible to read %s\n", fileName.toLatin1().constData());
     return;
   }
 
-  // set up to run
+  /*// set up to run
   clientMain->cudaWeatherRoadsSlot(true); //REMOVE comment!!
   clientMain->ui.pollutionCheckBox->setChecked(true);
   QCoreApplication::processEvents();
@@ -245,8 +252,7 @@ void CUDAGridPollution::loadSimSave(QString fileName) {
   if (clientMain->mGLWidget_3D->infoLayers.layers.size() <= 0) {
     clientMain->mGLWidget_3D->infoLayers.initInfoLayer();
   }
-
-  float deltaTime = LC::misctools::Global::global()->cuda_delta_time;
+  float cuda_delta_time = G::global().getFloat("cuda_delta_time");
   float cellSize = clientMain->ui.cudaCellSizeSpinBox->value();//meter
   clientMain->mGLWidget_3D->cudaTrafficSimulator.initSimulator(deltaTime,
       cellSize, &clientMain->cg.roadGraph, numPeople,
@@ -301,7 +307,7 @@ void CUDAGridPollution::loadSimSave(QString fileName) {
 
   while (currLine < lines.size()) {
     QString dayName = lines[currLine];
-    printf("===== %s =====\n", dayName.toAscii().constData());
+    printf("===== %s =====\n", dayName.toLatin1().constData());
     currLine++;
     // read distributions
     float probability, mean, variance;
@@ -364,14 +370,6 @@ void CUDAGridPollution::loadSimSave(QString fileName) {
           int numPeopleErrand = numPeoProb * erranProb;
           //printf("ERRAND erranProb %f mean %f var %f\n",erranProb,mean,variance);
           //printf("numPeopleErrand %d numPeoProb %d erranProb %f\n",numPeopleErrand,numPeoProb,erranProb);
-          /*QSet<int> personErrand;
-          while(personErrand.size()<numPeopleErrand){
-          int peE=qrand()%numPeoProb;RAND_MAX;
-          personErrand.insert(peE);
-          if(peE>numPeopleErrand)
-          printf("Size %d peE %d numPeoProb %d\n",personErrand.size(),peE,numPeoProb);
-          }
-          printf("numPeopleErrand %d numPeoProb %d\n",numPeopleErrand,numPeoProb);*/
           std::vector<int> randErrand;
           randErrand.resize(numPeoProb);
 
@@ -504,6 +502,7 @@ void CUDAGridPollution::loadSimSave(QString fileName) {
 
   file.close();
   printf("<<CUDAGridPollution::loadSimSave %d\n", timer.elapsed());
+  */
 }//
 
 }  // namespace LC
