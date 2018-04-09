@@ -24,8 +24,8 @@
 
 #include "cudaTrafficPersonShortestPath.h"
 
-#define ROUTE_DEBUG 0
-#define PATH_DEBUG 0
+#define ROUTE_DEBUG 1
+#define PATH_DEBUG 1
 
 namespace LC {
 
@@ -197,8 +197,8 @@ void CUDATrafficPersonShortestPath::calculateSeveralPeopleRoute(
         trafficPersonVec[peopleStartInInter[p]].personPath[currIndex] = lane;
         currIndex++;
 
-        if (currIndex >= 80) { //change CUDATrafficPerson::personPath
-          printf("Error: More than 80 edges %d\n", path.size());
+        if (currIndex >= 140) { //change CUDATrafficPerson::personPath
+          printf("Error: More than 140 edges %d\n", path.size());
           currIndex--;
           break;
         }
@@ -293,6 +293,7 @@ void CUDATrafficPersonShortestPath::generateRoutesMulti(
       calculateSeveralPeopleRoute(roadGraph, trafficPersonVec, peopleStartInInter,
                                   edgeDescToLaneMapNum);//,nextEdgeM);
       ++i;
+      printf(" one calculateSeveralPeopleRoute in %d ms\n", timer.elapsed());
     }
 
     //if(PATH_DEBUG)

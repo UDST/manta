@@ -70,7 +70,7 @@ struct CUDATrafficPerson {
 
 
   unsigned int currPathEdge;
-  unsigned int personPath[80];//change CUDATrafficPersonShortestPath::calculateSeveralPeopleRoute
+  unsigned int personPath[140];//change CUDATrafficPersonShortestPath::calculateSeveralPeopleRoute
   // data
   unsigned short num_steps;
   unsigned int color;
