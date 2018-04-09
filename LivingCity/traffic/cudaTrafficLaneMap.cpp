@@ -71,6 +71,7 @@ void CUDATrafficLaneMap::createLaneMap(
   int edge_count = 0;
   int tNumLanes = 0;
   float maxLength = 0;
+  int maxNumLanes = 0;
 
   //printf("edgesData %d\n",edgesData);
   edgesData.resize(boost::num_edges(inRoadGraph.myRoadGraph_BI) *
@@ -119,6 +120,10 @@ void CUDATrafficLaneMap::createLaneMap(
       maxLength = edgesData[tNumLanes].length;
     }
 
+    if (maxNumLanes < numLanes) {
+      maxNumLanes = numLanes;
+    }
+
     //printf("numLanes %d\n",numLanes);
     edgesData[tNumLanes].numLines = numLanes;
     float maxSpeedMperSec = inRoadGraph.myRoadGraph_BI[*ei].maxSpeedMperSec;
@@ -137,7 +142,7 @@ void CUDATrafficLaneMap::createLaneMap(
   edgesData.resize(tNumLanes);
 
   if (LANE_DEBUG) {
-    printf("Num edges %d Num Lanes %d Max Leng %f\n", edge_count, tNumLanes, maxLength);
+    printf("Num edges %d Num Lanes %d Max Leng %f Max num lanes %d\n", edge_count, tNumLanes, maxLength, maxNumLanes);
   }
 
   // 2. RESIZE LANE MAP
@@ -179,7 +184,7 @@ void CUDATrafficLaneMap::createLaneMap(
     }
 
     if (intersections[*vi].totalInOutEdges >= 20) {
-      printf("Vertex without more than 20 in/out edges\n");
+      printf("Vertex with more than 20 in/out edges\n");
       continue;
     }
 
@@ -277,19 +282,13 @@ void CUDATrafficLaneMap::createLaneMap(
       if ((outCount < edgeAngleOut.size() && inCount < edgeAngleIn.size() &&
            edgeAngleOut[outCount].second <= edgeAngleIn[inCount].second) ||
           (outCount < edgeAngleOut.size() && inCount >= edgeAngleIn.size())) {
-        intersections[*vi].edge[totalCount] =
-          edgeDescToLaneMapNum[edgeAngleOut[outCount].first];
-        intersections[*vi].edge[totalCount] |=
-          (edgesData[intersections[*vi].edge[totalCount]].numLines <<
-           24); //put the number of lines in each edge
+        intersections[*vi].edge[totalCount] = edgeDescToLaneMapNum[edgeAngleOut[outCount].first];
+        intersections[*vi].edge[totalCount] |= (edgesData[intersections[*vi].edge[totalCount]].numLines << 24); //put the number of lines in each edge
         intersections[*vi].edge[totalCount] |= 0x00000; //mask to define out edge
         outCount++;
       } else {
-        intersections[*vi].edge[totalCount] =
-          edgeDescToLaneMapNum[edgeAngleIn[inCount].first];
-        intersections[*vi].edge[totalCount] |=
-          (edgesData[intersections[*vi].edge[totalCount]].numLines <<
-           24); //put the number of lines in each edge
+        intersections[*vi].edge[totalCount] = edgeDescToLaneMapNum[edgeAngleIn[inCount].first];
+        intersections[*vi].edge[totalCount] |= (edgesData[intersections[*vi].edge[totalCount]].numLines << 24); //put the number of lines in each edge
         intersections[*vi].edge[totalCount] |= 0x010000; //mask to define in edge
         inCount++;
       }
