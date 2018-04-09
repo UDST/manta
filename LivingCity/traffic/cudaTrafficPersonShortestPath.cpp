@@ -24,7 +24,6 @@
 
 #include "cudaTrafficPersonShortestPath.h"
 
-#define WIDTH_WATER 4000.0f
 #define ROUTE_DEBUG 0
 #define PATH_DEBUG 0
 
@@ -78,9 +77,7 @@ void CUDATrafficPersonShortestPath::calculateSeveralPeopleRoute(
   LC::RoadGraph::roadBGLGraph_BI &roadGraph,
   std::vector<CUDATrafficPerson> &trafficPersonVec,
   std::vector<uint> &peopleStartInInter,
-  std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> &edgeDescToLaneMapNum
-  //,std::vector<ushort>& nextEdgeM
-) {
+  std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> &edgeDescToLaneMapNum) {
 
   LC::RoadGraph::roadGraphVertexDesc_BI srcvertex =
     trafficPersonVec[peopleStartInInter[0]].init_intersection;
@@ -147,9 +144,9 @@ void CUDATrafficPersonShortestPath::calculateSeveralPeopleRoute(
   for (int p = 0; p < peopleStartInInter.size(); p++) {
     int currIndex = 0;
     // create path
-    ushort vertex = trafficPersonVec[peopleStartInInter[p]].end_intersection;
+    uint vertex = trafficPersonVec[peopleStartInInter[p]].end_intersection;
     //printf("s %d d %d\n",srcvertex,vertex);
-    std::vector<ushort> path;
+    std::vector<uint> path;
 
     while (vertex != srcvertex) {
       if (ROUTE_DEBUG == true) {
@@ -196,7 +193,7 @@ void CUDATrafficPersonShortestPath::calculateSeveralPeopleRoute(
           break;
         }
 
-        ushort lane = edgeDescToLaneMapNum[edge_pair.first];
+        uint lane = edgeDescToLaneMapNum[edge_pair.first];
         trafficPersonVec[peopleStartInInter[p]].personPath[currIndex] = lane;
         currIndex++;
 
@@ -270,7 +267,7 @@ void CUDATrafficPersonShortestPath::generateRoutesMulti(
 
 
     //2. Generate hash with init intersectios nad people
-    QHash<ushort, std::vector<uint>> intersectionToPeople;
+    QHash<uint, std::vector<uint>> intersectionToPeople;
 
     for (int p = 0; p < trafficPersonVec.size(); p++) {
       if (sample != 1.0f) {
@@ -279,11 +276,11 @@ void CUDATrafficPersonShortestPath::generateRoutesMulti(
         }
       }
 
-      ushort iI = trafficPersonVec[p].init_intersection;
+      uint iI = trafficPersonVec[p].init_intersection;
       intersectionToPeople[iI].push_back(p);
     }
 
-    QHash<ushort, std::vector<uint>>::const_iterator i =
+    QHash<uint, std::vector<uint>>::const_iterator i =
                                     intersectionToPeople.constBegin();
 
     while (i != intersectionToPeople.constEnd()) {

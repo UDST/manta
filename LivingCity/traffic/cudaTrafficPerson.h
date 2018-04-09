@@ -55,8 +55,8 @@ struct CUDATrafficPerson {
 
   //////////////////////////
   // current edge (from edgeData)
-  unsigned short edgeNumLanes;//total number of lanes in that edge
-  unsigned short edgeNextInters;
+  unsigned short edgeNumLanes;  //total number of lanes in that edge
+  unsigned int edgeNextInters;
   float length;
   float maxSpeedMperSec;
   /////////////////////////
@@ -69,9 +69,8 @@ struct CUDATrafficPerson {
   ///////////////////////////
 
 
-  unsigned short currPathEdge;
-  unsigned short
-  personPath[80];//change CUDATrafficPersonShortestPath::calculateSeveralPeopleRoute
+  unsigned int currPathEdge;
+  unsigned int personPath[80];//change CUDATrafficPersonShortestPath::calculateSeveralPeopleRoute
   // data
   unsigned short num_steps;
   unsigned int color;

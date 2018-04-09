@@ -9,7 +9,7 @@
 #include "../misctools/misctools.h"
 
 #include "b18TrafficOD.h"
-#include "cudaTrafficLaneMap.h"
+#include "b18TrafficLaneMap.h"
 #include "cudaTrafficPersonShortestPath.h"
 
 #include "../VBOPeopleJobInfoLayer.h"
@@ -54,21 +54,19 @@ class B18TrafficSimulator {
   LCUrbanMain *clientMain;
 
   float deltaTime;
-  float cellSize;
-  ushort maxWidth;
   int threadNumber;
   float avgTravelTime;
 
 
   bool initialized;
-  void initSimulator(float deltaTime, float cellSize, RoadGraph *geoRoadGraph,
+  void initSimulator(float deltaTime, RoadGraph *geoRoadGraph,
                      LCUrbanMain *urbanMain);
 
   // int numberPeople,
 
   //PM
   B18TrafficOD b18TrafficOD;
-  CUDATrafficLaneMap cudaTrafficLaneMap;
+  B18TrafficLaneMap b18TrafficLaneMap;
   CUDATrafficPersonShortestPath cudaTrafficPersonShortestPath;
 
   void simulateInCPU_MultiPass(int numOfPasses,
@@ -81,7 +79,7 @@ class B18TrafficSimulator {
 
   // Lanes
   std::vector<uchar> laneMap;
-  std::vector<edgeData> edgesData;
+  std::vector<B18EdgeData> edgesData;
   std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> edgeDescToLaneMapNum;
   std::map<uint, RoadGraph::roadGraphEdgeDesc_BI> laneMapNumToEdgeDesc;
   void createLaneMap();
@@ -101,7 +99,7 @@ class B18TrafficSimulator {
 
   // Traffic lights
   std::vector<uchar> trafficLights;
-  std::vector<intersectionData> intersections;
+  std::vector<B18IntersectionData> intersections;
 
   // measurements
   std::vector<float> accSpeedPerLinePerTimeInterval;

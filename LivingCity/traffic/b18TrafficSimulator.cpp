@@ -13,7 +13,7 @@ LCUrbanMain *clientMain;
 
 const float s_0 = 1.5f * 4.12f; // ALWAYS USED
 const float intersectionClearance = 7.8f;
-bool calculatePollution = false;
+const bool calculatePollution = false;
 
 B18TrafficSimulator::B18TrafficSimulator() {
   initialized = false;
@@ -26,11 +26,9 @@ B18TrafficSimulator::~B18TrafficSimulator() {
 
 void B18TrafficSimulator::initSimulator(
   float _deltaTime,
-  float _cellSize,
   RoadGraph *originalRoadGraph,
   LCUrbanMain *urbanMain) {
   deltaTime = _deltaTime;
-  cellSize = _cellSize;
 
   if (simRoadGraph == 0) { //!!!!! NOT COPY IF IT IS THERE
     simRoadGraph = new RoadGraph(*originalRoadGraph);
@@ -74,7 +72,7 @@ void B18TrafficSimulator::resetPeopleJobANDintersections() {
 
   //printf("resetPeopleJobANDintersections\n");
   b18TrafficOD.resetTrafficPersonJob(trafficPersonVec);
-  cudaTrafficLaneMap.resetIntersections(intersections, trafficLights);
+  b18TrafficLaneMap.resetIntersections(intersections, trafficLights);
 }//
 
 
@@ -84,9 +82,8 @@ void B18TrafficSimulator::createLaneMap() { //
     return;
   }
 
-  cudaTrafficLaneMap.createLaneMap(*simRoadGraph, laneMap, edgesData,
-                                   intersections, trafficLights, laneMapNumToEdgeDesc, edgeDescToLaneMapNum,
-                                   maxWidth, cellSize);
+  b18TrafficLaneMap.createLaneMap(*simRoadGraph, laneMap, edgesData,
+                                   intersections, trafficLights, laneMapNumToEdgeDesc, edgeDescToLaneMapNum);
 }//
 
 void B18TrafficSimulator::generateCarPaths() { //
@@ -143,7 +140,7 @@ void B18TrafficSimulator::simulateInGPU(){
 	LC::misctools::Global::global()->cuda_render_displaylist_staticRoadsBuildings=1;//display list
 	timer.start();
 	// 1. Init Cuda
-	initCUDA(cellSize,deltaTime,maxWidth,trafficPersonVec,edgesData,laneMap,intersections);
+	initCUDA(deltaTime,maxWidth,trafficPersonVec,edgesData,laneMap,intersections);
 	// 2. Excute
 	printf("First time_departure %f\n",currentTime);
 	while(currentTime<endTime){//24.0f){
@@ -196,9 +193,9 @@ void B18TrafficSimulator::simulateInGPU(){
 // calculate if the car will turn left center or right (or the same)
 void calculateLaneCarShouldBe(
   ushort curEdgeLane,
-  ushort nextEdge,
-  std::vector<intersectionData> &intersections,
-  ushort edgeNextInters,
+  uint nextEdge,
+  std::vector<B18IntersectionData> &intersections,
+  uint edgeNextInters,
   ushort edgeNumLanes,
   ushort &initOKLanes,
   ushort &endOKLanes) {
@@ -224,7 +221,7 @@ void calculateLaneCarShouldBe(
        eN--) {//clockwise
     uint procEdge = intersections[edgeNextInters].edge[eN];
 
-    if ((procEdge & 0xFFFF) == curEdgeLane) { //current edge
+    if ((procEdge & 0xFFFFF) == curEdgeLane) { //current edge
       if (DEBUG_TRAFFIC == 1) {
         printf("CE procEdge %05x\n", procEdge);
       }
@@ -239,7 +236,7 @@ void calculateLaneCarShouldBe(
     }
 
 
-    if ((procEdge & 0x010000) == 0x0) { //out edge
+    if ((procEdge & 0x800000) == 0x0) { //out edge
       if (DEBUG_TRAFFIC == 1) {
         printf("   procEdge %05x\n", procEdge);
       }
@@ -255,7 +252,7 @@ void calculateLaneCarShouldBe(
       }
     }
 
-    if ((procEdge & 0xFFFF) == nextEdge) {
+    if ((procEdge & 0xFFFFF) == nextEdge) {
       exitFound = true;
       currentEdgeFound = false;
 
@@ -439,32 +436,31 @@ void calculateLaneCarShouldBe(
 }//
 
 void calculateGapsLC(
-  float cellSize,
-  ushort maxWidth,
   uint mapToReadShift,
   std::vector<uchar> &laneMap,
   uchar trafficLightState,
-  ushort laneToCheck,
+  uint laneToCheck,
+  ushort numLinesEdge,
   float posInMToCheck,
   float length,
   uchar &v_a,
   uchar &v_b,
   float &gap_a,
   float &gap_b) {
-  ushort numOfCells = ceil(length / cellSize);
-  ushort initShift = ceil(posInMToCheck / cellSize);
+  ushort numOfCells = ceil(length);
+  ushort initShift = ceil(posInMToCheck);
   uchar laneChar;
   bool found = false;
 
   // CHECK FORWARD
   //printf("initShift %u numOfCells %u\n",initShift,numOfCells);
-  for (ushort b = initShift - 1; (b < numOfCells) &&
-       (found == false);
-       b++) { //NOTE -1 to make sure there is none in at the same level
-    laneChar = laneMap[mapToReadShift + maxWidth * (laneToCheck) + b];
+  for (ushort b = initShift - 1; (b < numOfCells) &&  (found == false); b++) { //NOTE -1 to make sure there is none in at the same level
+    // laneChar = laneMap[mapToReadShift + maxWidth * (laneToCheck) + b];
+    const uint posToSample = mapToReadShift + kMaxMapWidthM * (laneToCheck + (((int) (b / kMaxMapWidthM)) * numLinesEdge)) + b % kMaxMapWidthM;
+    laneChar = laneMap[posToSample];
 
     if (laneChar != 0xFF) {
-      gap_a = ((float)b - initShift) * cellSize; //m
+      gap_a = ((float)b - initShift); //m
       v_a = laneChar; //laneChar is in 3*ms (to save space in array)
       found = true;
       break;
@@ -473,7 +469,6 @@ void calculateGapsLC(
 
   if (found == false) {
     if (trafficLightState == 0x00) { //red
-      //gap_a=((float)numOfCells-initShift)*cellSize;
       //found=true;
       gap_a = gap_b = 1000.0f; //force to change to the line without vehicle
       v_a = v_b = 0xFF;
@@ -489,13 +484,11 @@ void calculateGapsLC(
   found = false;
 
   //printf("2initShift %u numOfCells %u\n",initShift,numOfCells);
-  for (int b = initShift + 1; (b >= 0) &&
-       (found == false);
-       b--) { //NOTE +1 to make sure there is none in at the same level
-    laneChar = laneMap[mapToReadShift + maxWidth * (laneToCheck) + b];
-
+  for (int b = initShift + 1; (b >= 0) && (found == false); b--) {  // NOTE +1 to make sure there is none in at the same level
+    //laneChar = laneMap[mapToReadShift + maxWidth * (laneToCheck) + b];
+    const uint posToSample = mapToReadShift + kMaxMapWidthM * (laneToCheck + (((int) (b / kMaxMapWidthM)) * numLinesEdge)) + b % kMaxMapWidthM;
     if (laneChar != 0xFF) {
-      gap_b = ((float)initShift - b) * cellSize; //m
+      gap_b = ((float)initShift - b); //m
       v_b = laneChar; //laneChar is in 3*ms (to save space in array)
       found = true;
       break;
@@ -511,17 +504,14 @@ void calculateGapsLC(
 
 void simulateOnePersonCPU(
   uint p,
-  float cellSize,
   float deltaTime,
   float currentTime,
-  ushort maxWidth,
   uint mapToReadShift,
   uint mapToWriteShift,
   std::vector<LC::CUDATrafficPerson> &trafficPersonVec,
-  //std::vector<ushort>& nextEdgeM,
-  std::vector<LC::edgeData> &edgesData,
+  std::vector<LC::B18EdgeData> &edgesData,
   std::vector<uchar> &laneMap,
-  std::vector<intersectionData> &intersections,
+  std::vector<B18IntersectionData> &intersections,
   std::vector<uchar> &trafficLights) {
   //if(DEBUG_TRAFFIC==1)printf("currentTime %f   0 Person: %d State %d Time Dep %f\n",currentTime,p,trafficPersonVec[p].active, trafficPersonVec[p].time_departure);
   ///////////////////////////////
@@ -542,9 +532,9 @@ void simulateOnePersonCPU(
     } else { //start
       //1.2 find first edge
       trafficPersonVec[p].currPathEdge = 0;
-      ushort firstEdge = trafficPersonVec[p].personPath[0];
+      uint firstEdge = trafficPersonVec[p].personPath[0];
 
-      if (firstEdge == 0xFFFF) {
+      if (firstEdge == -1) {
         trafficPersonVec[p].active = 2;
         //printf("0xFFFF\n");
         return;
@@ -566,21 +556,18 @@ void simulateOnePersonCPU(
       trafficPersonVec[p].maxSpeedMperSec = edgesData[firstEdge].maxSpeedMperSec;
       //printf("edgesData %.10f\n",edgesData[firstEdge].maxSpeedCellsPerDeltaTime);
       //1.4 try to place it in middle of edge
-      ushort numOfCells = ceil(trafficPersonVec[p].length / cellSize);
-      ushort initShift = (ushort)(0.5f *
-                                  numOfCells); //number of cells it should be placed (half of road)
+      ushort numOfCells = ceil(trafficPersonVec[p].length);
+      ushort initShift = (ushort)(0.5f * numOfCells); //number of cells it should be placed (half of road)
 
       uchar laneChar;
       bool placed = false;
 
-      ushort numCellsEmptyToBePlaced = s_0 / cellSize;
+      ushort numCellsEmptyToBePlaced = s_0;
       ushort countEmptyCells = 0;
 
       for (ushort b = initShift; (b < numOfCells) && (placed == false); b++) {
-        //for(int lN=trafficPersonVec[p].edgeNumLanes-1;lN>=0;lN--){
-        //ushort lN=0;//just first LANE !!!!!!!
         ushort lN = trafficPersonVec[p].edgeNumLanes - 1; //just right LANE !!!!!!!
-        laneChar = laneMap[mapToReadShift + maxWidth * (firstEdge + lN) +
+        laneChar = laneMap[mapToReadShift + kMaxMapWidthM * (firstEdge + lN) +
                                           b]; //get byte of edge (proper line)
 
         if (laneChar != 0xFF) {
@@ -595,10 +582,10 @@ void simulateOnePersonCPU(
         }
 
         trafficPersonVec[p].numOfLaneInEdge = lN;
-        trafficPersonVec[p].posInLaneM = b * cellSize; //m
+        trafficPersonVec[p].posInLaneM = b; //m
         uchar vInMpS = (uchar)(trafficPersonVec[p].v *
                                3); //speed in m/s *3 (to keep more precision
-        laneMap[mapToWriteShift + maxWidth * (firstEdge + lN) + b] = vInMpS;
+        laneMap[mapToWriteShift + kMaxMapWidthM * (firstEdge + lN) + b] = vInMpS;
         placed = true;
         //printf("Placed\n");
         break;
@@ -609,8 +596,7 @@ void simulateOnePersonCPU(
         return;
       }
 
-      trafficPersonVec[p].v =
-        0; //trafficPersonVec[p].maxSpeedCellsPerDeltaTime;//(20000.0f*deltaTime)/cellSize;//20km/h-->cell/delta time
+      trafficPersonVec[p].v = 0; 
       trafficPersonVec[p].LC_stateofLaneChanging = 0;
 
       //1.5 active car
@@ -625,10 +611,10 @@ void simulateOnePersonCPU(
       trafficPersonVec[p].gas = 0;
       //trafficPersonVec[p].nextPathEdge++;//incremet so it continues in next edge
       // set up next edge info
-      ushort nextEdge = trafficPersonVec[p].personPath[1];
+      uint nextEdge = trafficPersonVec[p].personPath[1];
 
       //trafficPersonVec[p].nextEdge=nextEdge;
-      if (nextEdge != 0xFFFF) {
+      if (nextEdge != -1) {
         trafficPersonVec[p].nextEdgemaxSpeedMperSec =
           edgesData[nextEdge].maxSpeedMperSec;
         trafficPersonVec[p].nextEdgeNumLanes = edgesData[nextEdge].numLines;
@@ -638,7 +624,6 @@ void simulateOnePersonCPU(
         trafficPersonVec[p].LC_initOKLanes = 0xFF;
         trafficPersonVec[p].LC_endOKLanes = 0xFF;
       }
-
       return;
     }
   }
@@ -654,42 +639,34 @@ void simulateOnePersonCPU(
   float numMToMove;
   bool getToNextEdge = false;
   bool nextVehicleIsATrafficLight = false;
-  ushort currentEdge =
-    trafficPersonVec[p].personPath[trafficPersonVec[p].currPathEdge];
-  ushort nextEdge =
-    trafficPersonVec[p].personPath[trafficPersonVec[p].currPathEdge + 1];
-  //if(trafficPersonVec[p].posInLaneM<trafficPersonVec[p].length){
+  uint currentEdge = trafficPersonVec[p].personPath[trafficPersonVec[p].currPathEdge];
+  uint nextEdge = trafficPersonVec[p].personPath[trafficPersonVec[p].currPathEdge + 1];
   // www.vwi.tu-dresden.de/~treiber/MicroApplet/IDM.html
   // IDM
   float thirdTerm = 0;
   ///////////////////////////////////////////////////
   // 2.1.1 Find front car
-  int numCellsCheck = std::max<float>(30.0f / cellSize,
-                                      trafficPersonVec[p].v * deltaTime * 2); //30 or double of the speed*time
+  int numCellsCheck = std::max<float>(30.0f, trafficPersonVec[p].v * deltaTime * 2); //30 or double of the speed*time
 
   // a) SAME LINE (BEFORE SIGNALING)
   bool found = false;
-  bool noFirstInLaneBeforeSign =
-    false; //use for stop control (just let 1st to pass)
-  bool noFirstInLaneAfterSign =
-    false; //use for stop control (just let 1st to pass)
+  bool noFirstInLaneBeforeSign = false; //use for stop control (just let 1st to pass)
+  bool noFirstInLaneAfterSign = false; //use for stop control (just let 1st to pass)
   float s;
   float delta_v;
   uchar laneChar;
-  ushort byteInLine = (ushort)floor(trafficPersonVec[p].posInLaneM / cellSize);
-  ushort numOfCells = ceil((trafficPersonVec[p].length - intersectionClearance) /
-                           cellSize);
+  ushort byteInLine = (ushort)floor(trafficPersonVec[p].posInLaneM);
+  ushort numOfCells = ceil((trafficPersonVec[p].length - intersectionClearance));
 
-  for (ushort b = byteInLine + 2; (b < numOfCells) && (found == false) &&
-       (numCellsCheck > 0); b++, numCellsCheck--) {
-    laneChar = laneMap[mapToReadShift + maxWidth *
-                                      (trafficPersonVec[p].personPath[trafficPersonVec[p].currPathEdge] +
-                                       trafficPersonVec[p].numOfLaneInEdge) + b];
+  for (ushort b = byteInLine + 2; (b < numOfCells) && (found == false) && (numCellsCheck > 0); b++, numCellsCheck--) {
+    // laneChar = laneMap[mapToReadShift + maxWidth * (trafficPersonVec[p].personPath[trafficPersonVec[p].currPathEdge] + trafficPersonVec[p].numOfLaneInEdge) + b];
+    // ShiftRead + WIDTH * (width number * # edges + # laneInEdge) + b 
+    const uint posToSample = mapToReadShift + kMaxMapWidthM * (trafficPersonVec[p].personPath[trafficPersonVec[p].currPathEdge] + (((int) (byteInLine / kMaxMapWidthM)) * trafficPersonVec[p].edgeNumLanes) + trafficPersonVec[p].numOfLaneInEdge) + b % kMaxMapWidthM;
+    laneChar = laneMap[posToSample];
 
     if (laneChar != 0xFF) {
-      s = ((float)(b - byteInLine) * cellSize); //m
-      delta_v = trafficPersonVec[p].v - (laneChar /
-                                         3.0f); //laneChar is in 3*ms (to save space in array)
+      s = ((float)(b - byteInLine)); //m
+      delta_v = trafficPersonVec[p].v - (laneChar / 3.0f); //laneChar is in 3*ms (to save space in array)
       found = true;
       noFirstInLaneBeforeSign = true;
       break;
@@ -697,11 +674,9 @@ void simulateOnePersonCPU(
   }
 
   // b) TRAFFIC LIGHT
-  if (byteInLine < numOfCells && found == false &&
-      numCellsCheck > 0) { //before traffic signaling (and not cell limited)
-    if (trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge] ==
-        0x00) { //red
-      s = ((float)(numOfCells - byteInLine) * cellSize); //m
+  if (byteInLine < numOfCells && found == false && numCellsCheck > 0) { //before traffic signaling (and not cell limited)
+    if (trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge] == 0x00) { //red
+      s = ((float)(numOfCells - byteInLine)); //m
       delta_v = trafficPersonVec[p].v - 0; //it should be treated as an obstacle
       nextVehicleIsATrafficLight = true;
       //printf("\nFOUND TL\n",s,delta_v);
@@ -710,14 +685,13 @@ void simulateOnePersonCPU(
   }
 
   // c) SAME LINE (AFTER SIGNALING)
-  for (ushort b = byteInLine + 2; (b < numOfCells) && (found == false) &&
-       (numCellsCheck > 0); b++, numCellsCheck--) {
-    laneChar = laneMap[mapToReadShift + maxWidth *
-                                      (trafficPersonVec[p].personPath[trafficPersonVec[p].currPathEdge] +
-                                       trafficPersonVec[p].numOfLaneInEdge) + b];
+  for (ushort b = byteInLine + 2; (b < numOfCells) && (found == false) && (numCellsCheck > 0); b++, numCellsCheck--) {
+    // laneChar = laneMap[mapToReadShift + maxWidth * (trafficPersonVec[p].personPath[trafficPersonVec[p].currPathEdge] + trafficPersonVec[p].numOfLaneInEdge) + b];
+    const uint posToSample = mapToReadShift + kMaxMapWidthM * (trafficPersonVec[p].personPath[trafficPersonVec[p].currPathEdge] + (((int) (byteInLine / kMaxMapWidthM)) * trafficPersonVec[p].edgeNumLanes) + trafficPersonVec[p].numOfLaneInEdge) + b % kMaxMapWidthM;
+    laneChar = laneMap[posToSample];
 
     if (laneChar != 0xFF) {
-      s = ((float)(b - byteInLine) * cellSize); //m
+      s = ((float)(b - byteInLine)); //m
       delta_v = trafficPersonVec[p].v - (laneChar /
                                          3.0f); //laneChar is in 3*ms (to save space in array)
       found = true;
@@ -726,8 +700,7 @@ void simulateOnePersonCPU(
     }
   }
 
-  if (trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge] == 0x0F &&
-      numCellsCheck > 0) { //stop
+  if (trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge] == 0x0F && numCellsCheck > 0) { //stop 
     //check
     if (noFirstInLaneBeforeSign == false && byteInLine < numOfCells &&
         //first before traffic
@@ -737,13 +710,13 @@ void simulateOnePersonCPU(
 
       trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge] =
         0x00; //reset stop
-      trafficPersonVec[p].posInLaneM = ceil(numOfCells * cellSize) +
+      trafficPersonVec[p].posInLaneM = ceil(numOfCells) +
                                        1; //move magicly after stop
 
     } else { //stop before STOP
       if (noFirstInLaneBeforeSign ==
           false) { //just update this if it was the first one before sign
-        s = ((float)(numOfCells - byteInLine) * cellSize); //m
+        s = ((float)(numOfCells - byteInLine)); //m
         delta_v = trafficPersonVec[p].v - 0; //it should be treated as an obstacle
         nextVehicleIsATrafficLight = true;
         found = true;
@@ -753,7 +726,7 @@ void simulateOnePersonCPU(
 
   // NEXT LINE
   if (found == false && numCellsCheck > 0) { //check if in next line
-    if ((nextEdge != 0xFFFF) &&
+    if ((nextEdge != -1) &&
         (trafficPersonVec[p].edgeNextInters !=
          trafficPersonVec[p].end_intersection)) { // we haven't arrived to destination (check next line)
 
@@ -766,17 +739,16 @@ void simulateOnePersonCPU(
       }
 
       //printf("2trafficPersonVec[p].numOfLaneInEdge %u\n",trafficPersonVec[p].numOfLaneInEdge);
-      ushort numOfCells = ceil(trafficPersonVec[p].nextEdgeLength / cellSize);
+      ushort numOfCells = ceil(trafficPersonVec[p].nextEdgeLength);
 
-      for (ushort b = 0; (b < numOfCells) && (found == false) &&
-           (numCellsCheck > 0); b++, numCellsCheck--) {
-        laneChar = laneMap[mapToReadShift + maxWidth * (nextEdge + nextEdgeLaneToBe) +
-                                          b];
+      for (ushort b = 0; (b < numOfCells) && (found == false) && (numCellsCheck > 0); b++, numCellsCheck--) {
+        //laneChar = laneMap[mapToReadShift + maxWidth * (nextEdge + nextEdgeLaneToBe) + b];
+        const uint posToSample = mapToReadShift + kMaxMapWidthM * (nextEdge + nextEdgeLaneToBe) + b; // b18 not changed since we check first width
+        laneChar = laneMap[posToSample];
 
         if (laneChar != 0xFF) {
-          s = ((float)(b) * cellSize); //m
-          delta_v = trafficPersonVec[p].v - (laneChar /
-                                             3.0f); //laneChar is in 3*ms (to save space in array)
+          s = ((float)(b)); //m
+          delta_v = trafficPersonVec[p].v - (laneChar / 3.0f);  // laneChar is in 3*ms (to save space in array)
           found = true;
           break;
         }
@@ -825,7 +797,7 @@ void simulateOnePersonCPU(
   /////
   //CO2
   //if(trafficPersonVec[p].v>0)
-  {
+  if (calculatePollution) {
     float speedMph = trafficPersonVec[p].v * 2.2369362920544; //mps to mph
     float gasStep = -0.064 + 0.0056 * speedMph + 0.00026 * (speedMph - 50.0f) *
                     (speedMph - 50.0f);
@@ -839,9 +811,11 @@ void simulateOnePersonCPU(
   //////////////////////////////////////////////
 
   if (trafficPersonVec[p].v == 0) { //if not moving not do anything else
-    ushort posInLineCells = (ushort)(trafficPersonVec[p].posInLaneM / cellSize);
-    laneMap[mapToWriteShift + maxWidth * (currentEdge +
-                                          trafficPersonVec[p].numOfLaneInEdge) + posInLineCells] = 0;
+    ushort posInLineCells = (ushort)(trafficPersonVec[p].posInLaneM);
+    //laneMap[mapToWriteShift + maxWidth * (currentEdge + trafficPersonVec[p].numOfLaneInEdge) + posInLineCells] = 0;
+    const uint posToSample = mapToWriteShift + kMaxMapWidthM * (currentEdge + (((int) (posInLineCells / kMaxMapWidthM)) * trafficPersonVec[p].edgeNumLanes) + trafficPersonVec[p].numOfLaneInEdge) + posInLineCells % kMaxMapWidthM;
+    laneMap[posToSample] = 0;
+    
     return;
   }
 
@@ -889,7 +863,7 @@ void simulateOnePersonCPU(
       // skip if there is one lane (avoid to do this)
       // skip if it is the last edge
       if (nextVehicleIsATrafficLight == false &&
-          trafficPersonVec[p].edgeNumLanes > 1 && nextEdge != 0xFFFF) {
+          trafficPersonVec[p].edgeNumLanes > 1 && nextEdge != -1) {
 
         ////////////////////////////////////////////////////
         // LC 1 update lane changing status
@@ -915,7 +889,7 @@ void simulateOnePersonCPU(
           if ((trafficPersonVec[p].v < (trafficPersonVec[p].maxSpeedMperSec * 0.7f)) &&
               (dv_dt < 0) && trafficPersonVec[p].v > 3.0f) {
             //printf(">>LANE CHANGE\n");
-            ushort laneToCheck;//!!!!
+            
             //printf("LC 0 %u\n",trafficPersonVec[p].numOfLaneInEdge);
             bool leftLane = trafficPersonVec[p].numOfLaneInEdge >
                             0; //at least one lane on the left
@@ -929,7 +903,7 @@ void simulateOnePersonCPU(
                 rightLane = false;
               }
             }
-
+            ushort laneToCheck;
             if (leftLane == true) {
               laneToCheck = trafficPersonVec[p].numOfLaneInEdge - 1;
             } else {
@@ -941,8 +915,8 @@ void simulateOnePersonCPU(
             //printf("p %u LC 1 %u\n",p,laneToCheck);
             uchar trafficLightState = trafficLights[currentEdge +
                                                                 trafficPersonVec[p].numOfLaneInEdge];
-            calculateGapsLC(cellSize, maxWidth, mapToReadShift, laneMap, trafficLightState,
-                            currentEdge + laneToCheck, trafficPersonVec[p].posInLaneM,
+            calculateGapsLC(mapToReadShift, laneMap, trafficLightState,
+                            currentEdge + laneToCheck, trafficPersonVec[p].edgeNumLanes, trafficPersonVec[p].posInLaneM,
                             trafficPersonVec[p].length, v_a, v_b, gap_a, gap_b);
 
             //printf("LC 2 %u %u %f %f\n",v_a,v_b,gap_a,gap_b);
@@ -1003,7 +977,6 @@ void simulateOnePersonCPU(
 
 
           //printf(">>LANE CHANGE\n");
-          ushort laneToCheck;//!!!!
           //printf("LC 0 %u\n",trafficPersonVec[p].numOfLaneInEdge);
           bool leftLane = false, rightLane = false;
 
@@ -1063,7 +1036,7 @@ void simulateOnePersonCPU(
                 rightLane = false;
               }
             }
-
+            ushort laneToCheck;
             if (leftLane == true) {
               laneToCheck = trafficPersonVec[p].numOfLaneInEdge - 1;
             } else {
@@ -1080,8 +1053,8 @@ void simulateOnePersonCPU(
             //printf("p %u LC 1 %u\n",p,laneToCheck);
             uchar trafficLightState = trafficLights[currentEdge +
                                                                 trafficPersonVec[p].numOfLaneInEdge];
-            calculateGapsLC(cellSize, maxWidth, mapToReadShift, laneMap, trafficLightState,
-                            currentEdge + laneToCheck, trafficPersonVec[p].posInLaneM,
+            calculateGapsLC(mapToReadShift, laneMap, trafficLightState,
+                            currentEdge + laneToCheck, trafficPersonVec[p].edgeNumLanes, trafficPersonVec[p].posInLaneM,
                             trafficPersonVec[p].length, v_a, v_b, gap_a, gap_b);
 
             //printf("LC 2 %u %u %f %f\n",v_a,v_b,gap_a,gap_b);
@@ -1137,11 +1110,11 @@ void simulateOnePersonCPU(
              trafficPersonVec[p].posInLaneM, trafficPersonVec[p].length);
     }
 
-    uchar vInMpS = (uchar)(trafficPersonVec[p].v *
-                           3); //speed in m/s to fit in uchar
-    ushort posInLineCells = (ushort)(trafficPersonVec[p].posInLaneM / cellSize);
-    laneMap[mapToWriteShift + maxWidth * (currentEdge +
-                                          trafficPersonVec[p].numOfLaneInEdge) + posInLineCells] = vInMpS;
+    uchar vInMpS = (uchar)(trafficPersonVec[p].v * 3); //speed in m/s to fit in uchar
+    ushort posInLineCells = (ushort)(trafficPersonVec[p].posInLaneM);
+    //laneMap[mapToWriteShift + maxWidth * (currentEdge + trafficPersonVec[p].numOfLaneInEdge) + posInLineCells] = vInMpS;
+    const uint posToSample = mapToWriteShift + kMaxMapWidthM * (currentEdge + (((int) (posInLineCells / kMaxMapWidthM)) * trafficPersonVec[p].edgeNumLanes) + trafficPersonVec[p].numOfLaneInEdge) + posInLineCells % kMaxMapWidthM;
+    laneMap[posToSample] = vInMpS;
     //printf("2<<LANE CHANGE\n");
     return;
   }
@@ -1155,7 +1128,7 @@ void simulateOnePersonCPU(
   /*ushort curr_intersection=trafficPersonVec[p].edgeNextInters;
   ushort end_intersection=trafficPersonVec[p].end_intersection;
   //2.1 check if end*/
-  if (nextEdge == 0xFFFF) { //if(curr_intersection==end_intersection){
+  if (nextEdge == -1) { //if(curr_intersection==end_intersection){
     if (DEBUG_TRAFFIC == 1) {
       printf("    2.1 Person: %d FINISHED\n", p);
     }
@@ -1188,11 +1161,11 @@ void simulateOnePersonCPU(
 
   ////////////
   // update next edge
-  ushort nextNEdge =
+  uint nextNEdge =
     trafficPersonVec[p].personPath[trafficPersonVec[p].currPathEdge + 1];
 
   //trafficPersonVec[p].nextEdge=nextEdge;
-  if (nextNEdge != 0xFFFF) {
+  if (nextNEdge != -1) {
     //trafficPersonVec[p].nextPathEdge++;
     trafficPersonVec[p].LC_initOKLanes = 0xFF;
     trafficPersonVec[p].LC_endOKLanes = 0xFF;
@@ -1213,11 +1186,12 @@ void simulateOnePersonCPU(
   }
 
   trafficPersonVec[p].LC_stateofLaneChanging = 0;
-  uchar vInMpS = (uchar)(trafficPersonVec[p].v *
-                         3); //speed in m/s to fit in uchar
-  ushort posInLineCells = (ushort)(trafficPersonVec[p].posInLaneM / cellSize);
-  laneMap[mapToWriteShift + maxWidth * (nextEdge +
-                                        trafficPersonVec[p].numOfLaneInEdge) + posInLineCells] = vInMpS;
+  uchar vInMpS = (uchar)(trafficPersonVec[p].v * 3); //speed in m/s to fit in uchar
+  ushort posInLineCells = (ushort)(trafficPersonVec[p].posInLaneM);
+
+  // laneMap[mapToWriteShift + maxWidth * (nextEdge + trafficPersonVec[p].numOfLaneInEdge) + posInLineCells] = vInMpS;
+  const uint posToSample = mapToWriteShift + kMaxMapWidthM * (nextEdge + (((int) (posInLineCells / kMaxMapWidthM)) * trafficPersonVec[p].edgeNumLanes) + trafficPersonVec[p].numOfLaneInEdge) + posInLineCells % kMaxMapWidthM;  // note the last % should not happen
+  laneMap[posToSample] = vInMpS;
 
 
   if (DEBUG_TRAFFIC == 1) {
@@ -1228,22 +1202,19 @@ void simulateOnePersonCPU(
 
 void simulateOneSTOPIntersectionCPU(
   uint i,
-  float cellSize,//to compute range to check
   float deltaTime,
-  float currentTime, std::vector<intersectionData> &intersections,
+  float currentTime, std::vector<B18IntersectionData> &intersections,
   std::vector<uchar> &trafficLights,
-  std::vector<LC::edgeData> &edgesData,//for the length
+  std::vector<LC::B18EdgeData> &edgesData,//for the length
   std::vector<uchar> &laneMap,//to check if there are cars
-  uint mapToReadShift, ushort maxWidth
-) {
+  uint mapToReadShift) {
   const float deltaEvent = 0; //10.0f;!!!! CHANGE
 
   //if(i==0)printf("i %d\n",i);
-  if (currentTime > intersections[i].nextEvent &&
-      intersections[i].totalInOutEdges > 0) {
+  if (currentTime > intersections[i].nextEvent && intersections[i].totalInOutEdges > 0) {
     uint edgeOT = intersections[i].edge[intersections[i].state];
     uchar numLinesO = edgeOT >> 24;
-    ushort edgeONum = edgeOT & 0xFFFF;
+    ushort edgeONum = edgeOT & 0xFFFFF;
 
     // red old traffic lights
     for (int nL = 0; nL < numLinesO; nL++) {
@@ -1255,23 +1226,22 @@ void simulateOneSTOPIntersectionCPU(
       intersections[i].state = (intersections[i].state + 1) %
                                intersections[i].totalInOutEdges;//next light
 
-      if ((intersections[i].edge[intersections[i].state] & 0x010000) == 0x010000) {
+      if ((intersections[i].edge[intersections[i].state] & 0x800000) == 0x800000) {
         uint edgeIT = intersections[i].edge[intersections[i].state];
-        ushort edgeINum = edgeIT & 0xFFFF; //get edgeI
+        ushort edgeINum = edgeIT & 0xFFFFF; //get edgeI
         uchar numLinesI = edgeIT >> 24;
         /// check if someone in this edge
-        int rangeToCheck = ceil(5.0f / cellSize); //5m
-        ushort firstPosToCheck = ceil((edgesData[edgeINum].length -
-                                       intersectionClearance) / cellSize) - 1; //last po
+        int rangeToCheck = 5.0f; //5m
+        ushort firstPosToCheck = edgesData[edgeINum].length - intersectionClearance; //last po
         bool atLeastOneStopped = false;
 
-        for (int posCheck = firstPosToCheck; rangeToCheck >= 0 &&
-             posCheck >= 0;
-             posCheck--, rangeToCheck--) { //as many cells as the rangeToCheck says
+        for (int posCheck = firstPosToCheck; rangeToCheck >= 0 && posCheck >= 0; posCheck--, rangeToCheck--) { //as many cells as the rangeToCheck says
           for (int nL = 0; nL < numLinesI; nL++) {
-            int cellNum = mapToReadShift + maxWidth * (edgeINum + nL) + posCheck;
+            //int cellNum = mapToReadShift + maxWidth * (edgeINum + nL) + posCheck;
+            const uint posToSample = mapToReadShift + kMaxMapWidthM * (edgeINum + (((int) (posCheck / kMaxMapWidthM)) * numLinesI) + nL) + posCheck % kMaxMapWidthM;
 
-            if (laneMap[cellNum] == 0) { //car stopped
+
+            if (laneMap[posToSample] == 0) { //car stopped
               trafficLights[edgeINum + nL] = 0x0F; // STOP SIGN 0x0F--> Let pass
               atLeastOneStopped = true;
             }
@@ -1279,8 +1249,7 @@ void simulateOneSTOPIntersectionCPU(
         }
 
         if (atLeastOneStopped == true) {
-          intersections[i].nextEvent = currentTime +
-                                       deltaEvent; //just move forward time if changed (otherwise check in next iteration)
+          intersections[i].nextEvent = currentTime + deltaEvent; //just move forward time if changed (otherwise check in next iteration)
           break;
         }
       }
@@ -1289,7 +1258,7 @@ void simulateOneSTOPIntersectionCPU(
 }//
 
 void simulateOneIntersectionCPU(uint i, float currentTime,
-                                std::vector<intersectionData> &intersections,
+                                std::vector<B18IntersectionData> &intersections,
                                 std::vector<uchar> &trafficLights) {
   const float deltaEvent = 20.0f;
 
@@ -1300,7 +1269,7 @@ void simulateOneIntersectionCPU(uint i, float currentTime,
 
     uint edgeOT = intersections[i].edge[intersections[i].state];
     uchar numLinesO = edgeOT >> 24;
-    ushort edgeONum = edgeOT & 0xFFFF;
+    ushort edgeONum = edgeOT & 0xFFFFF;
 
     // red old traffic lights
     for (int nL = 0; nL < numLinesO; nL++) {
@@ -1312,10 +1281,10 @@ void simulateOneIntersectionCPU(uint i, float currentTime,
       intersections[i].state = (intersections[i].state + 1) %
                                intersections[i].totalInOutEdges;//next light
 
-      if ((intersections[i].edge[intersections[i].state] & 0x010000) == 0x010000) {
+      if ((intersections[i].edge[intersections[i].state] & 0x800000) == 0x800000) {
         // green new traffic lights
         uint edgeIT = intersections[i].edge[intersections[i].state];
-        ushort edgeINum = edgeIT & 0xFFFF; //get edgeI
+        ushort edgeINum = edgeIT & 0xFFFFF; //get edgeI
         uchar numLinesI = edgeIT >> 24;
 
         for (int nL = 0; nL < numLinesI; nL++) {
@@ -1341,10 +1310,8 @@ void sampleTraffic(std::vector<CUDATrafficPerson> &trafficPersonVec,
   //printf("offset %d\n",offset);
   for (int p = 0; p < numPeople; p++) {
     if (trafficPersonVec[p].active == 1) {
-      int lineNum =
-        trafficPersonVec[p].personPath[trafficPersonVec[p].currPathEdge]; //trafficPersonVec[p].curEdgeLane;
-      accSpeedPerLinePerTimeInterval[lineNum + offset] += trafficPersonVec[p].v /
-          3.0f;///3.0f;
+      int lineNum = trafficPersonVec[p].personPath[trafficPersonVec[p].currPathEdge];
+      accSpeedPerLinePerTimeInterval[lineNum + offset] += trafficPersonVec[p].v / 3.0f;
       numVehPerLinePerTimeInterval[lineNum + offset]++;
     }
   }//for people
@@ -1379,13 +1346,15 @@ void B18TrafficSimulator::simulateInCPU_MultiPass(int numOfPasses,
       printf("Num edges %d\n", boost::num_edges(simRoadGraph->myRoadGraph_BI));
     }
 
-    //QTime pathTimer;
-    //pathTimer.start();
+    QTime pathTimer;
+    pathTimer.start();
+    printf("***Start generateRoutesMulti\n");
     cudaTrafficPersonShortestPath.generateRoutesMulti(simRoadGraph->myRoadGraph_BI,
         trafficPersonVec, edgeDescToLaneMapNum, weigthMode,
         peoplePathSampling[numOfPasses]);
-    //printf("***Path time %f\n",pathTimer.elapsed());
+    printf("***Path time %f\n",pathTimer.elapsed());
     // run simulation
+    printf("***Start simulateInCPU \n");
     simulateInCPU(startTimeH, endTimeH);
     //estimate traffic density
     calculateAndDisplayTrafficDensity();
@@ -1475,7 +1444,7 @@ void B18TrafficSimulator::simulateInCPU(float startTimeH, float endTimeH) {
   int samplingNumber = 0;
 
   if (DEBUG_SIMULATOR) {
-    printf("Map maxwidth %u -->hlafMap /2 %u delta %f\n", maxWidth, halfLaneMap,
+    printf("Map -->hlafMap /2 %u delta %f\n", halfLaneMap,
            deltaTime);
   }
 
@@ -1507,15 +1476,13 @@ void B18TrafficSimulator::simulateInCPU(float startTimeH, float endTimeH) {
     //printf("Sim itersections\n");
     for (int i = 0; i < intersections.size(); i++) {
       simulateOneIntersectionCPU(i, currentTime, intersections, trafficLights);
-      //simulateOneSTOPIntersectionCPU(i,cellSize,deltaTime,currentTime,intersections,trafficLights,edgesData,laneMap,mapToReadShift,maxWidth);
     }
 
     //printf("Sim people\n");
     ////////////////////////////////////////////////////////////
     // 3. UPDATE PEOPLE
     for (int p = 1; p < numPeople; p++) {
-      simulateOnePersonCPU(p, cellSize, deltaTime, currentTime, maxWidth,
-                           mapToReadShift, mapToWriteShift, trafficPersonVec, edgesData, laneMap,
+      simulateOnePersonCPU(p, deltaTime, currentTime, mapToReadShift, mapToWriteShift, trafficPersonVec, edgesData, laneMap,
                            intersections, trafficLights);
     }//for people
 

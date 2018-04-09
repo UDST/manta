@@ -76,6 +76,7 @@ void CUDATrafficLaneMap::createLaneMap(
   //printf("edgesData %d\n",edgesData);
   edgesData.resize(boost::num_edges(inRoadGraph.myRoadGraph_BI) *
                    4); //3 to make sure it fits
+
   edgeDescToLaneMapNum.clear();
   laneMapNumToEdgeDesc.clear();
 
@@ -84,8 +85,7 @@ void CUDATrafficLaneMap::createLaneMap(
   int numBins = 27 / binLength;//maxlength is 26km
   std::vector<int> bins(numBins);
   std::fill(bins.begin(), bins.end(), 0);
-  for (boost::tie(ei, ei_end) = boost::edges(inRoadGraph.myRoadGraph_BI);
-    ei != ei_end; ++ei) {
+  for (boost::tie(ei, ei_end) = boost::edges(inRoadGraph.myRoadGraph_BI); ei != ei_end; ++ei) {
     float length = inRoadGraph.myRoadGraph_BI[*ei].edgeLength;
     int binN = (length / 1000.0f) / binLength;
     //printf("l %.2f binN %d\n", length, binN);
@@ -98,8 +98,10 @@ void CUDATrafficLaneMap::createLaneMap(
     printf("%.0fkm, %d\n", (binN * binLength+1.0f), bins[binN]);
   }
 
-  for (boost::tie(ei, ei_end) = boost::edges(inRoadGraph.myRoadGraph_BI);
-       ei != ei_end; ++ei) {
+
+  // Create EdgeData
+  
+  for (boost::tie(ei, ei_end) = boost::edges(inRoadGraph.myRoadGraph_BI); ei != ei_end; ++ei) {
 
     // num lanes
     int numLanes = inRoadGraph.myRoadGraph_BI[*ei].numberOfLanes;
@@ -116,10 +118,13 @@ void CUDATrafficLaneMap::createLaneMap(
     //printf("inRoadGraph.myRoadGraph_BI[*ei].edgeLength %f\n",inRoadGraph.myRoadGraph_BI[*ei].edgeLength);
     //edgesData[tNumLanes].lengthCells=ceil(length/cellSize);
     //length/=cellSize;
+    if (edgesData[tNumLanes].length > 65535.0f) {
+      printf("Edge longer than 65535, ushort logic in simulator will fail, update that code.");
+      exit(-1);
+    }
     if (maxLength < edgesData[tNumLanes].length) {
       maxLength = edgesData[tNumLanes].length;
     }
-
     if (maxNumLanes < numLanes) {
       maxNumLanes = numLanes;
     }
