@@ -37,23 +37,17 @@
 
 #include "../misctools/misctools.h"
 
-//#include "opencv2/highgui/highgui.hpp"
-//#include "opencv2/imgproc/imgproc.hpp"
-
 #include "cudaTrafficPerson.h"
 #include "RoadGraph/roadGraph.h"
 
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
 namespace LC {
-class CUDATrafficPersonShortestPath { // : public QGLWidget
+class CUDATrafficPersonShortestPath {
   //Q_OBJECT
 
  public:
-  CUDATrafficPersonShortestPath();
-  ~CUDATrafficPersonShortestPath();
 
-  //void generateRoutes(LC::RoadGraph::roadBGLGraph_BI& roadGraph,std::vector<CUDATrafficPerson>& trafficPersonVec,std::map<RoadGraph::roadGraphEdgeDesc_BI,uint>& edgeDescToLaneMapNum);//,std::vector<ushort>& nextEdgeM);
   void calculateSeveralPeopleRoute(LC::RoadGraph::roadBGLGraph_BI &roadGraph,
                                    std::vector<CUDATrafficPerson> &trafficPersonVec,
                                    std::vector<uint> &peopleStartInInter,

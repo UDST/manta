@@ -4,6 +4,9 @@
 #include "../LC_GLWidget3D.h"
 #include "../LC_UrbanMain.h"
 #include <thread>
+
+#include "b18TrafficJohnson.h"
+
 #define DEBUG_TRAFFIC 1
 #define DEBUG_SIMULATOR 1
 
@@ -86,14 +89,19 @@ void B18TrafficSimulator::createLaneMap() { //
                                    intersections, trafficLights, laneMapNumToEdgeDesc, edgeDescToLaneMapNum);
 }//
 
-void B18TrafficSimulator::generateCarPaths() { //
+void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
   if (initialized == false) {
-    printf("Error: initSimulator was not called\n");
+    printf("Error (generateCarPaths): initSimulator was not called\n");
     return;
   }
+  if (useJohnsonRouting) {
+    printf("***generateCarPaths Start generateRoute Johnson\n");
+    B18TrafficJohnson::generateRoutes(simRoadGraph->myRoadGraph_BI, trafficPersonVec, edgeDescToLaneMapNum, 0);
+  } else {
+    printf("***generateCarPaths Start generateRoutesMulti Disktra\n");
+    cudaTrafficPersonShortestPath.generateRoutesMulti(simRoadGraph->myRoadGraph_BI, trafficPersonVec, edgeDescToLaneMapNum, 0);
+  }
 
-  cudaTrafficPersonShortestPath.generateRoutesMulti(simRoadGraph->myRoadGraph_BI,
-      trafficPersonVec, edgeDescToLaneMapNum, 0);
 }//
 
 void B18TrafficSimulator::calculateAndDisplayTrafficDensity() {
@@ -217,11 +225,10 @@ void calculateLaneCarShouldBe(
   ushort numExitToTake = 0;
   ushort numExists = 0;
 
-  for (int eN = intersections[edgeNextInters].totalInOutEdges - 1; eN >= 0;
-       eN--) {//clockwise
+  for (int eN = intersections[edgeNextInters].totalInOutEdges - 1; eN >= 0; eN--) {  // clockwise
     uint procEdge = intersections[edgeNextInters].edge[eN];
 
-    if ((procEdge & 0xFFFFF) == curEdgeLane) { //current edge
+    if ((procEdge & kMaskLaneMap) == curEdgeLane) { //current edge 0xFFFFF
       if (DEBUG_TRAFFIC == 1) {
         printf("CE procEdge %05x\n", procEdge);
       }
@@ -236,7 +243,7 @@ void calculateLaneCarShouldBe(
     }
 
 
-    if ((procEdge & 0x800000) == 0x0) { //out edge
+    if ((procEdge & kMaskInEdge) == 0x0) { //out edge 0x800000
       if (DEBUG_TRAFFIC == 1) {
         printf("   procEdge %05x\n", procEdge);
       }
@@ -252,7 +259,7 @@ void calculateLaneCarShouldBe(
       }
     }
 
-    if ((procEdge & 0xFFFFF) == nextEdge) {
+    if ((procEdge & kMaskInEdge) == nextEdge) {
       exitFound = true;
       currentEdgeFound = false;
 
@@ -1214,7 +1221,7 @@ void simulateOneSTOPIntersectionCPU(
   if (currentTime > intersections[i].nextEvent && intersections[i].totalInOutEdges > 0) {
     uint edgeOT = intersections[i].edge[intersections[i].state];
     uchar numLinesO = edgeOT >> 24;
-    ushort edgeONum = edgeOT & 0xFFFFF;
+    ushort edgeONum = edgeOT & kMaskLaneMap; // 0xFFFFF
 
     // red old traffic lights
     for (int nL = 0; nL < numLinesO; nL++) {
@@ -1226,9 +1233,9 @@ void simulateOneSTOPIntersectionCPU(
       intersections[i].state = (intersections[i].state + 1) %
                                intersections[i].totalInOutEdges;//next light
 
-      if ((intersections[i].edge[intersections[i].state] & 0x800000) == 0x800000) {
+      if ((intersections[i].edge[intersections[i].state] & kMaskInEdge) == kMaskInEdge) {  // 0x800000
         uint edgeIT = intersections[i].edge[intersections[i].state];
-        ushort edgeINum = edgeIT & 0xFFFFF; //get edgeI
+        ushort edgeINum = edgeIT & kMaskLaneMap; //get edgeI 0xFFFFF
         uchar numLinesI = edgeIT >> 24;
         /// check if someone in this edge
         int rangeToCheck = 5.0f; //5m
@@ -1269,7 +1276,7 @@ void simulateOneIntersectionCPU(uint i, float currentTime,
 
     uint edgeOT = intersections[i].edge[intersections[i].state];
     uchar numLinesO = edgeOT >> 24;
-    ushort edgeONum = edgeOT & 0xFFFFF;
+    ushort edgeONum = edgeOT & kMaskLaneMap; // 0xFFFFF;
 
     // red old traffic lights
     for (int nL = 0; nL < numLinesO; nL++) {
@@ -1281,10 +1288,10 @@ void simulateOneIntersectionCPU(uint i, float currentTime,
       intersections[i].state = (intersections[i].state + 1) %
                                intersections[i].totalInOutEdges;//next light
 
-      if ((intersections[i].edge[intersections[i].state] & 0x800000) == 0x800000) {
+      if ((intersections[i].edge[intersections[i].state] & kMaskInEdge) == kMaskInEdge) {  // 0x800000
         // green new traffic lights
         uint edgeIT = intersections[i].edge[intersections[i].state];
-        ushort edgeINum = edgeIT & 0xFFFFF; //get edgeI
+        ushort edgeINum = edgeIT & kMaskLaneMap; //  0xFFFFF; //get edgeI
         uchar numLinesI = edgeIT >> 24;
 
         for (int nL = 0; nL < numLinesI; nL++) {
@@ -1319,8 +1326,7 @@ void sampleTraffic(std::vector<CUDATrafficPerson> &trafficPersonVec,
 
 // numOfPasses-> define if just disjktra or iterative
 // reGeneratePeopleLanes-> recompute lanes (it is used in MCMC that calls those func before)
-void B18TrafficSimulator::simulateInCPU_MultiPass(int numOfPasses,
-    float startTimeH, float endTimeH) {
+void B18TrafficSimulator::simulateInCPU_MultiPass(int numOfPasses, float startTimeH, float endTimeH, bool useJohnsonRouting) {
 
   // create lane map
   if (DEBUG_SIMULATOR) {
@@ -1348,10 +1354,14 @@ void B18TrafficSimulator::simulateInCPU_MultiPass(int numOfPasses,
 
     QTime pathTimer;
     pathTimer.start();
-    printf("***Start generateRoutesMulti\n");
-    cudaTrafficPersonShortestPath.generateRoutesMulti(simRoadGraph->myRoadGraph_BI,
-        trafficPersonVec, edgeDescToLaneMapNum, weigthMode,
-        peoplePathSampling[numOfPasses]);
+    
+    if (useJohnsonRouting) {
+      printf("***Start generateRoute Johnson\n");
+      B18TrafficJohnson::generateRoutes(simRoadGraph->myRoadGraph_BI, trafficPersonVec, edgeDescToLaneMapNum, weigthMode, peoplePathSampling[numOfPasses]);
+    } else {
+      printf("***Start generateRoutesMulti Disktra\n");
+      cudaTrafficPersonShortestPath.generateRoutesMulti(simRoadGraph->myRoadGraph_BI, trafficPersonVec, edgeDescToLaneMapNum, weigthMode, peoplePathSampling[numOfPasses]);
+    }
     printf("***Path time %f\n",pathTimer.elapsed());
     // run simulation
     printf("***Start simulateInCPU \n");
@@ -1362,12 +1372,12 @@ void B18TrafficSimulator::simulateInCPU_MultiPass(int numOfPasses,
 }//
 
 void B18TrafficSimulator::simulateInCPU_Onepass(float startTimeH,
-    float endTimeH) {
+  float endTimeH, bool useJohnsonRouting) {
   resetPeopleJobANDintersections();
   // create lane map
   createLaneMap();
   // find path for each vehicle
-  generateCarPaths();
+  generateCarPaths(useJohnsonRouting);
   // run simulation
   simulateInCPU(startTimeH, endTimeH);
   //estimate traffic density

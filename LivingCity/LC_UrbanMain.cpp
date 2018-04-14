@@ -633,6 +633,13 @@ void LCUrbanMain::onLayerEnable(int) {
 //////////////////////////
 
 void LCUrbanMain::onB18SimulateCPUPressed(bool) {
+  
+  if (glWidget3D->b18TrafficSimulator.trafficPersonVec.size() <= 0) {
+    printf("onB18SimulateCPUPressed People empty--> Load B18\n");
+    b18CreateOD(/*random=*/false);
+  } else {
+    printf("onB18SimulateCPUPressed People already loaded\n");
+  }
 
   ///////////////////////////////////////
   // SIMULATION
@@ -643,7 +650,8 @@ void LCUrbanMain::onB18SimulateCPUPressed(bool) {
   float endTimeH = eTime.hour() + eTime.minute() / 60.0f;
 
   int numPasses = ui.b18ShortestPathNumPassesSpinBox->value();
-  glWidget3D->b18TrafficSimulator.simulateInCPU_MultiPass(numPasses, startTimeH, endTimeH);
+  bool useJohnsonRouting = ui.b18UseJohnsonRoutingCheckBox->isChecked();
+  glWidget3D->b18TrafficSimulator.simulateInCPU_MultiPass(numPasses, startTimeH, endTimeH, useJohnsonRouting);
 }//
 
 void LCUrbanMain::onB18SimulateGPUPressed(bool) {
@@ -681,9 +689,8 @@ void LCUrbanMain::b18CreateOD(bool random) {
   // INIT
   if (glWidget3D->b18TrafficSimulator.initialized == false) {
     float deltaTime = ui.b18DeltaTimeSpinBox->value();
-    float cellSize = ui.b18CellSizeSpinBox->value();
     printf(">>1. Init simulator\n");
-    glWidget3D->b18TrafficSimulator.initSimulator(deltaTime, cellSize, &glWidget3D->cg.roadGraph, this); //
+    glWidget3D->b18TrafficSimulator.initSimulator(deltaTime, &glWidget3D->cg.roadGraph, this); //
     printf("<<1. Init simulator %d ms\n", timer.elapsed());
   } else {
     printf("<<1. Already initiated\n");
@@ -718,7 +725,7 @@ void LCUrbanMain::b18CreateOD(bool random) {
       glWidget3D->b18TrafficSimulator.createB2018People(startDemandTime, endDemandTime);
     }
 
-    printf("<<2. Create people in %d ms\n", timer.elapsed());
+    printf("<<2. Create/load people (%d) in %d ms\n", glWidget3D->b18TrafficSimulator.trafficPersonVec.size(), timer.elapsed());
   } else {
     printf("<<2. Already people\n");
   }

@@ -1154,9 +1154,9 @@
              <number>3</number>
             </property>
             <item row="6" column="0">
-             <widget class="QCheckBox" name="b18RoutingDijkstraCheckBox">
+             <widget class="QCheckBox" name="b18UseJohnsonRoutingCheckBox">
               <property name="text">
-               <string>Path Dijkstra</string>
+               <string>Path Johnson</string>
               </property>
               <property name="checked">
                <bool>true</bool>
@@ -1351,66 +1351,7 @@
             </property>
             <item row="2" column="0">
              <layout class="QGridLayout" name="gridLayout_21">
-              <item row="9" column="0" colspan="2">
-               <widget class="Line" name="line">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="0">
-               <widget class="QLabel" name="label_13">
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>25</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>Cell Size (m)</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QDoubleSpinBox" name="b18CellSizeSpinBox">
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>20</height>
-                 </size>
-                </property>
-                <property name="minimum">
-                 <double>0.100000000000000</double>
-                </property>
-                <property name="value">
-                 <double>1.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item row="5" column="0" colspan="2">
-               <widget class="Line" name="line_2">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-               </widget>
-              </item>
               <item row="7" column="0" colspan="2">
-               <widget class="QPushButton" name="b18CPUSimulateButton">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>25</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>CPU Simulate</string>
-                </property>
-               </widget>
-              </item>
-              <item row="8" column="0" colspan="2">
                <widget class="QPushButton" name="b18GPUSimulateButton">
                 <property name="enabled">
                  <bool>false</bool>
@@ -1426,14 +1367,51 @@
                 </property>
                </widget>
               </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="label_14">
-                <property name="text">
-                 <string>Delta Time (s)</string>
+              <item row="1" column="1">
+               <widget class="QSpinBox" name="b18ShortestPathNumPassesSpinBox">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>17</height>
+                 </size>
+                </property>
+                <property name="maximum">
+                 <number>5</number>
                 </property>
                </widget>
               </item>
-              <item row="1" column="1">
+              <item row="3" column="1">
+               <widget class="QTimeEdit" name="b18EndTimeEdit">
+                <property name="time">
+                 <time>
+                  <hour>20</hour>
+                  <minute>0</minute>
+                  <second>0</second>
+                 </time>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="label_18">
+                <property name="text">
+                 <string>End Time</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="label_19">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>Start Time</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
                <widget class="QDoubleSpinBox" name="b18DeltaTimeSpinBox">
                 <property name="maximumSize">
                  <size>
@@ -1453,19 +1431,47 @@
                </widget>
               </item>
               <item row="2" column="1">
-               <widget class="QSpinBox" name="b18ShortestPathNumPassesSpinBox">
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>17</height>
-                 </size>
-                </property>
-                <property name="maximum">
-                 <number>5</number>
+               <widget class="QTimeEdit" name="b18StratTimeEdit">
+                <property name="time">
+                 <time>
+                  <hour>16</hour>
+                  <minute>30</minute>
+                  <second>0</second>
+                 </time>
                 </property>
                </widget>
               </item>
-              <item row="2" column="0">
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_14">
+                <property name="text">
+                 <string>Delta Time (s)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="0" colspan="2">
+               <widget class="QPushButton" name="b18CPUSimulateButton">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>CPU Simulate</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0" colspan="2">
+               <widget class="Line" name="line_2">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
                <widget class="QLabel" name="label_6">
                 <property name="maximumSize">
                  <size>
@@ -1478,45 +1484,10 @@
                 </property>
                </widget>
               </item>
-              <item row="3" column="0">
-               <widget class="QLabel" name="label_19">
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>25</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>Start Time</string>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="1">
-               <widget class="QTimeEdit" name="b18StratTimeEdit">
-                <property name="time">
-                 <time>
-                  <hour>16</hour>
-                  <minute>30</minute>
-                  <second>0</second>
-                 </time>
-                </property>
-               </widget>
-              </item>
-              <item row="4" column="0">
-               <widget class="QLabel" name="label_18">
-                <property name="text">
-                 <string>End Time</string>
-                </property>
-               </widget>
-              </item>
-              <item row="4" column="1">
-               <widget class="QTimeEdit" name="b18EndTimeEdit">
-                <property name="time">
-                 <time>
-                  <hour>20</hour>
-                  <minute>0</minute>
-                  <second>0</second>
-                 </time>
+              <item row="8" column="0" colspan="2">
+               <widget class="Line" name="line">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
                 </property>
                </widget>
               </item>

@@ -18,6 +18,7 @@
 
 namespace LC {
 
+
 class B18TrafficLaneMap {
  public:
    B18TrafficLaneMap();
@@ -31,6 +32,8 @@ class B18TrafficLaneMap {
 
   void resetIntersections(std::vector<B18IntersectionData> &intersections,
                           std::vector<uchar> &trafficLights);
+
+  
 };
 }
 

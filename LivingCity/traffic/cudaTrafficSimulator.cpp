@@ -241,21 +241,17 @@ void calculateLaneCarShouldBe(
   ushort numExitToTake = 0;
   ushort numExists = 0;
 
-  for (int eN = intersections[edgeNextInters].totalInOutEdges - 1; eN >= 0;
-       eN--) {//clockwise
+  for (int eN = intersections[edgeNextInters].totalInOutEdges - 1; eN >= 0; eN--) {  // clockwise
     uint procEdge = intersections[edgeNextInters].edge[eN];
 
     if ((procEdge & 0xFFFF) == curEdgeLane) { //current edge
       if (DEBUG_TRAFFIC == 1) {
         printf("CE procEdge %05x\n", procEdge);
       }
-
       currentEdgeFound = true;
-
       if (exitFound == false) {
         numExitToTake = 0;
       }
-
       continue;
     }
 
@@ -264,7 +260,6 @@ void calculateLaneCarShouldBe(
       if (DEBUG_TRAFFIC == 1) {
         printf("   procEdge %05x\n", procEdge);
       }
-
       numExists++;
 
       if (currentEdgeFound == true) {

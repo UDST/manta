@@ -97,6 +97,9 @@
     <ClInclude Include="RoadGraph\roadGraph.h" />
     <ClInclude Include="RoadGraph\roadGraphEdge.h" />
     <ClInclude Include="RoadGraph\roadGraphVertex.h" />
+    <ClInclude Include="traffic\b18EdgeData.h" />
+    <ClInclude Include="traffic\b18TrafficJohnson.h" />
+    <ClInclude Include="traffic\b18TrafficLaneMap.h" />
     <ClInclude Include="traffic\b18TrafficOD.h" />
     <ClInclude Include="traffic\b18TrafficSimulator.h" />
     <ClInclude Include="traffic\cudaCODE_trafficSimulator.h" />
@@ -245,6 +248,8 @@
     <ClCompile Include="RoadGraph\roadGraph.cpp" />
     <ClCompile Include="RoadGraph\roadGraphEdge.cpp" />
     <ClCompile Include="RoadGraph\roadGraphVertex.cpp" />
+    <ClCompile Include="traffic\b18TrafficJohnson.cpp" />
+    <ClCompile Include="traffic\b18TrafficLaneMap.cpp" />
     <ClCompile Include="traffic\b18TrafficOD.cpp" />
     <ClCompile Include="traffic\b18TrafficSimulator.cpp" />
     <ClCompile Include="traffic\cudaGridPollution.cpp" />
@@ -407,6 +412,9 @@
       <AdditionalDependencies>Qt5Cored.lib;Qt5Guid.lib;Qt5OpenGLd.lib;Qt5Xmld.lib;Qt5Widgetsd.lib;opengl32.lib;opencv_core2412d.lib;opencv_imgproc2412d.lib;opencv_highgui2412d.lib;opencv_legacy2412d.lib;opencv_photo2412d.lib;opencv_video2412d.lib;glew32.lib;cudart.lib;Glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>libboost_serialization-vc100-mt-1_44.lib</IgnoreSpecificDefaultLibraries>
     </Link>
+    <CudaCompile>
+      <CodeGeneration>compute_52,sm_52</CodeGeneration>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -443,6 +451,9 @@
       <AdditionalDependencies>Qt5Core.lib;Qt5Gui.lib;Qt5OpenGL.lib;Qt5Xml.lib;Qt5Widgets.lib;opengl32.lib;glu32.lib;opencv_core2412.lib;opencv_imgproc2412.lib;opencv_highgui2412.lib;opencv_legacy2412.lib;opencv_photo2412.lib;opencv_video2412.lib;glew32.lib;cudart.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>libboost_serialization-vc100-mt-1_44.lib</IgnoreSpecificDefaultLibraries>
     </Link>
+    <CudaCompile>
+      <CodeGeneration>compute_52,sm_52</CodeGeneration>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

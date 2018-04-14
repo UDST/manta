@@ -24,16 +24,12 @@
 
 #include "cudaTrafficPersonShortestPath.h"
 
+#include <boost/graph/dijkstra_shortest_paths.hpp>
+
 #define ROUTE_DEBUG 1
 #define PATH_DEBUG 1
 
 namespace LC {
-
-CUDATrafficPersonShortestPath::CUDATrafficPersonShortestPath() {
-}//
-CUDATrafficPersonShortestPath::~CUDATrafficPersonShortestPath() {
-}//
-
 
 /////////////////////////////
 template <typename UniquePairAssociativeContainer>

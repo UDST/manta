@@ -70,8 +70,8 @@ class B18TrafficSimulator {
   CUDATrafficPersonShortestPath cudaTrafficPersonShortestPath;
 
   void simulateInCPU_MultiPass(int numOfPasses,
-                               float startTimeH, float endTimeH);
-  void simulateInCPU_Onepass(float startTimeH, float endTimeH);
+    float startTimeH, float endTimeH, bool useJohnsonRouting);
+  void simulateInCPU_Onepass(float startTimeH, float endTimeH, bool useJohnsonRouting);
 
 
   void simulateInCPU(float startTimeH, float endTimeH);
@@ -85,7 +85,7 @@ class B18TrafficSimulator {
   void createLaneMap();
 
   // car path
-  void generateCarPaths();
+  void generateCarPaths(bool useJohnsonRouting);
 
   // People
   std::vector<CUDATrafficPerson> trafficPersonVec;

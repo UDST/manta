@@ -17,6 +17,9 @@
 namespace LC {
 
   const int kMaxMapWidthM = 1024;
+  const uint kMaskOutEdge = 0x000000;
+  const uint kMaskInEdge = 0x800000;
+  const uint kMaskLaneMap = 0x007FFFFF;
 
 struct B18EdgeData {
   ushort numLines;

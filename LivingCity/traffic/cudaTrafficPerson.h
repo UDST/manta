@@ -41,6 +41,7 @@
 
 namespace LC {
 
+  const unsigned int kMaxPersonPath = 140;
 
 struct CUDATrafficPerson {
   unsigned short init_intersection;
@@ -70,7 +71,7 @@ struct CUDATrafficPerson {
 
 
   unsigned int currPathEdge;
-  unsigned int personPath[140];//change CUDATrafficPersonShortestPath::calculateSeveralPeopleRoute
+  unsigned int personPath[kMaxPersonPath];//change CUDATrafficPersonShortestPath::calculateSeveralPeopleRoute
   // data
   unsigned short num_steps;
   unsigned int color;

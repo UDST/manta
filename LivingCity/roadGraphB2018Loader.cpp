@@ -410,8 +410,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph,
 
   printf("\n*** Readed in %d\n", timer.elapsed());
   printf("       --> #Nod %d\n", index);
-  printf("       --> #Edg %d -> Total length %2.2f\n", dynEdgToEdge.size(),
-         totalLeng);
+  printf("       --> #Edg %d -> Total length %2.2f\n", dynEdgToEdge.size(), totalLeng);
   printf("       --> #Peo %d\n", totalNumPeople);
   //printf("\nNodes readed in %d Nod %d Cen %d Link %d\n", timer.elapsed(), osmidToVertexLoc.size(), centroids.size(), links.size());
 }
