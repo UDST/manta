@@ -557,33 +557,6 @@ void LCGLWidget3D::initializeGL() {
 
 void LCGLWidget3D::resizeGL(int width, int height) {
   updateCamera();
-  /*height = height?height:1;
-
-      printf("Resize w %d h %d\n",width,height);
-
-      myCam->resizeCam(width/2.0f,height/2.0f);
-
-      glViewport( 0, 0, (GLint)width, (GLint)height );
-
-      //////////////////////////
-      // PROJECTION MATRIX
-
-      float fov=myCam->fovy;
-
-      float aspect=(float)width/(float)height;
-      float zfar=4.0f*FAR_DIST;//4* to allow see the sky
-      float znear=5.0f;//also change in cameraTo3D
-
-      float f = 1.0f / tan (fov * (M_PI / 360.0));
-
-      double m[16]=
-      {	f/aspect,	0,								0,									0,
-      0,			f,								0,						 			0,
-      0,			0,		(zfar+znear)/(znear-zfar),		(2.0f*zfar*znear)/(znear-zfar),
-      0,			0,								-1,									0
-
-      };
-      pMatrix=QMatrix4x4(m);*/
 }
 
 void LCGLWidget3D::paintGL() {
@@ -603,8 +576,7 @@ void LCGLWidget3D::drawScene(int drawMode) {
   // LAYER MODE
   if (G::global().getInt("render_mode") == 2) {
     //printf("render_mode 2\n");
-    glUniform1i(glGetUniformLocation(vboRenderManager.program, "shadowState"),
-                0); //SHADOW: Disable
+    glUniform1i(glGetUniformLocation(vboRenderManager.program, "shadowState"), 0); //SHADOW: Disable
     vboRenderManager.vboTerrain.render(vboRenderManager);
 
     if (keyMPressed == true) {
@@ -614,8 +586,7 @@ void LCGLWidget3D::drawScene(int drawMode) {
 
   // 2D MODE
   if (G::global().getInt("render_mode") == 1) {
-    glUniform1i(glGetUniformLocation(vboRenderManager.program, "shadowState"),
-                0); //SHADOW: Disable
+    glUniform1i(glGetUniformLocation(vboRenderManager.program, "shadowState"), 0); //SHADOW: Disable
     //printf("render_mode 1\n");
     vboRenderManager.vboTerrain.render(vboRenderManager);
 

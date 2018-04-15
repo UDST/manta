@@ -722,7 +722,8 @@ void LCUrbanMain::b18CreateOD(bool random) {
           numPeople, glWidget3D->vboRenderManager.layers);
     } else {
       printf(">>2. createB2018People\n");
-      glWidget3D->b18TrafficSimulator.createB2018People(startDemandTime, endDemandTime);
+      int limitNumPeople = ui.b18NumPeopleB18SpinBox->value();
+      glWidget3D->b18TrafficSimulator.createB2018People(startDemandTime, endDemandTime, limitNumPeople);
     }
 
     printf("<<2. Create/load people (%d) in %d ms\n", glWidget3D->b18TrafficSimulator.trafficPersonVec.size(), timer.elapsed());
