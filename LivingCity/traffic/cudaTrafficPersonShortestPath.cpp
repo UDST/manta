@@ -234,33 +234,49 @@ void CUDATrafficPersonShortestPath::generateRoutesMulti(
     // 1. Update weight edges
 
     int numEdges = 0;
+    float minTravelTime = FLT_MAX;
+    float maxTravelTime = -FLT_MAX;
+    float minLength = FLT_MAX;
+    float maxLength = -FLT_MAX;
+    float minSpeed = FLT_MAX;
+    float maxSpeed = -FLT_MAX;
 
     for (boost::tie(ei, eiEnd) = boost::edges(roadGraph);
-         ei != eiEnd; ++ei) {
+      ei != eiEnd; ++ei) {
       numEdges++;
 
       if (roadGraph[*ei].numberOfLanes > 0) {
         // Use the original info, length and max speed
+        float speed;
         if (weigthMode == 0 || roadGraph[*ei].averageSpeed.size() <= 0) {
-          roadGraph[*ei].edge_weight = roadGraph[*ei].edgeLength /
-                                       (roadGraph[*ei].maxSpeedMperSec * roadGraph[*ei].numberOfLanes);
+          speed = roadGraph[*ei].maxSpeedMperSec;// *sqrt(roadGraph[*ei].numberOfLanes));
         } else {
           // Use the avarage speed sampled in a former step
           float avOfAv = 0;
-
           for (int avOfAvN = 0; avOfAvN < roadGraph[*ei].averageSpeed.size(); avOfAvN++) {
             avOfAv += roadGraph[*ei].averageSpeed[avOfAvN];
           }
-
-          avOfAv /= roadGraph[*ei].averageSpeed.size();
-          roadGraph[*ei].edge_weight = roadGraph[*ei].edgeLength / avOfAv;
+          speed = avOfAv / roadGraph[*ei].averageSpeed.size();
         }
+        float travelTime = roadGraph[*ei].edgeLength / speed;
+        roadGraph[*ei].edge_weight = travelTime;
+
+        minTravelTime = minTravelTime>travelTime ? travelTime : minTravelTime;
+        maxTravelTime = maxTravelTime < travelTime ? travelTime : maxTravelTime;
+
+        minLength = minLength > roadGraph[*ei].edgeLength ? roadGraph[*ei].edgeLength : minLength;
+        maxLength = maxLength < roadGraph[*ei].edgeLength ? roadGraph[*ei].edgeLength : maxLength;
+
+        minSpeed = minSpeed > speed ? speed : minSpeed;
+        maxSpeed = maxSpeed < speed ? speed : maxSpeed;
       } else {
         roadGraph[*ei].edge_weight =
           100000000.0; //FLT_MAX;// if it has not lines, then the weight is inf
       }
     }
-
+    printf("Travel time Min: %f Max: %f\n", minTravelTime, maxTravelTime);
+    printf("Length Min: %f Max: %f\n", minLength, maxLength);
+    printf("Speed Min: %f Max: %f\n", minSpeed, maxSpeed);
 
     //2. Generate hash with init intersectios nad people
     QHash<uint, std::vector<uint>> intersectionToPeople;
