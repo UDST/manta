@@ -55,14 +55,14 @@ void B18TrafficSimulator::createRandomPeople(float startTime, float endTime,
                                   peopleJobInfoLayers, simRoadGraph->myRoadGraph_BI);
 }//
 
-void B18TrafficSimulator::createB2018People(float startTime, float endTime) {
+void B18TrafficSimulator::createB2018People(float startTime, float endTime, int limitNumPeople) {
   if (initialized == false) {
     printf("Error: initSimulator was not called\n");
     return;
   }
 
   b18TrafficOD.resetTrafficPersonJob(trafficPersonVec);
-  b18TrafficOD.loadB18TrafficPeople(startTime, endTime, trafficPersonVec, simRoadGraph->myRoadGraph_BI);
+  b18TrafficOD.loadB18TrafficPeople(startTime, endTime, trafficPersonVec, simRoadGraph->myRoadGraph_BI, limitNumPeople);
 
 }
 
@@ -648,6 +648,9 @@ void simulateOnePersonCPU(
   bool nextVehicleIsATrafficLight = false;
   uint currentEdge = trafficPersonVec[p].personPath[trafficPersonVec[p].currPathEdge];
   uint nextEdge = trafficPersonVec[p].personPath[trafficPersonVec[p].currPathEdge + 1];
+  if (DEBUG_TRAFFIC == 1) {
+    printf("    2. Person: %d Try to move current Edge %u Next %u\n", p, currentEdge, nextEdge);
+  }
   // www.vwi.tu-dresden.de/~treiber/MicroApplet/IDM.html
   // IDM
   float thirdTerm = 0;
@@ -1154,16 +1157,14 @@ void simulateOnePersonCPU(
   }*/
   //trafficPersonVec[p].curEdgeLane=trafficPersonVec[p].nextEdge;
   trafficPersonVec[p].currPathEdge++;
-  trafficPersonVec[p].maxSpeedMperSec =
-    trafficPersonVec[p].nextEdgemaxSpeedMperSec;
+  trafficPersonVec[p].maxSpeedMperSec = trafficPersonVec[p].nextEdgemaxSpeedMperSec;
   trafficPersonVec[p].edgeNumLanes = trafficPersonVec[p].nextEdgeNumLanes;
   trafficPersonVec[p].edgeNextInters = trafficPersonVec[p].nextEdgeNextInters;
   trafficPersonVec[p].length = trafficPersonVec[p].nextEdgeLength;
   trafficPersonVec[p].posInLaneM = numMToMove;
 
   if (trafficPersonVec[p].numOfLaneInEdge >= trafficPersonVec[p].edgeNumLanes) {
-    trafficPersonVec[p].numOfLaneInEdge = trafficPersonVec[p].edgeNumLanes -
-                                          1; //change line if there are less roads
+    trafficPersonVec[p].numOfLaneInEdge = trafficPersonVec[p].edgeNumLanes - 1; //change line if there are less roads
   }
 
   ////////////
@@ -1406,7 +1407,7 @@ void B18TrafficSimulator::simulateInCPU(float startTimeH, float endTimeH) {
   int numInt = currentTime / deltaTime; //floor
 
   if (DEBUG_SIMULATOR) {
-    printf("currentTime %f --> %f\n", currentTime, numInt * deltaTime);
+    printf("currentTime %.2fs (%.2fh)--> %f\n", currentTime, currentTime/3600.0f, numInt * deltaTime);
   }
 
   currentTime = numInt * deltaTime;
@@ -1424,7 +1425,7 @@ void B18TrafficSimulator::simulateInCPU(float startTimeH, float endTimeH) {
   int numIntersec = intersections.size();
 
   if (DEBUG_SIMULATOR) {
-    printf(">>Start Simulation %f\n", currentTime);
+    printf(">>Start Simulation %.2fs (%.2fh)\n", currentTime, currentTime/3600.0f);
   }
 
   QTime timer;
@@ -1437,8 +1438,7 @@ void B18TrafficSimulator::simulateInCPU(float startTimeH, float endTimeH) {
   // sampling
   uint numStepsPerSample = 30.0f / deltaTime; //each min
   const uint numStepsTogether = 12; //change also in density (10 per hour)
-  uint numSamples = ceil(((endTime - startTime) / (deltaTime * numStepsPerSample *
-                          numStepsTogether))) + 1; //!!!
+  uint numSamples = ceil(((endTime - startTime) / (deltaTime * numStepsPerSample * numStepsTogether))) + 1; //!!!
 
   if (DEBUG_SIMULATOR) {
     printf("numSamples %d\n", numSamples);
@@ -1447,20 +1447,17 @@ void B18TrafficSimulator::simulateInCPU(float startTimeH, float endTimeH) {
   uint numLines = trafficLights.size();
   accSpeedPerLinePerTimeInterval.resize(numSamples * numLines); //!!
   numVehPerLinePerTimeInterval.resize(numSamples * numLines);
-  memset(accSpeedPerLinePerTimeInterval.data(), 0,
-         accSpeedPerLinePerTimeInterval.size()*sizeof(float));
-  memset(numVehPerLinePerTimeInterval.data(), 0,
-         numVehPerLinePerTimeInterval.size()*sizeof(float));
+  memset(accSpeedPerLinePerTimeInterval.data(), 0, accSpeedPerLinePerTimeInterval.size()*sizeof(float));
+  memset(numVehPerLinePerTimeInterval.data(), 0, numVehPerLinePerTimeInterval.size()*sizeof(float));
   int samplingNumber = 0;
 
   if (DEBUG_SIMULATOR) {
-    printf("Map -->hlafMap /2 %u delta %f\n", halfLaneMap,
-           deltaTime);
+    printf("Map -->hlafMap /2 %u delta %f\n", halfLaneMap, deltaTime);
   }
 
   int count = 0;
 
-  while (currentTime < endTime) { //24.0f){
+  while (currentTime < endTime) {
     count++;
 
     //bool anyActive=false;
@@ -1491,9 +1488,8 @@ void B18TrafficSimulator::simulateInCPU(float startTimeH, float endTimeH) {
     //printf("Sim people\n");
     ////////////////////////////////////////////////////////////
     // 3. UPDATE PEOPLE
-    for (int p = 1; p < numPeople; p++) {
-      simulateOnePersonCPU(p, deltaTime, currentTime, mapToReadShift, mapToWriteShift, trafficPersonVec, edgesData, laneMap,
-                           intersections, trafficLights);
+    for (int p = 0; p < numPeople; p++) {
+      simulateOnePersonCPU(p, deltaTime, currentTime, mapToReadShift, mapToWriteShift, trafficPersonVec, edgesData, laneMap, intersections, trafficLights);
     }//for people
 
     ////////////////////////////////////////////////////////////
@@ -1592,13 +1588,12 @@ void B18TrafficSimulator::render(VBORenderManager &rendManager) {
   rendManager.removeStaticGeometry("Sim_Box", false);
   /////////////////////////////
   // RENDER CARS
-  bool renderMultiEdge = false;
-  bool renderBoxes = false;
-  bool renderModels = false;
+  const bool renderMultiEdge = false;
+  const bool renderBoxes = false;
+  const bool renderModels = false;
 
   // init render people
-  if (b18TrafficSimulatorRender.size() != trafficPersonVec.size() &&
-      trafficPersonVec.size() > 0) {
+  if (b18TrafficSimulatorRender.size() != trafficPersonVec.size() && trafficPersonVec.size() > 0) {
     b18TrafficSimulatorRender.clear();
     b18TrafficSimulatorRender.resize(trafficPersonVec.size());
   }
@@ -1758,8 +1753,7 @@ void B18TrafficSimulator::render(VBORenderManager &rendManager) {
         continue;
       }
 
-      carColor = QVector3D(1, 0,
-                           0); //(trafficPersonVec[p].color>>24)&0xFF,(trafficPersonVec[p].color>>16)&0xFF,(trafficPersonVec[p].color>>8)&0xFF)/255.0f;
+      carColor = QVector3D(1, 0, 0);
 
       //position
       if (laneMapNumToEdgeDesc.find(
@@ -1843,8 +1837,7 @@ void B18TrafficSimulator::render(VBORenderManager &rendManager) {
 
   //////////////////////////
   // RENDER CAR AS POINTS
-  if (renderBoxes == false && renderModels == false &&
-      trafficPersonVec.size() > 0) {
+  if (renderBoxes == false && renderModels == false && trafficPersonVec.size() > 0) {
     //rendManager.removeStaticGeometry("Sim_Points",false);
     const float heightPoint = 5.0f;
     std::vector<Vertex> carPoints;
@@ -1863,9 +1856,7 @@ void B18TrafficSimulator::render(VBORenderManager &rendManager) {
                                (trafficPersonVec[p].color >> 8) & 0xFF) / 255.0f;
 
         //position
-        if (laneMapNumToEdgeDesc.find(
-              trafficPersonVec[p].personPath[trafficPersonVec[p].currPathEdge]) ==
-            laneMapNumToEdgeDesc.end()) {
+        if (laneMapNumToEdgeDesc.find(trafficPersonVec[p].personPath[trafficPersonVec[p].currPathEdge]) == laneMapNumToEdgeDesc.end()) {
           printf("ERROR\n");//edge not found in map
           continue;
         }
@@ -1927,8 +1918,7 @@ void B18TrafficSimulator::render(VBORenderManager &rendManager) {
 
     //glEnd();
     if (carPoints.size() > 0) {
-      rendManager.addStaticGeometry("Sim_Points", carPoints, "", GL_POINTS,
-                                    1 | mode_AdaptTerrain);
+      rendManager.addStaticGeometry("Sim_Points", carPoints, "", GL_POINTS, 1 | mode_AdaptTerrain);
       glDisable(GL_DEPTH_TEST);
       glPointSize(15.0f);
       rendManager.renderStaticGeometry("Sim_Points");

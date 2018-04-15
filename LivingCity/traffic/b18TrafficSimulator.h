@@ -91,7 +91,7 @@ class B18TrafficSimulator {
   std::vector<CUDATrafficPerson> trafficPersonVec;
   void createRandomPeople(float startTime, float endTime, int numberPeople,
                           PeopleJobInfoLayers &peopleJobInfoLayers);
-  void createB2018People(float startTime, float endTime);
+  void createB2018People(float startTime, float endTime, int limitNumPeople = -1);
 
   void resetPeopleJobANDintersections();
   void saveODToFile() {}; // TODO

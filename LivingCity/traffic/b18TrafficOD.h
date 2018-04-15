@@ -54,7 +54,7 @@ class B18TrafficOD {
   // generate from b18
   void loadB18TrafficPeople(float startTimeH, float endTimeH,
                                 std::vector<CUDATrafficPerson> &trafficPersonVec,
-                                RoadGraph::roadBGLGraph_BI &roadGraph);
+                                RoadGraph::roadBGLGraph_BI &roadGraph, int limitNumPeople = -1);
 
   void resetTrafficPersonJob(std::vector<CUDATrafficPerson> &trafficPersonVec);
   std::vector<ushort> backUpInitEdge;

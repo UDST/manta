@@ -259,7 +259,7 @@ void B18TrafficOD::createRandomPeople(
 void B18TrafficOD::loadB18TrafficPeople(
   float startTimeH, float endTimeH,
   std::vector<CUDATrafficPerson> &trafficPersonVec, // out
-  RoadGraph::roadBGLGraph_BI &roadGraph) {
+  RoadGraph::roadBGLGraph_BI &roadGraph, int limitNumPeople) {
 
   trafficPersonVec.clear();
   QTime timer;
@@ -270,14 +270,15 @@ void B18TrafficOD::loadB18TrafficPeople(
     return;
   }
 
-  trafficPersonVec.resize(RoadGraphB2018::totalNumPeople);
+  int totalNumPeople = (limitNumPeople > 0) ? limitNumPeople : RoadGraphB2018::totalNumPeople;
+  trafficPersonVec.resize(totalNumPeople);
   qsrand(6541799621);
   float midTime = (startTimeH + endTimeH) / 2.0f;
 
   int numPeople = 0;
 
-  for (int d = 0; d < RoadGraphB2018::demandB2018.size(); d++) {
-    int odNumPeople = RoadGraphB2018::demandB2018[d].num_people;
+  for (int d = 0; (d < RoadGraphB2018::demandB2018.size()) && (numPeople < totalNumPeople); d++) {
+    int odNumPeople = std::min<int>(totalNumPeople - numPeople, RoadGraphB2018::demandB2018[d].num_people);
     uint src_vertex = RoadGraphB2018::demandB2018[d].src_vertex;
     uint tgt_vertex = RoadGraphB2018::demandB2018[d].tgt_vertex;
 
@@ -285,8 +286,7 @@ void B18TrafficOD::loadB18TrafficPeople(
       float goToWork = LC::misctools::genRand(startTimeH, endTimeH);/*midTime + LC::misctools::genRand(startTimeH - midTime,
                        endTimeH - startTimeH); //6.30-9.30 /// GOOOD ONE*/
      
-      randomPerson(numPeople, trafficPersonVec[numPeople],
-                   src_vertex, tgt_vertex, goToWork);
+      randomPerson(numPeople, trafficPersonVec[numPeople], src_vertex, tgt_vertex, goToWork);
      // printf("go to work %.2f --> %.2f\n", goToWork, (trafficPersonVec[p].time_departure / 3600.0f));
 
       numPeople++;
@@ -294,7 +294,7 @@ void B18TrafficOD::loadB18TrafficPeople(
 
   }
 
-  if (RoadGraphB2018::totalNumPeople != numPeople) {
+  if (totalNumPeople != numPeople) {
     printf("ERROR: generateB2018TrafficPeople totalNumPeople != numPeople, this should not happen.");
     exit(-1);
   }

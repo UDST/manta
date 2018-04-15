@@ -203,12 +203,24 @@ void CUDATrafficPersonShortestPath::calculateSeveralPeopleRoute(
       }
 
     }
-
-    /*for(int pa=0;pa<path.size();pa++){
-        printf("Person %d: %u\n",peopleStartInInter[p],trafficPersonVec[peopleStartInInter[p]].personPath[pa]);
-    }*/
     trafficPersonVec[peopleStartInInter[p]].personPath[currIndex] = -1;
-    //nextEdgeM.push_back(0xFFFF);//ensure the person
+  }
+
+  ////////////////////
+  // Debug
+  const bool kDebugFirstPerson = true;
+  if (trafficPersonVec.size()>0 && kDebugFirstPerson) {
+    int currIndex = 0;
+    while (true) {
+      uint laneMap = trafficPersonVec[0].personPath[currIndex++
+      ];
+      if (laneMap != -1) {
+        printf("-> %u ", laneMap);
+      } else {
+        break;
+      }
+    }
+    printf("\n");
   }
 
 }//
