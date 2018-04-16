@@ -9,6 +9,7 @@
 
 #define DEBUG_TRAFFIC 1
 #define DEBUG_SIMULATOR 1
+#define DEBUG_T_LIGHT 1
 
 namespace LC {
 
@@ -200,7 +201,7 @@ void B18TrafficSimulator::simulateInGPU(){
 
 // calculate if the car will turn left center or right (or the same)
 void calculateLaneCarShouldBe(
-  ushort curEdgeLane,
+  uint curEdgeLane,
   uint nextEdge,
   std::vector<B18IntersectionData> &intersections,
   uint edgeNextInters,
@@ -1235,7 +1236,7 @@ void simulateOneSTOPIntersectionCPU(
   if (currentTime > intersections[i].nextEvent && intersections[i].totalInOutEdges > 0) {
     uint edgeOT = intersections[i].edge[intersections[i].state];
     uchar numLinesO = edgeOT >> 24;
-    ushort edgeONum = edgeOT & kMaskLaneMap; // 0xFFFFF
+    uint edgeONum = edgeOT & kMaskLaneMap; // 0xFFFFF
 
     // red old traffic lights
     for (int nL = 0; nL < numLinesO; nL++) {
@@ -1249,7 +1250,7 @@ void simulateOneSTOPIntersectionCPU(
 
       if ((intersections[i].edge[intersections[i].state] & kMaskInEdge) == kMaskInEdge) {  // 0x800000
         uint edgeIT = intersections[i].edge[intersections[i].state];
-        ushort edgeINum = edgeIT & kMaskLaneMap; //get edgeI 0xFFFFF
+        uint edgeINum = edgeIT & kMaskLaneMap; //get edgeI 0xFFFFF
         uchar numLinesI = edgeIT >> 24;
         /// check if someone in this edge
         int rangeToCheck = 5.0f; //5m
@@ -1283,14 +1284,13 @@ void simulateOneIntersectionCPU(uint i, float currentTime,
                                 std::vector<uchar> &trafficLights) {
   const float deltaEvent = 20.0f;
 
-  if(i==0)printf("i %d\n",i);
-  if (currentTime > intersections[i].nextEvent &&
-      intersections[i].totalInOutEdges > 0) {
-
+  //if (DEBUG_T_LIGHT == 1) printf("Inter %d CurrTime %.1f Next Event %.1f InOut %d\n", i, currentTime, intersections[i].nextEvent, intersections[i].totalInOutEdges);
+  if (currentTime > intersections[i].nextEvent && intersections[i].totalInOutEdges > 0) {
+    if (DEBUG_T_LIGHT == 1) printf("Inter %d: Event happen\n", i);
 
     uint edgeOT = intersections[i].edge[intersections[i].state];
     uchar numLinesO = edgeOT >> 24;
-    ushort edgeONum = edgeOT & kMaskLaneMap; // 0xFFFFF;
+    uint edgeONum = edgeOT & kMaskLaneMap; // 0xFFFFF;
 
     // red old traffic lights
     for (int nL = 0; nL < numLinesO; nL++) {
@@ -1304,7 +1304,7 @@ void simulateOneIntersectionCPU(uint i, float currentTime,
       if ((intersections[i].edge[intersections[i].state] & kMaskInEdge) == kMaskInEdge) {  // 0x800000
         // green new traffic lights
         uint edgeIT = intersections[i].edge[intersections[i].state];
-        ushort edgeINum = edgeIT & kMaskLaneMap; //  0xFFFFF; //get edgeI
+        uint edgeINum = edgeIT & kMaskLaneMap; //  0xFFFFF; //get edgeI
         uchar numLinesI = edgeIT >> 24;
 
         for (int nL = 0; nL < numLinesI; nL++) {
@@ -1343,7 +1343,7 @@ void B18TrafficSimulator::simulateInCPU_MultiPass(int numOfPasses, float startTi
 
   // create lane map
   if (DEBUG_SIMULATOR) {
-    printf("MP createLaneMap\n");
+    printf(">>simulateInCPU_MultiPass\n");
   }
   createLaneMap();
 
@@ -1353,7 +1353,7 @@ void B18TrafficSimulator::simulateInCPU_MultiPass(int numOfPasses, float startTi
   int weigthMode;
   float peoplePathSampling[] = {1.0f, 1.0f, 0.5f, 0.25f, 0.12f, 0.67f};
 
-  for (int nP = 0; nP < numOfPasses + 1; nP++) {
+  for (int nP = 0; nP < numOfPasses; nP++) {
     resetPeopleJobANDintersections();//reset people
     weigthMode = 1; //first time run normal weights
 
@@ -1381,6 +1381,9 @@ void B18TrafficSimulator::simulateInCPU_MultiPass(int numOfPasses, float startTi
     simulateInCPU(startTimeH, endTimeH);
     //estimate traffic density
     calculateAndDisplayTrafficDensity();
+  }
+  if (DEBUG_SIMULATOR) {
+    printf("<<simulateInCPU_MultiPass\n");
   }
 }//
 
@@ -1962,7 +1965,7 @@ void B18TrafficSimulator::render(VBORenderManager &rendManager) {
 
       ///
       int numL = simRoadGraph->myRoadGraph_BI[*ei].numberOfLanes;
-      ushort laneMapNum = edgeDescToLaneMapNum[*ei];
+      uint laneMapNum = edgeDescToLaneMapNum[*ei];
 
       for (int lN = 0; lN < numL; lN++) {
         uchar trafficLight = 0x01; //default
@@ -2015,8 +2018,7 @@ void B18TrafficSimulator::calculateAndDisplayTrafficDensity(/*RoadGraph& inRoadG
   int numSampling = accSpeedPerLinePerTimeInterval.size() / tNumLanes;
 
   if (DEBUG_SIMULATOR) {
-    printf(">>CUDATrafficDesigner::calculateAndDisplayTrafficDensity numSampling %d\n",
-           numSampling);
+    printf(">>calculateAndDisplayTrafficDensity numSampling %d\n", numSampling);
   }
 
   RoadGraph::roadGraphEdgeIter_BI ei, eiEnd;
