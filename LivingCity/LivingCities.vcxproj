@@ -97,6 +97,7 @@
     <ClInclude Include="RoadGraph\roadGraph.h" />
     <ClInclude Include="RoadGraph\roadGraphEdge.h" />
     <ClInclude Include="RoadGraph\roadGraphVertex.h" />
+    <ClInclude Include="traffic\b18CommandLineVersion.h" />
     <ClInclude Include="traffic\b18EdgeData.h" />
     <ClInclude Include="traffic\b18TrafficJohnson.h" />
     <ClInclude Include="traffic\b18TrafficLaneMap.h" />
@@ -248,6 +249,7 @@
     <ClCompile Include="RoadGraph\roadGraph.cpp" />
     <ClCompile Include="RoadGraph\roadGraphEdge.cpp" />
     <ClCompile Include="RoadGraph\roadGraphVertex.cpp" />
+    <ClCompile Include="traffic\b18CommandLineVersion.cpp" />
     <ClCompile Include="traffic\b18TrafficJohnson.cpp" />
     <ClCompile Include="traffic\b18TrafficLaneMap.cpp" />
     <ClCompile Include="traffic\b18TrafficOD.cpp" />

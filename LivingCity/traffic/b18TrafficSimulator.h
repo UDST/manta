@@ -60,7 +60,7 @@ class B18TrafficSimulator {
 
   bool initialized;
   void initSimulator(float deltaTime, RoadGraph *geoRoadGraph,
-                     LCUrbanMain *urbanMain);
+                     LCUrbanMain *urbanMain = nullptr);
 
   // int numberPeople,
 

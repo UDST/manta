@@ -9,7 +9,6 @@
 
 namespace LC {
 
-class LCGLWidget3D;
 
 class DemandB2018 {
 public:
@@ -30,8 +29,7 @@ class RoadGraphB2018 {
   /**
   * Load
   **/
-  static void loadB2018RoadGraph(RoadGraph &inRoadGraph,
-                                 LCGLWidget3D *glWidget3D);
+  static void loadB2018RoadGraph(RoadGraph &inRoadGraph);
   
   static std::vector<DemandB2018> demandB2018;
   static int totalNumPeople;

@@ -4,16 +4,16 @@
 ************************************************************************************************/
 
 #include "roadGraphB2018Loader.h"
+#include <stdint.h>
 
 #include "Geometry/client_geometry.h"
-#include "LC_UrbanMain.h"
-#include "LC_GLWidget3D.h"
 
 #include "global.h"
 #include "bTraffic/bTrafficIntersection.h"
 
 #include <QHash>
 #include <QVector2D>
+
 
 namespace LC {
 
@@ -65,12 +65,12 @@ static QVector2D projLatLonToWorldMercator(float lat, float lon,
   return  result;
 }//
 
-void saveSetToFile(QSet<uint64> &set, QString &filename) {
+void saveSetToFile(QSet<uint64_t> &set, QString &filename) {
   QFile file(filename);
 
   if (file.open(QIODevice::ReadWrite)) {
     QTextStream stream(&file);
-    QSetIterator<uint64> nA(set);
+    QSetIterator<uint64_t> nA(set);
 
     while (nA.hasNext()) {
       stream << nA.next() << "\n";
@@ -80,16 +80,12 @@ void saveSetToFile(QSet<uint64> &set, QString &filename) {
 
 //////////////////////////////////////////////////////////
 
-void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph,
-                                        LCGLWidget3D *glWidget3D) {
+void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph) {
 
   printf(">>loadB2018RoadGraph\n");
   printf(">>Remove\n");
   inRoadGraph.myRoadGraph.clear();
   inRoadGraph.myRoadGraph_BI.clear();
-  glWidget3D->cg.geoZone.blocks.clear();
-  glWidget3D->vboRenderManager.removeAllStreetElementName("tree");
-  glWidget3D->vboRenderManager.removeAllStreetElementName("streetLamp");
   printf("<<Remove\n");
 
 
@@ -114,8 +110,8 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph,
   timer.start();
   QVector2D minBox(FLT_MAX, FLT_MAX);
   QVector2D maxBox(-FLT_MAX, -FLT_MAX);
-  QHash<uint64, QVector2D> osmidToVertexLoc;
-  QHash<uint64, uchar> osmidToBType; // node type
+  QHash<uint64_t, QVector2D> osmidToVertexLoc;
+  QHash<uint64_t, uchar> osmidToBType; // node type
 
   QHash<QString, uchar> bTypeStringTobType;
   bTypeStringTobType[""] = 0;
@@ -143,7 +139,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph,
     float x = fields[indexX].toFloat();
     float y = fields[indexY].toFloat();
     //qDebug() << "x " << x << " y " << y;
-    uint64 osmid = fields[indexOsmid].toLongLong();
+    uint64_t osmid = fields[indexOsmid].toLongLong();
     osmidToVertexLoc[osmid] = QVector2D(x, y);
     updateMinMax2(QVector2D(x, y), minBox, maxBox);
 
@@ -168,7 +164,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph,
   const float lon0 = (maxBox.y() + minBox.y()) * 0.5f;
   minBox = QVector2D(FLT_MAX, FLT_MAX);
   maxBox = QVector2D(-FLT_MAX, -FLT_MAX);
-  QHash<uint64, QVector2D>::iterator i;
+  QHash<uint64_t, QVector2D>::iterator i;
 
   for (i = osmidToVertexLoc.begin(); i != osmidToVertexLoc.end(); ++i) {
     //printf("1 ANG: %.2f %.2f MinBox %.2f %.2f MaxBox %.2f %.2f--> %.2f %.2f\n", i.value().x(), i.value().y(), minBox.x(), minBox.y(), maxBox.x(), maxBox.y(), maxBox.x() - minBox.x(), maxBox.y() - minBox.y());
@@ -187,17 +183,12 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph,
   // TERRAIN
   printf(">> Process terrain");
   float scale = 1.0f;
-  float sqSideSz = std::max(maxBox.x() - minBox.x(),
+  float sqSideSz = std::max<float>(maxBox.x() - minBox.x(),
                             maxBox.y() - minBox.y()) * scale * 0.5f; // half side
   QVector3D centerV(-minBox.x(), -minBox.y(), 0);
   QVector3D centerAfterSc(-sqSideSz, -sqSideSz, 0);
   G::boundingPolygon.clear();
   G::boundingPolygon.push_back(QVector3D(sqSideSz, -sqSideSz, 0.0f));
-  glWidget3D->vboRenderManager.changeTerrainDimensions(sqSideSz * 2 + 400.0f,
-      200);
-
-  QString sfo_path("data/b2018.png");
-  glWidget3D->vboRenderManager.vboTerrain.loadTerrain(sfo_path);
 
   ///////////////////////////////
   // ADD NODES
@@ -208,11 +199,11 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph,
   vertex_SIM.resize(osmidToVertexLoc.size());
 
   int index = 0;
-  QHash<uint64, int> dynIndToInd;
-  QHash<int, uint64> indToOsmid;
+  QHash<uint64_t, int> dynIndToInd;
+  QHash<int, uint64_t> indToOsmid;
 
   for (i = osmidToVertexLoc.begin(); i != osmidToVertexLoc.end(); ++i) {
-    uint64 ind = i.key();
+    uint64_t ind = i.key();
 
     float x = osmidToVertexLoc[ind].x();
     float y = osmidToVertexLoc[ind].y();
@@ -263,13 +254,13 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph,
   printf("Link Index %d %d %d %d %d %d\n", indexId, indexU, indexV, indexLen,
          indexLanes, indexSpeedMH);
   qDebug() << sizeof(long);
-  qDebug() << sizeof(uint64);
+  qDebug() << sizeof(uint64_t);
   QHash<int, std::pair<uint, uint>> dynEdgToEdge;
   std::pair<RoadGraph::roadGraphEdgeDesc_BI, bool> e0_pair;
   std::pair<RoadGraph::roadGraphEdgeDesc, bool> e0_pair_SIMP;
   float totalLeng = 0;
   int numEdges = 0;
-  QSet<uint64> noAvailableNodes;
+  QSet<uint64_t> noAvailableNodes;
   const bool saveNoAvailableNodes = false;
 
   while (!streamL.atEnd()) {
@@ -283,8 +274,8 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph,
 
     int ind = fields[indexId].toInt();
 
-    uint64 start = fields[indexU].toLongLong();
-    uint64 end = fields[indexV].toLongLong();
+    uint64_t start = fields[indexU].toLongLong();
+    uint64_t end = fields[indexV].toLongLong();
 
     if ((!dynIndToInd.contains(start)) || (!dynIndToInd.contains(end))) {
       if (saveNoAvailableNodes) {
@@ -365,7 +356,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph,
   const int destIndex = headers.indexOf("dest");
 
   printf("Demand Index %d %d %d\n", numPeopleIndex, origIndex, destIndex);
-  QSet<uint64> noAvailableNodesDemand;
+  QSet<uint64_t> noAvailableNodesDemand;
   const bool saveNoAvailableNodesDemand = true;
   totalNumPeople = 0;
 
@@ -381,8 +372,8 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph,
     int numPeople = fields[numPeopleIndex].toInt();
     totalNumPeople += numPeople;
 
-    uint64 start = fields[origIndex].toLongLong();
-    uint64 end = fields[destIndex].toLongLong();
+    uint64_t start = fields[origIndex].toLongLong();
+    uint64_t end = fields[destIndex].toLongLong();
 
     if ((!dynIndToInd.contains(start)) || (!dynIndToInd.contains(end))) {
       if (saveNoAvailableNodesDemand) {

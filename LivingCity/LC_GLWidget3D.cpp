@@ -534,7 +534,15 @@ void LCGLWidget3D::initializeGL() {
     generateGeometry(ClientGeometry::kStartFromRoads);
   } else {
     //RoadGraphDynameq::loadDynameqRoadGraph(cg.roadGraph, this);
-    RoadGraphB2018::loadB2018RoadGraph(cg.roadGraph, this);
+    RoadGraphB2018::loadB2018RoadGraph(cg.roadGraph);
+    // To remove the gl dependency of the loader.
+    cg.geoZone.blocks.clear();
+    vboRenderManager.removeAllStreetElementName("tree");
+    vboRenderManager.removeAllStreetElementName("streetLamp");
+    float sqSideSz = G::boundingPolygon[0].x();
+    vboRenderManager.changeTerrainDimensions(sqSideSz * 2 + 400.0f, 200);
+    QString sfo_path("data/b2018.png");
+    vboRenderManager.vboTerrain.loadTerrain(sfo_path);
   }
 
   printf("Edge\n");

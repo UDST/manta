@@ -132,4 +132,4 @@ protected:
 	void changeXYZTranslation(float dx, float dy, float dz);
 };
 
-} // namespace ucore
+} // namespace LC

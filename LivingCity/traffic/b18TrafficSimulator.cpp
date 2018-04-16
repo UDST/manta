@@ -12,7 +12,7 @@
 
 namespace LC {
 
-LCUrbanMain *clientMain;
+//LCUrbanMain *clientMain;
 
 const float s_0 = 1.5f * 4.12f; // ALWAYS USED
 const float intersectionClearance = 7.8f;
@@ -679,6 +679,9 @@ void simulateOnePersonCPU(
       delta_v = trafficPersonVec[p].v - (laneChar / 3.0f); //laneChar is in 3*ms (to save space in array)
       found = true;
       noFirstInLaneBeforeSign = true;
+      if (DEBUG_TRAFFIC == 1) {
+        printf("    2. Person: %d BEFORE Intersection: first obstacle -> car\n", p);
+      }
       break;
     }
   }
@@ -689,6 +692,9 @@ void simulateOnePersonCPU(
       s = ((float)(numOfCells - byteInLine)); //m
       delta_v = trafficPersonVec[p].v - 0; //it should be treated as an obstacle
       nextVehicleIsATrafficLight = true;
+      if (DEBUG_TRAFFIC == 1) {
+        printf("    2. Person: %d first obstacle -> traffic light\n", p);
+      }
       //printf("\nFOUND TL\n",s,delta_v);
       found = true;
     }
@@ -706,30 +712,35 @@ void simulateOnePersonCPU(
                                          3.0f); //laneChar is in 3*ms (to save space in array)
       found = true;
       noFirstInLaneAfterSign = true;
+      if (DEBUG_TRAFFIC == 1) {
+        printf("    2. Person: %d AFTER Intersection: first obstacle -> car\n", p);
+      }
       break;
     }
   }
 
   if (trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge] == 0x0F && numCellsCheck > 0) { //stop 
     //check
-    if (noFirstInLaneBeforeSign == false && byteInLine < numOfCells &&
-        //first before traffic
+    if (noFirstInLaneBeforeSign == false && byteInLine < numOfCells && //first before traffic
         trafficPersonVec[p].v == 0 && //stopped
-        noFirstInLaneAfterSign ==
-        false) { // noone after the traffic light (otherwise wait before stop) !! TODO also check the beginning og next edge
+        noFirstInLaneAfterSign == false) { // noone after the traffic light (otherwise wait before stop) !! TODO also check the beginning of next edge
 
-      trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge] =
-        0x00; //reset stop
-      trafficPersonVec[p].posInLaneM = ceil(numOfCells) +
-                                       1; //move magicly after stop
+      trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge] = 0x00; //reset stop
+      trafficPersonVec[p].posInLaneM = ceil(numOfCells) + 1; //move magicly after stop
+
+      if (DEBUG_TRAFFIC == 1) {
+        printf("    2. Person: %d move after stop\n", p);
+      }
 
     } else { //stop before STOP
-      if (noFirstInLaneBeforeSign ==
-          false) { //just update this if it was the first one before sign
+      if (noFirstInLaneBeforeSign == false) { //just update this if it was the first one before sign
         s = ((float)(numOfCells - byteInLine)); //m
         delta_v = trafficPersonVec[p].v - 0; //it should be treated as an obstacle
         nextVehicleIsATrafficLight = true;
         found = true;
+        if (DEBUG_TRAFFIC == 1) {
+          printf("    2. Person: %d just update this if it was the first one before sign\n", p);
+        }
       }
     }
   }
@@ -737,9 +748,10 @@ void simulateOnePersonCPU(
   // NEXT LINE
   if (found == false && numCellsCheck > 0) { //check if in next line
     if ((nextEdge != -1) &&
-        (trafficPersonVec[p].edgeNextInters !=
-         trafficPersonVec[p].end_intersection)) { // we haven't arrived to destination (check next line)
-
+        (trafficPersonVec[p].edgeNextInters != trafficPersonVec[p].end_intersection)) { // we haven't arrived to destination (check next line)
+      if (DEBUG_TRAFFIC == 1) {
+        printf("    2. Person: NEXT LINE\n", p);
+      }
       ushort nextEdgeLaneToBe = trafficPersonVec[p].numOfLaneInEdge; //same lane
 
       //printf("trafficPersonVec[p].numOfLaneInEdge %u\n",trafficPersonVec[p].numOfLaneInEdge);
@@ -833,10 +845,11 @@ void simulateOnePersonCPU(
 
   ///////////////////////////////
   // COLOR
-  if (clientMain->ui.b18RenderSimulationCheckBox->isChecked()) {
+  trafficPersonVec[p].color = p << 8;
+  //if (clientMain->ui.b18RenderSimulationCheckBox->isChecked()) {
     //if(G::global().getInt("cuda_carInfoRendering_type")==0){
     //qsrand(p);
-    trafficPersonVec[p].color = p << 8;
+    
     /*}
     if(G::global().getInt("cuda_carInfoRendering_type")==1){
         uchar c=(uchar)(255*trafficPersonVec[p].v/15.0f);//84m/s is more than 300km/h
@@ -847,7 +860,7 @@ void simulateOnePersonCPU(
         trafficPersonVec[p].color=(c<<24)|(c<<16)|(c<<8);
 
     }*/
-  }
+  //}
 
   ////////////////////////////////
 
@@ -1516,25 +1529,22 @@ void B18TrafficSimulator::simulateInCPU(float startTimeH, float endTimeH) {
     if (calculatePollution == true &&
         (((float)((int)currentTime)) == (currentTime)) &&
         ((int)currentTime % ((int)60 * 6)) == 0) { //each 6 min
-      cudaGridPollution.addValueToGrid(currentTime, trafficPersonVec, simRoadGraph,
-                                       clientMain,
-                                       laneMapNumToEdgeDesc);
+      cudaGridPollution.addValueToGrid(currentTime, trafficPersonVec, simRoadGraph, clientMain, laneMapNumToEdgeDesc);
     }
 
     currentTime += deltaTime;
     steps++;
 
-    if (clientMain->ui.b18RenderSimulationCheckBox->isChecked() ==
-        true) { //G::global().getBool("cudaRenderSimulation")==true){
-      while (clientMain->ui.b18RenderStepSpinBox->value() == 0) {
+    // RENDER IF NECESSARY
+    if (clientMain!=nullptr && clientMain->ui.b18RenderSimulationCheckBox->isChecked()) {
+      /*while (clientMain->ui.b18RenderStepSpinBox->value() == 0) {
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
         clientMain->glWidget3D->updateGL();
         QApplication::processEvents();
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
-      }
+      }*/
 
-      if (steps % clientMain->ui.b18RenderStepSpinBox->value() ==
-          0) { //each "steps" steps, render
+      if (steps % clientMain->ui.b18RenderStepSpinBox->value() == 0) { //each "steps" steps, render
         QString timeT;
         int timeH = currentTime / 3600.0f;
         int timeM = (currentTime - timeH * 3600.0f) / 60.0f;
@@ -1556,7 +1566,7 @@ void B18TrafficSimulator::simulateInCPU(float startTimeH, float endTimeH) {
     uint totalNumSteps = 0;
     float totalGas = 0;
 
-    for (int p = 1; p < numPeople; p++) {
+    for (int p = 0; p < numPeople; p++) {
       totalNumSteps += trafficPersonVec[p].num_steps;
       totalGas += trafficPersonVec[p].gas;
     }
@@ -1567,7 +1577,7 @@ void B18TrafficSimulator::simulateInCPU(float startTimeH, float endTimeH) {
            timer.elapsed());
   }
 
-  clientMain->glWidget3D->updateGL();
+  //clientMain->glWidget3D->updateGL();
 
   if (DEBUG_SIMULATOR) {
     printf("<<simulate\n");
