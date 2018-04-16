@@ -247,7 +247,7 @@ void B18TrafficLaneMap::createLaneMap(
     //      0x0080 0000 in out (one bit)
     //      0x007F FFFF Edge number
     for (int iter = 0; iter < edgeAngleOut.size() + edgeAngleIn.size(); iter++) {
-      if ((outCount < edgeAngleOut.size() && inCount < edgeAngleIn.size() &&
+      if ((outCount < edgeAngleOut.size() && inCount < edgeAngleIn.size() && 
            edgeAngleOut[outCount].second <= edgeAngleIn[inCount].second) ||
           (outCount < edgeAngleOut.size() && inCount >= edgeAngleIn.size())) {
         intersections[*vi].edge[totalCount] = edgeDescToLaneMapNum[edgeAngleOut[outCount].first];

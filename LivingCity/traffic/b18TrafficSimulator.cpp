@@ -9,7 +9,7 @@
 
 #define DEBUG_TRAFFIC 1
 #define DEBUG_SIMULATOR 1
-#define DEBUG_T_LIGHT 1
+#define DEBUG_T_LIGHT 0
 
 namespace LC {
 
@@ -1282,24 +1282,31 @@ void simulateOneSTOPIntersectionCPU(
 void simulateOneIntersectionCPU(uint i, float currentTime,
                                 std::vector<B18IntersectionData> &intersections,
                                 std::vector<uchar> &trafficLights) {
-  const float deltaEvent = 20.0f;
+  const float deltaEvent = 5.0f; /// !!!!
 
   //if (DEBUG_T_LIGHT == 1) printf("Inter %d CurrTime %.1f Next Event %.1f InOut %d\n", i, currentTime, intersections[i].nextEvent, intersections[i].totalInOutEdges);
   if (currentTime > intersections[i].nextEvent && intersections[i].totalInOutEdges > 0) {
-    if (DEBUG_T_LIGHT == 1) printf("Inter %d: Event happen\n", i);
-
+    
     uint edgeOT = intersections[i].edge[intersections[i].state];
     uchar numLinesO = edgeOT >> 24;
     uint edgeONum = edgeOT & kMaskLaneMap; // 0xFFFFF;
 
+    if (DEBUG_T_LIGHT == 1) {
+      printf("Inter %d: Event happen: numLines %u laneMap %u\n", i, numLinesO, edgeONum);
+    }
+
     // red old traffic lights
-    for (int nL = 0; nL < numLinesO; nL++) {
-      trafficLights[edgeONum + nL] = 0x00; //red old traffic light
+    if ((edgeOT&kMaskInEdge) == kMaskInEdge) {  // Just do it if we were in in
+      for (int nL = 0; nL < numLinesO; nL++) {
+        trafficLights[edgeONum + nL] = 0x00; //red old traffic light
+        if (DEBUG_T_LIGHT == 1) {
+          printf("Inter %d: Event happen: numLines %u laneMap %u --> Set red traffic light %u\n", i, numLinesO, edgeONum, edgeONum + nL);
+        }
+      }
     }
 
     for (int iN = 0; iN <= intersections[i].totalInOutEdges + 1; iN++) { //to give a round
-      intersections[i].state = (intersections[i].state + 1) %
-                               intersections[i].totalInOutEdges;//next light
+      intersections[i].state = (intersections[i].state + 1) % intersections[i].totalInOutEdges;//next light
 
       if ((intersections[i].edge[intersections[i].state] & kMaskInEdge) == kMaskInEdge) {  // 0x800000
         // green new traffic lights
@@ -1309,6 +1316,9 @@ void simulateOneIntersectionCPU(uint i, float currentTime,
 
         for (int nL = 0; nL < numLinesI; nL++) {
           trafficLights[edgeINum + nL] = 0xFF;
+          if (DEBUG_T_LIGHT == 1) {
+            printf("Inter %d: Event happen: numLines %u laneMap %u --> Set green traffic light %u\n", i, numLinesO, edgeONum, edgeINum + nL);
+          }
         }
 
         //trafficLights[edgeINum]=0xFF;
@@ -1495,7 +1505,6 @@ void B18TrafficSimulator::simulateInCPU(float startTimeH, float endTimeH) {
 
     ////////////////////////////////////////////////////////////
     // 2. UPDATE INTERSECTIONS
-    printf("Sim itersections\n");
     for (int i = 0; i < intersections.size(); i++) {
       simulateOneIntersectionCPU(i, currentTime, intersections, trafficLights);
     }
