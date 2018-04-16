@@ -1283,7 +1283,7 @@ void simulateOneIntersectionCPU(uint i, float currentTime,
                                 std::vector<uchar> &trafficLights) {
   const float deltaEvent = 20.0f;
 
-  //if(i==0)printf("i %d\n",i);
+  if(i==0)printf("i %d\n",i);
   if (currentTime > intersections[i].nextEvent &&
       intersections[i].totalInOutEdges > 0) {
 
@@ -1297,8 +1297,7 @@ void simulateOneIntersectionCPU(uint i, float currentTime,
       trafficLights[edgeONum + nL] = 0x00; //red old traffic light
     }
 
-    for (int iN = 0; iN <= intersections[i].totalInOutEdges + 1;
-         iN++) { //to give a round
+    for (int iN = 0; iN <= intersections[i].totalInOutEdges + 1; iN++) { //to give a round
       intersections[i].state = (intersections[i].state + 1) %
                                intersections[i].totalInOutEdges;//next light
 
@@ -1493,7 +1492,7 @@ void B18TrafficSimulator::simulateInCPU(float startTimeH, float endTimeH) {
 
     ////////////////////////////////////////////////////////////
     // 2. UPDATE INTERSECTIONS
-    //printf("Sim itersections\n");
+    printf("Sim itersections\n");
     for (int i = 0; i < intersections.size(); i++) {
       simulateOneIntersectionCPU(i, currentTime, intersections, trafficLights);
     }

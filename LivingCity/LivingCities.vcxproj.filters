@@ -276,6 +276,9 @@
     <ClInclude Include="traffic\b18CommandLineVersion.h">
       <Filter>Traffic</Filter>
     </ClInclude>
+    <ClInclude Include="traffic\b18TestSimpleRoadAndOD.h">
+      <Filter>Traffic</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="LC_UrbanMain.h">
@@ -512,6 +515,9 @@
       <Filter>Traffic</Filter>
     </ClCompile>
     <ClCompile Include="traffic\b18CommandLineVersion.cpp">
+      <Filter>Traffic</Filter>
+    </ClCompile>
+    <ClCompile Include="traffic\b18TestSimpleRoadAndOD.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
   </ItemGroup>

@@ -140,14 +140,11 @@ void B18TrafficLaneMap::createLaneMap(
     printf(">>Generate Intersection Info\n");
   }
 
-  for (boost::tie(vi, viEnd) = boost::vertices(inRoadGraph.myRoadGraph_BI);
-       vi != viEnd; ++vi) {
-    //glVertex3f(inRoadGraph.myRoadGraph_BI[*vi].pt.x(),inRoadGraph.myRoadGraph_BI[*vi].pt.y(),inRoadGraph.myRoadGraph_BI[*vi].pt.z());
+  for (boost::tie(vi, viEnd) = boost::vertices(inRoadGraph.myRoadGraph_BI); vi != viEnd; ++vi) {
     intersections[*vi].state = 0;
     intersections[*vi].nextEvent = 0.0f;
-    //printf("outIn intersections[*vi].totalInOutEd\n");
-    intersections[*vi].totalInOutEdges = boost::degree(*vi,
-                                         inRoadGraph.myRoadGraph_BI);//(*vi,inRoadGraph.myRoadGraph_BI)+boost::in_degree(*vi,inRoadGraph.myRoadGraph_BI);
+    
+    intersections[*vi].totalInOutEdges = boost::degree(*vi, inRoadGraph.myRoadGraph_BI);
 
     if (intersections[*vi].totalInOutEdges <= 0) {
       //printf("Vertex without in/out edges\n");
