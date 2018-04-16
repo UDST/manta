@@ -1165,9 +1165,19 @@
             </item>
             <item row="0" column="1">
              <widget class="QTimeEdit" name="b18DemandStratTimeEdit">
+              <property name="dateTime">
+               <datetime>
+                <hour>7</hour>
+                <minute>30</minute>
+                <second>0</second>
+                <year>2000</year>
+                <month>1</month>
+                <day>1</day>
+               </datetime>
+              </property>
               <property name="time">
                <time>
-                <hour>16</hour>
+                <hour>7</hour>
                 <minute>30</minute>
                 <second>0</second>
                </time>
@@ -1198,9 +1208,19 @@
             </item>
             <item row="1" column="1">
              <widget class="QTimeEdit" name="b18DemandEndTimeEdit">
+              <property name="dateTime">
+               <datetime>
+                <hour>9</hour>
+                <minute>0</minute>
+                <second>0</second>
+                <year>2000</year>
+                <month>1</month>
+                <day>1</day>
+               </datetime>
+              </property>
               <property name="time">
                <time>
-                <hour>20</hour>
+                <hour>9</hour>
                 <minute>0</minute>
                 <second>0</second>
                </time>
@@ -1422,6 +1442,9 @@
                   <height>17</height>
                  </size>
                 </property>
+                <property name="minimum">
+                 <number>1</number>
+                </property>
                 <property name="maximum">
                  <number>5</number>
                 </property>
@@ -1429,9 +1452,19 @@
               </item>
               <item row="3" column="1">
                <widget class="QTimeEdit" name="b18EndTimeEdit">
+                <property name="dateTime">
+                 <datetime>
+                  <hour>9</hour>
+                  <minute>0</minute>
+                  <second>0</second>
+                  <year>2000</year>
+                  <month>1</month>
+                  <day>1</day>
+                 </datetime>
+                </property>
                 <property name="time">
                  <time>
-                  <hour>20</hour>
+                  <hour>9</hour>
                   <minute>0</minute>
                   <second>0</second>
                  </time>
@@ -1479,9 +1512,19 @@
               </item>
               <item row="2" column="1">
                <widget class="QTimeEdit" name="b18StratTimeEdit">
+                <property name="dateTime">
+                 <datetime>
+                  <hour>7</hour>
+                  <minute>30</minute>
+                  <second>0</second>
+                  <year>2000</year>
+                  <month>1</month>
+                  <day>1</day>
+                 </datetime>
+                </property>
                 <property name="time">
                  <time>
-                  <hour>16</hour>
+                  <hour>7</hour>
                   <minute>30</minute>
                   <second>0</second>
                  </time>

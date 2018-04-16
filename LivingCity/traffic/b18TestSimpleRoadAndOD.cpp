@@ -187,8 +187,9 @@ void B18TestSimpleRoadAndOD::generateTest(RoadGraph &inRoadGraph, std::vector<CU
   float startTime;
   float gapBetweenCars;*/
   float gap = 15.0f / 3600.0f; 
-  demand.push_back(Demand(1, 1, 4, startTimeH, gap));
-  //demand.push_back(Demand(100, 2, 3, startTime, 15.0f / 3600.0f));
+  //demand.push_back(Demand(1, 1, 4, startTimeH, gap)); // super super simple
+  demand.push_back(Demand(100, 1, 4, startTimeH, gap));
+  demand.push_back(Demand(100, 2, 3, startTimeH, 15.0f / 3600.0f));
 
   B18TrafficOD b18OD;
 

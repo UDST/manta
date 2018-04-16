@@ -39,7 +39,7 @@
 
 //test
 #include "bTraffic/bGenerateTest.h"
-//#include "Util.h"
+#include "traffic/b18TestSimpleRoadAndOD.h"
 
 #define FAR_DIST 2500.0f
 
@@ -529,10 +529,19 @@ void LCGLWidget3D::initializeGL() {
 
   // load roads
   printf("load roads\n");
+  const int roadInitialization = 2; // 0 = test; 1 = PM; 2 = B2018
 
-  if (urbanMain->ui.proceduralModelingCheckBox->isChecked()) { //read from UI
+  if (roadInitialization == 0) { //read from UI // urbanMain->ui.proceduralModelingCheckBox->isChecked()
+    const float deltaTime = 0.5f;
+    const float startDemandH = 7.30f;
+    const float endDemandH = 9.00f;
+    B18TestSimpleRoadAndOD::generateTest(cg.roadGraph, b18TrafficSimulator.trafficPersonVec, startDemandH, endDemandH, this);
+    b18TrafficSimulator.initSimulator(deltaTime, &cg.roadGraph, urbanMain);
+  }
+  if (roadInitialization ==1) { //read from UI // urbanMain->ui.proceduralModelingCheckBox->isChecked()
     generateGeometry(ClientGeometry::kStartFromRoads);
-  } else {
+  }
+  if (roadInitialization == 2) {
     //RoadGraphDynameq::loadDynameqRoadGraph(cg.roadGraph, this);
     RoadGraphB2018::loadB2018RoadGraph(cg.roadGraph);
     // To remove the gl dependency of the loader.

@@ -7,8 +7,8 @@
 
 #include "b18TrafficJohnson.h"
 
-#define DEBUG_TRAFFIC 1
-#define DEBUG_SIMULATOR 1
+#define DEBUG_TRAFFIC 0
+#define DEBUG_SIMULATOR 0
 #define DEBUG_T_LIGHT 0
 
 namespace LC {
@@ -1282,7 +1282,7 @@ void simulateOneSTOPIntersectionCPU(
 void simulateOneIntersectionCPU(uint i, float currentTime,
                                 std::vector<B18IntersectionData> &intersections,
                                 std::vector<uchar> &trafficLights) {
-  const float deltaEvent = 5.0f; /// !!!!
+  const float deltaEvent = 20.0f; /// !!!!
 
   //if (DEBUG_T_LIGHT == 1) printf("Inter %d CurrTime %.1f Next Event %.1f InOut %d\n", i, currentTime, intersections[i].nextEvent, intersections[i].totalInOutEdges);
   if (currentTime > intersections[i].nextEvent && intersections[i].totalInOutEdges > 0) {
@@ -1389,6 +1389,7 @@ void B18TrafficSimulator::simulateInCPU_MultiPass(int numOfPasses, float startTi
     // run simulation
     printf("***Start simulateInCPU \n");
     simulateInCPU(startTimeH, endTimeH);
+    printf("***End simulateInCPU \n");
     //estimate traffic density
     calculateAndDisplayTrafficDensity();
   }
