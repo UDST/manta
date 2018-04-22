@@ -255,9 +255,6 @@
     <ClInclude Include="roadGraphDynameqLoader.h">
       <Filter>RoadGraph Loaders</Filter>
     </ClInclude>
-    <ClInclude Include="traffic\cudaCODE_trafficSimulator.h">
-      <Filter>Traffic</Filter>
-    </ClInclude>
     <ClInclude Include="traffic\b18TrafficSimulator.h">
       <Filter>Traffic</Filter>
     </ClInclude>
@@ -277,6 +274,9 @@
       <Filter>Traffic</Filter>
     </ClInclude>
     <ClInclude Include="traffic\b18TestSimpleRoadAndOD.h">
+      <Filter>Traffic</Filter>
+    </ClInclude>
+    <ClInclude Include="traffic\b18CUDA_trafficSimulator.h">
       <Filter>Traffic</Filter>
     </ClInclude>
   </ItemGroup>
@@ -533,7 +533,7 @@
     <CudaCompile Include="bTraffic\bCUDA_trafficSimulator.cu">
       <Filter>Traffic B2014</Filter>
     </CudaCompile>
-    <CudaCompile Include="traffic\cudaCODE_trafficSimulator.cu">
+    <CudaCompile Include="traffic\b18CUDA_trafficSimulator.cu">
       <Filter>Traffic</Filter>
     </CudaCompile>
   </ItemGroup>

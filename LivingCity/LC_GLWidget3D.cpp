@@ -633,7 +633,9 @@ void LCGLWidget3D::drawScene(int drawMode) {
     ////////////////////////////
     // TRAFFIC
     if (urbanMain->ui.b18RenderSimulationCheckBox->isChecked() == true) {
+      //printf(">>GLWidget draw traffic\n");
       b18TrafficSimulator.render(vboRenderManager);
+      //printf("<<GLWidget draw traffic\n");
     }
 
     vboRenderManager.renderStaticGeometry(QString("sky"));
@@ -694,7 +696,7 @@ void LCGLWidget3D::drawScene(int drawMode) {
   //disable depth buffer
   glDepthFunc(GL_ALWAYS);
   glDisable(GL_TEXTURE_2D);
-
+  //printf("<<Flush\n");
   glFlush();
 }
 

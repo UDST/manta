@@ -115,7 +115,8 @@ HEADERS += \
     triangle/triangle.h \
     traffic/b18TrafficOD.h \
     traffic/b18TrafficSimulator.h \
-    bTraffic/bCUDA_trafficSimulator.h
+    bTraffic/bCUDA_trafficSimulator.h \
+    traffic\b18CUDA_trafficSimulator.h
 
 SOURCES += \
     global.cpp \

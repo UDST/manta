@@ -72,10 +72,9 @@ class B18TrafficSimulator {
   void simulateInCPU_MultiPass(int numOfPasses,
     float startTimeH, float endTimeH, bool useJohnsonRouting);
   void simulateInCPU_Onepass(float startTimeH, float endTimeH, bool useJohnsonRouting);
-
-
   void simulateInCPU(float startTimeH, float endTimeH);
-  void simulateInGPU(float startTimeH, float endTimeH);
+
+  void simulateInGPU(float startTimeH, float endTimeH, bool useJohnsonRouting);
 
   // Lanes
   std::vector<uchar> laneMap;

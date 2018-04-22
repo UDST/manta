@@ -94,14 +94,27 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph) {
   /////////////////////////////////////////////////
   // READ NODES
 
-  QString fileName = "berkeley_2018/bay_area_full_strongly_nodes.csv";
+  const bool fullNetwork = true; // select big or small network.
+  QString nodesFileName;
+  QString edgeFileName;
+  QString odFilename;
+  if (fullNetwork){
+    nodesFileName = "berkeley_2018/bay_area_full_strongly_nodes.csv";
+    edgeFileName = "berkeley_2018/full_edges_speed_capacity.csv";
+    odFilename = "berkeley_2018/od.csv";
+  } else {
+    nodesFileName = "berkeley_2018/bay_area_tertiary_strongly_nodes.csv";
+    edgeFileName = "berkeley_2018/tertiary_edges_speed_capacity.csv";
+    odFilename = "berkeley_2018/od.csv";
+  }
+
   //QString fileName="data/Dynameq/smallTestNet_base.dqt";
-  QFile baseFile(fileName); // Create a file handle for the file named
+  QFile baseFile(nodesFileName); // Create a file handle for the file named
 
   QString line;
 
   if (!baseFile.open(QIODevice::ReadOnly | QIODevice::Text)) { // Open the file
-    printf("Can't open file '%s'\n", fileName.toUtf8().constData());
+    printf("Can't open file '%s'\n", nodesFileName.toUtf8().constData());
     return;
   }
 
@@ -233,11 +246,10 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph) {
   ///////////////////////////////
   // EDGES
   printf(">> Process edges\n");
-  fileName = "berkeley_2018/edges_speed_capacity.csv";
-  QFile linkFile(fileName); // Create a file handle for the file named
+  QFile linkFile(edgeFileName); // Create a file handle for the file named
 
   if (!linkFile.open(QIODevice::ReadOnly | QIODevice::Text)) { // Open the file
-    printf("Can't open file '%s'\n", fileName.toUtf8().constData());
+    printf("Can't open file '%s'\n", edgeFileName.toUtf8().constData());
     return;
   }
 
@@ -337,15 +349,15 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph) {
     QString filename = "noAvailableNodes.txt";
     saveSetToFile(noAvailableNodes, filename);
   }
+  printf("\n*** Readed in %d --> #Edges %d\n", timer.elapsed(), dynEdgToEdge.size());
 
   ///////////////////////////////
   // DEMAND
   printf(">> Process demand\n");
-  fileName = "berkeley_2018/od.csv";
-  QFile demandFile(fileName); // Create a file handle for the file named
+  QFile demandFile(odFilename); // Create a file handle for the file named
 
   if (!demandFile.open(QIODevice::ReadOnly | QIODevice::Text)) { // Open the file
-    printf("Can't open file '%s'\n", fileName.toUtf8().constData());
+    printf("Can't open file '%s'\n", odFilename.toUtf8().constData());
     return;
   }
 
@@ -369,9 +381,6 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph) {
       continue;
     }
 
-    int numPeople = fields[numPeopleIndex].toInt();
-    totalNumPeople += numPeople;
-
     uint64_t start = fields[origIndex].toLongLong();
     uint64_t end = fields[destIndex].toLongLong();
 
@@ -385,9 +394,11 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph) {
         }
       }
       //qDebug() << "NO CONTAINS: start" << start << " end " << end;
-      exit(-1);
+      //exit(-1);
       continue;
     }
+    int numPeople = fields[numPeopleIndex].toInt();
+    totalNumPeople += numPeople;
     demandB2018.push_back(DemandB2018(numPeople, dynIndToInd[start], dynIndToInd[end]));
   }
 

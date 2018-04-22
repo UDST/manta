@@ -7,7 +7,8 @@ namespace LC {
   void B18CommandLineVersion::runB18Simulation() {
     printf("<<+ runB18Simulation\n");
 
-    const bool kUseBasicTest = true;
+    const bool kUseBasicTest = false; // false = B2018; true = basic intersection
+    const bool kUseCPU = false; // false = GPU; true = CPU
 
     const float deltaTime = 0.5f;
     const float startDemandH = 7.30f;
@@ -37,7 +38,11 @@ namespace LC {
     printf("4. Simulate");
     const int numPasses = 1;
     const bool useJohnsonRouting = false;
-    b18TrafficSimulator.simulateInCPU_MultiPass(numPasses, startSimulationH, endSimulationH, useJohnsonRouting);
+    if (kUseCPU) {
+      b18TrafficSimulator.simulateInCPU_MultiPass(numPasses, startSimulationH, endSimulationH, useJohnsonRouting);
+    } else {
+      b18TrafficSimulator.simulateInGPU(startSimulationH, endSimulationH, useJohnsonRouting);
+    }
 
     printf(">>++ runB18Simulation\n");
   }

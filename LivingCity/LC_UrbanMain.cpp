@@ -656,15 +656,24 @@ void LCUrbanMain::onB18SimulateCPUPressed(bool) {
 
 void LCUrbanMain::onB18SimulateGPUPressed(bool) {
 
-  /*///////////////////////////////////////
+  if (glWidget3D->b18TrafficSimulator.trafficPersonVec.size() <= 0) {
+    printf("onB18SimulateCPUPressed People empty--> Load B18\n");
+    b18CreateOD(/*random=*/false);
+  } else {
+    printf("onB18SimulateCPUPressed People already loaded\n");
+  }
+
+  ///////////////////////////////////////
   // SIMULATION
   // time
-  QTime sTime = ui.stratTimeEdit->time();
-  QTime eTime = ui.endTimeEdit->time();
-  float startTime = sTime.hour() + sTime.minute() / 60.0f;
-  float endTime = eTime.hour() + eTime.minute() / 60.0f;
+  QTime sTime = ui.b18StratTimeEdit->time();
+  QTime eTime = ui.b18EndTimeEdit->time();
+  float startTimeH = sTime.hour() + sTime.minute() / 60.0f;
+  float endTimeH = eTime.hour() + eTime.minute() / 60.0f;
   //simulate
-  glWidget3D->bTrafficSimulator.simulateGPU(startTime, endTime);*/
+  int numPasses = ui.b18ShortestPathNumPassesSpinBox->value();
+  bool useJohnsonRouting = ui.b18UseJohnsonRoutingCheckBox->isChecked();
+  glWidget3D->b18TrafficSimulator.simulateInGPU(startTimeH, endTimeH, useJohnsonRouting);
 }//
 
 void LCUrbanMain::onB18CreateRandomOD(bool) {

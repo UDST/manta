@@ -19,5 +19,6 @@ int main(int argc, char *argv[]) {
   } else {
     B18CommandLineVersion cl;
     cl.runB18Simulation();
+    printf(">>Simulation Ended\n");
   }
 }

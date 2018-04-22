@@ -104,7 +104,7 @@
     <ClInclude Include="traffic\b18TrafficLaneMap.h" />
     <ClInclude Include="traffic\b18TrafficOD.h" />
     <ClInclude Include="traffic\b18TrafficSimulator.h" />
-    <ClInclude Include="traffic\cudaCODE_trafficSimulator.h" />
+    <ClInclude Include="traffic\b18CUDA_trafficSimulator.h" />
     <ClInclude Include="traffic\cudaEdgeData.h" />
     <ClInclude Include="traffic\cudaGridPollution.h" />
     <ClInclude Include="traffic\cudaPmTrafficPersonJob.h" />
@@ -305,7 +305,7 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="traffic\cudaCODE_trafficSimulator.cu" />
+    <CudaCompile Include="traffic\b18CUDA_trafficSimulator.cu" />
     <None Include="..\data\shaders\lc_fragment.glsl" />
     <None Include="..\data\shaders\lc_vertex.glsl" />
     <CustomBuild Include="LC_UrbanMain.qrc">
