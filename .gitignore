@@ -1,0 +1,13 @@
+/build/
+/LivingCity/*.dll
+/x64
+/LivingCity/obj
+/LivingCity/GeneratedFiles
+/LivingCity/screenshots
+/LivingCity/noAvail*
+*.pdb
+*.sdf
+*.opensdf
+*.exe
+*.ilk
+/LivingCity/berkeley_2018
