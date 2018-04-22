@@ -203,6 +203,8 @@ void B18TrafficSimulator::simulateInGPU(float startTimeH, float endTimeH, bool u
 				timeT.sprintf("%d:%02d",timeH,timeM);
         clientMain->ui.b18TimeLCD->display(timeT);
 
+        QApplication::processEvents();
+        QApplication::processEvents();
         clientMain->glWidget3D->updateGL();
 				QApplication::processEvents();
 			}
@@ -1967,6 +1969,7 @@ void B18TrafficSimulator::render(VBORenderManager &rendManager) {
           }
         } else {
           // ONE EDGE
+          printf("One edge\n");
           QVector3D p0 = simRoadGraph->myRoadGraph_BI[boost::source(ei,
                          simRoadGraph->myRoadGraph_BI)].pt;
           QVector3D p1 = simRoadGraph->myRoadGraph_BI[boost::target(ei,
@@ -1974,11 +1977,16 @@ void B18TrafficSimulator::render(VBORenderManager &rendManager) {
           QVector3D dir = (p1 - p0).normalized();
           QVector3D per = (QVector3D::crossProduct(QVector3D(0, 0, 1.0f),
                            dir).normalized());
-          //printf("trafficPersonVec[p].numOfLaneInEdge %u\n",trafficPersonVec[p].numOfLaneInEdge);
+          
           float perShift = -0.5f * G::global().getFloat("roadLaneWidth") *
                            (1 + 2 * trafficPersonVec[p].numOfLaneInEdge);
-          QVector3D v = p0 + dir * trafficPersonVec[p].posInLaneM + perShift * per;
-          //glVertex3f(v.x(),v.y(),heightPoint);
+          //QVector3D v = p0 + dir * trafficPersonVec[p].posInLaneM + perShift * per;
+
+          float roadLength = (p1 - p0).length();
+          float dirShift = (trafficPersonVec[p].posInLaneM / trafficPersonVec[p].length) * roadLength;
+          QVector3D v = p0 + dir * dirShift + perShift * per;
+          //printf("Edge %u GUI length %.2f Data %.2f PosInLaneM %.2f DirShift %.2f--> Perc %.2f\n", trafficPersonVec[p].currPathEdge, roadLength, trafficPersonVec[p].length, trafficPersonVec[p].posInLaneM, dirShift, (trafficPersonVec[p].posInLaneM / trafficPersonVec[p].length));
+          
           carPoints.push_back(Vertex(QVector3D(v.x(), v.y(), heightPoint), pointColor,
                                      QVector3D(), QVector3D()));
           activeCars++;

@@ -49,7 +49,7 @@ struct CUDATrafficPerson {
   float time_departure;
 
   unsigned short active;//0 inactive 1 active 2 finished
-  //unsigned short curEdgeLane;// edge number
+  //unsigned int curEdgeLane;// edge number
   unsigned short numOfLaneInEdge;//number of lane in that edge
 
   float posInLaneM;

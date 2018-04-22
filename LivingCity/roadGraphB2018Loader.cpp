@@ -94,7 +94,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph) {
   /////////////////////////////////////////////////
   // READ NODES
 
-  const bool fullNetwork = true; // select big or small network.
+  const bool fullNetwork = false; // select big or small network.
   QString nodesFileName;
   QString edgeFileName;
   QString odFilename;
