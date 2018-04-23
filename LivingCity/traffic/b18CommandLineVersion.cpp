@@ -12,7 +12,8 @@ namespace LC {
     bool useBasicTest = settings.value("USE_BASIC_TEST", false).toBool(); // false = B2018; true = basic intersection
     bool useCPU = settings.value("USE_CPU", false).toBool(); // false = GPU; true = CPU
     bool useFullB18Network = settings.value("USE_FULL_B2018_NETWORK", false).toBool(); // false = GPU; true = CPU
-
+    bool useJohnsonRouting = settings.value("USE_JOHNSON_ROUTING", false).toBool(); // false = Disjktra; true = Johnson
+    
     const float deltaTime = 0.5f;
     const float startDemandH = 7.30f;
     const float endDemandH = 9.00f;
@@ -40,7 +41,6 @@ namespace LC {
 
     printf("4. Simulate");
     const int numPasses = 1;
-    const bool useJohnsonRouting = false;
     if (useCPU) {
       b18TrafficSimulator.simulateInCPU_MultiPass(numPasses, startSimulationH, endSimulationH, useJohnsonRouting);
     } else {

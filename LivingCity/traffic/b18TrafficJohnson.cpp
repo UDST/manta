@@ -213,7 +213,7 @@ void B18TrafficJohnson::generateRoutes(
   }
 
   for (int h = 0; h < pathHistogram.size(); h++) {
-    printf("pathHistogram,%d,$d\n", h, pathHistogram[h]);
+    printf("pathHistogram,%d,%d\n", h, pathHistogram[h]);
   }
 
   printf("<< generateRoutePathsJohnson: individual routes time %d ms --> numPeople %d (No Acc %d sameSrcDst %d)\n",
