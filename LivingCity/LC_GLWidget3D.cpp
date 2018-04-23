@@ -529,21 +529,19 @@ void LCGLWidget3D::initializeGL() {
 
   // load roads
   printf("load roads\n");
-  const int roadInitialization = 2; // 0 = test; 1 = PM; 2 = B2018
-
-  if (roadInitialization == 0) { //read from UI // urbanMain->ui.proceduralModelingCheckBox->isChecked()
+  
+  QSettings settings(QApplication::applicationDirPath() + "/command_line_options.ini", QSettings::IniFormat);
+  bool useBasicTest = settings.value("USE_BASIC_TEST", false).toBool(); // false = B2018; true = basic intersection
+  
+  if (useBasicTest) {
     const float deltaTime = 0.5f;
     const float startDemandH = 7.30f;
     const float endDemandH = 9.00f;
     B18TestSimpleRoadAndOD::generateTest(cg.roadGraph, b18TrafficSimulator.trafficPersonVec, startDemandH, endDemandH, this);
     b18TrafficSimulator.initSimulator(deltaTime, &cg.roadGraph, urbanMain);
-  }
-  if (roadInitialization ==1) { //read from UI // urbanMain->ui.proceduralModelingCheckBox->isChecked()
-    generateGeometry(ClientGeometry::kStartFromRoads);
-  }
-  if (roadInitialization == 2) {
-    //RoadGraphDynameq::loadDynameqRoadGraph(cg.roadGraph, this);
-    RoadGraphB2018::loadB2018RoadGraph(cg.roadGraph);
+  } else {
+    bool useFullB18Network = settings.value("USE_FULL_B2018_NETWORK", false).toBool();
+    RoadGraphB2018::loadB2018RoadGraph(cg.roadGraph, useFullB18Network);
     // To remove the gl dependency of the loader.
     cg.geoZone.blocks.clear();
     vboRenderManager.removeAllStreetElementName("tree");

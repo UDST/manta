@@ -14,16 +14,16 @@
 
 ///////////////////////////////
 // CONSTANTS
-//__constant__ float deltaTimeG=1.0f*(1.0f/3600.0f);
+
 __constant__ float intersectionClearance = 7.8f;
-__constant__ float s_0=7.0f;
-//const float deltaTimeC=1.0f*(1.0f/3600.0f);
+__constant__ float s_0 = 7.0f;
 ////////////////////////////////
 // VARIABLES
 LC::CUDATrafficPerson *trafficPersonVec_d;
 //ushort *nextEdgeM_d;
 LC::B18EdgeData *edgesData_d;
 
+__constant__ bool calculatePollution = true;
 __constant__ float cellSize = 1.0f;
 __constant__ float deltaTime = 0.5f;
 uchar *laneMap_d;
@@ -665,6 +665,20 @@ __device__ int cuda_qrand(){
      }
 
      //////////////////////////////////////////////
+
+     /////
+     //CO2
+     //if(trafficPersonVec[p].v>0)
+     if (calculatePollution) {
+       float speedMph = trafficPersonVec[p].v * 2.2369362920544; //mps to mph
+       float gasStep = -0.064 + 0.0056 * speedMph + 0.00026 * (speedMph - 50.0f) *
+         (speedMph - 50.0f);
+
+       if (gasStep > 0) {
+         gasStep *= deltaTime;
+         trafficPersonVec[p].gas += gasStep;
+       }
+     }
 
      if (trafficPersonVec[p].v == 0) { //if not moving not do anything else
        ushort posInLineCells = (ushort) (trafficPersonVec[p].posInLaneM);

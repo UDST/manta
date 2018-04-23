@@ -29,7 +29,7 @@ class RoadGraphB2018 {
   /**
   * Load
   **/
-  static void loadB2018RoadGraph(RoadGraph &inRoadGraph);
+  static void loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNetwork); // select big or small network.
   
   static std::vector<DemandB2018> demandB2018;
   static int totalNumPeople;

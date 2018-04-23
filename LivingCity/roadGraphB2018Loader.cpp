@@ -80,7 +80,7 @@ void saveSetToFile(QSet<uint64_t> &set, QString &filename) {
 
 //////////////////////////////////////////////////////////
 
-void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph) {
+void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNetwork) {
 
   printf(">>loadB2018RoadGraph\n");
   printf(">>Remove\n");
@@ -94,11 +94,10 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph) {
   /////////////////////////////////////////////////
   // READ NODES
 
-  const bool fullNetwork = false; // select big or small network.
   QString nodesFileName;
   QString edgeFileName;
   QString odFilename;
-  if (fullNetwork){
+  if (loadFullNetwork) {
     nodesFileName = "berkeley_2018/bay_area_full_strongly_nodes.csv";
     edgeFileName = "berkeley_2018/full_edges_speed_capacity.csv";
     odFilename = "berkeley_2018/od.csv";
@@ -108,7 +107,6 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph) {
     odFilename = "berkeley_2018/od.csv";
   }
 
-  //QString fileName="data/Dynameq/smallTestNet_base.dqt";
   QFile baseFile(nodesFileName); // Create a file handle for the file named
 
   QString line;
