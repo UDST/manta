@@ -127,7 +127,7 @@ void B18TrafficOD::sampleDistribution(int numberToSample,
   }
 }
 
-void B18TrafficOD::randomPerson(int p, CUDATrafficPerson &person,
+void B18TrafficOD::randomPerson(int p, B18TrafficPerson &person,
                                 uint srcvertex,
                                 uint tgtvertex, float startTime) {
 
@@ -148,11 +148,11 @@ void B18TrafficOD::randomPerson(int p, CUDATrafficPerson &person,
   person.numOfLaneInEdge = 0;
   person.color = p << 8;
   person.LC_stateofLaneChanging = 0;
-  person.personPath[0] = -1;
+  person.indexPathInit = 0; // 0 should point to -1.
 
 }
 
-void B18TrafficOD::randomPerson(int p, CUDATrafficPerson &person,
+void B18TrafficOD::randomPerson(int p, B18TrafficPerson &person,
                                 QVector3D housePos3D, QVector3D jobPos3D,
                                 float startTime,
                                 LC::RoadGraph::roadBGLGraph_BI &roadGraph) {
@@ -186,25 +186,20 @@ void B18TrafficOD::randomPerson(int p, CUDATrafficPerson &person,
   randomPerson(p, person, srcvertex, tgtvertex, startTime);
 }
 
-void B18TrafficOD::resetTrafficPersonJob(
-  std::vector<CUDATrafficPerson> &trafficPersonVec) {
-  if (PERSON_DEBUG) {
-    printf("trafficPersonVec %d backUpInitEdge %d\n", trafficPersonVec.size(),
-           backUpInitEdge.size());
-  }
-
+void B18TrafficOD::resetTrafficPersonJob(std::vector<B18TrafficPerson> &trafficPersonVec) {
   for (int p = 0; p < trafficPersonVec.size(); p++) {
+    trafficPersonVec[p].active = 0;
   }
 }//
 
 void B18TrafficOD::createRandomPeople(
   int numberPerGen,
   float startTimeH, float endTimeH,
-  std::vector<CUDATrafficPerson> &trafficPersonVec,
+  std::vector<B18TrafficPerson> &trafficPersonVec,
   PeopleJobInfoLayers &simPeopleJobInfoLayers,
   LC::RoadGraph::roadBGLGraph_BI &roadGraph) {
   if (PERSON_DEBUG) {
-    printf(">> CUDA generateTrafficPersonJob\n");
+    printf(">> generateTrafficPersonJob\n");
   }
 
   QTime timer;
@@ -252,13 +247,13 @@ void B18TrafficOD::createRandomPeople(
   }
 
   if (PERSON_DEBUG) {
-    printf("<< CUDA generateTrafficPersonJob\n");
+    printf("<< generateTrafficPersonJob\n");
   }
 }//
 
 void B18TrafficOD::loadB18TrafficPeople(
   float startTimeH, float endTimeH,
-  std::vector<CUDATrafficPerson> &trafficPersonVec, // out
+  std::vector<B18TrafficPerson> &trafficPersonVec, // out
   RoadGraph::roadBGLGraph_BI &roadGraph, int limitNumPeople) {
 
   trafficPersonVec.clear();
@@ -283,12 +278,9 @@ void B18TrafficOD::loadB18TrafficPeople(
     uint tgt_vertex = RoadGraphB2018::demandB2018[d].tgt_vertex;
 
     for (int p = 0; p < odNumPeople; p++) {
-      float goToWork = LC::misctools::genRand(startTimeH, endTimeH);/*midTime + LC::misctools::genRand(startTimeH - midTime,
-                       endTimeH - startTimeH); //6.30-9.30 /// GOOOD ONE*/
-     
+      float goToWork = LC::misctools::genRand(startTimeH, endTimeH);
       randomPerson(numPeople, trafficPersonVec[numPeople], src_vertex, tgt_vertex, goToWork);
      // printf("go to work %.2f --> %.2f\n", goToWork, (trafficPersonVec[p].time_departure / 3600.0f));
-
       numPeople++;
     }
 

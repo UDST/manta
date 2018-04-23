@@ -4,7 +4,7 @@
 #include "curand_kernel.h"
 #include "device_launch_parameters.h"
 
-#include "cudaTrafficPerson.h"
+#include "b18TrafficPerson.h"
 #include "b18EdgeData.h"
 #include <vector>
 
@@ -19,8 +19,8 @@ __constant__ float intersectionClearance = 7.8f;
 __constant__ float s_0 = 7.0f;
 ////////////////////////////////
 // VARIABLES
-LC::CUDATrafficPerson *trafficPersonVec_d;
-//ushort *nextEdgeM_d;
+LC::B18TrafficPerson *trafficPersonVec_d;
+uint *indexPathVec_d;
 LC::B18EdgeData *edgesData_d;
 
 __constant__ bool calculatePollution = true;
@@ -35,44 +35,57 @@ uint halfLaneMap;
 LC::B18IntersectionData *intersections_d;
 uchar *trafficLights_d;
 
-void b18InitCUDA(std::vector<LC::CUDATrafficPerson>& trafficPersonVec, std::vector<LC::B18EdgeData>& edgesData, std::vector<uchar>& laneMap, std::vector<uchar>& trafficLights, std::vector<LC::B18IntersectionData>& intersections) {
-	// people
-	size_t size = trafficPersonVec.size() * sizeof(LC::CUDATrafficPerson);
-	cudaError err ;
-	err=cudaMalloc((void **) &trafficPersonVec_d, size);   // Allocate array on device
-	if ( cudaSuccess != err )fprintf( stderr, "Cuda error: %s.\n",cudaGetErrorString( err) );
-	err =cudaMemcpy(trafficPersonVec_d,trafficPersonVec.data(),size,cudaMemcpyHostToDevice);
-	if ( cudaSuccess != err )fprintf( stderr, "Cuda error: %s.\n",cudaGetErrorString( err) );
-	
-	//edgeData
-	size_t sizeD = edgesData.size() * sizeof(LC::B18EdgeData);
-	err=cudaMalloc((void **) &edgesData_d, sizeD);   // Allocate array on device
-	if ( cudaSuccess != err )fprintf( stderr, "Cuda error: %s.\n",cudaGetErrorString( err) );
-	err=cudaMemcpy(edgesData_d,edgesData.data(),sizeD,cudaMemcpyHostToDevice);
-	if ( cudaSuccess != err )fprintf( stderr, "Cuda error: %s.\n",cudaGetErrorString( err) );
-	//laneMap
-	size_t sizeL = laneMap.size() * sizeof(uchar);
-	err=cudaMalloc((void **) &laneMap_d, sizeL);   // Allocate array on device
-	if ( cudaSuccess != err )fprintf( stderr, "Cuda error: %s.\n",cudaGetErrorString( err) );
-	err=cudaMemcpy(laneMap_d,laneMap.data(),sizeL,cudaMemcpyHostToDevice);
-	if ( cudaSuccess != err )fprintf( stderr, "Cuda error: %s.\n",cudaGetErrorString( err) );
-	halfLaneMap=laneMap.size()/2;
-	// intersections
-	size_t sizeI = intersections.size() * sizeof(LC::B18IntersectionData);
-	err=cudaMalloc((void **) &intersections_d, sizeI);   // Allocate array on device
-	if ( cudaSuccess != err )fprintf( stderr, "Cuda error: %s.\n",cudaGetErrorString( err) );
-	err=cudaMemcpy(intersections_d,intersections.data(),sizeI,cudaMemcpyHostToDevice);
-	if ( cudaSuccess != err )fprintf( stderr, "Cuda error: %s.\n",cudaGetErrorString( err) );
-  size_t sizeT = trafficLights.size() * sizeof(uchar);//total number of lanes
-	err=cudaMalloc((void **) &trafficLights_d, sizeT);   // Allocate array on device
-	if ( cudaSuccess != err )fprintf( stderr, "Cuda error: %s.\n",cudaGetErrorString( err) );
+void b18InitCUDA(std::vector<LC::B18TrafficPerson>& trafficPersonVec, std::vector<uint> &indexPathVec, std::vector<LC::B18EdgeData>& edgesData, std::vector<uchar>& laneMap, std::vector<uchar>& trafficLights, std::vector<LC::B18IntersectionData>& intersections) {
+  printf(">>b18InitCUDA\n");
+  cudaError err;
+  { // people
+    size_t size = trafficPersonVec.size() * sizeof(LC::B18TrafficPerson);
+    err = cudaMalloc((void **) &trafficPersonVec_d, size);   // Allocate array on device
+    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
+    err = cudaMemcpy(trafficPersonVec_d, trafficPersonVec.data(), size, cudaMemcpyHostToDevice);
+    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
+  }
+  
+  { // indexPathVec
+    size_t sizeIn = indexPathVec.size() * sizeof(uint);
+    err = cudaMalloc((void **) &indexPathVec_d, sizeIn);   // Allocate array on device
+    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
+    err = cudaMemcpy(indexPathVec_d, indexPathVec.data(), sizeIn, cudaMemcpyHostToDevice);
+    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
+  }
+  {//edgeData
+    size_t sizeD = edgesData.size() * sizeof(LC::B18EdgeData);
+    err = cudaMalloc((void **) &edgesData_d, sizeD);   // Allocate array on device
+    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
+    err = cudaMemcpy(edgesData_d, edgesData.data(), sizeD, cudaMemcpyHostToDevice);
+    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
+  }
+  {//laneMap
+    size_t sizeL = laneMap.size() * sizeof(uchar);
+    err = cudaMalloc((void **) &laneMap_d, sizeL);   // Allocate array on device
+    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
+    err = cudaMemcpy(laneMap_d, laneMap.data(), sizeL, cudaMemcpyHostToDevice);
+    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
+    halfLaneMap = laneMap.size() / 2;
+  }
+  {// intersections
+    size_t sizeI = intersections.size() * sizeof(LC::B18IntersectionData);
+    err = cudaMalloc((void **) &intersections_d, sizeI);   // Allocate array on device
+    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
+    err = cudaMemcpy(intersections_d, intersections.data(), sizeI, cudaMemcpyHostToDevice);
+    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
+    size_t sizeT = trafficLights.size() * sizeof(uchar);//total number of lanes
+    err = cudaMalloc((void **) &trafficLights_d, sizeT);   // Allocate array on device
+    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
+  }
+  printf("<<b18InitCUDA\n");
 }//
 
 void b18FinishCUDA(void){
 	//////////////////////////////
 	// FINISH
 	cudaFree(trafficPersonVec_d);
-	//cudaFree(nextEdgeM_d);
+  cudaFree(indexPathVec_d);
 	cudaFree(edgesData_d);
 	cudaFree(laneMap_d);
 	cudaFree(intersections_d);
@@ -80,9 +93,9 @@ void b18FinishCUDA(void){
 
 }//
 
- void b18GetDataCUDA(std::vector<LC::CUDATrafficPerson>& trafficPersonVec,std::vector<uchar>& trafficLights){
+ void b18GetDataCUDA(std::vector<LC::B18TrafficPerson>& trafficPersonVec,std::vector<uchar>& trafficLights){
 	 // copy back people
-	 size_t size = trafficPersonVec.size() * sizeof(LC::CUDATrafficPerson);
+	 size_t size = trafficPersonVec.size() * sizeof(LC::B18TrafficPerson);
 	 cudaMemcpy(trafficPersonVec.data(),trafficPersonVec_d,size,cudaMemcpyDeviceToHost);//cudaMemcpyHostToDevice
 
 	 size_t sizeI = trafficLights.size() * sizeof(uchar);
@@ -168,7 +181,6 @@ void b18FinishCUDA(void){
    ushort &endOKLanes) {
    initOKLanes = 0;
    endOKLanes = edgeNumLanes;
-
    bool currentEdgeFound = false;
    bool exitFound = false;
    ushort numExitToTake = 0;
@@ -184,7 +196,6 @@ void b18FinishCUDA(void){
        }
        continue;
      }
-
 
      if ((procEdge & kMaskInEdge) == 0x0) { //out edge 0x800000
        numExists++;
@@ -367,18 +378,14 @@ void b18FinishCUDA(void){
    }
 	}//
 
-__device__ int cuda_qrand(){
-	return 10;
-}
-
  // Kernel that executes on the CUDA device
- __global__ void kernel_trafficSimulation(
+__global__ void kernel_trafficSimulation(
 	 int numPeople,
 	 float currentTime,
    uint mapToReadShift,
    uint mapToWriteShift,
-	 LC::CUDATrafficPerson *trafficPersonVec,
-	 //ushort *nextEdgeM,
+	 LC::B18TrafficPerson *trafficPersonVec,
+   uint *indexPathVec,
    LC::B18EdgeData* edgesData,
 	 uchar *laneMap,
    LC::B18IntersectionData *intersections,
@@ -407,8 +414,8 @@ __device__ int cuda_qrand(){
          return;
        } else { //start
          //1.2 find first edge
-         trafficPersonVec[p].currPathEdge = 0;
-         uint firstEdge = trafficPersonVec[p].personPath[0];
+         trafficPersonVec[p].indexPathCurr = trafficPersonVec[p].indexPathInit; // reset index.
+         uint firstEdge = indexPathVec[trafficPersonVec[p].indexPathCurr];
 
          if (firstEdge == -1) {
            trafficPersonVec[p].active = 2;
@@ -483,7 +490,7 @@ __device__ int cuda_qrand(){
          trafficPersonVec[p].gas = 0;
          //trafficPersonVec[p].nextPathEdge++;//incremet so it continues in next edge
          // set up next edge info
-         uint nextEdge = trafficPersonVec[p].personPath[1];
+         uint nextEdge = indexPathVec[trafficPersonVec[p].indexPathCurr + 1];
 
          //trafficPersonVec[p].nextEdge=nextEdge;
          if (nextEdge != -1) {
@@ -511,8 +518,8 @@ __device__ int cuda_qrand(){
      float numMToMove;
      bool getToNextEdge = false;
      bool nextVehicleIsATrafficLight = false;
-     uint currentEdge = trafficPersonVec[p].personPath[trafficPersonVec[p].currPathEdge];
-     uint nextEdge = trafficPersonVec[p].personPath[trafficPersonVec[p].currPathEdge + 1];
+     uint currentEdge = indexPathVec[trafficPersonVec[p].indexPathCurr];
+     uint nextEdge = indexPathVec[trafficPersonVec[p].indexPathCurr + 1];
      if (DEBUG_TRAFFIC == 1) {
        printf("    2. Person: %d Try to move current Edge %u Next %u\n", p, currentEdge, nextEdge);
      }
@@ -534,9 +541,9 @@ __device__ int cuda_qrand(){
      ushort numOfCells = ceil((trafficPersonVec[p].length - intersectionClearance));
 
      for (ushort b = byteInLine + 2; (b < numOfCells) && (found == false) && (numCellsCheck > 0); b++, numCellsCheck--) {
-       // laneChar = laneMap[mapToReadShift + maxWidth * (trafficPersonVec[p].personPath[trafficPersonVec[p].currPathEdge] + trafficPersonVec[p].numOfLaneInEdge) + b];
+       // laneChar = laneMap[mapToReadShift + maxWidth * ((indexPathVec[trafficPersonVec[p].indexPathCurr + trafficPersonVec[p].numOfLaneInEdge) + b];
        // ShiftRead + WIDTH * (width number * # edges + # laneInEdge) + b 
-       const uint posToSample = mapToReadShift + kMaxMapWidthM * (trafficPersonVec[p].personPath[trafficPersonVec[p].currPathEdge] + (((int) (byteInLine / kMaxMapWidthM)) * trafficPersonVec[p].edgeNumLanes) + trafficPersonVec[p].numOfLaneInEdge) + b % kMaxMapWidthM;
+       const uint posToSample = mapToReadShift + kMaxMapWidthM * (indexPathVec[trafficPersonVec[p].indexPathCurr] + (((int) (byteInLine / kMaxMapWidthM)) * trafficPersonVec[p].edgeNumLanes) + trafficPersonVec[p].numOfLaneInEdge) + b % kMaxMapWidthM;
        laneChar = laneMap[posToSample];
 
        if (laneChar != 0xFF) {
@@ -561,8 +568,8 @@ __device__ int cuda_qrand(){
 
      // c) SAME LINE (AFTER SIGNALING)
      for (ushort b = byteInLine + 2; (b < numOfCells) && (found == false) && (numCellsCheck > 0); b++, numCellsCheck--) {
-       // laneChar = laneMap[mapToReadShift + maxWidth * (trafficPersonVec[p].personPath[trafficPersonVec[p].currPathEdge] + trafficPersonVec[p].numOfLaneInEdge) + b];
-       const uint posToSample = mapToReadShift + kMaxMapWidthM * (trafficPersonVec[p].personPath[trafficPersonVec[p].currPathEdge] + (((int) (byteInLine / kMaxMapWidthM)) * trafficPersonVec[p].edgeNumLanes) + trafficPersonVec[p].numOfLaneInEdge) + b % kMaxMapWidthM;
+       // laneChar = laneMap[mapToReadShift + maxWidth * ((indexPathVec[trafficPersonVec[p].indexPathCurr + trafficPersonVec[p].numOfLaneInEdge) + b];
+       const uint posToSample = mapToReadShift + kMaxMapWidthM * (indexPathVec[trafficPersonVec[p].indexPathCurr] + (((int) (byteInLine / kMaxMapWidthM)) * trafficPersonVec[p].edgeNumLanes) + trafficPersonVec[p].numOfLaneInEdge) + b % kMaxMapWidthM;
        laneChar = laneMap[posToSample];
 
        if (laneChar != 0xFF) {
@@ -965,7 +972,7 @@ __device__ int cuda_qrand(){
        return;
      }
 
-     trafficPersonVec[p].currPathEdge++;
+     trafficPersonVec[p].indexPathCurr++;
      trafficPersonVec[p].maxSpeedMperSec = trafficPersonVec[p].nextEdgemaxSpeedMperSec;
      trafficPersonVec[p].edgeNumLanes = trafficPersonVec[p].nextEdgeNumLanes;
      trafficPersonVec[p].edgeNextInters = trafficPersonVec[p].nextEdgeNextInters;
@@ -978,8 +985,7 @@ __device__ int cuda_qrand(){
 
      ////////////
      // update next edge
-     uint nextNEdge =
-       trafficPersonVec[p].personPath[trafficPersonVec[p].currPathEdge + 1];
+     uint nextNEdge = indexPathVec[trafficPersonVec[p].indexPathCurr + 1];
 
      //trafficPersonVec[p].nextEdge=nextEdge;
      if (nextNEdge != -1) {
@@ -1134,5 +1140,5 @@ void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersect
 	kernel_intersectionOneSimulation <<< numIntersections,1 >>> (numIntersections, currentTime,intersections_d,trafficLights_d);
 
   // Simulate people.
-  kernel_trafficSimulation << < ceil(numPeople / 1024.0f), 1024 >> > (numPeople, currentTime, mapToReadShift, mapToWriteShift, trafficPersonVec_d, edgesData_d, laneMap_d, intersections_d, trafficLights_d);
+  kernel_trafficSimulation << < ceil(numPeople / 1024.0f), 1024 >> > (numPeople, currentTime, mapToReadShift, mapToWriteShift, trafficPersonVec_d, indexPathVec_d, edgesData_d, laneMap_d, intersections_d, trafficLights_d);
 }//

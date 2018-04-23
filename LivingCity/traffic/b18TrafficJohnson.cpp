@@ -17,11 +17,11 @@ typedef exterior_vertex_property<RoadGraph::roadBGLGraph_BI, float>
 DistanceProperty;
 typedef DistanceProperty::matrix_type DistanceMatrix;
 typedef DistanceProperty::matrix_map_type DistanceMatrixMap;
-//typedef constant_property_map<RoadGraph::roadGraphEdgeDesc_BI, float> WeightMap;
 
 void B18TrafficJohnson::generateRoutes(
   LC::RoadGraph::roadBGLGraph_BI &roadGraph,
-  std::vector<CUDATrafficPerson> &trafficPersonVec,
+  std::vector<B18TrafficPerson> &trafficPersonVec,
+  std::vector<uint>& indexPathVec,
   std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> &edgeDescToLaneMapNum,
   int weigthMode, float sample) {
 
@@ -34,6 +34,10 @@ void B18TrafficJohnson::generateRoutes(
   QTime timer;
   timer.start();
   
+  uint currIndexPath = 0; // counter to keep track where to put more
+  indexPathVec.clear();
+  indexPathVec.resize(trafficPersonVec.size() * 140); // initial allocation (so we do not add)
+  indexPathVec[currIndexPath++] = -1; // first path is empty
 
   // 1. Update weight edges
   printf(">> generateRoutes Update weight edges\n");
@@ -50,35 +54,38 @@ void B18TrafficJohnson::generateRoutes(
   float maxSpeed = -FLT_MAX;
   for (boost::tie(ei, eiEnd) = boost::edges(roadGraph); ei != eiEnd; ++ei) {
     numEdges++;
-
-    if ((numEdges % (edgeDescToLaneMapNum.size() / 20)) == 0) {
+    if ((edgeDescToLaneMapNum.size() > 20) && (numEdges % (edgeDescToLaneMapNum.size() / 20)) == 0) {
       printf("Edge %d of %d (%2.0f%%)\n", numEdges, edgeDescToLaneMapNum.size(), (100.0f * numEdges) / edgeDescToLaneMapNum.size());
     }
-    
-    float speed;
-    if (weigthMode == 0 || roadGraph[*ei].averageSpeed.size() <= 0) {
-      speed = roadGraph[*ei].maxSpeedMperSec;//(p0-p1).length();
-  
-    } else {
-      // Use the avarage speed sampled in a former step
-      float avOfAv = 0;
-      for (int avOfAvN = 0; avOfAvN < roadGraph[*ei].averageSpeed.size(); avOfAvN++) {
-        avOfAv += roadGraph[*ei].averageSpeed[avOfAvN];
+    if (roadGraph[*ei].numberOfLanes > 0) {
+      float speed;
+      if (weigthMode == 0 || roadGraph[*ei].averageSpeed.size() <= 0) {
+        speed = roadGraph[*ei].maxSpeedMperSec;//(p0-p1).length();
+
+      } else {
+        // Use the avarage speed sampled in a former step
+        float avOfAv = 0;
+        for (int avOfAvN = 0; avOfAvN < roadGraph[*ei].averageSpeed.size(); avOfAvN++) {
+          avOfAv += roadGraph[*ei].averageSpeed[avOfAvN];
+        }
+        speed = avOfAv / roadGraph[*ei].averageSpeed.size();
       }
-      speed = avOfAv / roadGraph[*ei].averageSpeed.size();
+      float travelTime = roadGraph[*ei].edgeLength / speed;
+      roadGraph[*ei].edge_weight = travelTime;
+      weight_pmap[*ei] = travelTime;
+
+      minTravelTime = minTravelTime>travelTime ? travelTime : minTravelTime;
+      maxTravelTime = maxTravelTime < travelTime ? travelTime : maxTravelTime;
+
+      minLength = minLength > roadGraph[*ei].edgeLength ? roadGraph[*ei].edgeLength : minLength;
+      maxLength = maxLength < roadGraph[*ei].edgeLength ? roadGraph[*ei].edgeLength : maxLength;
+
+      minSpeed = minSpeed > speed ? speed : minSpeed;
+      maxSpeed = maxSpeed < speed ? speed : maxSpeed;
+    } else {
+      roadGraph[*ei].edge_weight =
+        100000000.0; //FLT_MAX;// if it has not lines, then the weight is inf
     }
-    float travelTime = roadGraph[*ei].edgeLength / speed;
-    roadGraph[*ei].edge_weight = travelTime;
-    weight_pmap[*ei] = travelTime;
-
-    minTravelTime = minTravelTime>travelTime ? travelTime : minTravelTime;
-    maxTravelTime = maxTravelTime < travelTime ? travelTime : maxTravelTime;
-
-    minLength = minLength > roadGraph[*ei].edgeLength ? roadGraph[*ei].edgeLength : minLength;
-    maxLength = maxLength < roadGraph[*ei].edgeLength ? roadGraph[*ei].edgeLength : maxLength;
-
-    minSpeed = minSpeed > speed ? speed : minSpeed;
-    maxSpeed = maxSpeed < speed ? speed : maxSpeed;
   }
   printf("Travel time Min: %f Max: %f\n", minTravelTime, maxTravelTime);
   printf("Length Min: %f Max: %f\n", minLength, maxLength);
@@ -107,7 +114,6 @@ void B18TrafficJohnson::generateRoutes(
   float maxDist = -1.0f;
   for (int vN = 0; vN < numVertex; vN++) {
     for (int vN2 = 0; vN2 < numVertex; vN2++) {
-      //printf("%.1f ", dm[vN][vN2]);
       maxDist = maxDist < dm[vN][vN2] ? dm[vN][vN2] : maxDist;
     }
     //printf("\n");
@@ -120,7 +126,7 @@ void B18TrafficJohnson::generateRoutes(
   uint sameSrcDst = 0;
   QTime timer2;
   timer2.start();
-  std::vector<int> pathHistogram(kMaxPersonPath, 0);
+  std::vector<int> pathHistogram(250, 0); // this should be around 140.
 
   for (int p = 0; p < trafficPersonVec.size(); p++) {
     if (trafficPersonVec.size() > 200) {
@@ -130,20 +136,21 @@ void B18TrafficJohnson::generateRoutes(
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////
+    trafficPersonVec[p].indexPathInit = currIndexPath;
 
     LC::RoadGraph::roadGraphVertexDesc_BI srcvertex = trafficPersonVec[p].init_intersection;
     LC::RoadGraph::roadGraphVertexDesc_BI tgtvertex = trafficPersonVec[p].end_intersection;
 
     // check whether source same than target (we have arrived)
     if (tgtvertex == srcvertex) {
-      trafficPersonVec[p].personPath[0] = -1;
+      trafficPersonVec[p].indexPathInit = 0; // that index points to -1
       sameSrcDst++;
       continue;
     }
 
     // check if accesible
     if (dm[srcvertex][tgtvertex] == (std::numeric_limits < float >::max)()) {
-      trafficPersonVec[p].personPath[0] = -1;
+      trafficPersonVec[p].indexPathInit = 0; // that index points to -1
       noAccesible++;
       continue;
     }
@@ -180,17 +187,20 @@ void B18TrafficJohnson::generateRoutes(
             }
 
             uint lane = edgeDescToLaneMapNum[edge_pair.first];
-            trafficPersonVec[p].personPath[currIndex] = lane;
-            currIndex++;
+            if (indexPathVec.size() < (currIndexPath - 2)) {  // almost full
+              printf("p %d *****indexPathVec too small -> size: %d currIndexPath: %d\n", p, indexPathVec.size(), currIndexPath);
+              indexPathVec.resize((int) (indexPathVec.size()*1.4f));// Expand 40%.
+            }
+            indexPathVec[currIndexPath++] = lane;
+            currIndex++;  // for histogram.
 
-            if (currIndex >= kMaxPersonPath) { //change CUDATrafficPerson::personPath
-              printf("Error: More than kMaxPersonPath edges %d\n", currIndex);
-              currIndex--;
-              break;
+            if (currIndex > 250) {
+              printf("currIndex > 250\n");
+              currvertex = tgtvertex;//end loop
+              break;//break for
             }
 
             currvertex = tgtPosEdgeV;
-            //printf("found edge %u\n", edge);
             cont = true;
             break;//break for
           }
@@ -207,15 +217,47 @@ void B18TrafficJohnson::generateRoutes(
       break;
     }//while find tgt
 
+    indexPathVec[currIndexPath++] = -1; // end path with -1
     pathHistogram[currIndex]++;
-    trafficPersonVec[p].personPath[currIndex] = -1;
     ////////////////////////////////////////////////////////////////////////////////////////////
   }
 
-  for (int h = 0; h < pathHistogram.size(); h++) {
-    printf("pathHistogram,%d,%d\n", h, pathHistogram[h]);
+  // Resize tight indexPathVec and set everyone to the first edge (maybe do in sim?)
+  printf("Final Path Size %u\n", currIndexPath);
+  indexPathVec.resize(currIndexPath);
+  for (int p = 0; p < trafficPersonVec.size(); p++) {
+    trafficPersonVec[p].indexPathCurr = trafficPersonVec[p].indexPathInit;
   }
 
+  { // Print histogram
+    
+    int maxNumSteps = INT_MAX;
+    for (int h = pathHistogram.size()-1; h >=0; h--) {
+      if (pathHistogram[h] != 0) {
+        maxNumSteps = h;
+        break;
+      }
+    }
+    for (int h = 0; h < maxNumSteps +1; h++) {
+      printf("pathHistogram,%d,%d\n", h, pathHistogram[h]);
+    }
+  }
+  ////////////////////
+  // Debug
+  const bool kDebugFirstPerson = true;
+  if (trafficPersonVec.size()>0 && kDebugFirstPerson) {
+    int currIndex = 0;
+    while (true) {
+      uint laneMap = indexPathVec[trafficPersonVec[0].indexPathInit + currIndex];
+      if (laneMap != -1) {
+        printf("-> %u ", laneMap);
+        currIndex++;
+      } else {
+        break;
+      }
+    }
+    printf("\n");
+  }
   printf("<< generateRoutePathsJohnson: individual routes time %d ms --> numPeople %d (No Acc %d sameSrcDst %d)\n",
     timer2.elapsed(), trafficPersonVec.size(), noAccesible, sameSrcDst);
 }//

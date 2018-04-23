@@ -10,12 +10,11 @@
 
 #include "b18TrafficOD.h"
 #include "b18TrafficLaneMap.h"
-#include "cudaTrafficPersonShortestPath.h"
 
 #include "../VBOPeopleJobInfoLayer.h"
 #include "../VBORenderManager.h"
 
-#include "cudaGridPollution.h"
+#include "b18GridPollution.h"
 
 
 namespace LC {
@@ -62,12 +61,9 @@ class B18TrafficSimulator {
   void initSimulator(float deltaTime, RoadGraph *geoRoadGraph,
                      LCUrbanMain *urbanMain = nullptr);
 
-  // int numberPeople,
-
   //PM
   B18TrafficOD b18TrafficOD;
   B18TrafficLaneMap b18TrafficLaneMap;
-  CUDATrafficPersonShortestPath cudaTrafficPersonShortestPath;
 
   void simulateInCPU_MultiPass(int numOfPasses,
     float startTimeH, float endTimeH, bool useJohnsonRouting);
@@ -87,7 +83,9 @@ class B18TrafficSimulator {
   void generateCarPaths(bool useJohnsonRouting);
 
   // People
-  std::vector<CUDATrafficPerson> trafficPersonVec;
+  std::vector<B18TrafficPerson> trafficPersonVec;
+  std::vector<uint> indexPathVec;
+
   void createRandomPeople(float startTime, float endTime, int numberPeople,
                           PeopleJobInfoLayers &peopleJobInfoLayers);
   void createB2018People(float startTime, float endTime, int limitNumPeople = -1);
@@ -116,7 +114,7 @@ class B18TrafficSimulator {
   std::vector<B18TrafficSimulatorRender> b18TrafficSimulatorRender;
   std::vector<B18TrafficLightRender> b18TrafficLightRender;
   // pollution
-  CUDAGridPollution cudaGridPollution;
+  B18GridPollution gridPollution;
 };
 }
 

@@ -60,7 +60,7 @@ void B18TrafficLaneMap::createLaneMap(
   ////////////////////////////////
   // Check distribution of street length
   float binLength = 1.0f;//1km
-  int numBins = 27 / binLength;//maxlength is 26km
+  int numBins = 31 / binLength;//maxlength is 26km
   std::vector<int> bins(numBins);
   std::fill(bins.begin(), bins.end(), 0);
   for (boost::tie(ei, ei_end) = boost::edges(inRoadGraph.myRoadGraph_BI); ei != ei_end; ++ei) {
@@ -68,7 +68,7 @@ void B18TrafficLaneMap::createLaneMap(
     int binN = (length / 1000.0f) / binLength;
     //printf("l %.2f binN %d\n", length, binN);
     if (binN < 0 || binN >= numBins) {
-      printf("ERROR: Bin out of range %d of %f\n", binN, numBins);
+      printf("ERROR: Bin out of range: %d of %d\n", binN, numBins);
     }
     bins[binN]++;
   }

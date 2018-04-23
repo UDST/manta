@@ -13,7 +13,8 @@ namespace LC {
     bool useCPU = settings.value("USE_CPU", false).toBool(); // false = GPU; true = CPU
     bool useFullB18Network = settings.value("USE_FULL_B2018_NETWORK", false).toBool(); // false = GPU; true = CPU
     bool useJohnsonRouting = settings.value("USE_JOHNSON_ROUTING", false).toBool(); // false = Disjktra; true = Johnson
-    
+    int limitNumPeople = settings.value("LIMIT_NUM_PEOPLE", -1).toInt(); // -1
+
     const float deltaTime = 0.5f;
     const float startDemandH = 7.30f;
     const float endDemandH = 9.00f;
@@ -28,18 +29,17 @@ namespace LC {
       b18TrafficSimulator.initSimulator(deltaTime, &cg.roadGraph);
     } else {
       // B18 CODE: Normal Simulation
-      printf("1. Load RoadGraph");
+      printf("1. Load RoadGraph\n");
       RoadGraphB2018::loadB2018RoadGraph(cg.roadGraph, useFullB18Network);
 
-      printf("2. Init Simulator");
+      printf("2. Init Simulator\n");
       b18TrafficSimulator.initSimulator(deltaTime, &cg.roadGraph);
 
-      printf("3. Create people");
-      const int limitNumPeople = 1; // -1 to not limit
+      printf("3. Create people\n");
       b18TrafficSimulator.createB2018People(startDemandH, endDemandH, limitNumPeople);
     }
 
-    printf("4. Simulate");
+    printf("4. Simulate\n");
     const int numPasses = 1;
     if (useCPU) {
       b18TrafficSimulator.simulateInCPU_MultiPass(numPasses, startSimulationH, endSimulationH, useJohnsonRouting);

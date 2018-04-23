@@ -18,7 +18,7 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 
-#include "cudaTrafficPerson.h"
+#include "b18TrafficPerson.h"
 #include "RoadGraph/roadGraph.h"
 
 #include <boost/graph/dijkstra_shortest_paths.hpp>
@@ -36,10 +36,10 @@ class B18TrafficOD {
   cv::Mat *peopleDistribution;
   cv::Mat *jobDistribution;
 
-  void randomPerson(int p, CUDATrafficPerson &person, QVector3D housePos3D,
+  void randomPerson(int p, B18TrafficPerson &person, QVector3D housePos3D,
                     QVector3D jobPos3D, float startTimeH,
                     LC::RoadGraph::roadBGLGraph_BI &roadGraph);
-  void randomPerson(int p, CUDATrafficPerson &person, uint srcvertex,
+  void randomPerson(int p, B18TrafficPerson &person, uint srcvertex,
                     uint tgtvertex, float startTimeH);
 
   void sampleDistribution(int numberToSample, PeopleJobOneLayer &distribution,
@@ -47,17 +47,16 @@ class B18TrafficOD {
   // generate random
   void createRandomPeople(int numberPerGen,
                           float startTimeH, float endTimeH,
-                          std::vector<CUDATrafficPerson> &trafficPersonVec,
+                          std::vector<B18TrafficPerson> &trafficPersonVec,
                           PeopleJobInfoLayers &simPeopleJobInfoLayersn,
                           LC::RoadGraph::roadBGLGraph_BI &roadGraph);
 
   // generate from b18
   void loadB18TrafficPeople(float startTimeH, float endTimeH,
-                                std::vector<CUDATrafficPerson> &trafficPersonVec,
+                                std::vector<B18TrafficPerson> &trafficPersonVec,
                                 RoadGraph::roadBGLGraph_BI &roadGraph, int limitNumPeople = -1);
 
-  void resetTrafficPersonJob(std::vector<CUDATrafficPerson> &trafficPersonVec);
-  std::vector<ushort> backUpInitEdge;
+  void resetTrafficPersonJob(std::vector<B18TrafficPerson> &trafficPersonVec);
 };
 }
 

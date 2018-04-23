@@ -7,7 +7,6 @@
 #include "b18TestSimpleRoadAndOD.h"
 
 #include "../Geometry/client_geometry.h"
-//#include "../LC_UrbanMain.h"
 #include "../LC_GLWidget3D.h"
 #include "b18TrafficOD.h"
 #include "../global.h"
@@ -47,7 +46,7 @@ namespace LC {
 
   }  // namespace
 
-void B18TestSimpleRoadAndOD::generateTest(RoadGraph &inRoadGraph, std::vector<CUDATrafficPerson> &trafficPersonVec, 
+  void B18TestSimpleRoadAndOD::generateTest(RoadGraph &inRoadGraph, std::vector<B18TrafficPerson> &trafficPersonVec,
   float startTimeH, float endTimeH, LCGLWidget3D *glWidget3D) {
   printf(">>loadTestRoadGraph\n");
   printf(">>Remove\n");
