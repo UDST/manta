@@ -127,7 +127,9 @@ void B18TrafficSimulator::calculateAndDisplayTrafficDensity() {
   }
 
   calculateAndDisplayTrafficDensity(accSpeedPerLinePerTimeInterval,
-                                    numVehPerLinePerTimeInterval, edgeDescToLaneMapNum, laneMapNumToEdgeDesc,
+                                    numVehPerLinePerTimeInterval,
+                                    edgeDescToLaneMapNum, 
+                                    laneMapNumToEdgeDesc,
                                     trafficLights.size());//num lanes
 }//
 
@@ -186,7 +188,7 @@ void B18TrafficSimulator::simulateInGPU(float startTimeH, float endTimeH, bool u
 	G::global()["cuda_render_displaylist_staticRoadsBuildings"]=1;//display list
 	timer.start();
 	// 1. Init Cuda
-  b18InitCUDA(trafficPersonVec, indexPathVec, edgesData, laneMap, trafficLights, intersections);
+  b18InitCUDA(trafficPersonVec, indexPathVec, edgesData, laneMap, trafficLights, intersections, startTimeH, endTimeH, accSpeedPerLinePerTimeInterval, numVehPerLinePerTimeInterval);
 	// 2. Excute
 	printf("First time_departure %f\n",currentTime);
   int count = 0;
@@ -217,6 +219,7 @@ void B18TrafficSimulator::simulateInGPU(float startTimeH, float endTimeH, bool u
 	}
 	// 3. Finish
   b18GetDataCUDA(trafficPersonVec, trafficLights);
+  b18GetSampleTraffic(accSpeedPerLinePerTimeInterval, numVehPerLinePerTimeInterval);
 	/////
 	uint totalNumSteps=0;
 		float totalGas=0;
@@ -227,7 +230,8 @@ void B18TrafficSimulator::simulateInGPU(float startTimeH, float endTimeH, bool u
 		avgTravelTime=(totalNumSteps)/(trafficPersonVec.size()*60.0f);//in min
 		printf("Total num steps %u Avg %.2f min Avg Gas %.2f. Calculated in %d ms\n",totalNumSteps,avgTravelTime,totalGas/trafficPersonVec.size(),timer.elapsed());
 
-	///
+	//
+  calculateAndDisplayTrafficDensity();
   b18FinishCUDA();
 	printf("  <<End Simulation TIME: %d ms.\n",timer.elapsed());
   G::global()["cuda_render_displaylist_staticRoadsBuildings"] = 3;//kill display list
@@ -2086,8 +2090,8 @@ void B18TrafficSimulator::render(VBORenderManager &rendManager) {
   }
 }//
 
-void B18TrafficSimulator::calculateAndDisplayTrafficDensity(/*RoadGraph& inRoadGraph,*/std::vector<float>
-    &accSpeedPerLinePerTimeInterval,
+void B18TrafficSimulator::calculateAndDisplayTrafficDensity(
+    std::vector<float> &accSpeedPerLinePerTimeInterval,
     std::vector<float> &numVehPerLinePerTimeInterval,
     std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> &edgeDescToLaneMapNum,
     std::map<uint, RoadGraph::roadGraphEdgeDesc_BI> &laneMapNumToEdgeDesc,
@@ -2095,95 +2099,116 @@ void B18TrafficSimulator::calculateAndDisplayTrafficDensity(/*RoadGraph& inRoadG
 
   const float numStepsTogether = 12;
   int numSampling = accSpeedPerLinePerTimeInterval.size() / tNumLanes;
-
-  if (DEBUG_SIMULATOR) {
-    printf(">>calculateAndDisplayTrafficDensity numSampling %d\n", numSampling);
-  }
+  printf(">>calculateAndDisplayTrafficDensity numSampling %d\n", numSampling);
+  
 
   RoadGraph::roadGraphEdgeIter_BI ei, eiEnd;
+  const bool saveToFile = true; // false = display in network; true saveToFile
+  if (saveToFile) {
+    /////////////////////////////////
+    // SAVE TO FILE
+    QFile speedFile("average_speed.txt");
+    QFile utilizationFile("utilization.txt");
+    if (speedFile.open(QIODevice::ReadWrite) && utilizationFile.open(QIODevice::ReadWrite)) {
+      QTextStream streamS(&speedFile);
+      QTextStream streamU(&utilizationFile);
 
-  //std::vector<int> numTotalCarsInLanes;
-  //numTotalCarsInLanes.resize(numSampling);
-  //memset(numTotalCarsInLanes.data(),0,numTotalCarsInLanes.size()*sizeof(int
-  printPercentageMemoryUsed();
-  if (DEBUG_SIMULATOR) {
-    printf(">>calculateAndDisplayTrafficDensity Allocate memory numSampling %d\n", numSampling);
-  }
-  
-  int count = 0;
-  for (boost::tie(ei, eiEnd) = boost::edges(simRoadGraph->myRoadGraph_BI); ei != eiEnd; ++ei) {
-    if (edgeDescToLaneMapNum.count(*ei) == 0) {
-      continue;
+      for (boost::tie(ei, eiEnd) = boost::edges(simRoadGraph->myRoadGraph_BI); ei != eiEnd; ++ei) {
+        int numLanes = simRoadGraph->myRoadGraph_BI[*ei].numberOfLanes;
+
+        if (numLanes == 0) {
+          continue;  //edges with zero lines just skip
+        }
+        int numLane = edgeDescToLaneMapNum[*ei];
+        //  0.8f to make easier to become red
+        float maxVehicles = 0.5f * simRoadGraph->myRoadGraph_BI[*ei].edgeLength * simRoadGraph->myRoadGraph_BI[*ei].numberOfLanes / (s_0);
+
+        if (maxVehicles < 1.0f) {
+          maxVehicles = 1.0f;
+        }
+        streamS << simRoadGraph->myRoadGraph_BI[*ei].faci;
+        streamU << simRoadGraph->myRoadGraph_BI[*ei].faci;
+        for (int sa = 0; sa < numSampling - 1; sa++) {
+          uint offset = sa * tNumLanes;
+
+          // avarage speed
+          float averageSpeed;
+          if (numVehPerLinePerTimeInterval[numLane + offset] * numStepsTogether > 0) {
+            averageSpeed = (accSpeedPerLinePerTimeInterval[numLane + offset]) / ((float) numVehPerLinePerTimeInterval[numLane + offset]); //!!!!!
+          } else {
+            averageSpeed = 0;
+          }
+          streamS << "," << averageSpeed;
+          // average utilization
+          float averageUtilization;
+          averageUtilization = numVehPerLinePerTimeInterval[numLane + offset] / (maxVehicles * numStepsTogether);
+          averageUtilization = std::min(1.0f, averageUtilization);
+          streamU << "," << averageUtilization;
+        }
+        streamS << "\n";
+        streamU << "\n";
+      }
     }
-    printf("Edge allocation %d -> lane %d\n", count, edgeDescToLaneMapNum[*ei]);
+
+
+  } else {
+
+    ///////////////////////////////
+    // DISPLAY IN NETWORK
     printPercentageMemoryUsed();
-    simRoadGraph->myRoadGraph_BI[*ei].averageSpeed.resize(numSampling);
-    simRoadGraph->myRoadGraph_BI[*ei].averageUtilization.resize(numSampling);
-    if ((++count) % 200 == 0) {
-      //printf("Edge allocation %d: ", count);
-      
+    if (DEBUG_SIMULATOR) {
+      printf(">>calculateAndDisplayTrafficDensity Allocate memory numSampling %d\n", numSampling);
     }
-  }
-  printPercentageMemoryUsed();
 
-  if (DEBUG_SIMULATOR) {
+    int count = 0;
+    for (boost::tie(ei, eiEnd) = boost::edges(simRoadGraph->myRoadGraph_BI); ei != eiEnd; ++ei) {
+      if (edgeDescToLaneMapNum.count(*ei) == 0) {
+        continue;
+      }
+      printPercentageMemoryUsed();
+      simRoadGraph->myRoadGraph_BI[*ei].averageSpeed.resize(numSampling);
+      simRoadGraph->myRoadGraph_BI[*ei].averageUtilization.resize(numSampling);
+    }
+    printPercentageMemoryUsed();
     printf(">>calculateAndDisplayTrafficDensity Process\n");
-  }
-  for (boost::tie(ei, eiEnd) = boost::edges(simRoadGraph->myRoadGraph_BI); ei != eiEnd; ++ei) {
-    int numLanes = simRoadGraph->myRoadGraph_BI[*ei].numberOfLanes;
+    
+    for (boost::tie(ei, eiEnd) = boost::edges(simRoadGraph->myRoadGraph_BI); ei != eiEnd; ++ei) {
+      int numLanes = simRoadGraph->myRoadGraph_BI[*ei].numberOfLanes;
 
-    if (numLanes == 0) {
-      continue;//edges with zero lines just skip
-    }
-    int numLane = edgeDescToLaneMapNum[*ei];
-    int offset;
-    //0.8f to make easier to become red
-    float maxVehicles = 0.5f * simRoadGraph->myRoadGraph_BI[*ei].edgeLength * simRoadGraph->myRoadGraph_BI[*ei].numberOfLanes / (s_0);
+      if (numLanes == 0) {
+        continue;  //edges with zero lines just skip
+      }
+      int numLane = edgeDescToLaneMapNum[*ei];
+      //0.8f to make easier to become red
+      float maxVehicles = 0.5f * simRoadGraph->myRoadGraph_BI[*ei].edgeLength * simRoadGraph->myRoadGraph_BI[*ei].numberOfLanes / (s_0);
 
-    if (maxVehicles < 1.0f) {
-      maxVehicles = 1.0f;
-    }
-
-    for (int sa = 0; sa < numSampling - 1; sa++) {
-      offset = sa * tNumLanes;
-
-      ////////////////////////////////////////////////
-      // avarage speed
-      /*if(numVehPerLinePerTimeInterval[numLane+offset]>0){
-        simRoadGraph->myRoadGraph_BI[*ei].averageSpeed[sa]=accSpeedPerLinePerTimeInterval[numLane+offset]/(numVehPerLinePerTimeInterval[numLane+offset]*numStepsTogether);
-        if(simRoadGraph->myRoadGraph_BI[*ei].averageSpeed[sa]>1)
-                simRoadGraph->myRoadGraph_BI[*ei].averageSpeed[sa]=1.0f;
-      }else{
-        simRoadGraph->myRoadGraph_BI[*ei].averageSpeed[sa]=simRoadGraph->myRoadGraph_BI[*ei].maxSpeedMperSec;
-      }*/
-      if (numVehPerLinePerTimeInterval[numLane + offset]*numStepsTogether > 0) {
-        simRoadGraph->myRoadGraph_BI[*ei].averageSpeed[sa] = (accSpeedPerLinePerTimeInterval[numLane + offset]) / ((float) numVehPerLinePerTimeInterval[numLane + offset]); //!!!!!
-      } else {
-        simRoadGraph->myRoadGraph_BI[*ei].averageSpeed[sa] = 0;
+      if (maxVehicles < 1.0f) {
+        maxVehicles = 1.0f;
       }
 
-      //if(simRoadGraph->myRoadGraph_BI[*ei].averageSpeed[sa]!=0)
-      //	printf("num %f acc %f -->avfg %f\n",numVehPerLinePerTimeInterval[numLane+offset]/numStepsTogether,accSpeedPerLinePerTimeInterval[numLane+offset]/numStepsTogether,simRoadGraph->myRoadGraph_BI[*ei].averageSpeed[sa]);
-      //simRoadGraph->myRoadGraph_BI[*ei].averageSpeed[sa]=numVehPerLinePerTimeInterval[numLane+offset]/numStepsTogether;//!!!!!
-      ///////////////////////////////
-      // average utilization
-      simRoadGraph->myRoadGraph_BI[*ei].averageUtilization[sa] = numVehPerLinePerTimeInterval[numLane + offset] / (maxVehicles * numStepsTogether);
+      for (int sa = 0; sa < numSampling - 1; sa++) {
+        uint offset = sa * tNumLanes;
 
-      if (simRoadGraph->myRoadGraph_BI[*ei].averageUtilization[sa] > 1.0f) {
-        //printf("numVehPerLinePerTimeInterval[numLane+offset] %d maxVe %f--> %f\n",numVehPerLinePerTimeInterval[numLane+offset],maxVehicles,simRoadGraph->myRoadGraph_BI[*ei].averageUtilization[sa]);
-        simRoadGraph->myRoadGraph_BI[*ei].averageUtilization[sa] = 1;
+        ////////////////////////////////////////////////
+        // avarage speed
+        if (numVehPerLinePerTimeInterval[numLane + offset] * numStepsTogether > 0) {
+          simRoadGraph->myRoadGraph_BI[*ei].averageSpeed[sa] = (accSpeedPerLinePerTimeInterval[numLane + offset]) / ((float) numVehPerLinePerTimeInterval[numLane + offset]); //!!!!!
+        } else {
+          simRoadGraph->myRoadGraph_BI[*ei].averageSpeed[sa] = 0;
+        }
+        ///////////////////////////////
+        // average utilization
+        simRoadGraph->myRoadGraph_BI[*ei].averageUtilization[sa] = numVehPerLinePerTimeInterval[numLane + offset] / (maxVehicles * numStepsTogether);
+
+        if (simRoadGraph->myRoadGraph_BI[*ei].averageUtilization[sa] > 1.0f) {
+          //printf("numVehPerLinePerTimeInterval[numLane+offset] %d maxVe %f--> %f\n",numVehPerLinePerTimeInterval[numLane+offset],maxVehicles,simRoadGraph->myRoadGraph_BI[*ei].averageUtilization[sa]);
+          simRoadGraph->myRoadGraph_BI[*ei].averageUtilization[sa] = 1;
+        }
       }
     }
   }
 
-  /*for(int sa=0;sa<numSampling-1;sa++){
-        printf("%d ",numTotalCarsInLanes[sa]);
-  }*/
-  if (DEBUG_SIMULATOR) {
-    printf("\n");
-  }
-
-  //printf("\n<<CUDATrafficDesigner::calculateAndDisplayTrafficDensity numTotalCarsInLanes %d\n",numTotalCarsInLanes);
+  printf("\n<<calculateAndDisplayTrafficDensity\n");
 }//
 
 //////////////////////////////

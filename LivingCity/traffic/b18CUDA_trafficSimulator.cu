@@ -17,6 +17,7 @@
 
 __constant__ float intersectionClearance = 7.8f;
 __constant__ float s_0 = 7.0f;
+
 ////////////////////////////////
 // VARIABLES
 LC::B18TrafficPerson *trafficPersonVec_d;
@@ -25,17 +26,36 @@ LC::B18EdgeData *edgesData_d;
 
 __constant__ bool calculatePollution = true;
 __constant__ float cellSize = 1.0f;
+
 __constant__ float deltaTime = 0.5f;
+const float deltaTimeH = 0.5f;
+
+const uint numStepsPerSample = 30.0f / deltaTimeH; //each min
+const uint numStepsTogether = 12; //change also in density (10 per hour)
+
 uchar *laneMap_d;
 bool readFirstMapC=true;
 uint mapToReadShift;
 uint mapToWriteShift;
 uint halfLaneMap;
+float startTime;
 
 LC::B18IntersectionData *intersections_d;
 uchar *trafficLights_d;
 
-void b18InitCUDA(std::vector<LC::B18TrafficPerson>& trafficPersonVec, std::vector<uint> &indexPathVec, std::vector<LC::B18EdgeData>& edgesData, std::vector<uchar>& laneMap, std::vector<uchar>& trafficLights, std::vector<LC::B18IntersectionData>& intersections) {
+float* accSpeedPerLinePerTimeInterval_d;
+float* numVehPerLinePerTimeInterval_d;
+
+void b18InitCUDA(
+  std::vector<LC::B18TrafficPerson>& trafficPersonVec, 
+  std::vector<uint> &indexPathVec, 
+  std::vector<LC::B18EdgeData>& edgesData, 
+  std::vector<uchar>& laneMap, 
+  std::vector<uchar>& trafficLights, 
+  std::vector<LC::B18IntersectionData>& intersections,
+  float startTimeH, float endTimeH,
+  std::vector<float>& accSpeedPerLinePerTimeInterval,
+  std::vector<float>& numVehPerLinePerTimeInterval) {
   printf(">>b18InitCUDA\n");
   cudaError err;
   { // people
@@ -78,6 +98,20 @@ void b18InitCUDA(std::vector<LC::B18TrafficPerson>& trafficPersonVec, std::vecto
     err = cudaMalloc((void **) &trafficLights_d, sizeT);   // Allocate array on device
     if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
   }
+  {
+    startTime = startTimeH * 3600.0f;
+    uint numSamples = ceil(((endTimeH*3600.0f - startTimeH*3600.0f) / (deltaTimeH * numStepsPerSample * numStepsTogether))) + 1; //!!!
+    accSpeedPerLinePerTimeInterval.resize(numSamples * trafficLights.size());
+    numVehPerLinePerTimeInterval.resize(numSamples * trafficLights.size());
+    size_t sizeAcc = accSpeedPerLinePerTimeInterval.size() * sizeof(float);
+    err = cudaMalloc((void **) &accSpeedPerLinePerTimeInterval_d, sizeAcc);   // Allocate array on device
+    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
+    cudaMemset(&accSpeedPerLinePerTimeInterval_d[0], 0, sizeAcc);
+    err = cudaMalloc((void **) &numVehPerLinePerTimeInterval_d, sizeAcc);   // Allocate array on device
+    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
+    cudaMemset(&numVehPerLinePerTimeInterval_d[0], 0, sizeAcc);
+    
+  }
   printf("<<b18InitCUDA\n");
 }//
 
@@ -91,6 +125,8 @@ void b18FinishCUDA(void){
 	cudaFree(intersections_d);
 	cudaFree(trafficLights_d);
 
+  cudaFree(accSpeedPerLinePerTimeInterval_d);
+  cudaFree(numVehPerLinePerTimeInterval_d);
 }//
 
  void b18GetDataCUDA(std::vector<LC::B18TrafficPerson>& trafficPersonVec,std::vector<uchar>& trafficLights){
@@ -1120,6 +1156,33 @@ __global__ void kernel_intersectionOneSimulation(
 	 
  }//
 
+// Kernel that executes on the CUDA device
+__global__ void kernel_sampleTraffic(
+  int numPeople,
+  LC::B18TrafficPerson *trafficPersonVec,
+  uint *indexPathVec,
+  float *accSpeedPerLinePerTimeInterval,
+  float *numVehPerLinePerTimeInterval, //this could have been int
+  uint offset
+  ) {
+  int p = blockIdx.x * blockDim.x + threadIdx.x;
+  if (p < numPeople) {//CUDA check (inside margins)
+    if (trafficPersonVec[p].active == 1) { // just active
+      int edgeNum = indexPathVec[trafficPersonVec[p].indexPathCurr];
+      accSpeedPerLinePerTimeInterval[edgeNum + offset] += trafficPersonVec[p].v / 3.0f;
+      numVehPerLinePerTimeInterval[edgeNum + offset]++;
+    }
+  }
+}
+
+void b18GetSampleTraffic(std::vector<float>& accSpeedPerLinePerTimeInterval, std::vector<float>& numVehPerLinePerTimeInterval) {
+  // copy back people
+  size_t size = accSpeedPerLinePerTimeInterval.size() * sizeof(float);
+  cudaMemcpy(accSpeedPerLinePerTimeInterval.data(), accSpeedPerLinePerTimeInterval_d, size, cudaMemcpyDeviceToHost);
+
+  size_t sizeI = numVehPerLinePerTimeInterval.size() * sizeof(uchar);
+  cudaMemcpy(numVehPerLinePerTimeInterval.data(), numVehPerLinePerTimeInterval_d, sizeI, cudaMemcpyDeviceToHost);
+}
 
 void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersections) {
 
@@ -1141,4 +1204,12 @@ void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersect
 
   // Simulate people.
   kernel_trafficSimulation << < ceil(numPeople / 1024.0f), 1024 >> > (numPeople, currentTime, mapToReadShift, mapToWriteShift, trafficPersonVec_d, indexPathVec_d, edgesData_d, laneMap_d, intersections_d, trafficLights_d);
+
+  // Sample if necessary.
+  if ((((float) ((int) currentTime)) == (currentTime)) &&
+    ((int) currentTime % ((int) 30)) == 0) { //3min //(sample double each 3min)
+    int samplingNumber = (currentTime - startTime) / (30 * numStepsTogether);
+    uint offset = numIntersections * samplingNumber;
+    kernel_sampleTraffic << < ceil(numPeople / 1024.0f), 1024 >> > (numPeople, trafficPersonVec_d, indexPathVec_d, accSpeedPerLinePerTimeInterval_d, numVehPerLinePerTimeInterval_d, offset);
+  }
 }//

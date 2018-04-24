@@ -282,7 +282,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
       continue;
     }
 
-    int ind = fields[indexId].toInt();
+    uint ind = fields[indexId].toInt();
 
     uint64_t start = fields[indexU].toLongLong();
     uint64_t end = fields[indexV].toLongLong();
@@ -333,7 +333,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
     inRoadGraph.myRoadGraph_BI[e0_pair.first].numberOfLanes = numLanes;
     inRoadGraph.myRoadGraph_BI[e0_pair.first].edgeLength = length;
     inRoadGraph.myRoadGraph_BI[e0_pair.first].maxSpeedMperSec = speedMS;
-
+    inRoadGraph.myRoadGraph_BI[e0_pair.first].faci = ind;
     // add to edge
     dynEdgToEdge[ind] = std::make_pair(dynIndToInd[start], dynIndToInd[end]);
 
