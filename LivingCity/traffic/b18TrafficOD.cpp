@@ -2,6 +2,10 @@
 
 #include "../roadGraphB2018Loader.h"
 
+#include <boost/random.hpp>
+#include <boost/random/normal_distribution.hpp>
+#include <boost/math/distributions/non_central_t.hpp>
+
 #define ROUTE_DEBUG 0
 #define PERSON_DEBUG 0
 
@@ -129,12 +133,12 @@ void B18TrafficOD::sampleDistribution(int numberToSample,
 
 void B18TrafficOD::randomPerson(int p, B18TrafficPerson &person,
                                 uint srcvertex,
-                                uint tgtvertex, float startTime) {
+                                uint tgtvertex, float startTimeH) {
 
   // Data
   person.init_intersection = srcvertex;
   person.end_intersection = tgtvertex;
-  person.time_departure = startTime * 3600.0f; //seconds
+  person.time_departure = startTimeH * 3600.0f; //seconds
   //printf("Person %d: init %u end %u Time %f\n",p,srcvertex,tgtvertex,goToWork);
   // Status
   qsrand(p);
@@ -154,7 +158,7 @@ void B18TrafficOD::randomPerson(int p, B18TrafficPerson &person,
 
 void B18TrafficOD::randomPerson(int p, B18TrafficPerson &person,
                                 QVector3D housePos3D, QVector3D jobPos3D,
-                                float startTime,
+                                float startTimeH,
                                 LC::RoadGraph::roadBGLGraph_BI &roadGraph) {
   LC::RoadGraph::roadGraphVertexDesc srcvertex, tgtvertex;
   RoadGraph::roadGraphVertexIter vi, viEnd;
@@ -183,7 +187,7 @@ void B18TrafficOD::randomPerson(int p, B18TrafficPerson &person,
     }
   }
 
-  randomPerson(p, person, srcvertex, tgtvertex, startTime);
+  randomPerson(p, person, srcvertex, tgtvertex, startTimeH);
 }
 
 void B18TrafficOD::resetTrafficPersonJob(std::vector<B18TrafficPerson> &trafficPersonVec) {
@@ -235,9 +239,9 @@ void B18TrafficOD::createRandomPeople(
   float midTime = (startTimeH + endTimeH) / 2.0f;
 
   for (int p = 0; p < numberPerGen; p++) {
-    float goToWork = midTime + LC::misctools::genRand(startTimeH - midTime,
+    float goToWorkH = midTime + LC::misctools::genRand(startTimeH - midTime,
                      endTimeH - startTimeH);
-    randomPerson(p, trafficPersonVec[p], peopleDis[p], jobDis[p], goToWork,
+    randomPerson(p, trafficPersonVec[p], peopleDis[p], jobDis[p], goToWorkH,
                  roadGraph);
   }
 
@@ -267,8 +271,11 @@ void B18TrafficOD::loadB18TrafficPeople(
 
   int totalNumPeople = (limitNumPeople > 0) ? limitNumPeople : RoadGraphB2018::totalNumPeople;
   trafficPersonVec.resize(totalNumPeople);
-  qsrand(6541799621);
-  float midTime = (startTimeH + endTimeH) / 2.0f;
+  boost::mt19937 rng;
+  //boost::math::non_central_t_distribution<> td(/*v=*/2.09,/*delta=*/7.51);
+  //boost::variate_generator<boost::mt19937&, boost::math::non_central_t_distribution<> > var(rng, td);
+  boost::normal_distribution<> nd(7.5, 0.75);
+  boost::variate_generator<boost::mt19937&, boost::normal_distribution<> > var(rng, nd);
 
   int numPeople = 0;
 
@@ -278,8 +285,8 @@ void B18TrafficOD::loadB18TrafficPeople(
     uint tgt_vertex = RoadGraphB2018::demandB2018[d].tgt_vertex;
 
     for (int p = 0; p < odNumPeople; p++) {
-      float goToWork = LC::misctools::genRand(startTimeH, endTimeH);
-      randomPerson(numPeople, trafficPersonVec[numPeople], src_vertex, tgt_vertex, goToWork);
+      float goToWorkH = var();
+      randomPerson(numPeople, trafficPersonVec[numPeople], src_vertex, tgt_vertex, goToWorkH);
      // printf("go to work %.2f --> %.2f\n", goToWork, (trafficPersonVec[p].time_departure / 3600.0f));
       numPeople++;
     }

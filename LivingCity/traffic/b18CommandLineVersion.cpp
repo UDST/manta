@@ -16,8 +16,8 @@ namespace LC {
     int limitNumPeople = settings.value("LIMIT_NUM_PEOPLE", -1).toInt(); // -1
 
     const float deltaTime = 0.5f;
-    const float startDemandH = 7.30f;
-    const float endDemandH = 9.00f;
+    const float startDemandH = 5.00f;
+    const float endDemandH = 12.00f;
 
     float startSimulationH = startDemandH;
     float endSimulationH = endDemandH;

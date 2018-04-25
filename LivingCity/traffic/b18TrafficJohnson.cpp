@@ -136,6 +136,23 @@ void B18TrafficJohnson::generateRoutes(
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////
+    // Some people do not change route.
+    if (sample != 1.0f) {
+      if (sample > (((float) qrand()) / RAND_MAX)) { // not recalculate
+        // Copy route directly
+        uint oldIndex = trafficPersonVec[p].indexPathInit;
+        trafficPersonVec[p].indexPathInit = currIndexPath;
+        uint index = 0;
+        while (oldIndexPathVec[oldIndex + index] != -1) {
+          indexPathVec[currIndexPath++] = oldIndexPathVec[oldIndex + index];
+          index++;
+        }
+        indexPathVec[currIndexPath++] = -1;
+        continue;
+      }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////
     trafficPersonVec[p].indexPathInit = currIndexPath;
 
     LC::RoadGraph::roadGraphVertexDesc_BI srcvertex = trafficPersonVec[p].init_intersection;

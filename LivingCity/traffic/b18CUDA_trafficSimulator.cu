@@ -1210,6 +1210,7 @@ void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersect
     ((int) currentTime % ((int) 30)) == 0) { //3min //(sample double each 3min)
     int samplingNumber = (currentTime - startTime) / (30 * numStepsTogether);
     uint offset = numIntersections * samplingNumber;
+    //printf("Sample %d\n", samplingNumber);
     kernel_sampleTraffic << < ceil(numPeople / 1024.0f), 1024 >> > (numPeople, trafficPersonVec_d, indexPathVec_d, accSpeedPerLinePerTimeInterval_d, numVehPerLinePerTimeInterval_d, offset);
   }
 }//

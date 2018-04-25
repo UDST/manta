@@ -2104,6 +2104,7 @@ void B18TrafficSimulator::calculateAndDisplayTrafficDensity(
 
   RoadGraph::roadGraphEdgeIter_BI ei, eiEnd;
   const bool saveToFile = true; // false = display in network; true saveToFile
+  const bool updateSpeeds = true;
   if (saveToFile) {
     /////////////////////////////////
     // SAVE TO FILE
@@ -2136,7 +2137,7 @@ void B18TrafficSimulator::calculateAndDisplayTrafficDensity(
           if (numVehPerLinePerTimeInterval[numLane + offset] * numStepsTogether > 0) {
             averageSpeed = (accSpeedPerLinePerTimeInterval[numLane + offset]) / ((float) numVehPerLinePerTimeInterval[numLane + offset]); //!!!!!
           } else {
-            averageSpeed = 0;
+            averageSpeed = -1.0f;
           }
           streamS << "," << averageSpeed;
           // average utilization
@@ -2151,24 +2152,18 @@ void B18TrafficSimulator::calculateAndDisplayTrafficDensity(
     }
 
 
-  } else {
+  } 
+  
+  if (updateSpeeds) {
 
     ///////////////////////////////
-    // DISPLAY IN NETWORK
+    // COMPUTE AVG SPEED TO UPDATE NETWORK FOR MULTI STEP (and display)
     printPercentageMemoryUsed();
     if (DEBUG_SIMULATOR) {
       printf(">>calculateAndDisplayTrafficDensity Allocate memory numSampling %d\n", numSampling);
     }
 
     int count = 0;
-    for (boost::tie(ei, eiEnd) = boost::edges(simRoadGraph->myRoadGraph_BI); ei != eiEnd; ++ei) {
-      if (edgeDescToLaneMapNum.count(*ei) == 0) {
-        continue;
-      }
-      printPercentageMemoryUsed();
-      simRoadGraph->myRoadGraph_BI[*ei].averageSpeed.resize(numSampling);
-      simRoadGraph->myRoadGraph_BI[*ei].averageUtilization.resize(numSampling);
-    }
     printPercentageMemoryUsed();
     printf(">>calculateAndDisplayTrafficDensity Process\n");
     
@@ -2186,25 +2181,27 @@ void B18TrafficSimulator::calculateAndDisplayTrafficDensity(
         maxVehicles = 1.0f;
       }
 
+      float averageSpeed = 0.0f;
+      float averageUtilization = 0.0f;
       for (int sa = 0; sa < numSampling - 1; sa++) {
         uint offset = sa * tNumLanes;
 
         ////////////////////////////////////////////////
-        // avarage speed
+        // average speed
+
         if (numVehPerLinePerTimeInterval[numLane + offset] * numStepsTogether > 0) {
-          simRoadGraph->myRoadGraph_BI[*ei].averageSpeed[sa] = (accSpeedPerLinePerTimeInterval[numLane + offset]) / ((float) numVehPerLinePerTimeInterval[numLane + offset]); //!!!!!
+          averageSpeed += (accSpeedPerLinePerTimeInterval[numLane + offset]) / ((float) numVehPerLinePerTimeInterval[numLane + offset]); //!!!!!
         } else {
-          simRoadGraph->myRoadGraph_BI[*ei].averageSpeed[sa] = 0;
+          averageSpeed += simRoadGraph->myRoadGraph_BI[*ei].maxSpeedMperSec;
         }
         ///////////////////////////////
         // average utilization
-        simRoadGraph->myRoadGraph_BI[*ei].averageUtilization[sa] = numVehPerLinePerTimeInterval[numLane + offset] / (maxVehicles * numStepsTogether);
-
-        if (simRoadGraph->myRoadGraph_BI[*ei].averageUtilization[sa] > 1.0f) {
-          //printf("numVehPerLinePerTimeInterval[numLane+offset] %d maxVe %f--> %f\n",numVehPerLinePerTimeInterval[numLane+offset],maxVehicles,simRoadGraph->myRoadGraph_BI[*ei].averageUtilization[sa]);
-          simRoadGraph->myRoadGraph_BI[*ei].averageUtilization[sa] = 1;
-        }
+        averageUtilization += min(1.0f, numVehPerLinePerTimeInterval[numLane + offset] / (maxVehicles * numStepsTogether));
       }
+      simRoadGraph->myRoadGraph_BI[*ei].averageSpeed.resize(1);
+      simRoadGraph->myRoadGraph_BI[*ei].averageUtilization.resize(1);
+      simRoadGraph->myRoadGraph_BI[*ei].averageSpeed[0] = averageSpeed / numSampling;
+      simRoadGraph->myRoadGraph_BI[*ei].averageUtilization[0] = averageUtilization / numSampling;
     }
   }
 

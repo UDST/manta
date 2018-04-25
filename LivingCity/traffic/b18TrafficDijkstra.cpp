@@ -198,7 +198,8 @@ void B18TrafficDijstra::generateRoutesMulti(
   float sample) {
 
   uint currIndexPath = 0; // counter to keep track where to put more
-  indexPathVec.clear();
+  std::vector<uint> oldIndexPathVec = std:move(indexPathVec); // avoid copying
+  indexPathVec = std::vector<uint>();
   indexPathVec.resize(trafficPersonVec.size() * 140); // initial allocation (so we do not add)
   indexPathVec[currIndexPath++] = -1; // first path is empty
   // Just using the lane length and number of edges
@@ -263,8 +264,19 @@ void B18TrafficDijstra::generateRoutesMulti(
     QHash<uint, std::vector<uint>> intersectionToPeople;
 
     for (int p = 0; p < trafficPersonVec.size(); p++) {
+
+      // Some people do not change route.
       if (sample != 1.0f) {
-        if (sample > (((float)qrand()) / RAND_MAX)) {
+        if (sample > (((float)qrand()) / RAND_MAX)) { // not recalculate
+          // Copy route directly
+          uint oldIndex = trafficPersonVec[p].indexPathInit;
+          trafficPersonVec[p].indexPathInit = currIndexPath;
+          uint index = 0;
+          while (oldIndexPathVec[oldIndex + index] != -1) {
+            indexPathVec[currIndexPath++] = oldIndexPathVec[oldIndex + index];
+            index++;
+          }
+          indexPathVec[currIndexPath++] = -1;
           continue;
         }
       }
