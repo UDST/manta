@@ -198,7 +198,7 @@ void B18TrafficDijstra::generateRoutesMulti(
   float sample) {
 
   uint currIndexPath = 0; // counter to keep track where to put more
-  std::vector<uint> oldIndexPathVec = std:move(indexPathVec); // avoid copying
+  std::vector<uint> oldIndexPathVec = std::move(indexPathVec); // avoid copying
   indexPathVec = std::vector<uint>();
   indexPathVec.resize(trafficPersonVec.size() * 140); // initial allocation (so we do not add)
   indexPathVec[currIndexPath++] = -1; // first path is empty

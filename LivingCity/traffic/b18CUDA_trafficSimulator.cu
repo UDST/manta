@@ -1174,14 +1174,28 @@ __global__ void kernel_sampleTraffic(
     }
   }
 }
+__global__ void kernel_resetPeople(
+  int numPeople,
+  LC::B18TrafficPerson *trafficPersonVec) {
+  int p = blockIdx.x * blockDim.x + threadIdx.x;
+  if (p < numPeople) {//CUDA check (inside margins)
+    trafficPersonVec[p].active = 0;
+  }
+}
 
-void b18GetSampleTraffic(std::vector<float>& accSpeedPerLinePerTimeInterval, std::vector<float>& numVehPerLinePerTimeInterval) {
+void b18GetSampleTrafficCUDA(std::vector<float>& accSpeedPerLinePerTimeInterval, std::vector<float>& numVehPerLinePerTimeInterval) {
   // copy back people
   size_t size = accSpeedPerLinePerTimeInterval.size() * sizeof(float);
   cudaMemcpy(accSpeedPerLinePerTimeInterval.data(), accSpeedPerLinePerTimeInterval_d, size, cudaMemcpyDeviceToHost);
 
   size_t sizeI = numVehPerLinePerTimeInterval.size() * sizeof(uchar);
   cudaMemcpy(numVehPerLinePerTimeInterval.data(), numVehPerLinePerTimeInterval_d, sizeI, cudaMemcpyDeviceToHost);
+}
+
+void b18ResetPeopleLanesCUDA(uint numPeople) {
+  kernel_resetPeople << < ceil(numPeople / 1024.0f), 1024 >> > (numPeople, trafficPersonVec_d);
+  cudaMemset(&laneMap_d[0], -1, halfLaneMap*sizeof(unsigned char));
+  cudaMemset(&laneMap_d[halfLaneMap], -1, halfLaneMap*sizeof(unsigned char));
 }
 
 void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersections) {
