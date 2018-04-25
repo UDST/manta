@@ -24,9 +24,10 @@ extern void b18InitCUDA(std::vector<LC::B18TrafficPerson> &trafficPersonVec,
                         std::vector<float>& numVehPerLinePerTimeInterval);
 extern void b18GetDataCUDA(std::vector<LC::B18TrafficPerson> &trafficPersonVec,
                            std::vector<uchar> &trafficLights);
-extern void b18GetSampleTraffic(std::vector<float>& accSpeedPerLinePerTimeInterval, 
+extern void b18GetSampleTrafficCUDA(std::vector<float>& accSpeedPerLinePerTimeInterval, 
                                 std::vector<float>& numVehPerLinePerTimeInterval);
-extern void b18FinishCUDA(void);
+extern void b18FinishCUDA(void); // free memory
+extern void b18ResetPeopleLanesCUDA(uint numPeople); // reset people to inactive
 extern void b18SimulateTrafficCUDA(float currentTime, uint numPeople,
                                    uint numIntersections);
 

@@ -34,8 +34,9 @@ void B18TrafficJohnson::generateRoutes(
   QTime timer;
   timer.start();
   
-  uint currIndexPath = 0; // counter to keep track where to put more
-  indexPathVec.clear();
+  uint currIndexPath = 0;
+  std::vector<uint> oldIndexPathVec = std::move(indexPathVec); // avoid copying
+  indexPathVec = std::vector<uint>();
   indexPathVec.resize(trafficPersonVec.size() * 140); // initial allocation (so we do not add)
   indexPathVec[currIndexPath++] = -1; // first path is empty
 

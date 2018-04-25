@@ -14,6 +14,7 @@ namespace LC {
     bool useFullB18Network = settings.value("USE_FULL_B2018_NETWORK", false).toBool(); // false = GPU; true = CPU
     bool useJohnsonRouting = settings.value("USE_JOHNSON_ROUTING", false).toBool(); // false = Disjktra; true = Johnson
     int limitNumPeople = settings.value("LIMIT_NUM_PEOPLE", -1).toInt(); // -1
+    int numOfPasses = settings.value("NUM_PASSES", 1).toInt();
 
     const float deltaTime = 0.5f;
     const float startDemandH = 5.00f;
@@ -40,11 +41,11 @@ namespace LC {
     }
 
     printf("4. Simulate\n");
-    const int numPasses = 1;
+
     if (useCPU) {
-      b18TrafficSimulator.simulateInCPU_MultiPass(numPasses, startSimulationH, endSimulationH, useJohnsonRouting);
+      b18TrafficSimulator.simulateInCPU_MultiPass(numOfPasses, startSimulationH, endSimulationH, useJohnsonRouting);
     } else {
-      b18TrafficSimulator.simulateInGPU(startSimulationH, endSimulationH, useJohnsonRouting);
+      b18TrafficSimulator.simulateInGPU(numOfPasses, startSimulationH, endSimulationH, useJohnsonRouting);
     }
 
     printf(">>++ runB18Simulation\n");

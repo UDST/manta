@@ -673,7 +673,7 @@ void LCUrbanMain::onB18SimulateGPUPressed(bool) {
   //simulate
   int numPasses = ui.b18ShortestPathNumPassesSpinBox->value();
   bool useJohnsonRouting = ui.b18UseJohnsonRoutingCheckBox->isChecked();
-  glWidget3D->b18TrafficSimulator.simulateInGPU(startTimeH, endTimeH, useJohnsonRouting);
+  glWidget3D->b18TrafficSimulator.simulateInGPU(numPasses, startTimeH, endTimeH, useJohnsonRouting);
 }//
 
 void LCUrbanMain::onB18CreateRandomOD(bool) {
