@@ -120,7 +120,7 @@ void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
 
 }//
 
-void B18TrafficSimulator::calculateAndDisplayTrafficDensity() {
+void B18TrafficSimulator::calculateAndDisplayTrafficDensity(int numOfPass) {
   if (initialized == false) {
     printf("Error: initSimulator was not called\n");
     return;
@@ -130,7 +130,8 @@ void B18TrafficSimulator::calculateAndDisplayTrafficDensity() {
                                     numVehPerLinePerTimeInterval,
                                     edgeDescToLaneMapNum, 
                                     laneMapNumToEdgeDesc,
-                                    trafficLights.size());//num lanes
+                                    trafficLights.size(), //num lanes
+                                    numOfPass);
 }//
 
 
@@ -201,7 +202,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     int count = 0;
     while (currentTime < endTime) {//24.0f){
       if (count++ % 180 == 0) {
-        printf("Time %.2fh (%.2f --> %.2f): %.0f%%\n", (currentTime / 3600.0f), (startTime / 3600.0f), (endTime / 3600.0f), 100.0f - (100.0f * (endTime - currentTime) / (endTime - startTime)));
+        printf("Time %.2fh (%.2f --> %.2f): %.0f%% #People %d\n", (currentTime / 3600.0f), (startTime / 3600.0f), (endTime / 3600.0f), 100.0f - (100.0f * (endTime - currentTime) / (endTime - startTime)), trafficPersonVec.size());
       }
       b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(), intersections.size());
 
@@ -239,7 +240,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       printf("Total num steps %u Avg %.2f min Avg Gas %.2f. Calculated in %d ms\n", totalNumSteps, avgTravelTime, totalGas / trafficPersonVec.size(), timer.elapsed());
     }
     //
-    calculateAndDisplayTrafficDensity();
+    calculateAndDisplayTrafficDensity(nP);
     printf("  <<End One Step %d TIME: %d ms.\n", nP, timer.elapsed());
   }
   b18FinishCUDA();
@@ -1450,7 +1451,7 @@ void B18TrafficSimulator::simulateInCPU_MultiPass(int numOfPasses, float startTi
     simulateInCPU(startTimeH, endTimeH);
     printf("***End simulateInCPU \n");
     //estimate traffic density
-    calculateAndDisplayTrafficDensity();
+    calculateAndDisplayTrafficDensity(nP);
   }
   if (DEBUG_SIMULATOR) {
     printf("<<simulateInCPU_MultiPass\n");
@@ -1467,7 +1468,7 @@ void B18TrafficSimulator::simulateInCPU_Onepass(float startTimeH,
   // run simulation
   simulateInCPU(startTimeH, endTimeH);
   //estimate traffic density
-  calculateAndDisplayTrafficDensity();
+  calculateAndDisplayTrafficDensity(0);
 }//
 
 
@@ -2104,7 +2105,7 @@ void B18TrafficSimulator::calculateAndDisplayTrafficDensity(
     std::vector<float> &numVehPerLinePerTimeInterval,
     std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> &edgeDescToLaneMapNum,
     std::map<uint, RoadGraph::roadGraphEdgeDesc_BI> &laneMapNumToEdgeDesc,
-    int tNumLanes) {
+    int tNumLanes, int numOfPass) {
 
   const float numStepsTogether = 12;
   int numSampling = accSpeedPerLinePerTimeInterval.size() / tNumLanes;
@@ -2117,8 +2118,8 @@ void B18TrafficSimulator::calculateAndDisplayTrafficDensity(
   if (saveToFile) {
     /////////////////////////////////
     // SAVE TO FILE
-    QFile speedFile("average_speed.txt");
-    QFile utilizationFile("utilization.txt");
+    QFile speedFile(QString::number(numOfPass) + "_average_speed.txt");
+    QFile utilizationFile(QString::number(numOfPass) + "_utilization.txt");
     if (speedFile.open(QIODevice::ReadWrite) && utilizationFile.open(QIODevice::ReadWrite)) {
       QTextStream streamS(&speedFile);
       QTextStream streamU(&utilizationFile);
