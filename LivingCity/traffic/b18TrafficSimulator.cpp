@@ -9,7 +9,7 @@
 #include "b18TrafficJohnson.h"
 #include "b18CUDA_trafficSimulator.h"
 
-#define DEBUG_TRAFFIC 1
+#define DEBUG_TRAFFIC 0
 #define DEBUG_SIMULATOR 1
 #define DEBUG_T_LIGHT 0
 
