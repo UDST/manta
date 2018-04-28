@@ -307,8 +307,8 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
     //qDebug() << fields;
     //qDebug() << "start" << start << " end " << end;
     float length = fields[indexLen].toFloat();
-    int numLanes = fields[indexLanes].toInt();
-    float speedMS = fields[indexSpeedMH].toFloat() * 0.44704f; //m/h --> m/sec
+    int numLanes = std::max<int>(fields[indexLanes].toInt(),1); // at least one
+    float speedMS = std::max<float>(0.01f, fields[indexSpeedMH].toFloat() * 0.44704f); //m/h --> m/sec // force to have a speed
 
     //printf("%d %d of %d): Leng %.2f #lanes %d speed %.2f\n", dynIndToInd[start], dynIndToInd[end], index, length, numLanes, speedMS);
 

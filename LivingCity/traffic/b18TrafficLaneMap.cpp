@@ -100,7 +100,7 @@ void B18TrafficLaneMap::createLaneMap(
     }
 
     int numWidthNeeded = ceil(edgesData[tNumMapWidth].length / kMaxMapWidthM); // number of width needed if > than kMaxMapWidthM
-    edgesData[tNumMapWidth].numLines = numLanes * numWidthNeeded;
+    edgesData[tNumMapWidth].numLines = numLanes;
     // next intersection
     edgesData[tNumMapWidth].nextInters = boost::target(*ei,
                                       inRoadGraph.myRoadGraph_BI);
@@ -116,7 +116,7 @@ void B18TrafficLaneMap::createLaneMap(
   edgesData.resize(tNumMapWidth);
 
   if (LANE_DEBUG) {
-    printf("Num edges %d Num Lanes %d Max Leng %f Max num lanes %d\n", edge_count, tNumMapWidth, maxLength, maxNumLanes);
+    printf("Num edges %d Num Lanes %d Num Lanes Width %d Max Leng %f Max num lanes %d\n", edge_count, tNumLanes, tNumMapWidth, maxLength, maxNumLanes);
   }
 
   // 2. RESIZE LANE MAP
@@ -133,7 +133,7 @@ void B18TrafficLaneMap::createLaneMap(
   RoadGraph::in_roadGraphEdgeIter_BI Iei, Iei_end;
   RoadGraph::out_roadGraphEdgeIter_BI Oei, Oei_end;
   intersections.resize(boost::num_vertices(inRoadGraph.myRoadGraph_BI));//as many as vertices
-  trafficLights.resize(tNumLanes);
+  trafficLights.resize(tNumMapWidth); // we could use tNumLanes but then the edge number would not match and we would need to add logic.
   memset(trafficLights.data(), 0, trafficLights.size()*sizeof(uchar));
 
   if (LANE_DEBUG) {

@@ -35,10 +35,10 @@ void B18TrafficJohnson::generateRoutes(
   timer.start();
   
   uint currIndexPath = 0;
-  std::vector<uint> oldIndexPathVec = std::move(indexPathVec); // avoid copying
-  indexPathVec = std::vector<uint>();
+  std::vector<uint> oldIndexPathVec = indexPathVec; // std::move(indexPathVec); // avoid copying
+  indexPathVec.clear(); // = std::vector<uint>();
   indexPathVec.resize(trafficPersonVec.size() * 140); // initial allocation (so we do not add)
-  indexPathVec[currIndexPath++] = -1; // first path is empty
+  //indexPathVec[currIndexPath++] = -1; // first path is empty
 
   // 1. Update weight edges
   printf(">> generateRoutes Update weight edges\n");
@@ -127,7 +127,8 @@ void B18TrafficJohnson::generateRoutes(
   uint sameSrcDst = 0;
   QTime timer2;
   timer2.start();
-  std::vector<int> pathHistogram(250, 0); // this should be around 140.
+  const int kMaxNumPath = 250;
+  std::vector<int> pathHistogram(kMaxNumPath, 0); // this should be around 250.
 
   for (int p = 0; p < trafficPersonVec.size(); p++) {
     if (trafficPersonVec.size() > 200) {
@@ -140,11 +141,16 @@ void B18TrafficJohnson::generateRoutes(
     // Some people do not change route.
     if (sample != 1.0f) {
       if (sample > (((float) qrand()) / RAND_MAX)) { // not recalculate
+        printf("Person %d does not change route\n", p);
         // Copy route directly
         uint oldIndex = trafficPersonVec[p].indexPathInit;
         trafficPersonVec[p].indexPathInit = currIndexPath;
         uint index = 0;
         while (oldIndexPathVec[oldIndex + index] != -1) {
+          if (indexPathVec.size() < (currIndexPath - 2)) {  // Resize vector.
+            printf("p %d of %d ****COPY ROUTE: *indexPathVec too small -> size: %d currIndexPath: %d\n", p, trafficPersonVec.size(), indexPathVec.size(), currIndexPath);
+            indexPathVec.resize((int) (indexPathVec.size()*1.4f));// Expand 40%.
+          }
           indexPathVec[currIndexPath++] = oldIndexPathVec[oldIndex + index];
           index++;
         }
@@ -161,14 +167,16 @@ void B18TrafficJohnson::generateRoutes(
 
     // check whether source same than target (we have arrived)
     if (tgtvertex == srcvertex) {
-      trafficPersonVec[p].indexPathInit = 0; // that index points to -1
+      //trafficPersonVec[p].indexPathInit = 0; // that index points to -1
+      indexPathVec[currIndexPath++] = -1;
       sameSrcDst++;
       continue;
     }
 
     // check if accesible
     if (dm[srcvertex][tgtvertex] == (std::numeric_limits < float >::max)()) {
-      trafficPersonVec[p].indexPathInit = 0; // that index points to -1
+      //trafficPersonVec[p].indexPathInit = 0; // that index points to -1
+      indexPathVec[currIndexPath++] = -1;
       noAccesible++;
       continue;
     }
@@ -204,15 +212,16 @@ void B18TrafficJohnson::generateRoutes(
               break;//break for
             }
 
-            uint lane = edgeDescToLaneMapNum[edge_pair.first];
-            if (indexPathVec.size() < (currIndexPath - 2)) {  // almost full
-              printf("p %d *****indexPathVec too small -> size: %d currIndexPath: %d\n", p, indexPathVec.size(), currIndexPath);
+            if (indexPathVec.size() < (currIndexPath - 2)) {  // Resize vector.
+              printf("p %d of %d *****indexPathVec too small -> size: %d currIndexPath: %d\n", p, trafficPersonVec.size(), indexPathVec.size(), currIndexPath);
               indexPathVec.resize((int) (indexPathVec.size()*1.4f));// Expand 40%.
             }
-            indexPathVec[currIndexPath++] = lane;
-            currIndex++;  // for histogram.
 
-            if (currIndex > 250) {
+            uint lane = edgeDescToLaneMapNum[edge_pair.first];
+            indexPathVec[currIndexPath++] = lane;
+            currIndex++;  // this person number jumps.
+
+            if (currIndex >= kMaxNumPath - 1) {  // This is very uncommon (just finish person).
               printf("currIndex > 250\n");
               currvertex = tgtvertex;//end loop
               break;//break for
@@ -230,13 +239,21 @@ void B18TrafficJohnson::generateRoutes(
       }
 
       // not foudn edge
-      printf("****none edge works\n");//this should not happen
+      printf("****none edge works or > 250\n");  //this should not happen
       //exit(0);//!!! REMOVE
       break;
     }//while find tgt
 
+    if (indexPathVec.size() < (currIndexPath - 2)) {  // Resize vector.
+      printf("p %d of %d *****indexPathVec too small -> size: %d currIndexPath: %d\n", p, trafficPersonVec.size(), indexPathVec.size(), currIndexPath);
+      indexPathVec.resize((int) (indexPathVec.size()*1.4f));// Expand 40%.
+    }
     indexPathVec[currIndexPath++] = -1; // end path with -1
-    pathHistogram[currIndex]++;
+    if (currIndex >= 0 && currIndex < kMaxNumPath) {
+      pathHistogram[currIndex]++;
+    } else {
+      printf("Error with pathHistogram--> currIndex %d and Size %d\n", currIndex, pathHistogram.size());
+    }
     ////////////////////////////////////////////////////////////////////////////////////////////
   }
 

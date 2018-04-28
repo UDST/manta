@@ -9,8 +9,8 @@
 #include "b18TrafficJohnson.h"
 #include "b18CUDA_trafficSimulator.h"
 
-#define DEBUG_TRAFFIC 0
-#define DEBUG_SIMULATOR 0
+#define DEBUG_TRAFFIC 1
+#define DEBUG_SIMULATOR 1
 #define DEBUG_T_LIGHT 0
 
 #ifdef __linux__ 
@@ -143,19 +143,16 @@ void B18TrafficSimulator::calculateAndDisplayTrafficDensity(int numOfPass) {
 void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float endTimeH, bool useJohnsonRouting) {
 
   //////////////////////////////////////////
-  printf("Simulate GPU: createLaneMap");
+  printf("Simulate GPU: createLaneMap\n");
   createLaneMap();
 
   ////////////////////////////
-  printf("Simulate GPU: routes");
+  printf("Simulate GPU: routes\n");
   QTime pathTimer;
   pathTimer.start();
 
   int weigthMode;
   float peoplePathSampling[] = {1.0f, 1.0f, 0.5f, 0.25f, 0.12f, 0.67f};
-
-  // 1. Init Cuda
-  b18InitCUDA(trafficPersonVec, indexPathVec, edgesData, laneMap, trafficLights, intersections, startTimeH, endTimeH, accSpeedPerLinePerTimeInterval, numVehPerLinePerTimeInterval);
 
   for (int nP = 0; nP < numOfPasses; nP++) {
     weigthMode = 1; 
@@ -173,6 +170,9 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 
     /////////////////////////////////////
     printf("  >>Start Simulation\n");
+    // 1. Init Cuda
+    bool fistInitialization = (nP == 0);
+    b18InitCUDA(fistInitialization, trafficPersonVec, indexPathVec, edgesData, laneMap, trafficLights, intersections, startTimeH, endTimeH, accSpeedPerLinePerTimeInterval, numVehPerLinePerTimeInterval);
 
     float startTime = startTimeH*3600.0f;//7.0f
     float endTime = endTimeH*3600.0f;//8.0f//10.0f
@@ -209,7 +209,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       if (clientMain != nullptr && clientMain->ui.b18RenderSimulationCheckBox->isChecked()) {
         steps++;
         if (steps%clientMain->ui.b18RenderStepSpinBox->value() == 0) {//each "steps" steps, render
-          b18GetDataCUDA(trafficPersonVec, trafficLights);
+          b18GetDataCUDA(trafficPersonVec); // trafficLights
           QString timeT;
 
           int timeH = currentTime / 3600.0f;
@@ -226,7 +226,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       currentTime += deltaTime;
     }
     // 3. Finish
-    b18GetDataCUDA(trafficPersonVec, trafficLights);
+    b18GetDataCUDA(trafficPersonVec);
     b18GetSampleTrafficCUDA(accSpeedPerLinePerTimeInterval, numVehPerLinePerTimeInterval);
     /////
     {  // debug
@@ -1196,9 +1196,14 @@ void simulateOnePersonCPU(
     uchar vInMpS = (uchar)(trafficPersonVec[p].v * 3); //speed in m/s to fit in uchar
     ushort posInLineCells = (ushort)(trafficPersonVec[p].posInLaneM);
     //laneMap[mapToWriteShift + maxWidth * (currentEdge + trafficPersonVec[p].numOfLaneInEdge) + posInLineCells] = vInMpS;
+    printf("numeoflaneinedge %d calculated edge %d\n", trafficPersonVec[p].numOfLaneInEdge, (currentEdge + (((int) (posInLineCells / kMaxMapWidthM)) * trafficPersonVec[p].edgeNumLanes) + trafficPersonVec[p].numOfLaneInEdge));
     const uint posToSample = mapToWriteShift + kMaxMapWidthM * (currentEdge + (((int) (posInLineCells / kMaxMapWidthM)) * trafficPersonVec[p].edgeNumLanes) + trafficPersonVec[p].numOfLaneInEdge) + posInLineCells % kMaxMapWidthM;
     laneMap[posToSample] = vInMpS;
     //printf("2<<LANE CHANGE\n");
+    if (DEBUG_TRAFFIC == 1) {
+      printf("    2. Person: %d moving in edge %u pos %f of %f END\n", p, currentEdge,
+        trafficPersonVec[p].posInLaneM, trafficPersonVec[p].length);
+    }
     return;
   }
 

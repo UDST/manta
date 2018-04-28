@@ -18,6 +18,14 @@
 __constant__ float intersectionClearance = 7.8f;
 __constant__ float s_0 = 7.0f;
 
+#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort = true) {
+  if (code != cudaSuccess) {
+    fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+    if (abort) exit(code);
+  }
+}
+
 ////////////////////////////////
 // VARIABLES
 LC::B18TrafficPerson *trafficPersonVec_d;
@@ -40,6 +48,7 @@ uint mapToWriteShift;
 uint halfLaneMap;
 float startTime;
 
+
 LC::B18IntersectionData *intersections_d;
 uchar *trafficLights_d;
 
@@ -47,6 +56,7 @@ float* accSpeedPerLinePerTimeInterval_d;
 float* numVehPerLinePerTimeInterval_d;
 
 void b18InitCUDA(
+  bool fistInitialization,
   std::vector<LC::B18TrafficPerson>& trafficPersonVec, 
   std::vector<uint> &indexPathVec, 
   std::vector<LC::B18EdgeData>& edgesData, 
@@ -57,60 +67,49 @@ void b18InitCUDA(
   std::vector<float>& accSpeedPerLinePerTimeInterval,
   std::vector<float>& numVehPerLinePerTimeInterval) {
   printf(">>b18InitCUDA\n");
-  cudaError err;
+
   { // people
     size_t size = trafficPersonVec.size() * sizeof(LC::B18TrafficPerson);
-    err = cudaMalloc((void **) &trafficPersonVec_d, size);   // Allocate array on device
-    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
-    err = cudaMemcpy(trafficPersonVec_d, trafficPersonVec.data(), size, cudaMemcpyHostToDevice);
-    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
+    if (fistInitialization) gpuErrchk(cudaMalloc((void **) &trafficPersonVec_d, size));   // Allocate array on device
+    gpuErrchk(cudaMemcpy(trafficPersonVec_d, trafficPersonVec.data(), size, cudaMemcpyHostToDevice));
   }
   
   { // indexPathVec
     size_t sizeIn = indexPathVec.size() * sizeof(uint);
-    err = cudaMalloc((void **) &indexPathVec_d, sizeIn);   // Allocate array on device
-    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
-    err = cudaMemcpy(indexPathVec_d, indexPathVec.data(), sizeIn, cudaMemcpyHostToDevice);
-    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
+    if (fistInitialization) gpuErrchk(cudaMalloc((void **) &indexPathVec_d, sizeIn));   // Allocate array on device
+    gpuErrchk(cudaMemcpy(indexPathVec_d, indexPathVec.data(), sizeIn, cudaMemcpyHostToDevice));
   }
   {//edgeData
     size_t sizeD = edgesData.size() * sizeof(LC::B18EdgeData);
-    err = cudaMalloc((void **) &edgesData_d, sizeD);   // Allocate array on device
-    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
-    err = cudaMemcpy(edgesData_d, edgesData.data(), sizeD, cudaMemcpyHostToDevice);
-    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
+    if (fistInitialization) gpuErrchk(cudaMalloc((void **) &edgesData_d, sizeD));   // Allocate array on device
+    gpuErrchk(cudaMemcpy(edgesData_d, edgesData.data(), sizeD, cudaMemcpyHostToDevice));
   }
   {//laneMap
     size_t sizeL = laneMap.size() * sizeof(uchar);
-    err = cudaMalloc((void **) &laneMap_d, sizeL);   // Allocate array on device
-    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
-    err = cudaMemcpy(laneMap_d, laneMap.data(), sizeL, cudaMemcpyHostToDevice);
-    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
+    if (fistInitialization) gpuErrchk(cudaMalloc((void **) &laneMap_d, sizeL));   // Allocate array on device
+    gpuErrchk(cudaMemcpy(laneMap_d, laneMap.data(), sizeL, cudaMemcpyHostToDevice));
     halfLaneMap = laneMap.size() / 2;
   }
   {// intersections
     size_t sizeI = intersections.size() * sizeof(LC::B18IntersectionData);
-    err = cudaMalloc((void **) &intersections_d, sizeI);   // Allocate array on device
-    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
-    err = cudaMemcpy(intersections_d, intersections.data(), sizeI, cudaMemcpyHostToDevice);
-    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
+    if (fistInitialization) gpuErrchk(cudaMalloc((void **) &intersections_d, sizeI));   // Allocate array on device
+    gpuErrchk(cudaMemcpy(intersections_d, intersections.data(), sizeI, cudaMemcpyHostToDevice));
     size_t sizeT = trafficLights.size() * sizeof(uchar);//total number of lanes
-    err = cudaMalloc((void **) &trafficLights_d, sizeT);   // Allocate array on device
-    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
+    if (fistInitialization) gpuErrchk(cudaMalloc((void **) &trafficLights_d, sizeT));   // Allocate array on device
+    gpuErrchk(cudaMemcpy(trafficLights_d, trafficLights.data(), sizeT, cudaMemcpyHostToDevice));
   }
   {
     startTime = startTimeH * 3600.0f;
     uint numSamples = ceil(((endTimeH*3600.0f - startTimeH*3600.0f) / (deltaTimeH * numStepsPerSample * numStepsTogether))) + 1; //!!!
+    accSpeedPerLinePerTimeInterval.clear();
+    numVehPerLinePerTimeInterval.clear();
     accSpeedPerLinePerTimeInterval.resize(numSamples * trafficLights.size());
     numVehPerLinePerTimeInterval.resize(numSamples * trafficLights.size());
     size_t sizeAcc = accSpeedPerLinePerTimeInterval.size() * sizeof(float);
-    err = cudaMalloc((void **) &accSpeedPerLinePerTimeInterval_d, sizeAcc);   // Allocate array on device
-    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
-    cudaMemset(&accSpeedPerLinePerTimeInterval_d[0], 0, sizeAcc);
-    err = cudaMalloc((void **) &numVehPerLinePerTimeInterval_d, sizeAcc);   // Allocate array on device
-    if (cudaSuccess != err)fprintf(stderr, "Cuda error: %s.\n", cudaGetErrorString(err));
-    cudaMemset(&numVehPerLinePerTimeInterval_d[0], 0, sizeAcc);
-    
+    if (fistInitialization)gpuErrchk(cudaMalloc((void **) &accSpeedPerLinePerTimeInterval_d, sizeAcc));   // Allocate array on device
+    if (fistInitialization)gpuErrchk(cudaMalloc((void **) &numVehPerLinePerTimeInterval_d, sizeAcc));   // Allocate array on device
+    gpuErrchk(cudaMemset(&accSpeedPerLinePerTimeInterval_d[0], 0, sizeAcc));
+    gpuErrchk(cudaMemset(&numVehPerLinePerTimeInterval_d[0], 0, sizeAcc));
   }
   printf("<<b18InitCUDA\n");
 }//
@@ -129,13 +128,10 @@ void b18FinishCUDA(void){
   cudaFree(numVehPerLinePerTimeInterval_d);
 }//
 
- void b18GetDataCUDA(std::vector<LC::B18TrafficPerson>& trafficPersonVec,std::vector<uchar>& trafficLights){
+ void b18GetDataCUDA(std::vector<LC::B18TrafficPerson>& trafficPersonVec){
 	 // copy back people
 	 size_t size = trafficPersonVec.size() * sizeof(LC::B18TrafficPerson);
 	 cudaMemcpy(trafficPersonVec.data(),trafficPersonVec_d,size,cudaMemcpyDeviceToHost);//cudaMemcpyHostToDevice
-
-	 size_t sizeI = trafficLights.size() * sizeof(uchar);
-	 cudaMemcpy(trafficLights.data(),trafficLights_d,sizeI,cudaMemcpyDeviceToHost);
  }
 
 
@@ -1205,19 +1201,21 @@ void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersect
 	if(readFirstMapC==true){
 		mapToReadShift=0;
 		mapToWriteShift=halfLaneMap;
-		cudaMemset(&laneMap_d[halfLaneMap],-1,halfLaneMap*sizeof (unsigned char));//clean second half
+    gpuErrchk(cudaMemset(&laneMap_d[halfLaneMap], -1, halfLaneMap*sizeof(unsigned char)));//clean second half
 	}else{
 		mapToReadShift=halfLaneMap;
 		mapToWriteShift=0;
-		cudaMemset(&laneMap_d[0],-1,halfLaneMap*sizeof (unsigned char));//clean first half
+    gpuErrchk(cudaMemset(&laneMap_d[0], -1, halfLaneMap*sizeof(unsigned char)));//clean first half
 	}
 	readFirstMapC=!readFirstMapC;//next iteration invert use
 
   // Simulate intersections.
 	kernel_intersectionOneSimulation <<< numIntersections,1 >>> (numIntersections, currentTime,intersections_d,trafficLights_d);
-
+  gpuErrchk(cudaPeekAtLastError());
+  
   // Simulate people.
   kernel_trafficSimulation << < ceil(numPeople / 1024.0f), 1024 >> > (numPeople, currentTime, mapToReadShift, mapToWriteShift, trafficPersonVec_d, indexPathVec_d, edgesData_d, laneMap_d, intersections_d, trafficLights_d);
+  gpuErrchk(cudaPeekAtLastError());
 
   // Sample if necessary.
   if ((((float) ((int) currentTime)) == (currentTime)) &&
@@ -1226,5 +1224,6 @@ void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersect
     uint offset = numIntersections * samplingNumber;
     //printf("Sample %d\n", samplingNumber);
     kernel_sampleTraffic << < ceil(numPeople / 1024.0f), 1024 >> > (numPeople, trafficPersonVec_d, indexPathVec_d, accSpeedPerLinePerTimeInterval_d, numVehPerLinePerTimeInterval_d, offset);
+    gpuErrchk(cudaPeekAtLastError());
   }
 }//

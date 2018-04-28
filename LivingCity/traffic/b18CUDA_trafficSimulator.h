@@ -14,7 +14,8 @@
 #include <vector>
 
 
-extern void b18InitCUDA(std::vector<LC::B18TrafficPerson> &trafficPersonVec,
+extern void b18InitCUDA(bool fistInitialization, // crate buffers
+                        std::vector<LC::B18TrafficPerson> &trafficPersonVec,
                         std::vector<uint> &indexPathVec,
                         std::vector<LC::B18EdgeData> &edgesData, std::vector<uchar> &laneMap,
                         std::vector<uchar> &trafficLights,
@@ -22,8 +23,7 @@ extern void b18InitCUDA(std::vector<LC::B18TrafficPerson> &trafficPersonVec,
                         float startTimeH, float endTimeH,
                         std::vector<float>& accSpeedPerLinePerTimeInterval,
                         std::vector<float>& numVehPerLinePerTimeInterval);
-extern void b18GetDataCUDA(std::vector<LC::B18TrafficPerson> &trafficPersonVec,
-                           std::vector<uchar> &trafficLights);
+extern void b18GetDataCUDA(std::vector<LC::B18TrafficPerson> &trafficPersonVec);
 extern void b18GetSampleTrafficCUDA(std::vector<float>& accSpeedPerLinePerTimeInterval, 
                                 std::vector<float>& numVehPerLinePerTimeInterval);
 extern void b18FinishCUDA(void); // free memory

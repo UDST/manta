@@ -313,6 +313,7 @@ void B18TrafficOD::loadB18TrafficPeople(
     int binN = t / binLength;
     if (binN < 0 || binN >= numBins) {
       printf("ERROR: Bin out of range %d of %f\n", binN, numBins);
+      continue;
     }
     bins[binN]++;
   }

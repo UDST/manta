@@ -2,8 +2,8 @@
 
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
-#define ROUTE_DEBUG 1
-#define PATH_DEBUG 1
+#define ROUTE_DEBUG 0
+#define PATH_DEBUG 0
 
 namespace LC {
 
@@ -70,7 +70,7 @@ void B18TrafficDijstra::calculateSeveralPeopleRoute(
 
   
   // run dijkstra
-  printf("Run dijktra\n");
+  //printf("Run dijktra\n");
   PredecessorMap mapPredecessor;
   boost::associative_property_map<PredecessorMap> pmPredecessor(mapPredecessor);
 
@@ -170,7 +170,7 @@ void B18TrafficDijstra::calculateSeveralPeopleRoute(
 
   ////////////////////
   // Debug
-  const bool kDebugFirstPerson = true;
+  const bool kDebugFirstPerson = false;
   if (trafficPersonVec.size()>0 && kDebugFirstPerson) {
     int currIndex = 0;
     while (true) {
@@ -261,6 +261,7 @@ void B18TrafficDijstra::generateRoutesMulti(
     printf("Speed Min: %f Max: %f\n", minSpeed, maxSpeed);
 
     //2. Generate hash with init intersectios nad people
+    printf("Start Dikstra\n");
     QHash<uint, std::vector<uint>> intersectionToPeople;
 
     for (int p = 0; p < trafficPersonVec.size(); p++) {
@@ -287,12 +288,14 @@ void B18TrafficDijstra::generateRoutesMulti(
 
     QHash<uint, std::vector<uint>>::const_iterator i = intersectionToPeople.constBegin();
 
+    int proccP = 0;
     while (i != intersectionToPeople.constEnd()) {
       if (i.value().size() <= 0) {
         continue;
       }
 
       std::vector<uint> peopleStartInInter = i.value();
+      proccP += peopleStartInInter.size();
       //printf("peopleStartInInter.size() %d\n",peopleStartInInter.size());
       calculateSeveralPeopleRoute(
         roadGraph, 
@@ -302,15 +305,15 @@ void B18TrafficDijstra::generateRoutesMulti(
         peopleStartInInter,
         edgeDescToLaneMapNum);
       ++i;
-      printf(" one calculateSeveralPeopleRoute in %d ms\n", timer.elapsed());
+
+      if ((trafficPersonVec.size() > 100) && ((proccP % int(trafficPersonVec.size()/100) == 0))) {
+        printf("Dikstra: %d of %d in %d ms\n", proccP, trafficPersonVec.size(), timer.elapsed());
+      }
     }
 
     // resize tight indexPathVec and set everyone to the first edge (maybe do in sim?)
     printf("Final Path Size %u\n", currIndexPath);
     indexPathVec.resize(currIndexPath);
-    for (int p = 0; p < trafficPersonVec.size(); p++) {
-      trafficPersonVec[p].indexPathCurr = trafficPersonVec[p].indexPathInit;
-    }
     printf("<< generateRoutesMulti in %d ms\n", timer.elapsed());
     return;
   }
