@@ -10,7 +10,7 @@
 #include "b18CUDA_trafficSimulator.h"
 
 #define DEBUG_TRAFFIC 0
-#define DEBUG_SIMULATOR 1
+#define DEBUG_SIMULATOR 0
 #define DEBUG_T_LIGHT 0
 
 #ifdef __linux__ 
@@ -1196,7 +1196,7 @@ void simulateOnePersonCPU(
     uchar vInMpS = (uchar)(trafficPersonVec[p].v * 3); //speed in m/s to fit in uchar
     ushort posInLineCells = (ushort)(trafficPersonVec[p].posInLaneM);
     //laneMap[mapToWriteShift + maxWidth * (currentEdge + trafficPersonVec[p].numOfLaneInEdge) + posInLineCells] = vInMpS;
-    printf("numeoflaneinedge %d calculated edge %d\n", trafficPersonVec[p].numOfLaneInEdge, (currentEdge + (((int) (posInLineCells / kMaxMapWidthM)) * trafficPersonVec[p].edgeNumLanes) + trafficPersonVec[p].numOfLaneInEdge));
+    //printf("numeoflaneinedge %d calculated edge %d\n", trafficPersonVec[p].numOfLaneInEdge, (currentEdge + (((int) (posInLineCells / kMaxMapWidthM)) * trafficPersonVec[p].edgeNumLanes) + trafficPersonVec[p].numOfLaneInEdge));
     const uint posToSample = mapToWriteShift + kMaxMapWidthM * (currentEdge + (((int) (posInLineCells / kMaxMapWidthM)) * trafficPersonVec[p].edgeNumLanes) + trafficPersonVec[p].numOfLaneInEdge) + posInLineCells % kMaxMapWidthM;
     laneMap[posToSample] = vInMpS;
     //printf("2<<LANE CHANGE\n");

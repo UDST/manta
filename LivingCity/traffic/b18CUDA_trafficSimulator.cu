@@ -1214,7 +1214,7 @@ void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersect
   gpuErrchk(cudaPeekAtLastError());
   
   // Simulate people.
-  kernel_trafficSimulation << < ceil(numPeople / 1024.0f), 1024 >> > (numPeople, currentTime, mapToReadShift, mapToWriteShift, trafficPersonVec_d, indexPathVec_d, edgesData_d, laneMap_d, intersections_d, trafficLights_d);
+  kernel_trafficSimulation << < ceil(numPeople / 256.0f), 256 >> > (numPeople, currentTime, mapToReadShift, mapToWriteShift, trafficPersonVec_d, indexPathVec_d, edgesData_d, laneMap_d, intersections_d, trafficLights_d);
   gpuErrchk(cudaPeekAtLastError());
 
   // Sample if necessary.
