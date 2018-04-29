@@ -148,7 +148,7 @@ void B18TrafficOD::randomPerson(int p, B18TrafficPerson &person,
   person.T = 0.8f + 1.2f * (((float) qrand()) / RAND_MAX); //time heading 0.8-2s
   person.v = 0;
   person.num_steps = 0;
-  person.gas = 0;
+  person.co = 0;
   person.active = 0;
   person.numOfLaneInEdge = 0;
   person.color = p << 8;

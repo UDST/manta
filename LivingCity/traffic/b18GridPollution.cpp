@@ -49,10 +49,10 @@ void B18GridPollution::addValueToGrid(float currTime,
       continue;
     }
 
-    float lastValueGas = lastPersonValue[p];
-    float newValueGas = trafficPersonVec[p].gas;
-    float gasThisCar = newValueGas - lastValueGas;
-    lastPersonValue[p] = newValueGas;
+    float lastValueCO = lastPersonValue[p];
+    float newValueCO = trafficPersonVec[p].co;
+    float coThisCar = newValueCO - lastValueCO;
+    lastPersonValue[p] = newValueCO;
     /////////////////////////////////////////////////////////
     // position
     int xIndex, yIndex;
@@ -111,7 +111,7 @@ void B18GridPollution::addValueToGrid(float currTime,
       yIndex = yIndex >= gridNumSide ? gridNumSide - 1 : yIndex;
     }
     int index = yIndex * gridNumSide + xIndex;
-    gridValues[index] += gasThisCar;
+    gridValues[index] += coThisCar;
   }
 
   //update maxValue (used for render)
