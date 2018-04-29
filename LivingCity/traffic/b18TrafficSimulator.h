@@ -103,13 +103,7 @@ class B18TrafficSimulator {
   std::vector<float> numVehPerLinePerTimeInterval;
 
   void calculateAndDisplayTrafficDensity(int numOfPass);
-  void calculateAndDisplayTrafficDensity(std::vector<float>
-                                         &accSpeedPerLinePerTimeInterval,
-                                         std::vector<float> &numVehPerLinePerTimeInterval,
-                                         std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> &edgeDescToLaneMapNum,
-                                         std::map<uint, RoadGraph::roadGraphEdgeDesc_BI> &laneMapNumToEdgeDesc,
-                                         int tNumLanes,
-                                         int numOfPass);
+  void savePeopleAndRoutes(int numOfPass);
 
   void render(VBORenderManager &rendManager);
   std::vector<B18TrafficSimulatorRender> b18TrafficSimulatorRender;

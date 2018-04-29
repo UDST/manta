@@ -14,8 +14,8 @@
 namespace LC {
 
 struct B18TrafficPerson {
-  unsigned short init_intersection;
-  unsigned short end_intersection;
+  unsigned int init_intersection;
+  unsigned int end_intersection;
   float time_departure;
 
   unsigned short active;//0 inactive 1 active 2 finished
@@ -42,7 +42,7 @@ struct B18TrafficPerson {
   // data
   unsigned short num_steps;
   unsigned int color;
-  float gas;
+  float co;
   // IDM
   float v;//current velocity
   float a;//acceleration

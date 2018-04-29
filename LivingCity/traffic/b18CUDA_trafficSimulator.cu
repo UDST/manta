@@ -519,7 +519,7 @@ __global__ void kernel_trafficSimulation(
          trafficPersonVec[p].active = 1;
          trafficPersonVec[p].isInIntersection = 0;
          trafficPersonVec[p].num_steps = 1;
-         trafficPersonVec[p].gas = 0;
+         trafficPersonVec[p].co = 0;
          //trafficPersonVec[p].nextPathEdge++;//incremet so it continues in next edge
          // set up next edge info
          uint nextEdge = indexPathVec[trafficPersonVec[p].indexPathCurr + 1];
@@ -710,12 +710,12 @@ __global__ void kernel_trafficSimulation(
      //if(trafficPersonVec[p].v>0)
      if (calculatePollution) {
        float speedMph = trafficPersonVec[p].v * 2.2369362920544; //mps to mph
-       float gasStep = -0.064 + 0.0056 * speedMph + 0.00026 * (speedMph - 50.0f) *
+       float coStep = -0.064 + 0.0056 * speedMph + 0.00026 * (speedMph - 50.0f) *
          (speedMph - 50.0f);
 
-       if (gasStep > 0) {
-         gasStep *= deltaTime;
-         trafficPersonVec[p].gas += gasStep;
+       if (coStep > 0) {
+         coStep *= deltaTime;
+         trafficPersonVec[p].co += coStep;
        }
      }
 
@@ -1214,7 +1214,7 @@ void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersect
   gpuErrchk(cudaPeekAtLastError());
   
   // Simulate people.
-  kernel_trafficSimulation << < ceil(numPeople / 256.0f), 256 >> > (numPeople, currentTime, mapToReadShift, mapToWriteShift, trafficPersonVec_d, indexPathVec_d, edgesData_d, laneMap_d, intersections_d, trafficLights_d);
+  kernel_trafficSimulation << < ceil(numPeople / 1024.0f), 1024 >> > (numPeople, currentTime, mapToReadShift, mapToWriteShift, trafficPersonVec_d, indexPathVec_d, edgesData_d, laneMap_d, intersections_d, trafficLights_d);
   gpuErrchk(cudaPeekAtLastError());
 
   // Sample if necessary.

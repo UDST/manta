@@ -120,21 +120,6 @@ void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
 
 }//
 
-void B18TrafficSimulator::calculateAndDisplayTrafficDensity(int numOfPass) {
-  if (initialized == false) {
-    printf("Error: initSimulator was not called\n");
-    return;
-  }
-
-  calculateAndDisplayTrafficDensity(accSpeedPerLinePerTimeInterval,
-                                    numVehPerLinePerTimeInterval,
-                                    edgeDescToLaneMapNum, 
-                                    laneMapNumToEdgeDesc,
-                                    trafficLights.size(), //num lanes
-                                    numOfPass);
-}//
-
-
 
 
 //////////////////////////////////////////////////
@@ -231,16 +216,17 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     /////
     {  // debug
       uint totalNumSteps = 0;
-      float totalGas = 0;
+      float totalCO = 0;
       for (int p = 0; p < trafficPersonVec.size(); p++) {
         totalNumSteps += trafficPersonVec[p].num_steps;
-        totalGas += trafficPersonVec[p].gas;
+        totalCO += trafficPersonVec[p].co;
       }
       avgTravelTime = (totalNumSteps) / (trafficPersonVec.size()*60.0f);//in min
-      printf("Total num steps %u Avg %.2f min Avg Gas %.2f. Calculated in %d ms\n", totalNumSteps, avgTravelTime, totalGas / trafficPersonVec.size(), timer.elapsed());
+      printf("Total num steps %u Avg %.2f min Avg CO %.2f. Calculated in %d ms\n", totalNumSteps, avgTravelTime, totalCO / trafficPersonVec.size(), timer.elapsed());
     }
     //
     calculateAndDisplayTrafficDensity(nP);
+    savePeopleAndRoutes(nP);
     printf("  <<End One Step %d TIME: %d ms.\n", nP, timer.elapsed());
   }
   b18FinishCUDA();
@@ -675,7 +661,7 @@ void simulateOnePersonCPU(
       trafficPersonVec[p].active = 1;
       trafficPersonVec[p].isInIntersection = 0;
       trafficPersonVec[p].num_steps = 1;
-      trafficPersonVec[p].gas = 0;
+      trafficPersonVec[p].co = 0;
       //trafficPersonVec[p].nextPathEdge++;//incremet so it continues in next edge
       // set up next edge info
       uint nextEdge = indexPathVec[trafficPersonVec[p].indexPathCurr + 1];
@@ -701,7 +687,9 @@ void simulateOnePersonCPU(
 
   ///////////////////////////////
   //2. it is moving
-  trafficPersonVec[p].num_steps++;
+  if (float(currentTime) == int(currentTime)) { // assuming deltatime = 0.5f --> each second
+    trafficPersonVec[p].num_steps++;
+  }
   //2.1 try to move
   float numMToMove;
   bool getToNextEdge = false;
@@ -881,15 +869,15 @@ void simulateOnePersonCPU(
   //if(trafficPersonVec[p].v>0)
   if (calculatePollution) {
     float speedMph = trafficPersonVec[p].v * 2.2369362920544; //mps to mph
-    float gasStep = -0.064 + 0.0056 * speedMph + 0.00026 * (speedMph - 50.0f) *
+    float coStep = -0.064 + 0.0056 * speedMph + 0.00026 * (speedMph - 50.0f) *
                     (speedMph - 50.0f);
 
-    if (gasStep > 0) {
-      gasStep *= deltaTime;
-      trafficPersonVec[p].gas += gasStep;
+    if (coStep > 0) {
+      coStep *= deltaTime;
+      trafficPersonVec[p].co += coStep;
     }
   }
-  //trafficPersonVec[p].gas+=numMToMove/1000.0f;
+
   //////////////////////////////////////////////
 
   if (trafficPersonVec[p].v == 0) { //if not moving not do anything else
@@ -940,7 +928,7 @@ void simulateOnePersonCPU(
     ////////////////////////////////////////////////////////
     // LANE CHANGING (happens when we are not reached the intersection)
     if (trafficPersonVec[p].v > 3.0f && //at least 10km/h to try to change lane
-        trafficPersonVec[p].num_steps % 10 == 0 //just check every (10 steps) 5 seconds
+        trafficPersonVec[p].num_steps % 5 == 0 //just check every (5 steps) 5 seconds
        ) {
       //next thing is not a traffic light
       // skip if there is one lane (avoid to do this)
@@ -1457,6 +1445,7 @@ void B18TrafficSimulator::simulateInCPU_MultiPass(int numOfPasses, float startTi
     printf("***End simulateInCPU \n");
     //estimate traffic density
     calculateAndDisplayTrafficDensity(nP);
+    savePeopleAndRoutes(nP);
   }
   if (DEBUG_SIMULATOR) {
     printf("<<simulateInCPU_MultiPass\n");
@@ -1474,6 +1463,7 @@ void B18TrafficSimulator::simulateInCPU_Onepass(float startTimeH,
   simulateInCPU(startTimeH, endTimeH);
   //estimate traffic density
   calculateAndDisplayTrafficDensity(0);
+  savePeopleAndRoutes(0);
 }//
 
 
@@ -1660,16 +1650,16 @@ void B18TrafficSimulator::simulateInCPU(float startTimeH, float endTimeH) {
   {
     // Total number of car steps
     uint totalNumSteps = 0;
-    float totalGas = 0.0f;
+    float totalCO = 0.0f;
 
     for (int p = 0; p < numPeople; p++) {
       totalNumSteps += trafficPersonVec[p].num_steps;
-      totalGas += trafficPersonVec[p].gas;
+      totalCO += trafficPersonVec[p].co;
     }
 
     avgTravelTime = (totalNumSteps) / (trafficPersonVec.size() * 60.0f); //in min
-    printf("(Count %d) Total num steps %u Avg %f min Avg Gas %f. Calculated in %d ms\n",
-           count, totalNumSteps, avgTravelTime, totalGas / trafficPersonVec.size(),
+    printf("(Count %d) Total num steps %u Avg %f min Avg CO %f. Calculated in %d ms\n",
+      count, totalNumSteps, avgTravelTime, totalCO / trafficPersonVec.size(),
            timer.elapsed());
   }
 
@@ -2105,20 +2095,99 @@ void B18TrafficSimulator::render(VBORenderManager &rendManager) {
   }
 }//
 
-void B18TrafficSimulator::calculateAndDisplayTrafficDensity(
-    std::vector<float> &accSpeedPerLinePerTimeInterval,
-    std::vector<float> &numVehPerLinePerTimeInterval,
-    std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> &edgeDescToLaneMapNum,
-    std::map<uint, RoadGraph::roadGraphEdgeDesc_BI> &laneMapNumToEdgeDesc,
-    int tNumLanes, int numOfPass) {
 
+void B18TrafficSimulator::savePeopleAndRoutes(int numOfPass) {
+  if (initialized == false) {
+    printf("Error savePeopleAndRoutes: initSimulator was not called\n");
+    return;
+  }
+
+  const bool saveToFile = true; 
+  if (saveToFile) {
+    /////////////////////////////////
+    // SAVE TO FILE
+    QFile peopleFile(QString::number(numOfPass) + "_people.txt");
+    QFile routeFile(QString::number(numOfPass) + "_route.txt");
+    QFile routeCount(QString::number(numOfPass) + "_edge_route_count.txt");
+    if (peopleFile.open(QIODevice::ReadWrite) && routeFile.open(QIODevice::ReadWrite) && routeCount.open(QIODevice::ReadWrite)) {
+      
+      
+      ///////////////
+      // People
+      printf("Save people %d\n", trafficPersonVec.size());
+      QTextStream streamP(&peopleFile);
+      streamP << "p,init_intersection,end_intersection,time_departure,num_steps,co,a,b,T\n";
+      for (int p = 0; p < trafficPersonVec.size(); p++) {
+        streamP << p;
+        streamP << "," << trafficPersonVec[p].init_intersection;
+        streamP << "," << trafficPersonVec[p].end_intersection;
+        streamP << "," << trafficPersonVec[p].time_departure;
+        streamP << "," << trafficPersonVec[p].num_steps;
+        streamP << "," << trafficPersonVec[p].co;
+        streamP << "," << trafficPersonVec[p].a;
+        streamP << "," << trafficPersonVec[p].b;
+        streamP << "," << trafficPersonVec[p].T;
+        streamP << "\n";
+      } // people
+      peopleFile.close();
+      /////////////
+      // People Route
+      printf("Save route %d\n", trafficPersonVec.size());
+      QHash<uint, uint> laneMapNumCount;
+      QTextStream streamR(&routeFile);
+      streamR << "p,route\n";
+      for (int p = 0; p < trafficPersonVec.size(); p++) {
+        streamR << p;
+        // Save route
+        uint index = 0;
+        while (indexPathVec[trafficPersonVec[p].indexPathInit + index] != -1) {
+          uint laneMapNum = indexPathVec[trafficPersonVec[p].indexPathInit + index];
+          if (laneMapNumToEdgeDesc.count(laneMapNum)>0) { // laneMapNum in map
+            streamR << "," << simRoadGraph->myRoadGraph_BI[laneMapNumToEdgeDesc[laneMapNum]].faci; // get id of the edge from the roadgraph
+            laneMapNumCount.insert(laneMapNum, laneMapNumCount.value(laneMapNum, 0) + 1);//is it initialized?
+            index++;
+          } else {
+            printf("Save route: This should not happen\n");
+            break;
+          }
+
+        }
+        streamR << "\n";
+      } // people
+      routeFile.close();
+      ////////////
+      // Per edge route count
+      printf("Save edge route count %d\n", laneMapNumCount.size());
+      QTextStream streamC(&routeCount);
+      QHash<uint, uint>::iterator i;
+      for (i = laneMapNumCount.begin(); i != laneMapNumCount.end(); ++i) {
+        uint laneMapNum = i.key();
+        streamC << simRoadGraph->myRoadGraph_BI[laneMapNumToEdgeDesc[laneMapNum]].faci; // get id of the edge from the roadgraph
+        streamC << "," << i.value();
+        streamC << "\n";
+      }
+      streamC << "\n";
+      routeCount.close();
+    }
+  }
+
+  printf("\n<<calculateAndDisplayTrafficDensity\n");
+}//
+
+void B18TrafficSimulator::calculateAndDisplayTrafficDensity(int numOfPass) {
+  if (initialized == false) {
+    printf("Error calculateAndDisplayTrafficDensity: initSimulator was not called\n");
+    return;
+  }
+
+  int tNumLanes = trafficLights.size();
   const float numStepsTogether = 12;
   int numSampling = accSpeedPerLinePerTimeInterval.size() / tNumLanes;
   printf(">>calculateAndDisplayTrafficDensity numSampling %d\n", numSampling);
   
 
   RoadGraph::roadGraphEdgeIter_BI ei, eiEnd;
-  const bool saveToFile = true; // false = display in network; true saveToFile
+  const bool saveToFile = true; 
   const bool updateSpeeds = true;
   if (saveToFile) {
     /////////////////////////////////
