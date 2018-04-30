@@ -33,7 +33,7 @@ namespace LC {
 
 const float s_0 = 1.5f * 4.12f; // ALWAYS USED
 const float intersectionClearance = 7.8f;
-const bool calculatePollution = false;
+const bool calculatePollution = true;
 
 B18TrafficSimulator::B18TrafficSimulator() {
   initialized = false;
@@ -661,7 +661,8 @@ void simulateOnePersonCPU(
       trafficPersonVec[p].active = 1;
       trafficPersonVec[p].isInIntersection = 0;
       trafficPersonVec[p].num_steps = 1;
-      trafficPersonVec[p].co = 0;
+      trafficPersonVec[p].co = 0.0f;
+      trafficPersonVec[p].gas = 0.0f;
       //trafficPersonVec[p].nextPathEdge++;//incremet so it continues in next edge
       // set up next edge info
       uint nextEdge = indexPathVec[trafficPersonVec[p].indexPathCurr + 1];
@@ -845,12 +846,6 @@ void simulateOnePersonCPU(
   numMToMove = std::max(0.0f,
                         trafficPersonVec[p].v * deltaTime + 0.5f * (dv_dt) * deltaTime * deltaTime);
 
-  //if(p==4524){
-  //	printf("v %f v0 %f a %f dv_dt %f s %f s_star %f thirdTerm %f MOVE %f\n",trafficPersonVec[p].v,trafficPersonVec[p].maxSpeedMperSec,trafficPersonVec[p].a,dv_dt,s,s_star,thirdTerm,numMToMove);
-  //}
-  //if(numMToMove==0){
-  //printf("v %f v0 %f a %f dv_dt %f s %f s_star %f thirdTerm %f MOVE %f\n",trafficPersonVec[p].v,trafficPersonVec[p].maxSpeedMperSec,trafficPersonVec[p].a,dv_dt,s,s_star,thirdTerm,numMToMove);
-  //}
   if (DEBUG_TRAFFIC == 1) {
     printf("v %f v0 %f a %f dv_dt %f MOVE %f\n", trafficPersonVec[p].v,
            trafficPersonVec[p].maxSpeedMperSec, trafficPersonVec[p].a, dv_dt, numMToMove);
@@ -862,20 +857,30 @@ void simulateOnePersonCPU(
   if (trafficPersonVec[p].v < 0) {
     //printf("p %d v %f v0 %f a %f dv_dt %f s %f s_star %f MOVE %f\n",p,trafficPersonVec[p].v,trafficPersonVec[p].maxSpeedMperSec,trafficPersonVec[p].a,dv_dt,s,s_star,numMToMove);
     trafficPersonVec[p].v = 0;
+    dv_dt = 0.0f;
   }
 
-  /////
-  //CO2
-  //if(trafficPersonVec[p].v>0)
-  if (calculatePollution) {
-    float speedMph = trafficPersonVec[p].v * 2.2369362920544; //mps to mph
-    float coStep = -0.064 + 0.0056 * speedMph + 0.00026 * (speedMph - 50.0f) *
-                    (speedMph - 50.0f);
+  if (calculatePollution && ((float(currentTime) == int(currentTime)))) { // enabled and each second (assuming deltaTime 0.5f)
+    // CO Calculation
+    const float speedMph = trafficPersonVec[p].v * 2.2369362920544; //mps to mph
+    const float coStep = -0.064 + 0.0056 * speedMph + 0.00026 * (speedMph - 50.0f) * (speedMph - 50.0f);
 
     if (coStep > 0) {
-      coStep *= deltaTime;
+      // coStep *= deltaTime; // we just compute it each second
       trafficPersonVec[p].co += coStep;
     }
+    // Gas Consumption
+    const float a = dv_dt;
+    const float v = trafficPersonVec[p].v; // in mps
+    const float Pea = a > 0.0f ? (0.472f*1.680f*a*a*v) : 0.0f;
+    const float gasStep = 0.666f + 0.072f*(0.269f*v+0.000672f*(v*v*v)+0.0171f*(v*v)+ 1.680f*a*v +Pea);
+    /*if (p == 0) {
+      printf("Time %f --> a %.6f v %.6f\n", currentTime, a, v);
+      printf("Time %f --> Consumption %.6f %.6f %.6f %.6f\n", currentTime, (0.269f*v + 0.000672f*(v*v*v)), (0.0171f*(v*v)), 1680.0f*a*v, Pea);
+      printf("Time %f --> Consumption %f+0.072*%f --> %f\n\n", currentTime, 0.666f, (0.269f*v + 0.000672f*(v*v*v) + 0.0171f*(v*v) + 1680.0f*a*v + Pea), gasStep);
+    }*/
+    trafficPersonVec[p].gas += gasStep; // *= deltaTime // we just compute it each second
+    
   }
 
   //////////////////////////////////////////////
@@ -1608,14 +1613,14 @@ void B18TrafficSimulator::simulateInCPU(float startTimeH, float endTimeH) {
 
     // UPDATE POLLUTION
     
-    if (calculatePollution == true &&
+    /*if (calculatePollution == true &&
         (((float)((int)currentTime)) == (currentTime)) &&
         ((int)currentTime % ((int)60 * 6)) == 0) { //each 6 min
       if (DEBUG_SIMULATOR) {
         printf("Update Pollution\n");
       }
       gridPollution.addValueToGrid(currentTime, trafficPersonVec, indexPathVec, simRoadGraph, clientMain, laneMapNumToEdgeDesc);
-    }
+    }*/
 
     currentTime += deltaTime;
     steps++;
@@ -2106,35 +2111,17 @@ void B18TrafficSimulator::savePeopleAndRoutes(int numOfPass) {
   if (saveToFile) {
     /////////////////////////////////
     // SAVE TO FILE
-    QFile peopleFile(QString::number(numOfPass) + "_people.txt");
-    QFile routeFile(QString::number(numOfPass) + "_route.txt");
-    QFile routeCount(QString::number(numOfPass) + "_edge_route_count.txt");
+    QFile peopleFile(QString::number(numOfPass) + "_people.csv");
+    QFile routeFile(QString::number(numOfPass) + "_route.csv");
+    QFile routeCount(QString::number(numOfPass) + "_edge_route_count.csv");
     if (peopleFile.open(QIODevice::ReadWrite) && routeFile.open(QIODevice::ReadWrite) && routeCount.open(QIODevice::ReadWrite)) {
       
-      
-      ///////////////
-      // People
-      printf("Save people %d\n", trafficPersonVec.size());
-      QTextStream streamP(&peopleFile);
-      streamP << "p,init_intersection,end_intersection,time_departure,num_steps,co,a,b,T\n";
-      for (int p = 0; p < trafficPersonVec.size(); p++) {
-        streamP << p;
-        streamP << "," << trafficPersonVec[p].init_intersection;
-        streamP << "," << trafficPersonVec[p].end_intersection;
-        streamP << "," << trafficPersonVec[p].time_departure;
-        streamP << "," << trafficPersonVec[p].num_steps;
-        streamP << "," << trafficPersonVec[p].co;
-        streamP << "," << trafficPersonVec[p].a;
-        streamP << "," << trafficPersonVec[p].b;
-        streamP << "," << trafficPersonVec[p].T;
-        streamP << "\n";
-      } // people
-      peopleFile.close();
       /////////////
       // People Route
       printf("Save route %d\n", trafficPersonVec.size());
       QHash<uint, uint> laneMapNumCount;
       QTextStream streamR(&routeFile);
+      std::vector<float> personDistance(trafficPersonVec.size(), 0.0f);
       streamR << "p,route\n";
       for (int p = 0; p < trafficPersonVec.size(); p++) {
         streamR << p;
@@ -2145,6 +2132,7 @@ void B18TrafficSimulator::savePeopleAndRoutes(int numOfPass) {
           if (laneMapNumToEdgeDesc.count(laneMapNum)>0) { // laneMapNum in map
             streamR << "," << simRoadGraph->myRoadGraph_BI[laneMapNumToEdgeDesc[laneMapNum]].faci; // get id of the edge from the roadgraph
             laneMapNumCount.insert(laneMapNum, laneMapNumCount.value(laneMapNum, 0) + 1);//is it initialized?
+            personDistance[p] += simRoadGraph->myRoadGraph_BI[laneMapNumToEdgeDesc[laneMapNum]].edgeLength;
             index++;
           } else {
             printf("Save route: This should not happen\n");
@@ -2155,6 +2143,29 @@ void B18TrafficSimulator::savePeopleAndRoutes(int numOfPass) {
         streamR << "\n";
       } // people
       routeFile.close();
+
+      ///////////////
+      // People
+      printf("Save people %d\n", trafficPersonVec.size());
+      QTextStream streamP(&peopleFile);
+      streamP << "p,init_intersection,end_intersection,time_departure,num_steps,co,gas,distance,a,b,T\n";
+      for (int p = 0; p < trafficPersonVec.size(); p++) {
+        streamP << p;
+        streamP << "," << trafficPersonVec[p].init_intersection;
+        streamP << "," << trafficPersonVec[p].end_intersection;
+        streamP << "," << trafficPersonVec[p].time_departure;
+        streamP << "," << trafficPersonVec[p].num_steps;
+        streamP << "," << trafficPersonVec[p].co;
+        streamP << "," << trafficPersonVec[p].gas;
+        streamP << "," << personDistance[p];
+        
+        streamP << "," << trafficPersonVec[p].a;
+        streamP << "," << trafficPersonVec[p].b;
+        streamP << "," << trafficPersonVec[p].T;
+        streamP << "\n";
+      } // people
+      peopleFile.close();
+      
       ////////////
       // Per edge route count
       printf("Save edge route count %d\n", laneMapNumCount.size());
@@ -2192,8 +2203,8 @@ void B18TrafficSimulator::calculateAndDisplayTrafficDensity(int numOfPass) {
   if (saveToFile) {
     /////////////////////////////////
     // SAVE TO FILE
-    QFile speedFile(QString::number(numOfPass) + "_average_speed.txt");
-    QFile utilizationFile(QString::number(numOfPass) + "_utilization.txt");
+    QFile speedFile(QString::number(numOfPass) + "_average_speed.csv");
+    QFile utilizationFile(QString::number(numOfPass) + "_utilization.csv");
     if (speedFile.open(QIODevice::ReadWrite) && utilizationFile.open(QIODevice::ReadWrite)) {
       QTextStream streamS(&speedFile);
       QTextStream streamU(&utilizationFile);

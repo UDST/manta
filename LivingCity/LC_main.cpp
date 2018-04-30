@@ -8,17 +8,17 @@
 // NOTE: Check command_line_options for default options.
 
 int main(int argc, char *argv[]) {
+
+  QApplication a(argc, argv);
   QSettings settings(QApplication::applicationDirPath() + "/command_line_options.ini", QSettings::IniFormat);
-  bool useGUI = settings.value("GUI", false).toBool();
+  bool useGUI = settings.value("GUI", true).toBool();
 
   if (useGUI == true) {
-    QApplication a(argc, argv);
     qDebug() << "App path: " << a.applicationDirPath();
     LC::LCUrbanMain w;
     w.showMaximized();
     return a.exec();
   } else {
-    QCoreApplication a(argc, argv);
     qDebug() << "App path: " << a.applicationDirPath();
 
     LC::B18CommandLineVersion cl;

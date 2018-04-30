@@ -43,6 +43,7 @@ struct B18TrafficPerson {
   unsigned short num_steps;
   unsigned int color;
   float co;
+  float gas;
   // IDM
   float v;//current velocity
   float a;//acceleration
