@@ -4,6 +4,9 @@
 #include <boost/graph/johnson_all_pairs_shortest.hpp>
 #include <boost/graph/exterior_property.hpp>
 
+#include <iostream> // save johnson
+#include <fstream>
+
 #define ROUTE_DEBUG 0
 
 namespace LC {
@@ -12,6 +15,11 @@ namespace LC {
 ////////////////
 /////////////////////////////
 using namespace boost;
+
+inline bool fileExists(const std::string& fileName) {
+  std::ifstream f(fileName.c_str());
+  return f.good();
+}
 
 typedef exterior_vertex_property<RoadGraph::roadBGLGraph_BI, float>
 DistanceProperty;
@@ -107,18 +115,47 @@ void B18TrafficJohnson::generateRoutes(
 
   ////////////////////////
   // CALL JOHNSON
-  printf("Call Johnson\n");
-  boost::johnson_all_pairs_shortest_paths(roadGraph, dm, weight_map(weight_pmap));
+  bool tryReadWriteFirstJohnsonArray = true && weigthMode==0; // if try to use and use street speeds
+  std::string fileName = "johnson_numVertex_" + std::to_string(numVertex) + "_maxTravelTime_" + std::to_string(maxTravelTime) + ".bin"; // encode num vertext and travel time to "check" is the same input
+  bool johnsonReadCorrectly = false;
+  if (tryReadWriteFirstJohnsonArray && fileExists(fileName)) {
+    // if exists try to read.
+    std::ifstream in(fileName, std::ios::in | std::ios::binary);
+    for (int vN = 0; vN < numVertex; vN++) {
+      in.read((char *) &dm[vN][0], numVertex * sizeof(float));
+    }
+    printf("Johnson Loaded\n");
+    johnsonReadCorrectly = true;
+  }
+
+  // Run Johnson since we could not find it or it is not the first iteration
+  if (johnsonReadCorrectly == false) {
+    printf("Call Johnson\n");
+    boost::johnson_all_pairs_shortest_paths(roadGraph, dm, weight_map(weight_pmap));
+    if (tryReadWriteFirstJohnsonArray) {
+      // write to file
+      printf("Johnson start writing...\n");
+      std::ofstream out(fileName, std::ios::out | std::ios::binary);
+      if (!out) {
+        printf("ERROR: Tried to save %s but failed\n", fileName.c_str());
+      } else {
+        for (int vN = 0; vN < numVertex; vN++) {
+          out.write((char *) &dm[vN][0], numVertex * sizeof(float));
+        }
+        printf("Johnson saved to file: %s\n", fileName.c_str());
+      }
+    }
+  }
   
   // check maxDist
-  printf("numVertex %d\n", numVertex);
+  printf("Create Johnson numVertex %d Time %d ms\n", numVertex, timer.elapsed());
   float maxDist = -1.0f;
   for (int vN = 0; vN < numVertex; vN++) {
     for (int vN2 = 0; vN2 < numVertex; vN2++) {
       maxDist = maxDist < dm[vN][vN2] ? dm[vN][vN2] : maxDist;
     }
-    //printf("\n");
   }
+
 
   printf("maxDist %f\n", maxDist);
   ////////////////////////
@@ -222,7 +259,7 @@ void B18TrafficJohnson::generateRoutes(
             currIndex++;  // this person number jumps.
 
             if (currIndex >= kMaxNumPath - 1) {  // This is very uncommon (just finish person).
-              printf("currIndex > 250\n");
+              // printf("currIndex > 250\n");
               currvertex = tgtvertex;//end loop
               break;//break for
             }
@@ -239,7 +276,7 @@ void B18TrafficJohnson::generateRoutes(
       }
 
       // not foudn edge
-      printf("****none edge works or > 250\n");  //this should not happen
+      //printf("****none edge works or > 250\n");  //this should not happen
       //exit(0);//!!! REMOVE
       break;
     }//while find tgt
