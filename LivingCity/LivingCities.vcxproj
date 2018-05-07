@@ -465,8 +465,8 @@
       <IgnoreSpecificDefaultLibraries>libboost_serialization-vc100-mt-1_44.lib</IgnoreSpecificDefaultLibraries>
     </Link>
     <CudaCompile>
-      <CodeGeneration>compute_20,sm_20</CodeGeneration>
-      <TargetMachinePlatform>64</TargetMachinePlatform>
+      <CodeGeneration>compute_52,sm_52</CodeGeneration>
+      <TargetMachinePlatform>32</TargetMachinePlatform>
       <GPUDebugInfo>true</GPUDebugInfo>
       <GenerateLineInfo>true</GenerateLineInfo>
     </CudaCompile>

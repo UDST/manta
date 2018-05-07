@@ -185,9 +185,13 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     // 2. Execute
     printf("First time_departure %f\n", currentTime);
     int count = 0;
+    QTime timerLoop;
+
     while (currentTime < endTime) {//24.0f){
-      if (count++ % 180 == 0) {
+      if (count++ % 1800 == 0) {
         printf("Time %.2fh (%.2f --> %.2f): %.0f%% #People %d\n", (currentTime / 3600.0f), (startTime / 3600.0f), (endTime / 3600.0f), 100.0f - (100.0f * (endTime - currentTime) / (endTime - startTime)), trafficPersonVec.size());
+        printf("%.2f ms per simulation step (average over 1800)\n",(timerLoop.elapsed()/1800.0f));
+        timerLoop.restart();
       }
       b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(), intersections.size());
 
