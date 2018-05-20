@@ -5,9 +5,9 @@ DESTDIR     = $$PWD
 OBJECTS_DIR = $$DESTDIR/obj
 
 unix {
-	LIBS += -L/opt/local/lib -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lGLEW
+    LIBS += -L/opt/local/lib -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lGLEW
 	# -L/Developer/NVIDIA/CUDA-7.5/lib -lcudart -lcublas
-	INCLUDEPATH += /opt/local/include/GL/ /opt/local/include/
+    INCLUDEPATH += /opt/local/include/GL/ /opt/local/include/
 }
 win32{
     # Note: OpenCV uses 2.4.12 since I compile with VS 2013 (vc12)
@@ -80,7 +80,6 @@ HEADERS += \
     VBOWater.h \
     bTraffic/bCPUTrafficThread.h \
     bTraffic/bCUDA_trafficSimulator.h \
-    bTraffic/bCUDA_trafficSimulator.h \
     bTraffic/bEdgeIntersectionData.h \
     bTraffic/bGenerateTest.h \
     bTraffic/bPMTrafficPerson.h \
@@ -125,7 +124,6 @@ HEADERS += \
     traffic/cudaTrafficPersonShortestPath.h \
     traffic/cudaTrafficRoutes.h \
     traffic/cudaTrafficSimulator.h \
-    traffic\b18CUDA_trafficSimulator.h \
     triangle/triangle.h \
     glu.h
 
@@ -204,8 +202,9 @@ SOURCES += \
     triangle/triangle.c
 
 OTHER_FILES += \
-    bTraffic/bCUDA_trafficSimulator.cu \
-    traffic/b18CUDA_trafficSimulator.cu
+        traffic/b18CUDA_trafficSimulator.cu \
+        bTraffic/bCUDA_trafficSimulator.cu
+
 
 
 
@@ -214,8 +213,8 @@ OTHER_FILES += \
 ###################################################################
 win32{
     # Cuda sources
-    CUDA_SOURCES += bTraffic/bCUDA_trafficSimulator.cu
     CUDA_SOURCES += traffic/b18CUDA_trafficSimulator.cu
+    CUDA_SOURCES += bTraffic/bCUDA_trafficSimulator.cu
 
     # Path to cuda toolkit install
     CUDA_DIR      = "D:/CUDA"
