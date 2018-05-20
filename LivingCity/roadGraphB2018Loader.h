@@ -33,6 +33,7 @@ class RoadGraphB2018 {
   
   static std::vector<DemandB2018> demandB2018;
   static int totalNumPeople;
+  static QHash<int, uint64_t> indToOsmid;
  private:
 
 };

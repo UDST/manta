@@ -20,7 +20,8 @@ win32{
         $$(OPENCV_BUILD)/x64/vc12/lib/opencv_photo2412.lib \
         $$(OPENCV_BUILD)/x64/vc12/lib/opencv_video2412.lib \
         $$PWD/glew/lib/glew32.lib \
-        $$PWD/glew/lib/OpenGL32.Lib
+        $$PWD/glew/lib/OpenGL32.Lib \
+        -lglut32
 
 
     INCLUDEPATH += \
@@ -41,19 +42,31 @@ FORMS += \
     LC_UrbanMain.ui
 
 HEADERS += \
-    global.h \
-    LC_camera_3d.h \
-    LC_GLWidget3D_Shadows.h \
+    Geometry/block.h \
+    Geometry/building.h \
+    Geometry/client_geometry.h \
+    Geometry/parcel.h \
+    Geometry/parcelBuildingAttributes.h \
+    Geometry/placeTypeInstances.h \
+    Geometry/zone.h \
     LC_GLWidget3D.h \
+    LC_GLWidget3D_Shadows.h \
     LC_Layer.h \
     LC_UrbanMain.h \
-    roadGraphDynameqLoader.h \
-    roadGraphB2018Loader.h \
+    LC_camera_3d.h \
+    PM/pmBlocks.h \
+    PM/pmBuildings.h \
+    PM/pmMain.h \
+    PM/pmParcels.h \
+    PM/pmRoads.h \
+    RoadGraph/roadGraph.h \
+    RoadGraph/roadGraphEdge.h \
+    RoadGraph/roadGraphVertex.h \
     VBOBlocks.h \
     VBOBuilding.h \
     VBOGUI.h \
-    VBOModel_StreetElements.h \
     VBOModel.h \
+    VBOModel_StreetElements.h \
     VBOPeopleJobInfoLayer.h \
     VBORenderManager.h \
     VBORoadGraph.h \
@@ -67,6 +80,7 @@ HEADERS += \
     VBOWater.h \
     bTraffic/bCPUTrafficThread.h \
     bTraffic/bCUDA_trafficSimulator.h \
+    bTraffic/bCUDA_trafficSimulator.h \
     bTraffic/bEdgeIntersectionData.h \
     bTraffic/bGenerateTest.h \
     bTraffic/bPMTrafficPerson.h \
@@ -77,13 +91,7 @@ HEADERS += \
     bTraffic/bTrafficLaneMap.h \
     bTraffic/bTrafficPeople.h \
     bTraffic/bTrafficSimulator.h \
-    Geometry/block.h \
-    Geometry/building.h \
-    Geometry/client_geometry.h \
-    Geometry/parcel.h \
-    Geometry/parcelBuildingAttributes.h \
-    Geometry/placeTypeInstances.h \
-    Geometry/zone.h \
+    global.h \
     misctools/bounding_box.h \
     misctools/common.h \
     misctools/misctools.h \
@@ -93,14 +101,19 @@ HEADERS += \
     nvModel/nvModel.h \
     nvModel/nvQuaternion.h \
     nvModel/nvVector.h \
-    PM/pmBlocks.h \
-    PM/pmBuildings.h \
-    PM/pmMain.h \
-    PM/pmParcels.h \
-    PM/pmRoads.h \
-    RoadGraph/roadGraph.h \
-    RoadGraph/roadGraphEdge.h \
-    RoadGraph/roadGraphVertex.h \
+    roadGraphB2018Loader.h \
+    roadGraphDynameqLoader.h \
+    traffic/b18CUDA_trafficSimulator.h \
+    traffic/b18CommandLineVersion.h \
+    traffic/b18EdgeData.h \
+    traffic/b18GridPollution.h \
+    traffic/b18TestSimpleRoadAndOD.h \
+    traffic/b18TrafficDijkstra.h \
+    traffic/b18TrafficJohnson.h \
+    traffic/b18TrafficLaneMap.h \
+    traffic/b18TrafficOD.h \
+    traffic/b18TrafficPerson.h \
+    traffic/b18TrafficSimulator.h \
     traffic/cudaEdgeData.h \
     traffic/cudaGridPollution.h \
     traffic/cudaPmTrafficPersonJob.h \
@@ -112,27 +125,37 @@ HEADERS += \
     traffic/cudaTrafficPersonShortestPath.h \
     traffic/cudaTrafficRoutes.h \
     traffic/cudaTrafficSimulator.h \
+    traffic\b18CUDA_trafficSimulator.h \
     triangle/triangle.h \
-    traffic/b18TrafficOD.h \
-    traffic/b18TrafficSimulator.h \
-    bTraffic/bCUDA_trafficSimulator.h \
-    traffic\b18CUDA_trafficSimulator.h
+    glu.h
 
 SOURCES += \
-    global.cpp \
-    LC_camera_3d.cpp \
-    LC_GLWidget3D_Shadows.cpp \
+    Geometry/block.cpp \
+    Geometry/building.cpp \
+    Geometry/client_geometry.cpp \
+    Geometry/parcel.cpp \
+    Geometry/parcelBuildingAttributes.cpp \
+    Geometry/placeTypeInstances.cpp \
+    Geometry/zone.cpp \
     LC_GLWidget3D.cpp \
+    LC_GLWidget3D_Shadows.cpp \
     LC_Layer.cpp \
-    LC_main.cpp \
     LC_UrbanMain.cpp \
-    roadGraphDynameqLoader.cpp \
-    roadGraphB2018Loader.cpp \
+    LC_camera_3d.cpp \
+    LC_main.cpp \
+    PM/pmBlocks.cpp \
+    PM/pmBuildings.cpp \
+    PM/pmMain.cpp \
+    PM/pmParcels.cpp \
+    PM/pmRoads.cpp \
+    RoadGraph/roadGraph.cpp \
+    RoadGraph/roadGraphEdge.cpp \
+    RoadGraph/roadGraphVertex.cpp \
     VBOBlocks.cpp \
     VBOBuilding.cpp \
     VBOGUI.cpp \
-    VBOModel_StreetElements.cpp \
     VBOModel.cpp \
+    VBOModel_StreetElements.cpp \
     VBOPeopleJobInfoLayer.cpp \
     VBORenderManager.cpp \
     VBORoadGraph.cpp \
@@ -152,27 +175,23 @@ SOURCES += \
     bTraffic/bTrafficJohnson.cpp \
     bTraffic/bTrafficLaneMap.cpp \
     bTraffic/bTrafficSimulator.cpp \
-    Geometry/block.cpp \
-    Geometry/building.cpp \
-    Geometry/client_geometry.cpp \
-    Geometry/parcel.cpp \
-    Geometry/parcelBuildingAttributes.cpp \
-    Geometry/placeTypeInstances.cpp \
-    Geometry/zone.cpp \
+    global.cpp \
     misctools/bounding_box.cpp \
     misctools/misctools.cpp \
     misctools/polygon_3D.cpp \
     nvModel/nvModel.cpp \
     nvModel/nvModelObj.cpp \
     nvModel/nvModelQuery.cpp \
-    PM/pmBlocks.cpp \
-    PM/pmBuildings.cpp \
-    PM/pmMain.cpp \
-    PM/pmParcels.cpp \
-    PM/pmRoads.cpp \
-    RoadGraph/roadGraph.cpp \
-    RoadGraph/roadGraphEdge.cpp \
-    RoadGraph/roadGraphVertex.cpp \
+    roadGraphB2018Loader.cpp \
+    roadGraphDynameqLoader.cpp \
+    traffic/b18CommandLineVersion.cpp \
+    traffic/b18GridPollution.cpp \
+    traffic/b18TestSimpleRoadAndOD.cpp \
+    traffic/b18TrafficDijkstra.cpp \
+    traffic/b18TrafficJohnson.cpp \
+    traffic/b18TrafficLaneMap.cpp \
+    traffic/b18TrafficOD.cpp \
+    traffic/b18TrafficSimulator.cpp \
     traffic/cudaGridPollution.cpp \
     traffic/cudaPmTrafficPersonJob.cpp \
     traffic/cudaTrafficDesigner.cpp \
@@ -182,12 +201,12 @@ SOURCES += \
     traffic/cudaTrafficPersonShortestPath.cpp \
     traffic/cudaTrafficRoutes.cpp \
     traffic/cudaTrafficSimulator.cpp \
-    triangle/triangle.c \
-    traffic/b18TrafficOD.cpp \
-    traffic/b18TrafficSimulator.cpp
+    triangle/triangle.c
 
 OTHER_FILES += \
-    bTraffic/bCUDA_trafficSimulator.cu
+    bTraffic/bCUDA_trafficSimulator.cu \
+    traffic/b18CUDA_trafficSimulator.cu
+
 
 
 ###################################################################
@@ -196,6 +215,7 @@ OTHER_FILES += \
 win32{
     # Cuda sources
     CUDA_SOURCES += bTraffic/bCUDA_trafficSimulator.cu
+    CUDA_SOURCES += traffic/b18CUDA_trafficSimulator.cu
 
     # Path to cuda toolkit install
     CUDA_DIR      = "D:/CUDA"

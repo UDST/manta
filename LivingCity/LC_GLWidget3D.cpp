@@ -30,9 +30,7 @@
 #include <QDebug>
 #include <QKeyEvent>
 #include "qmath.h"
-//#include <OpenGL/gl.h>
-//#include <OpenGL/glu.h>
-//#include <GLUT/glut.h>
+#include "glu.h"
 
 #include "roadGraphDynameqLoader.h"
 #include "roadGraphB2018Loader.h"
@@ -529,18 +527,22 @@ void LCGLWidget3D::initializeGL() {
 
   // load roads
   printf("load roads\n");
-  
-  QSettings settings(QApplication::applicationDirPath() + "/command_line_options.ini", QSettings::IniFormat);
-  bool useBasicTest = settings.value("USE_BASIC_TEST", false).toBool(); // false = B2018; true = basic intersection
-  
+
+  QSettings settings(QApplication::applicationDirPath() +
+                     "/command_line_options.ini", QSettings::IniFormat);
+  bool useBasicTest = settings.value("USE_BASIC_TEST",
+                                     false).toBool(); // false = B2018; true = basic intersection
+
   if (useBasicTest) {
     const float deltaTime = 0.5f;
     const float startDemandH = 7.30f;
     const float endDemandH = 9.00f;
-    B18TestSimpleRoadAndOD::generateTest(cg.roadGraph, b18TrafficSimulator.trafficPersonVec, startDemandH, endDemandH, this);
+    B18TestSimpleRoadAndOD::generateTest(cg.roadGraph,
+                                         b18TrafficSimulator.trafficPersonVec, startDemandH, endDemandH, this);
     b18TrafficSimulator.initSimulator(deltaTime, &cg.roadGraph, urbanMain);
   } else {
-    bool useFullB18Network = settings.value("USE_FULL_B2018_NETWORK", false).toBool();
+    bool useFullB18Network = settings.value("USE_FULL_B2018_NETWORK",
+                                            false).toBool();
     RoadGraphB2018::loadB2018RoadGraph(cg.roadGraph, useFullB18Network);
     // To remove the gl dependency of the loader.
     cg.geoZone.blocks.clear();
@@ -591,7 +593,8 @@ void LCGLWidget3D::drawScene(int drawMode) {
   // LAYER MODE
   if (G::global().getInt("render_mode") == 2) {
     //printf("render_mode 2\n");
-    glUniform1i(glGetUniformLocation(vboRenderManager.program, "shadowState"), 0); //SHADOW: Disable
+    glUniform1i(glGetUniformLocation(vboRenderManager.program, "shadowState"),
+                0); //SHADOW: Disable
     vboRenderManager.vboTerrain.render(vboRenderManager);
 
     if (keyMPressed == true) {
@@ -601,7 +604,8 @@ void LCGLWidget3D::drawScene(int drawMode) {
 
   // 2D MODE
   if (G::global().getInt("render_mode") == 1) {
-    glUniform1i(glGetUniformLocation(vboRenderManager.program, "shadowState"), 0); //SHADOW: Disable
+    glUniform1i(glGetUniformLocation(vboRenderManager.program, "shadowState"),
+                0); //SHADOW: Disable
     //printf("render_mode 1\n");
     vboRenderManager.vboTerrain.render(vboRenderManager);
 
@@ -922,35 +926,16 @@ bool LCGLWidget3D::mouseTo3D(int x, int y, QVector3D *result) {
   winY = (float)viewport[3] - (float)y;
   glReadPixels(x, int(winY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winZ);
 
-  const float *data_matrix = myCam->mvMatrix.data();
-  double data_matrix_double[16];
+  float *data_matrix = myCam->mvMatrix.data();
+  float *p_data_matrix = myCam->pMatrix.data();
+  float objectCoordinate[3];
+  // Next function has not been fully tested
+  glhUnProjectf(winX, winY, winZ, data_matrix, p_data_matrix,
+                viewport, &objectCoordinate[0]);
 
-  for (uint i = 0; i < 16; i++) {
-    data_matrix_double[i] = *data_matrix;
-    data_matrix++;
-  }
-
-  const float *p_data_matrix = myCam->pMatrix.data();
-  double p_data_matrix_double[16];
-
-  for (uint i = 0; i < 16; i++) {
-    p_data_matrix_double[i] = *p_data_matrix;
-    p_data_matrix++;
-  }
-
-#ifdef _WIN32
-  gluUnProject(winX, winY, winZ, data_matrix_double, p_data_matrix_double,
-               viewport, &posX, &posY, &posZ);
-#elif
-  qDebug() <<
-           "gluUnProject might not be available --> Reimplement LCGLWidget3D::mouseTo3D";
-#endif
-  //        GLKVector3 win_vec(winX, winY, winZ);
-  //        GLKMathUnproject(win_vec);
-
-  result->setX(posX);
-  result->setY(posY);
-  result->setZ(posZ);
+  result->setX(objectCoordinate[0]);
+  result->setY(objectCoordinate[1]);
+  result->setZ(objectCoordinate[2]);
   return true;
 }//
 

@@ -261,7 +261,7 @@ const float startSamples = 2.5f;
 const float endSamples = 14.5f;
 const int numBucketsPerHour = 6;
 std::vector<float> hToWDistribution;
-const bool gaussianDistribution = false; // from file or gaussian.
+const bool gaussianDistribution = false; // true = file; false = gaussian.
 float sampleFileDistribution() {
   // Initialized.
   if (fileDistributionInitialized == false) {
@@ -340,6 +340,7 @@ void B18TrafficOD::loadB18TrafficPeople(
   trafficPersonVec.resize(totalNumPeople);
 
   boost::mt19937 rng;
+  srand(45321654);
   //boost::math::non_central_t_distribution<> td(/*v=*/2.09,/*delta=*/7.51);
   //boost::variate_generator<boost::mt19937&, boost::math::non_central_t_distribution<> > var(rng, td);
   boost::normal_distribution<> nd(7.5, 0.75);
@@ -362,6 +363,25 @@ void B18TrafficOD::loadB18TrafficPeople(
       randomPerson(numPeople, trafficPersonVec[numPeople], src_vertex, tgt_vertex, goToWorkH);
      // printf("go to work %.2f --> %.2f\n", goToWork, (trafficPersonVec[p].time_departure / 3600.0f));
       numPeople++;
+    }
+  }
+  if (totalNumPeople > numPeople) {
+    printf("No enough on file --> Add random people %d\n", (totalNumPeople - numPeople));
+    // If this happens, the user ask to generate random people.
+    QList<int>  allVertexInd = RoadGraphB2018::indToOsmid.keys();
+    for (; numPeople < totalNumPeople; numPeople++) {
+      
+      uint src_vertex = allVertexInd[rand() % allVertexInd.size()]; 
+      uint tgt_vertex = allVertexInd[rand() % allVertexInd.size()];
+
+
+      float goToWorkH;
+      if (gaussianDistribution) {
+        goToWorkH = var();
+      } else {
+        goToWorkH = sampleFileDistribution();
+      }
+      randomPerson(numPeople, trafficPersonVec[numPeople], src_vertex, tgt_vertex, goToWorkH);
     }
 
   }

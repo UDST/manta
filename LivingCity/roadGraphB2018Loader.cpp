@@ -19,6 +19,7 @@ namespace LC {
 
 std::vector<DemandB2018> RoadGraphB2018::demandB2018;
 int RoadGraphB2018::totalNumPeople;
+QHash<int, uint64_t> RoadGraphB2018::indToOsmid;
 
 void updateMinMax2(QVector2D &newPoint, QVector2D &minBox, QVector2D &maxBox) {
   if (newPoint.x() < minBox.x()) {
@@ -211,7 +212,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
 
   int index = 0;
   QHash<uint64_t, int> dynIndToInd;
-  QHash<int, uint64_t> indToOsmid;
+  
 
   for (i = osmidToVertexLoc.begin(); i != osmidToVertexLoc.end(); ++i) {
     uint64_t ind = i.key();
