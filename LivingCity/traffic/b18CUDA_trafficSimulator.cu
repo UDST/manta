@@ -8,9 +8,15 @@
 #include "b18EdgeData.h"
 #include <vector>
 
-#define ushort unsigned short
-#define uint unsigned int
-#define uchar unsigned char
+#ifndef ushort
+#define ushort uint16_t
+#endif
+#ifndef uint
+#define uint uint32_t
+#endif
+#ifndef uchar
+#define uchar uint8_t
+#endif
 
 ///////////////////////////////
 // CONSTANTS
