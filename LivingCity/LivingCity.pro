@@ -83,18 +83,6 @@ HEADERS += \
     VBOUtil.h \
     VBOVegetation.h \
     VBOWater.h \
-    bTraffic/bCPUTrafficThread.h \
-    bTraffic/bCUDA_trafficSimulator.h \
-    bTraffic/bEdgeIntersectionData.h \
-    bTraffic/bGenerateTest.h \
-    bTraffic/bPMTrafficPerson.h \
-    bTraffic/bTrafficConstants.h \
-    bTraffic/bTrafficDijkstra.h \
-    bTraffic/bTrafficIntersection.h \
-    bTraffic/bTrafficJohnson.h \
-    bTraffic/bTrafficLaneMap.h \
-    bTraffic/bTrafficPeople.h \
-    bTraffic/bTrafficSimulator.h \
     global.h \
     misctools/bounding_box.h \
     misctools/common.h \
@@ -170,14 +158,6 @@ SOURCES += \
     VBOUtil.cpp \
     VBOVegetation.cpp \
     VBOWater.cpp \
-    bTraffic/bCPUTrafficThread.cpp \
-    bTraffic/bGenerateTest.cpp \
-    bTraffic/bPMTrafficPerson.cpp \
-    bTraffic/bTrafficDijkstra.cpp \
-    bTraffic/bTrafficIntersection.cpp \
-    bTraffic/bTrafficJohnson.cpp \
-    bTraffic/bTrafficLaneMap.cpp \
-    bTraffic/bTrafficSimulator.cpp \
     global.cpp \
     misctools/bounding_box.cpp \
     misctools/misctools.cpp \
@@ -275,13 +255,13 @@ win32{
 unix {
   # Cuda sources
   CUDA_SOURCES += traffic/b18CUDA_trafficSimulator.cu
-  CUDA_SOURCES += bTraffic/bCUDA_trafficSimulator.cu
+  #CUDA_SOURCES += bTraffic/bCUDA_trafficSimulator.cu
   # Path to cuda toolkit install
   CUDA_DIR = /usr/local/cuda
   INCLUDEPATH += $$CUDA_DIR/include
   QMAKE_LIBDIR += $$CUDA_DIR/lib
   # GPU architecture
-  CUDA_ARCH = sm_52
+  CUDA_ARCH = sm_50
   # NVCC flags
   NVCCFLAGS = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-options=-v
   # Path to libraries

@@ -35,9 +35,15 @@
 //#include "BaseTsd.h"//for U64
 #include "bTrafficConstants.h"
 
-#define ushort unsigned short
-#define uint unsigned int
-#define uchar unsigned char
+#ifndef ushort
+#define ushort uint16_t
+#endif
+#ifndef uint
+#define uint uint32_t
+#endif
+#ifndef uchar
+#define uchar uint8_t
+#endif
 
 #define DEBUG_TRAFFIC 0
 
@@ -360,7 +366,7 @@ unsigned long* laneMapW
 
   //2.1 was not really moving
   if (v == 0) {
-    laneMapWC[(maxWidthL*(cEdge + lN)) * 8 + uint(posInLaneC)] = 0;
+    laneMapWC[(maxWidthL*(cEdge + lN)) * 8 + (uint)(posInLaneC)] = 0;
     return;
   }
   //2.2 move
