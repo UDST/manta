@@ -62,25 +62,25 @@ namespace LC {
 		void drawCone(const QVector3D &d, const QVector3D &a,
 			const qreal h, const qreal rd, const int n);
 
-		typedef boost::numeric::ublas::matrix<double> tBoostMatrix;
+		//typedef boost::numeric::ublas::matrix<double> tBoostMatrix;
 
 		bool loadPolygonsFromFile(QString filename, std::vector<Polygon3D> &polygons);
 
 		bool loadPolygonFromFile(QString filename, Polygon3D &polygon);
 
-		bool isIdxWithinBMatrix(int r, int c, LC::misctools::tBoostMatrix &m);
+		//bool isIdxWithinBMatrix(int r, int c, LC::misctools::tBoostMatrix &m);
 
 		float deg2rad(float deg);
 
 		float rad2deg(float rad);
 
-		double sumElementsinRow(int r, LC::misctools::tBoostMatrix &m);
+		//double sumElementsinRow(int r, LC::misctools::tBoostMatrix &m);
 
-		double sumElementsinColumn(int c, LC::misctools::tBoostMatrix &m);
+		//double sumElementsinColumn(int c, LC::misctools::tBoostMatrix &m);
 
-		void printBMatrix(LC::misctools::tBoostMatrix &m);
+		//void printBMatrix(LC::misctools::tBoostMatrix &m);
 
-		void initBMatrix(LC::misctools::tBoostMatrix &m);
+		//void initBMatrix(LC::misctools::tBoostMatrix &m);
 
 		static const float MTC_FLOAT_TOL = 1e-6f;
 

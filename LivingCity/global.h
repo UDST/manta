@@ -36,7 +36,7 @@
 #pragma once
 
 #include <QHash>
-#include <Qvariant>
+#include <QVariant>
 #include <QVector3D>
 #include <vector>
 

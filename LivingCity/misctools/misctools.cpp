@@ -30,7 +30,7 @@
 #include <boost/random.hpp>
 #endif
 #include <qtimer.h>
-#include <qfile>
+#include <qfile.h>
 
 namespace LC {
 	namespace misctools {
@@ -103,43 +103,43 @@ namespace LC {
 		}
 
 
-		bool isIdxWithinBMatrix(int r, int c, tBoostMatrix &m)
-		{
-			return (r < m.size1() && c < m.size2() && r>=0 && c>=0);
-		}
+		//bool isIdxWithinBMatrix(int r, int c, tBoostMatrix &m)
+		//{
+		//	return (r < m.size1() && c < m.size2() && r>=0 && c>=0);
+		//}
 
-		double sumElementsinRow(int r, LC::misctools::tBoostMatrix &m)
-		{
-			assert(r < m.size1());
-			double sum = 0.0f;
+		//double sumElementsinRow(int r, LC::misctools::tBoostMatrix &m)
+		//{
+		//	assert(r < m.size1());
+		//	double sum = 0.0f;
 
-			for(int i=0; i<m.size2(); ++i){
-				sum += (m(r,i));
-			}
-			return sum;
-		}
+		//	for(int i=0; i<m.size2(); ++i){
+		//		sum += (m(r,i));
+		//	}
+		//	return sum;
+		//}
 
-		double sumElementsinColumn(int c, LC::misctools::tBoostMatrix &m)
-		{
-			assert(c < m.size2());
-			double sum = 0.0f;
+		//double sumElementsinColumn(int c, LC::misctools::tBoostMatrix &m)
+		//{
+		//	assert(c < m.size2());
+		//	double sum = 0.0f;
 
-			for(int i=0; i<m.size1(); ++i){
-				sum += (m(i,c));
-			}
-			return sum;
-		}
+		//	for(int i=0; i<m.size1(); ++i){
+		//		sum += (m(i,c));
+		//	}
+		//	return sum;
+		//}
 
-		void printBMatrix(tBoostMatrix &m)
-		{	
-			for(int i=0; i<m.size1(); ++i){				
-				for(int j=0; j<m.size2(); ++j){
-					std::cout << m(i,j) << " ";
-				}
-				std::cout << "\n";
-			}
-			std::cout << "\n";
-		}
+		//void printBMatrix(tBoostMatrix &m)
+		//{	
+		//	for(int i=0; i<m.size1(); ++i){				
+		//		for(int j=0; j<m.size2(); ++j){
+		//			std::cout << m(i,j) << " ";
+		//		}
+		//		std::cout << "\n";
+		//	}
+		//	std::cout << "\n";
+		//}
 
 		void printQMatrix4x4(QMatrix4x4 &m)
 		{	
@@ -152,14 +152,14 @@ namespace LC {
 			std::cout << "\n";
 		}
 
-		void initBMatrix(tBoostMatrix &m)
-		{
-			for(int i=0; i<m.size1(); ++i){
-				for(int j=0; j<m.size2(); ++j){
-					m(i,j) = 0;
-				}
-			}
-		}
+		//void initBMatrix(tBoostMatrix &m)
+		//{
+		//	for(int i=0; i<m.size1(); ++i){
+		//		for(int j=0; j<m.size2(); ++j){
+		//			m(i,j) = 0;
+		//		}
+		//	}
+		//}
 
 
 		//********************

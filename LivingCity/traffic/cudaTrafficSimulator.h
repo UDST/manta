@@ -32,7 +32,7 @@
 
 #include "../misctools/misctools.h"
 
-#include "cudaPMTrafficPersonJob.h"
+#include "cudaPmTrafficPersonJob.h"
 #include "cudaTrafficLaneMap.h"
 #include "cudaTrafficPersonShortestPath.h"
 

@@ -22,7 +22,7 @@
 // USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //---------------------------------------------------------------------------------------------------------------------
 
-#include "cudaPMTrafficPersonJob.h"
+#include "cudaPmTrafficPersonJob.h"
 
 #define ROUTE_DEBUG 0
 #define PERSON_DEBUG 0

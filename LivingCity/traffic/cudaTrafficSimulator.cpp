@@ -22,7 +22,7 @@
 // USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //---------------------------------------------------------------------------------------------------------------------
 
-#include "CUDATrafficSimulator.h"
+#include "cudaTrafficSimulator.h"
 //#include <cuda.h>
 //#include "cudaCODE_trafficSimulator.h"
 //#include "ModelVBO.h"

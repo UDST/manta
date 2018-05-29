@@ -4896,7 +4896,7 @@ void exactinit()
 	int cword;
 #endif /* LINUX */
 
-#ifdef CPU86
+#ifdef WIN32
 #ifdef SINGLE
     // FIXME: cannot be set on OSX
     _control87(_PC_24, _MCW_PC); /* Set FPU control word for single precision. */

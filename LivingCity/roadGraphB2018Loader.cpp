@@ -21,7 +21,7 @@ std::vector<DemandB2018> RoadGraphB2018::demandB2018;
 int RoadGraphB2018::totalNumPeople;
 QHash<int, uint64_t> RoadGraphB2018::indToOsmid;
 
-void updateMinMax2(QVector2D &newPoint, QVector2D &minBox, QVector2D &maxBox) {
+void updateMinMax2(const QVector2D &newPoint, QVector2D &minBox, QVector2D &maxBox) {
   if (newPoint.x() < minBox.x()) {
     minBox.setX(newPoint.x());
   }

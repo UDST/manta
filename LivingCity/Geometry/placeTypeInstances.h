@@ -30,8 +30,8 @@
 
 #include <QVariant>
 #include <QSettings>
-#include <qfile>
-#include <qvector3d>
+#include <QFile>
+#include <QVector3D>
 #include <vector>
 #include <qvariant.h>
 

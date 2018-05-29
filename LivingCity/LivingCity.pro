@@ -7,7 +7,12 @@ OBJECTS_DIR = $$DESTDIR/obj
 unix {
     LIBS += -L/opt/local/lib -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lGLEW
 	# -L/Developer/NVIDIA/CUDA-7.5/lib -lcudart -lcublas
-    INCLUDEPATH += /opt/local/include/GL/ /opt/local/include/
+    INCLUDEPATH += \
+      /usr/include/opencv2/ \
+      /opt/local/include/GL/ \
+      /opt/local/include/ \ 
+      /shared/boost/boost_1_59_0/ \
+      $$PWD/glew/include/GL
 }
 win32{
     # Note: OpenCV uses 2.4.12 since I compile with VS 2013 (vc12)

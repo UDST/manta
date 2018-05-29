@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include <QVector3d>
+#include <QVector3D>
 #include <QDir>
 #include "misctools/misctools.h"
 #include "Geometry/block.h"

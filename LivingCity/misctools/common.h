@@ -25,7 +25,7 @@
 #ifndef COMMON_ALREADY_INCLUDED
 #define COMMON_ALREADY_INCLUDED
 
-#include "glew.h"
+#include "GL/glew.h"
 
 #include <stdio.h>
 #include <math.h>
@@ -53,7 +53,7 @@
 #include <boost/geometry/geometries/register/ring.hpp>
 #include <boost/geometry/multi/multi.hpp>
 #endif
-#if defined(_WIN32) || defined(linux) || defined(__CYGWIN__)
+#if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
 #else
 #include <unistd.h>

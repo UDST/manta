@@ -32,7 +32,7 @@
 #include "imgproc/imgproc.hpp"
 
 #include <QtCore/qmath.h>
-#include <QFile.h>
+#include <qfile.h>
 
 #include "VBOUtil.h"
 

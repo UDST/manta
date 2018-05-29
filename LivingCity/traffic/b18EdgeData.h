@@ -10,9 +10,9 @@
 #define LC_B18_EDGE_DATA_H
 
 
-#define ushort unsigned short
-#define uint unsigned int
-#define uchar unsigned char
+#define ushort uint16_t
+#define uint uint32_t
+#define uchar uint8_t
 
 const int kMaxMapWidthM = 1024;
 const uint kMaskOutEdge = 0x000000;

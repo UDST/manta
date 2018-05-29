@@ -1,4 +1,4 @@
-#include "B18TrafficSimulator.h"
+#include "b18TrafficSimulator.h"
 
 #include "../global.h"
 #include "../LC_GLWidget3D.h"

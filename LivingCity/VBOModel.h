@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include <QVector3d>
+#include <QVector3D>
 #include "qmatrix4x4.h"
 #include <vector>
 

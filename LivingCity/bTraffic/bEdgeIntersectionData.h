@@ -36,9 +36,9 @@
 #define S_PASSINT	0x02
 #define	S_END	0xFF
 
-#define ushort unsigned short
-#define uint unsigned int
-#define uchar unsigned char
+#define ushort uint16_t
+#define uint uint32_t
+#define uchar uint8_t
 
 namespace LC {
 

@@ -24,7 +24,7 @@
 
 #define BOOST_TT_HAS_OPERATOR_HPP_INCLUDED
 
-#include "BCPUTrafficThread.h"
+#include "bCPUTrafficThread.h"
 
 #include "bPMTrafficPerson.h"
 #include "bTrafficLaneMap.h"
@@ -36,8 +36,8 @@
 
 #include "bTrafficConstants.h"
 
-#include <QMutex> //for atomic add
-#include <Qthread>
+#include <qmutex.h> //for atomic add
+#include <qthread.h>
 
 #define DEBUG_TRAFFIC 0
 #define DEBUG_SIMULATOR 0

@@ -35,9 +35,9 @@
 #include "bEdgeIntersectionData.h"
 
 // simulation
-#include <QObject>
-#include <Qthread>
-#include <QMutex>
+#include <qobject.h>
+#include <qthread.h>
+#include <qmutex.h>
 #include "bCPUTrafficThread.h"
 
 namespace LC {
