@@ -1,24 +1,24 @@
 //---------------------------------------------------------------------------------------------------------------------
 // Copyright 2017, 2018 Purdue University, Ignacio Garcia Dorado, Daniel Aliaga
 //
-// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the 
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
 // following conditions are met:
 //
-// 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the 
+// 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the
 // following disclaimer.
 //
-// 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
+// 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
 // following disclaimer in the documentation and/or other materials provided with the distribution.
 //
-// 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote 
+// 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote
 // products derived from this software without specific prior written permission.
 //
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS AS IS AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
-// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS AS IS AND ANY EXPRESS OR IMPLIED WARRANTIES,
+// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 // USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -39,167 +39,180 @@
 #define BOOST_TYPEOF_SILENT
 #endif//BOOST_TYPEOF_SILENT
 
-//#include <glew.h>
-
 #include "common.h"
 #include "global.h"
 
 #include "polygon_3D.h"
 #include "bounding_box.h"
-#include <algorithm> 
+#include <algorithm>
 
 namespace LC {
-	namespace misctools {
+namespace misctools {
 
-		/** 
-			drawCone Funtion to draw a cone
-			d--> axis vector of the cone (direction)
-			a--> apex (end of cone)
-			h--> height
-			r--> radious
-			n--> number of divisions
-		**/
-		void drawCone(const QVector3D &d, const QVector3D &a,
-			const qreal h, const qreal rd, const int n);
+#ifdef B18_RUN_WITH_GUI
+/**
+	drawCone Funtion to draw a cone
+	d--> axis vector of the cone (direction)
+	a--> apex (end of cone)
+	h--> height
+	r--> radious
+	n--> number of divisions
+**/
+void drawCone(const QVector3D &d, const QVector3D &a,
+	      const qreal h, const qreal rd, const int n);
 
-		//typedef boost::numeric::ublas::matrix<double> tBoostMatrix;
+//********************
+// Rendering of geometric primitives
+//********************
 
-		bool loadPolygonsFromFile(QString filename, std::vector<Polygon3D> &polygons);
+/**
+* Render circle parallel to XY plane, centered in X, Y, Z, and with radius r
+**/
+void renderCircle(float x, float y, float z, float radius);
+void renderPolyline(Loop3D &loopIn, bool closed);
+#endif
 
-		bool loadPolygonFromFile(QString filename, Polygon3D &polygon);
+bool loadPolygonsFromFile(QString filename, std::vector<Polygon3D> &polygons);
 
-		//bool isIdxWithinBMatrix(int r, int c, LC::misctools::tBoostMatrix &m);
+bool loadPolygonFromFile(QString filename, Polygon3D &polygon);
 
-		float deg2rad(float deg);
+//bool isIdxWithinBMatrix(int r, int c, LC::misctools::tBoostMatrix &m);
 
-		float rad2deg(float rad);
+float deg2rad(float deg);
 
-		//double sumElementsinRow(int r, LC::misctools::tBoostMatrix &m);
+float rad2deg(float rad);
 
-		//double sumElementsinColumn(int c, LC::misctools::tBoostMatrix &m);
+//double sumElementsinRow(int r, LC::misctools::tBoostMatrix &m);
 
-		//void printBMatrix(LC::misctools::tBoostMatrix &m);
+//double sumElementsinColumn(int c, LC::misctools::tBoostMatrix &m);
 
-		//void initBMatrix(LC::misctools::tBoostMatrix &m);
+//void printBMatrix(LC::misctools::tBoostMatrix &m);
 
-		static const float MTC_FLOAT_TOL = 1e-6f;
+//void initBMatrix(LC::misctools::tBoostMatrix &m);
 
-		static const int MAX_PARCEL_ID = 1000000;
+static const float MTC_FLOAT_TOL = 1e-6f;
 
-		static const float MEAN_BUILDING_FLOOR_HEIGHT = 3.0f;
+static const int MAX_PARCEL_ID = 1000000;
 
-		float getClosestPointInArray(std::vector<QVector3D> &pointArray, QVector3D &point, int &idx);
-		float getClosestPointInArrayXY(std::vector<QVector3D> &pointArray, QVector3D &point, int &idx);
+static const float MEAN_BUILDING_FLOOR_HEIGHT = 3.0f;
 
-		QVector3D calculateNormal(QVector3D& p0,QVector3D& p1,QVector3D& p2);
+float getClosestPointInArray(std::vector<QVector3D> &pointArray,
+                             QVector3D &point, int &idx);
+float getClosestPointInArrayXY(std::vector<QVector3D> &pointArray,
+                               QVector3D &point, int &idx);
 
-		float pointSegmentDistanceXY(QVector3D &a, QVector3D &b, QVector3D &c, QVector3D &closestPtInAB);
+QVector3D calculateNormal(QVector3D &p0, QVector3D &p1, QVector3D &p2);
 
-		float pointSegmentDistanceXY(QVector3D &s0, QVector3D &s1, QVector3D &pt);
+float pointSegmentDistanceXY(QVector3D &a, QVector3D &b, QVector3D &c,
+                             QVector3D &closestPtInAB);
 
-		bool segmentSegmentIntersectXY(QVector2D &a, QVector2D &b, QVector2D &c, QVector2D &d,
-			float *tab, float *tcd, bool segmentOnly, QVector2D &intPoint);
+float pointSegmentDistanceXY(QVector3D &s0, QVector3D &s1, QVector3D &pt);
 
-		bool rayTriangleIntersect(QVector3D &rayPivot, QVector3D &rayDirection,
-			QVector3D &p0, QVector3D &p1, QVector3D &p2);
+bool segmentSegmentIntersectXY(QVector2D &a, QVector2D &b, QVector2D &c,
+                               QVector2D &d,
+                               float *tab, float *tcd, bool segmentOnly, QVector2D &intPoint);
 
-		bool rayTriangleIntersect(QVector3D &rayPivot, QVector3D &rayDirection,
-			QVector3D &p0, QVector3D &p1, QVector3D &p2, QVector3D &intPt);
+bool rayTriangleIntersect(QVector3D &rayPivot, QVector3D &rayDirection,
+                          QVector3D &p0, QVector3D &p1, QVector3D &p2);
 
-		float angleThreePoints(QVector3D &pa, QVector3D &pb, QVector3D &pc);
+bool rayTriangleIntersect(QVector3D &rayPivot, QVector3D &rayDirection,
+                          QVector3D &p0, QVector3D &p1, QVector3D &p2, QVector3D &intPt);
 
-		QVector3D getColorFromIdx(int i);
+float angleThreePoints(QVector3D &pa, QVector3D &pb, QVector3D &pc);
 
-		int planeIntersectWithLine(QVector3D &p1, QVector3D &p2, QVector3D &n,QVector3D &p0, double &t, QVector3D &x);
+QVector3D getColorFromIdx(int i);
 
-		unsigned long mix(unsigned long a, unsigned long b, unsigned long c);
+int planeIntersectWithLine(QVector3D &p1, QVector3D &p2, QVector3D &n,
+                           QVector3D &p0, double &t, QVector3D &x);
 
-		template <class T>
-		T getVectorAverage (std::vector<T> &vec) {
-			if(vec.size() == 0) return 0;
-			T _sum = 0;
-			for(int i=0; i<vec.size(); ++i){
-				_sum += (vec.at(i));
-			}
-			return (_sum / vec.size() );
-		}
+unsigned long mix(unsigned long a, unsigned long b, unsigned long c);
 
-		template <class T>
-		T getVectorVariance (std::vector<T> &vec, T mean) {
-			if(vec.size() == 0) return 0;
-			T _sum = 0;
-			T _dif;
-			for(int i=0; i<vec.size(); ++i){
-				_dif = vec.at(i) - mean;
-				_sum += (_dif*_dif);
-			}
-			return (_sum / vec.size() );
-		}
+template <class T>
+T getVectorAverage(std::vector<T> &vec) {
+  if (vec.size() == 0) {
+    return 0;
+  }
 
-		template <class T>
-		void printVector (std::vector<T> &vec, QTextStream &stream) {			
-			for(int i=0; i<vec.size(); ++i){
-				stream << vec.at(i) << " ";
-			}			
-		}
+  T _sum = 0;
 
-		template <class T>
-		void printVector (std::vector<T> &vec) {			
-			printVector(vec, QTextStream(stdout) );
-		}
+  for (int i = 0; i < vec.size(); ++i) {
+    _sum += (vec.at(i));
+  }
 
-		/**
-		* Convert Colors
-		**/
-		//cs.rit.edu/~ncs/color/t_convert.html
-		// r,g,b values are from 0 to 1
-		// h = [0,360], s = [0,1], v = [0,1]
-		//		if s == 0, then h = -1 (undefined)
-		void HSVtoRGB( float *r, float *g, float *b, float h, float s, float v );
+  return (_sum / vec.size());
+}
 
-		//********************
-		// Random numbers.
-		//********************
-		float genRand();
-		float genRand(float a, float b);
-		float genRandNormal(float mean, float variance);
+template <class T>
+T getVectorVariance(std::vector<T> &vec, T mean) {
+  if (vec.size() == 0) {
+    return 0;
+  }
 
-		//********************
-		// Rendering of geometric primitives
-		//********************
+  T _sum = 0;
+  T _dif;
 
-		/**
-		* Render circle parallel to XY plane, centered in X, Y, Z, and with radius r
-		**/
-		void renderCircle(float x, float y, float z, float radius);
-		void renderPolyline(Loop3D &loopIn, bool closed);
+  for (int i = 0; i < vec.size(); ++i) {
+    _dif = vec.at(i) - mean;
+    _sum += (_dif * _dif);
+  }
+
+  return (_sum / vec.size());
+}
+
+template <class T>
+void printVector(std::vector<T> &vec, QTextStream &stream) {
+  for (int i = 0; i < vec.size(); ++i) {
+    stream << vec.at(i) << " ";
+  }
+}
+
+template <class T>
+void printVector(std::vector<T> &vec) {
+  printVector(vec, QTextStream(stdout));
+}
+
+/**
+* Convert Colors
+**/
+//cs.rit.edu/~ncs/color/t_convert.html
+// r,g,b values are from 0 to 1
+// h = [0,360], s = [0,1], v = [0,1]
+//		if s == 0, then h = -1 (undefined)
+void HSVtoRGB(float *r, float *g, float *b, float h, float s, float v);
+
+//********************
+// Random numbers.
+//********************
+float genRand();
+float genRand(float a, float b);
+float genRandNormal(float mean, float variance);
 
 
-		//*****************
-		// Color maps
-		//*****************
-		//Colormap flags
-		enum { LINEAR_SCL = 0, SQRT_SCL, LOG_SCL };
+//*****************
+// Color maps
+//*****************
+//Colormap flags
+enum { LINEAR_SCL = 0, SQRT_SCL, LOG_SCL };
 
-		void colorMapRainbowGet(float value, float minVal, float maxVal,
-			float &r, float &g, float &b, bool invert, int flag);
-		void colorMapHotGet(float value, float min, float max,
-			float &r, float &g, float &b, bool invert, int flag);
-		void colorMapJetGet(float value, float min, float max,
-			float &r, float &g, float &b, bool invert, int flag);
-		void colorMapColdGet(float value, float min, float max,
-			float &r, float &g, float &b, bool invert, int flag);
-		void colorMapHotPathGet(float value, float min, float max,
-			float &r, float &g, float &b, bool invert, int flag);
-		void colorMapYiGnBuGet(float value, float min, float max,
-			float &r, float &g, float &b, bool invert, int flag);
-		void colorMapTerrainGet(float value, float min, float max,
-			float &r, float &g, float &b, bool isPark, int flag);
-		void colorMapGrayscaleGet(float value, float min, float max,
-			float &r, float &g, float &b, int flag);		
-		void colorMapGoogleMapsGet( float pop, float elev, float &r, float &g, float &b);
+void colorMapRainbowGet(float value, float minVal, float maxVal,
+                        float &r, float &g, float &b, bool invert, int flag);
+void colorMapHotGet(float value, float min, float max,
+                    float &r, float &g, float &b, bool invert, int flag);
+void colorMapJetGet(float value, float min, float max,
+                    float &r, float &g, float &b, bool invert, int flag);
+void colorMapColdGet(float value, float min, float max,
+                     float &r, float &g, float &b, bool invert, int flag);
+void colorMapHotPathGet(float value, float min, float max,
+                        float &r, float &g, float &b, bool invert, int flag);
+void colorMapYiGnBuGet(float value, float min, float max,
+                       float &r, float &g, float &b, bool invert, int flag);
+void colorMapTerrainGet(float value, float min, float max,
+                        float &r, float &g, float &b, bool isPark, int flag);
+void colorMapGrayscaleGet(float value, float min, float max,
+                          float &r, float &g, float &b, int flag);
+void colorMapGoogleMapsGet(float pop, float elev, float &r, float &g, float &b);
 
-	}
+}
 }
 
 
@@ -207,26 +220,36 @@ namespace LC {
 //BOOST_GEOMETRY_REGISTER_POINT_3D_GET_SET (QVector3D, double, boost::geometry::cs::cartesian, x, y, z, setX, setY, setZ)
 
 
-BOOST_GEOMETRY_REGISTER_POINT_2D_GET_SET (Vector3D, double, boost::geometry::cs::cartesian, x, y, setX, setY)
-BOOST_GEOMETRY_REGISTER_RING (LC::misctools::Loop3D)
+BOOST_GEOMETRY_REGISTER_POINT_2D_GET_SET(Vector3D, double,
+    boost::geometry::cs::cartesian, x, y, setX, setY)
+BOOST_GEOMETRY_REGISTER_RING(LC::misctools::Loop3D)
 
 
 
-	// There is currently no registration macro for polygons
-	// and besides that a boost::array<T,N> in a macro would
-	// be very specific, so we show it "by hand":
-	namespace boost { namespace geometry { namespace traits
-{
+// There is currently no registration macro for polygons
+// and besides that a boost::array<T,N> in a macro would
+// be very specific, so we show it "by hand":
+namespace boost {
+namespace geometry {
+namespace traits {
 
-	template<> struct tag<LC::misctools::Polygon3D> { typedef polygon_tag type; };
-	//template<> struct ring_type<LC::misctools::Polygon3D> { typedef LC::misctools::Loop3D type; };
+template<> struct tag<LC::misctools::Polygon3D> {
+  typedef polygon_tag type;
+};
+//template<> struct ring_type<LC::misctools::Polygon3D> { typedef LC::misctools::Loop3D type; };
 
-}}} // namespace boost::geometry::traits
+}
+}
+} // namespace boost::geometry::traits
 
-	namespace boost { namespace geometry {
-	template<> struct ring_type<LC::misctools::Polygon3D> { typedef LC::misctools::Loop3D type; };
+namespace boost {
+namespace geometry {
+template<> struct ring_type<LC::misctools::Polygon3D> {
+  typedef LC::misctools::Loop3D type;
+};
 
-}} // namespace boost::geometry
+}
+} // namespace boost::geometry
 
 
 

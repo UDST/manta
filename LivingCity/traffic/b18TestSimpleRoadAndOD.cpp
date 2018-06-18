@@ -14,49 +14,51 @@
 
 namespace LC {
 
-  namespace {
-    void updateMinMax3(QVector3D &newPoint, QVector3D &minBox, QVector3D &maxBox) {
-      if (newPoint.x() < minBox.x()) {
-        minBox.setX(newPoint.x());
-      }
+namespace {
+void updateMinMax3(QVector3D &newPoint, QVector3D &minBox, QVector3D &maxBox) {
+  if (newPoint.x() < minBox.x()) {
+    minBox.setX(newPoint.x());
+  }
 
-      if (newPoint.y() < minBox.y()) {
-        minBox.setY(newPoint.y());
-      }
+  if (newPoint.y() < minBox.y()) {
+    minBox.setY(newPoint.y());
+  }
 
-      if (newPoint.x() > maxBox.x()) {
-        maxBox.setX(newPoint.x());
-      }
+  if (newPoint.x() > maxBox.x()) {
+    maxBox.setX(newPoint.x());
+  }
 
-      if (newPoint.y() > maxBox.y()) {
-        maxBox.setY(newPoint.y());
-      }
-    }//
+  if (newPoint.y() > maxBox.y()) {
+    maxBox.setY(newPoint.y());
+  }
+}//
 
+struct Demand {
+  uint numP;
+  uint start;
+  uint end;
+  float startTime;
+  float gapBetweenCars;
+  Demand(uint n, uint s, uint e, float st, float gap): numP(n), start(s), end(e),
+    startTime(st), gapBetweenCars(gap) {};
+};
 
+}  // namespace
 
-    struct Demand {
-      uint numP;
-      uint start;
-      uint end;
-      float startTime;
-      float gapBetweenCars;
-      Demand(uint n, uint s, uint e, float st, float gap): numP(n), start(s), end(e), startTime(st), gapBetweenCars(gap) {};
-    };
-
-  }  // namespace
-
-  void B18TestSimpleRoadAndOD::generateTest(RoadGraph &inRoadGraph, std::vector<B18TrafficPerson> &trafficPersonVec,
-  float startTimeH, float endTimeH, LCGLWidget3D *glWidget3D) {
+void B18TestSimpleRoadAndOD::generateTest(RoadGraph &inRoadGraph,
+    std::vector<B18TrafficPerson> &trafficPersonVec,
+    float startTimeH, float endTimeH, LCGLWidget3D *glWidget3D) {
   printf(">>loadTestRoadGraph\n");
   printf(">>Remove\n");
   inRoadGraph.myRoadGraph.clear();
   inRoadGraph.myRoadGraph_BI.clear();
+
   if (glWidget3D != nullptr) {
     glWidget3D->cg.geoZone.blocks.clear();
     glWidget3D->vboRenderManager.removeAllStreetElementName("tree");
     glWidget3D->vboRenderManager.removeAllStreetElementName("streetLamp");
   }
+
   printf("<<Remove\n");
   /////////////////////////////////////////////////
   // CREATE
@@ -125,6 +127,7 @@ namespace LC {
     QString flat_path("data/flat.png");
     glWidget3D->vboRenderManager.vboTerrain.loadTerrain(flat_path);
   }
+
   printf("Resize Terrain %f\n", sqSideSz);
 
   /////////////////////////////////////////
@@ -180,12 +183,7 @@ namespace LC {
   // DEMAND
 
   std::vector<Demand> demand;
-  /*uint numP;
-  uint start;
-  uint end;
-  float startTime;
-  float gapBetweenCars;*/
-  float gap = 15.0f / 3600.0f; 
+  float gap = 15.0f / 3600.0f;
   //demand.push_back(Demand(1, 1, 4, startTimeH, gap)); // super super simple
   demand.push_back(Demand(100, 1, 4, startTimeH, gap));
   demand.push_back(Demand(100, 2, 3, startTimeH, 15.0f / 3600.0f));
@@ -202,7 +200,8 @@ namespace LC {
 
     for (int p = 0; p < numP; p++) {
       float startTimeH = demand[dN].startTime + p * demand[dN].gapBetweenCars;
-      b18OD.randomPerson(p + cNumPeople, trafficPersonVec[p + cNumPeople], vertex[demand[dN].start], vertex[demand[dN].end], startTimeH);
+      b18OD.randomPerson(p + cNumPeople, trafficPersonVec[p + cNumPeople],
+                         vertex[demand[dN].start], vertex[demand[dN].end], startTimeH);
     }
   }//demand
 

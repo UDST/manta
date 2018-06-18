@@ -11,8 +11,10 @@
 #include "b18TrafficOD.h"
 #include "b18TrafficLaneMap.h"
 
+#ifdef B18_RUN_WITH_GUI
 #include "../VBOPeopleJobInfoLayer.h"
 #include "../VBORenderManager.h"
+#endif
 
 #include "b18GridPollution.h"
 
@@ -20,7 +22,6 @@
 namespace LC {
 
 class LCUrbanMain;
-//class VBORenderManager;
 
 class B18TrafficSimulatorRender {
  public:
@@ -66,11 +67,13 @@ class B18TrafficSimulator {
   B18TrafficLaneMap b18TrafficLaneMap;
 
   void simulateInCPU_MultiPass(int numOfPasses,
-    float startTimeH, float endTimeH, bool useJohnsonRouting);
-  void simulateInCPU_Onepass(float startTimeH, float endTimeH, bool useJohnsonRouting);
+                               float startTimeH, float endTimeH, bool useJohnsonRouting);
+  void simulateInCPU_Onepass(float startTimeH, float endTimeH,
+                             bool useJohnsonRouting);
   void simulateInCPU(float startTimeH, float endTimeH);
 
-  void simulateInGPU(int numOfPasses, float startTimeH, float endTimeH, bool useJohnsonRouting);
+  void simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
+                     bool useJohnsonRouting);
 
   // Lanes
   std::vector<uchar> laneMap;
@@ -86,8 +89,10 @@ class B18TrafficSimulator {
   std::vector<B18TrafficPerson> trafficPersonVec;
   std::vector<uint> indexPathVec;
 
+#ifdef B18_RUN_WITH_GUI
   void createRandomPeople(float startTime, float endTime, int numberPeople,
                           PeopleJobInfoLayers &peopleJobInfoLayers);
+#endif
   void createB2018People(float startTime, float endTime, int limitNumPeople = -1);
 
   void resetPeopleJobANDintersections();
@@ -104,10 +109,12 @@ class B18TrafficSimulator {
 
   void calculateAndDisplayTrafficDensity(int numOfPass);
   void savePeopleAndRoutes(int numOfPass);
-
+#ifdef B18_RUN_WITH_GUI
   void render(VBORenderManager &rendManager);
+#endif
   std::vector<B18TrafficSimulatorRender> b18TrafficSimulatorRender;
   std::vector<B18TrafficLightRender> b18TrafficLightRender;
+
   // pollution
   B18GridPollution gridPollution;
 };

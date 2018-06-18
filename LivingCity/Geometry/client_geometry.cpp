@@ -33,8 +33,9 @@
 ************************************************************************************************/
 
 #include "client_geometry.h"
+#ifdef B18_RUN_WITH_GUI
 #include "../PM/pmMain.h"
-
+#endif
 namespace LC {
 
 
@@ -231,6 +232,7 @@ std::cout << "Done!" << std::endl;
 return true;
 }*/
 
+#ifdef B18_RUN_WITH_GUI
 bool ClientGeometry::generateGeometry(int flag) { //, QGLWidget* glWidget){
   bool res;
 
@@ -288,7 +290,7 @@ bool ClientGeometry::generateGeometry(int flag) { //, QGLWidget* glWidget){
 
   return res;
 }
-
+#endif
 
 
 

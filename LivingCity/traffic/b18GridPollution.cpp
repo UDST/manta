@@ -1,9 +1,10 @@
 #include "b18GridPollution.h"
 
 #include "../global.h"
+#ifdef B18_RUN_WITH_GUI
 #include "../LC_GLWidget3D.h"
 #include "../LC_UrbanMain.h"
-
+#endif
 namespace LC {
 
 B18GridPollution::B18GridPollution() {
@@ -22,11 +23,11 @@ void B18GridPollution::initPollution(LCUrbanMain *_clientMain) {
 }//
 
 void B18GridPollution::addValueToGrid(float currTime,
-                                       std::vector<B18TrafficPerson> &trafficPersonVec,
-                                       std::vector<uint> &indexPathVec,
-                                       RoadGraph *simRoadGraph,
-                                       LCUrbanMain *_clientMain,
-                                       std::map<uint, RoadGraph::roadGraphEdgeDesc_BI> &laneMapNumToEdgeDesc) {
+                                      std::vector<B18TrafficPerson> &trafficPersonVec,
+                                      std::vector<uint> &indexPathVec,
+                                      RoadGraph *simRoadGraph,
+                                      LCUrbanMain *_clientMain,
+                                      std::map<uint, RoadGraph::roadGraphEdgeDesc_BI> &laneMapNumToEdgeDesc) {
   if (initialized == false) {
     initPollution(_clientMain);
   }
@@ -126,6 +127,8 @@ void B18GridPollution::addValueToGrid(float currTime,
 }//
 
 void B18GridPollution::renderPollution(int valueToRender) {
+#ifdef B18_RUN_WITH_GUI
+
   if (gridTimeValues.size() <= valueToRender) {// do not do anything
     printf("no render %d\n", gridTimeValues.size());
     return;
@@ -162,6 +165,7 @@ void B18GridPollution::renderPollution(int valueToRender) {
 
   glDisable(GL_BLEND);
   glEnable(GL_CULL_FACE);
+#endif
 }//
 
 void B18GridPollution::saveToFile(QString fileName) {

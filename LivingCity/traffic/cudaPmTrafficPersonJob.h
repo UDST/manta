@@ -36,7 +36,6 @@
 #define LC_CUDA_PM_TRAFFIC_PERSON_H
 
 #include "../misctools/misctools.h"
-#include <QGLWidget>
 
 #include <QtGlobal>
 #include "opencv2/highgui/highgui.hpp"
