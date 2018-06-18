@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "glew.h"
+#include "GL/glew.h"
 #include "VBOUtil.h"
 #include "qfile.h"
 #include <vector>

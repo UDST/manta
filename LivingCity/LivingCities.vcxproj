@@ -451,7 +451,7 @@
       <DebugInformationFormat>
       </DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>D:\boost\boost_1_59_0;.;D:\Qt\5.10.1\msvc2013_64\include\QtCore;D:\Qt\5.10.1\msvc2013_64\include\QtOpenGL;D:\Qt\5.10.1\msvc2013_64\include\QtWidgets;D:\Qt\5.10.1\msvc2013_64\include\QtGui;D:\Qt\5.10.1\msvc2013_64\include;.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);D:\opencv\build\include\opencv;D:\opencv\build\include\opencv2;D:\opencv\build\include;glew\include\GL;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\boost\boost_1_59_0;.;D:\Qt\5.10.1\msvc2013_64\include\QtCore;D:\Qt\5.10.1\msvc2013_64\include\QtOpenGL;D:\Qt\5.10.1\msvc2013_64\include\QtWidgets;D:\Qt\5.10.1\msvc2013_64\include\QtGui;D:\Qt\5.10.1\msvc2013_64\include;.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);D:\opencv\build\include\opencv;D:\opencv\build\include\opencv2;D:\opencv\build\include;glew\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
       <DisableSpecificWarnings>4244</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>

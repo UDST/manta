@@ -36,6 +36,8 @@
 #define S_PASSINT	0x02
 #define	S_END	0xFF
 
+#include "stdint.h"
+
 #define ushort uint16_t
 #define uint uint32_t
 #define uchar uint8_t

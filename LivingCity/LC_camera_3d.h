@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "glew.h"
+#include "GL/glew.h"
 #include "qvector3d.h"
 #include "qvector4d.h"
 #include "qmatrix4x4.h"

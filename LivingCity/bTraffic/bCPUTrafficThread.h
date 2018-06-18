@@ -31,7 +31,7 @@
 
 #define BOOST_TT_HAS_OPERATOR_HPP_INCLUDED
 
-#include "glew.h"
+#include "GL/glew.h"
 #include "qobject.h"
 #include <qthread.h>
 

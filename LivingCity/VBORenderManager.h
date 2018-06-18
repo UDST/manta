@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "glew.h"
+#include "GL/glew.h"
 #include "VBOShader.h"
 #include "VBOUtil.h"
 #include "qmap.h"

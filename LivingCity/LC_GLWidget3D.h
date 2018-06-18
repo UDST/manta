@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "glew.h"
+#include "GL/glew.h"
 #include <QGLWidget>
 #include "VBORenderManager.h"
 #include "LC_camera_3d.h"

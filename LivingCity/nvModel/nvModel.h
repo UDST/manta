@@ -42,7 +42,7 @@
 #include <vector>
 #include <assert.h>
 
-#include <glew.h>
+#include <GL/glew.h>
 #include "nvMath.h"
 
 namespace nv {

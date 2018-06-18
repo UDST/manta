@@ -9,10 +9,17 @@
 #ifndef LC_B18_EDGE_DATA_H
 #define LC_B18_EDGE_DATA_H
 
+#include "stdint.h"
 
+#ifndef ushort
 #define ushort uint16_t
+#endif
+#ifndef uint
 #define uint uint32_t
+#endif
+#ifndef uchar
 #define uchar uint8_t
+#endif
 
 const int kMaxMapWidthM = 1024;
 const uint kMaskOutEdge = 0x000000;
