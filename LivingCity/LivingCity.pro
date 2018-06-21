@@ -154,7 +154,7 @@ unix {
   # Cuda sources
   CUDA_SOURCES += traffic/b18CUDA_trafficSimulator.cu
   # Path to cuda toolkit install
-  CUDA_DIR = /usr/local/cuda-9.2
+  CUDA_DIR = /usr/local/cuda-9.0
   INCLUDEPATH += $$CUDA_DIR/include
   QMAKE_LIBDIR += $$CUDA_DIR/lib64
   # GPU architecture
