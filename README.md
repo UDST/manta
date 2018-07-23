@@ -10,33 +10,37 @@ Traffic Microsimulator with Extensions
  - Qt5 (used verions: 5.9.5 in Ubuntu)
  - qmake (used verions: 3.1 in Ubuntu)
 
+## Installation & Compilation
+
 Once the necessaries dependencies are installed you can use the following lines to make sure the
 correct verions of each one are used:
 ```bash
 export PATH=PATH=/usr/local/cuda-9.0/bin:$PATH
 export LIBRARY_PATH=/usr/local/cuda-9.0/lib64:$LIBRARY_PATH 
+export LD_LIBRARY_PATH=/usr/local/cuda-9.0/lib64:$LD_LIBRARY_PATH 
 ```
-Note that I used `LIBRARY_PATH` instead of `LD_LIBRARY_PATH` because the last one was not working 
-in the server with my user (view this 
-[SO thread](https://stackoverflow.com/questions/13292261/ld-library-path-doesnt-seem-to-work)).
 
-In Linux you can also add those lines at the end of your user's `~/.bashrc` to avoid re-entering
-them on each session.
-
-## Installation
+In Linux you can also add those `export`statements lines at the end of your user's `~/.bashrc` to
+avoid re-entering them on each session.
 
 Clone in your home directory with:
 ```bash
 git clone git@github.com:ual/traffic-simulator-extended.git ~/traffic-simulator-extended && cd traffic-simulator-extended
 ```
+
+If necessary checkout a different branch than master (`maintenance` for instance):
+```bash
+git checkout maintenance
+```
+
 Create `Makefile` and compile with:
 ```bash
 sudo qmake LivingCity/LivingCity.pro && sudo make -j
 ```
 
-If you wish to edit configuration, modify `command_line_options.ini`.
-
 ## Running
+
+If you wish to edit configuration, modify `command_line_options.ini`.
 
 Run with:
 ```bash
