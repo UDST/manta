@@ -10,7 +10,7 @@ unix {
     INCLUDEPATH += \
       /usr/include/opencv2/ \
       /opt/local/include/ \ 
-      /shared/boost/boost_1_59_0/ \
+      /usr/local/boost_1_59_0/ \
       $$PWD/glew/include/
 }
 win32{
