@@ -25,7 +25,7 @@ avoid re-entering them on each session.
 
 Clone in your home directory with:
 ```bash
-git clone git@github.com:ual/traffic-simulator-extended.git ~/traffic-simulator-extended && cd traffic-simulator-extended
+git clone git@github.com:ual/traffic-simulator-extended.git ~/traffic-simulator-extended && cd ~/traffic-simulator-extended
 ```
 
 If necessary checkout a different branch than master (`maintenance` for instance):
