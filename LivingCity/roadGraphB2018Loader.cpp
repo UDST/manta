@@ -82,15 +82,9 @@ void saveSetToFile(QSet<uint64_t> &set, QString &filename) {
 //////////////////////////////////////////////////////////
 
 void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNetwork) {
-
-  printf(">>loadB2018RoadGraph\n");
-  printf(">>Remove\n");
+  printf("Loading road graph...\n");
   inRoadGraph.myRoadGraph.clear();
   inRoadGraph.myRoadGraph_BI.clear();
-  printf("<<Remove\n");
-
-
-  printf("loadB2018RoadGraph\n");
 
   /////////////////////////////////////////////////
   // READ NODES
@@ -137,7 +131,8 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
   const int indexX = headers.indexOf("x");
   const int indexY = headers.indexOf("y");
   const int indexHigh = headers.indexOf("highway");
-  printf("Node Index %d %d %d %d\n", indexOsmid, indexX, indexY, indexHigh);
+
+  printf(">> Node Index %d %d %d %d\n", indexOsmid, indexX, indexY, indexHigh);
 
   while (!stream.atEnd()) {
     line = stream.readLine();
@@ -162,13 +157,12 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
       osmidToBType[osmid] = (!bTypeStringTobType.contains(bType)) ? 0 :
                             bTypeStringTobType[bType];
     }
-
-    //printf("MinBox %f %f MaxBox %f %f--> %f %f\n", minBox.x(), minBox.y(), maxBox.x(), maxBox.y(), maxBox.x() - minBox.x(), maxBox.y() - minBox.y());
   }
 
-  printf(">>Degrees --> MinBox %f %f MaxBox %f %f--> %f %f\n", minBox.x(),
-         minBox.y(), maxBox.x(), maxBox.y(), maxBox.x() - minBox.x(),
-         maxBox.y() - minBox.y());
+  printf(">> Degrees\n\tMinBox: (%f, %f)\n\tMaxBox:(%f, %f)\n\tSize:(%f, %f\)n",
+      minBox.x(), minBox.y(),
+      maxBox.x(), maxBox.y(),
+      maxBox.x() - minBox.x(), maxBox.y() - minBox.y());
 
   // Update coordenades to East-North-Up coordinates;
 
@@ -179,21 +173,18 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
   QHash<uint64_t, QVector2D>::iterator i;
 
   for (i = osmidToVertexLoc.begin(); i != osmidToVertexLoc.end(); ++i) {
-    //printf("1 ANG: %.2f %.2f MinBox %.2f %.2f MaxBox %.2f %.2f--> %.2f %.2f\n", i.value().x(), i.value().y(), minBox.x(), minBox.y(), maxBox.x(), maxBox.y(), maxBox.x() - minBox.x(), maxBox.y() - minBox.y());
-
     osmidToVertexLoc[i.key()] = projLatLonToWorldMercator(i.value().x(),
                                 i.value().y(), /*isDeg=*/true);
     updateMinMax2(osmidToVertexLoc[i.key()], minBox, maxBox);
-    //printf("1 M: %.2f %.2f MinBox %.2f %.2f MaxBox %.2f %.2f--> %.2f %.2f\n", osmidToVertexLoc[i.key()].x(), osmidToVertexLoc[i.key()].y(), minBox.x(), minBox.y(), maxBox.x(), maxBox.y(), maxBox.x() - minBox.x(), maxBox.y() - minBox.y());
-    //exit(-1);
   }
 
-  printf(">>Meters --> MinBox %f %f MaxBox %f %f--> %f %f\n", minBox.x(),
-         minBox.y(), maxBox.x(), maxBox.y(), maxBox.x() - minBox.x(),
-         maxBox.y() - minBox.y());
+  printf(">> Meters\n\tMinBox: (%f, %f)\n\tMaxBox:(%f, %f)\n\tSize:(%f, %f\)n",
+      minBox.x(), minBox.y(),
+      maxBox.x(), maxBox.y(),
+      maxBox.x() - minBox.x(), maxBox.y() - minBox.y());
 
   // TERRAIN
-  printf(">> Process terrain");
+  printf(">> Process terrain\n");
   float scale = 1.0f;
   float sqSideSz = std::max<float>(maxBox.x() - minBox.x(),
                             maxBox.y() - minBox.y()) * scale * 0.5f; // half side
@@ -204,7 +195,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
 
   ///////////////////////////////
   // ADD NODES
-  printf(">> Process nodes");
+  printf(">> Process nodes\n");
   std::vector<RoadGraph::roadGraphVertexDesc> vertex;
   std::vector<RoadGraph::roadGraphVertexDesc> vertex_SIM;
   vertex.resize(osmidToVertexLoc.size());
@@ -240,7 +231,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
     index++;
   }
 
-  printf("\n*** Readed in %d --> #Nod %d\n", timer.elapsed(), index);
+  printf(">> Red in %d mm (#nodes %d)\n", timer.elapsed(), index);
 
   ///////////////////////////////
   // EDGES
@@ -262,10 +253,8 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
   const int indexLanes = headers.indexOf("lanes");
   const int indexSpeedMH = headers.indexOf("speed_mph");
 
-  printf("Link Index %d %d %d %d %d %d\n", indexId, indexU, indexV, indexLen,
-         indexLanes, indexSpeedMH);
-  qDebug() << sizeof(long);
-  qDebug() << sizeof(uint64_t);
+  printf(">> Link Index %d %d %d %d %d %d\n", indexId, indexU, indexV, indexLen, indexLanes,
+      indexSpeedMH);
   QHash<int, std::pair<uint, uint>> dynEdgToEdge;
   std::pair<RoadGraph::roadGraphEdgeDesc_BI, bool> e0_pair;
   std::pair<RoadGraph::roadGraphEdgeDesc, bool> e0_pair_SIMP;
@@ -304,9 +293,6 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
       continue;
     }
 
-    //qDebug() << "line" << line;
-    //qDebug() << fields;
-    //qDebug() << "start" << start << " end " << end;
     float length = fields[indexLen].toFloat();
     int numLanes = std::max<int>(fields[indexLanes].toInt(),1); // at least one
     float speedMS = std::max<float>(0.01f, fields[indexSpeedMH].toFloat() * 0.44704f); //m/h --> m/sec // force to have a speed
@@ -337,10 +323,6 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
     inRoadGraph.myRoadGraph_BI[e0_pair.first].faci = ind;
     // add to edge
     dynEdgToEdge[ind] = std::make_pair(dynIndToInd[start], dynIndToInd[end]);
-
-    /*if (++numEdges > 1000) {
-      break;
-    }*/
   }
 
   // Save no available nodes to file.
@@ -348,7 +330,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
     QString filename = "noAvailableNodes.txt";
     saveSetToFile(noAvailableNodes, filename);
   }
-  printf("\n*** Readed in %d --> #Edges %d\n", timer.elapsed(), dynEdgToEdge.size());
+  printf(">> Red in %d mm (#edges %d)\n", timer.elapsed(), dynEdgToEdge.size());
 
   ///////////////////////////////
   // DEMAND
@@ -366,7 +348,6 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
   const int origIndex = headers.indexOf("orig");
   const int destIndex = headers.indexOf("dest");
 
-  printf("Demand Index %d %d %d\n", numPeopleIndex, origIndex, destIndex);
   QSet<uint64_t> noAvailableNodesDemand;
   const bool saveNoAvailableNodesDemand = true;
   totalNumPeople = 0;
@@ -392,8 +373,6 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
           noAvailableNodesDemand.insert(end);
         }
       }
-      //qDebug() << "NO CONTAINS: start" << start << " end " << end;
-      //exit(-1);
       continue;
     }
     int numPeople = fields[numPeopleIndex].toInt();
@@ -407,13 +386,10 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
     saveSetToFile(noAvailableNodesDemand, filename);
   }
 
-  ///////////////////////////////////////
-
-  printf("\n*** Readed in %d\n", timer.elapsed());
-  printf("       --> #Nod %d\n", index);
-  printf("       --> #Edg %d -> Total length %2.2f\n", dynEdgToEdge.size(), totalLeng);
-  printf("       --> #Peo %d\n", totalNumPeople);
-  //printf("\nNodes readed in %d Nod %d Cen %d Link %d\n", timer.elapsed(), osmidToVertexLoc.size(), centroids.size(), links.size());
+  printf(">> Red in %d\n\t#nodes: %d\n\t#edges: %d (total length: %2.2f)\n\t#people%d\n",
+      timer.elapsed(), index, dynEdgToEdge.size(), totalLeng, totalNumPeople);
 }
 
-}  // namespace LC
+
+}  // Closing namespace LC
+

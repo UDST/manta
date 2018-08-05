@@ -19,13 +19,10 @@ int main(int argc, char *argv[]) {
   bool useGUI = settings.value("GUI", true).toBool();
 
   if (useGUI == true) {
-    qDebug() << "App path: " << a.applicationDirPath();
     LC::LCUrbanMain w;
     w.showMaximized();
     return a.exec();
   } else {
-    qDebug() << "App path: " << a.applicationDirPath();
-
     LC::B18CommandLineVersion cl;
     cl.runB18Simulation();
     printf(">>Simulation Ended\n");
@@ -35,8 +32,6 @@ int main(int argc, char *argv[]) {
   QCoreApplication a(argc, argv);
   QSettings settings(QCoreApplication::applicationDirPath() +
                      "/command_line_options.ini", QSettings::IniFormat);
-
-  qDebug() << "App path: " << a.applicationDirPath();
 
   LC::B18CommandLineVersion cl;
   cl.runB18Simulation();

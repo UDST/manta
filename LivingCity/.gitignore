@@ -1,3 +1,7 @@
 build/
 obj/
 x64/
+
+# Vim swap files
+*.swp
+

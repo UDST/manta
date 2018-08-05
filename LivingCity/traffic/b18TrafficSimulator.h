@@ -46,7 +46,7 @@ class B18TrafficLightRender {
 class B18TrafficSimulator {
 
  public:
-  B18TrafficSimulator();
+  B18TrafficSimulator(float deltaTime, RoadGraph *geoRoadGraph, LCUrbanMain *urbanMain = nullptr);
   ~B18TrafficSimulator();
 
   // init data
@@ -56,11 +56,6 @@ class B18TrafficSimulator {
   float deltaTime;
   int threadNumber;
   float avgTravelTime;
-
-
-  bool initialized;
-  void initSimulator(float deltaTime, RoadGraph *geoRoadGraph,
-                     LCUrbanMain *urbanMain = nullptr);
 
   //PM
   B18TrafficOD b18TrafficOD;

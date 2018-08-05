@@ -36,38 +36,20 @@ const float s_0 = 1.5f * 4.12f; // ALWAYS USED
 const float intersectionClearance = 7.8f;
 const bool calculatePollution = true;
 
-B18TrafficSimulator::B18TrafficSimulator() {
-  initialized = false;
-  simRoadGraph = 0;
-  threadNumber = 0;
-}//
+B18TrafficSimulator::B18TrafficSimulator(float _deltaTime, RoadGraph *originalRoadGraph,
+    LCUrbanMain *urbanMain) : deltaTime(_deltaTime) {
+  simRoadGraph = new RoadGraph(*originalRoadGraph);
+  clientMain = urbanMain;
+}
 
 B18TrafficSimulator::~B18TrafficSimulator() {
-}//
-
-void B18TrafficSimulator::initSimulator(
-  float _deltaTime,
-  RoadGraph *originalRoadGraph,
-  LCUrbanMain *urbanMain) {
-  deltaTime = _deltaTime;
-
-  if (simRoadGraph == 0) { //!!!!! NOT COPY IF IT IS THERE
-    simRoadGraph = new RoadGraph(*originalRoadGraph);
-  }
-
-  clientMain = urbanMain;
-  initialized = true;
+  delete simRoadGraph;
 }
 
 #ifdef B18_RUN_WITH_GUI
 void B18TrafficSimulator::createRandomPeople(float startTime, float endTime,
     int numberPeople,
     PeopleJobInfoLayers &peopleJobInfoLayers) {
-  if (initialized == false) {
-    printf("Error: initSimulator was not called\n");
-    return;
-  }
-
   b18TrafficOD.resetTrafficPersonJob(trafficPersonVec);
   b18TrafficOD.createRandomPeople(numberPeople, startTime, endTime,
                                   trafficPersonVec,
@@ -77,11 +59,6 @@ void B18TrafficSimulator::createRandomPeople(float startTime, float endTime,
 
 void B18TrafficSimulator::createB2018People(float startTime, float endTime,
     int limitNumPeople) {
-  if (initialized == false) {
-    printf("Error: initSimulator was not called\n");
-    return;
-  }
-
   b18TrafficOD.resetTrafficPersonJob(trafficPersonVec);
   b18TrafficOD.loadB18TrafficPeople(startTime, endTime, trafficPersonVec,
                                     simRoadGraph->myRoadGraph_BI, limitNumPeople);
@@ -90,32 +67,17 @@ void B18TrafficSimulator::createB2018People(float startTime, float endTime,
 
 
 void B18TrafficSimulator::resetPeopleJobANDintersections() {
-  if (initialized == false) {
-    printf("Error: initSimulator was not called\n");
-    return;
-  }
-
   b18TrafficOD.resetTrafficPersonJob(trafficPersonVec);
   b18TrafficLaneMap.resetIntersections(intersections, trafficLights);
 }//
 
 
 void B18TrafficSimulator::createLaneMap() { //
-  if (initialized == false) {
-    printf("Error: initSimulator was not called\n");
-    return;
-  }
-
-  b18TrafficLaneMap.createLaneMap(*simRoadGraph, laneMap, edgesData,
-                                  intersections, trafficLights, laneMapNumToEdgeDesc, edgeDescToLaneMapNum);
+  b18TrafficLaneMap.createLaneMap(*simRoadGraph, laneMap, edgesData, intersections, trafficLights,
+      laneMapNumToEdgeDesc, edgeDescToLaneMapNum);
 }//
 
 void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
-  if (initialized == false) {
-    printf("Error (generateCarPaths): initSimulator was not called\n");
-    return;
-  }
-
   if (useJohnsonRouting) {
     printf("***generateCarPaths Start generateRoute Johnson\n");
     B18TrafficJohnson::generateRoutes(simRoadGraph->myRoadGraph_BI,
@@ -2278,11 +2240,6 @@ void B18TrafficSimulator::render(VBORenderManager &rendManager) {
 #endif
 
 void B18TrafficSimulator::savePeopleAndRoutes(int numOfPass) {
-  if (initialized == false) {
-    printf("Error savePeopleAndRoutes: initSimulator was not called\n");
-    return;
-  }
-
   const bool saveToFile = true;
 
   if (saveToFile) {
@@ -2379,11 +2336,6 @@ void B18TrafficSimulator::savePeopleAndRoutes(int numOfPass) {
 }//
 
 void B18TrafficSimulator::calculateAndDisplayTrafficDensity(int numOfPass) {
-  if (initialized == false) {
-    printf("Error calculateAndDisplayTrafficDensity: initSimulator was not called\n");
-    return;
-  }
-
   int tNumLanes = trafficLights.size();
   const float numStepsTogether = 12;
   int numSampling = accSpeedPerLinePerTimeInterval.size() / tNumLanes;

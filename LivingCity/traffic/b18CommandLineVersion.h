@@ -14,13 +14,9 @@
 
 namespace LC {
 
-  class B18CommandLineVersion{
+class B18CommandLineVersion{
   public:
-    ClientGeometry cg;
-    B18TrafficSimulator b18TrafficSimulator;
-
     void runB18Simulation();
-
-  };
+};
 
 }  // namespace LC

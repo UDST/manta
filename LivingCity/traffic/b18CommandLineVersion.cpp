@@ -9,8 +9,6 @@
 
 namespace LC {
 void B18CommandLineVersion::runB18Simulation() {
-  printf("<<+ runB18Simulation\n");
-
   QSettings settings(QCoreApplication::applicationDirPath() +
                      "/command_line_options.ini",
                      QSettings::IniFormat);
@@ -32,27 +30,29 @@ void B18CommandLineVersion::runB18Simulation() {
   float startSimulationH = startDemandH;
   float endSimulationH = endDemandH;
 
+  ClientGeometry cg;
+
+  /*
 #ifdef B18_RUN_WITH_GUI
 
   if (useBasicTest) {
     // SIMPLE TEST: Create a basic road and basic OD to run a simulation.
     printf("useBasicTest == true");
     B18TestSimpleRoadAndOD::generateTest(cg.roadGraph,
-                                         b18TrafficSimulator.trafficPersonVec, startDemandH, endDemandH, nullptr);
+        b18TrafficSimulator.trafficPersonVec, startDemandH, endDemandH, nullptr);
     b18TrafficSimulator.initSimulator(deltaTime, &cg.roadGraph);
   } else
 #endif
-  {
-    // B18 CODE: Normal Simulation
-    printf("1. Load RoadGraph\n");
-    RoadGraphB2018::loadB2018RoadGraph(cg.roadGraph, useFullB18Network);
+  */
+  // B18 CODE: Normal Simulation
+  printf("1. Load RoadGraph\n");
+  RoadGraphB2018::loadB2018RoadGraph(cg.roadGraph, useFullB18Network);
 
-    printf("2. Init Simulator\n");
-    b18TrafficSimulator.initSimulator(deltaTime, &cg.roadGraph);
+  printf("2. Init\n");
+  B18TrafficSimulator b18TrafficSimulator(deltaTime, &cg.roadGraph);
 
-    printf("3. Create people\n");
-    b18TrafficSimulator.createB2018People(startDemandH, endDemandH, limitNumPeople);
-  }
+  printf("3. Create people\n");
+  b18TrafficSimulator.createB2018People(startDemandH, endDemandH, limitNumPeople);
 
   printf("4. Simulate\n");
 
