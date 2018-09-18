@@ -15,9 +15,7 @@
 
 int main(int argc, char *argv[]) {
 
-  Benchmarker mainBench("main function", 0);
-
-  mainBench.begin();
+  mainBench.startMeasuring();
 
 #ifdef B18_RUN_WITH_GUI
   QApplication a(argc, argv);
@@ -45,5 +43,7 @@ int main(int argc, char *argv[]) {
   printf(">>Simulation Ended\n");
 #endif
 
-  mainBench.end();
+  mainBench.stopAndEndBenchmark();
+  intersectionBench.endBenchmark();
+  peopleBench.endBenchmark();
 }

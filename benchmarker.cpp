@@ -6,37 +6,51 @@ int Benchmarker::amountOpened = 0;
 
 Benchmarker::Benchmarker(const std::string desc, int depth) :
     on(false),
+    elapsed(Duration::zero()),
     description(desc),
     margin(depth * 4, ' ')
 {
     if (amountOpened == 0) outStream.open("timestamps.info");
-
     ++amountOpened;
 }
 
-void Benchmarker::begin()
+void Benchmarker::startMeasuring()
 {
     if (on) return;
     on = true;
 
-    beginning = std::chrono::steady_clock::now();
-    outStream << margin << " >> Started: " << description << std::endl;
+    lastTimestamp = std::chrono::high_resolution_clock::now(); 
 
     return;
 }
 
-void Benchmarker::end()
+void Benchmarker::stopMeasuring()
 {
     if (!on) return;
-    Timestamp end = std::chrono::steady_clock::now();
-    auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - beginning);
+
+    elapsed += std::chrono::duration_cast<Duration>(
+            std::chrono::high_resolution_clock::now() - lastTimestamp);
+
+    on = false;
+}
+
+void Benchmarker::endBenchmark()
+{
     outStream << margin
         << " << Ended: " << description
-        << " (elapsed time: " << elapsedTime.count() <<")"
+        << " (elapsed time: " << elapsed.count() <<")"
         << std::endl;
 
     --amountOpened;
     if (amountOpened == 0) outStream.close();
-    on = false;
 }
 
+void Benchmarker::stopAndEndBenchmark()
+{
+    stopMeasuring();
+    endBenchmark();
+}
+
+Benchmarker mainBench("main function", 0);
+Benchmarker intersectionBench("Intersections total time", 0);
+Benchmarker peopleBench("People total time", 0);

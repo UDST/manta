@@ -104,9 +104,9 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH,
   Benchmarker passesBench("Simulation passes", 2);
   Benchmarker finishCudaBench("Cuda finish", 2);
    
-  laneMapBench.begin();
+  laneMapBench.startMeasuring();
   createLaneMap();
-  laneMapBench.end();
+  laneMapBench.stopAndEndBenchmark();
 
   QTime pathTimer;
   pathTimer.start();
@@ -114,14 +114,14 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH,
   int weigthMode;
   float peoplePathSampling[] = {1.0f, 1.0f, 0.5f, 0.25f, 0.12f, 0.67f};
 
-  passesBench.begin();
+  passesBench.startMeasuring();
   for (int nP = 0; nP < numOfPasses; nP++) {
     Benchmarker roadGenerationBench("Road generation", 3);
     Benchmarker initCudaBench("Init Cuda step", 3);
     Benchmarker simulateBench("Simulation step", 3);
     Benchmarker getDataBench("Data retrieve step", 3);
 
-    roadGenerationBench.begin();
+    roadGenerationBench.startMeasuring();
     weigthMode = 1;
     if (nP == 0) {
       weigthMode = 0; //first time run normal weights
@@ -139,20 +139,20 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH,
                                              peoplePathSampling[nP]);
     }
 
-    roadGenerationBench.end();
+    roadGenerationBench.stopAndEndBenchmark();
 
 
     /////////////////////////////////////
     // 1. Init Cuda
-    initCudaBench.begin();
+    initCudaBench.startMeasuring();
     bool fistInitialization = (nP == 0);
     b18InitCUDA(fistInitialization, trafficPersonVec, indexPathVec, edgesData,
                 laneMap, trafficLights, intersections, startTimeH, endTimeH,
                 accSpeedPerLinePerTimeInterval, numVehPerLinePerTimeInterval);
 
-    initCudaBench.end();
+    initCudaBench.stopAndEndBenchmark();
 
-    simulateBench.begin();
+    simulateBench.startMeasuring();
     float startTime = startTimeH * 3600.0f; //7.0f
     float endTime = endTimeH * 3600.0f; //8.0f//10.0f
 
@@ -225,9 +225,9 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH,
 #endif
       currentTime += deltaTime;
     }
-    simulateBench.end();
+    simulateBench.stopAndEndBenchmark();
 
-    getDataBench.begin();
+    getDataBench.startMeasuring();
 
     // 3. Finish
     b18GetDataCUDA(trafficPersonVec);
@@ -252,11 +252,11 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH,
     calculateAndDisplayTrafficDensity(nP);
     savePeopleAndRoutes(nP);
     printf("  <<End One Step %d TIME: %d ms.\n", nP, timer.elapsed());
-    getDataBench.end();
+    getDataBench.stopAndEndBenchmark();
   }
 
-  passesBench.end();
-  finishCudaBench.begin();
+  passesBench.stopAndEndBenchmark();
+  finishCudaBench.startMeasuring();
   b18FinishCUDA();
   G::global()["cuda_render_displaylist_staticRoadsBuildings"] = 3;//kill display list
 
@@ -267,7 +267,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH,
   }
 
 #endif
-  finishCudaBench.end();
+  finishCudaBench.stopAndEndBenchmark();
 }//
 
 

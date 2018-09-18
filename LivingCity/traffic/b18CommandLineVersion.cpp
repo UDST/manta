@@ -51,20 +51,20 @@ void B18CommandLineVersion::runB18Simulation() {
   Benchmarker peopleBench("People creation task", 1);
   Benchmarker simulationBench("Simulation task", 1);
 
-  graphLoadBench.begin();
+  graphLoadBench.startMeasuring();
   ClientGeometry cg;
   RoadGraphB2018::loadB2018RoadGraph(cg.roadGraph, useFullB18Network);
-  graphLoadBench.end();
+  graphLoadBench.sto();
 
-  initBench.begin();
+  initBench.startMeasuring();
   B18TrafficSimulator b18TrafficSimulator(deltaTime, &cg.roadGraph);
-  initBench.end();
+  initBench.sto();
 
-  peopleBench.begin();
+  peopleBench.startMeasuring();
   b18TrafficSimulator.createB2018People(startDemandH, endDemandH, limitNumPeople);
-  peopleBench.end();
+  peopleBench.st();
 
-  simulationBench.begin();
+  simulationBench.startMeasuring();
   if (useCPU) {
     b18TrafficSimulator.simulateInCPU_MultiPass(numOfPasses, startSimulationH,
         endSimulationH, useJohnsonRouting);
@@ -72,7 +72,7 @@ void B18CommandLineVersion::runB18Simulation() {
     b18TrafficSimulator.simulateInGPU(numOfPasses, startSimulationH, endSimulationH,
                                       useJohnsonRouting);
   }
-  simulationBench.end();
+  simulationBench.st();
 }
 
 

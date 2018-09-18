@@ -6,25 +6,34 @@
 #include <iostream>
 #include <fstream>
 
-using Timestamp = std::chrono::time_point<std::chrono::steady_clock>;
+using Timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>;
+using Duration = std::chrono::nanoseconds;
 
 
 class Benchmarker {
     public:
         Benchmarker(const std::string desc, int depth);
 
-        void begin();
-        void end();
+        void startMeasuring();
+        void stopMeasuring();
+        void endBenchmark();
+        void stopAndEndBenchmark();
 
     private:
         bool on;
-        Timestamp beginning;
+        Timestamp lastTimestamp;
+        Duration elapsed;
         std::string description;
         std::string margin;
 
         static std::ofstream outStream;
         static int amountOpened;
 };
+
+
+extern Benchmarker mainBench;
+extern Benchmarker intersectionBench;
+extern Benchmarker peopleBench;
 
 
 #endif  // BENCHMARKER__H

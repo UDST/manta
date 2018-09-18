@@ -7,6 +7,9 @@
 #include "b18TrafficPerson.h"
 #include "b18EdgeData.h"
 #include <vector>
+#include <iostream>
+
+#include "../../benchmarker.h"
 
 #ifndef ushort
 #define ushort uint16_t
@@ -1241,6 +1244,7 @@ void b18ResetPeopleLanesCUDA(uint numPeople) {
 
 void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersections) {
 
+  intersectionBench.startMeasuring();
 	////////////////////////////////////////////////////////////
 	// 1. CHANGE MAP: set map to use and clean the other
 	if(readFirstMapC==true){
@@ -1257,10 +1261,14 @@ void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersect
   // Simulate intersections.
   kernel_intersectionOneSimulation << < ceil(numIntersections / 512.0f), 512 >> > (numIntersections, currentTime, intersections_d, trafficLights_d);
   gpuErrchk(cudaPeekAtLastError());
+
+  intersectionBench.stopMeasuring();
   
+  peopleBench.startMeasuring();
   // Simulate people.
   kernel_trafficSimulation <<< ceil(numPeople / 384.0f), 384>> > (numPeople, currentTime, mapToReadShift, mapToWriteShift, trafficPersonVec_d, indexPathVec_d, edgesData_d, laneMap_d, intersections_d, trafficLights_d);
   gpuErrchk(cudaPeekAtLastError());
+  peopleBench.stopMeasuring();
 
   // Sample if necessary.
   if ((((float) ((int) currentTime)) == (currentTime)) &&
