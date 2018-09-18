@@ -144,7 +144,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH,
 
     /////////////////////////////////////
     // 1. Init Cuda
-    initCudaBench.end();
+    initCudaBench.begin();
     bool fistInitialization = (nP == 0);
     b18InitCUDA(fistInitialization, trafficPersonVec, indexPathVec, edgesData,
                 laneMap, trafficLights, intersections, startTimeH, endTimeH,
