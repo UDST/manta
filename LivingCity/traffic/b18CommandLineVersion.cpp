@@ -1,5 +1,7 @@
 #include "b18CommandLineVersion.h"
 
+#include "benchmarker.h"
+
 #include "roadGraphB2018Loader.h"
 #include "qcoreapplication.h"
 
@@ -30,7 +32,6 @@ void B18CommandLineVersion::runB18Simulation() {
   float startSimulationH = startDemandH;
   float endSimulationH = endDemandH;
 
-  ClientGeometry cg;
 
   /*
 #ifdef B18_RUN_WITH_GUI
@@ -45,17 +46,25 @@ void B18CommandLineVersion::runB18Simulation() {
 #endif
   */
   // B18 CODE: Normal Simulation
-  printf("1. Load RoadGraph\n");
+  Benchmarker graphLoadBench("Load graph task", 1);
+  Benchmarker initBench("Initialize traffic simulator task", 1);
+  Benchmarker peopleBench("People creation task", 1);
+  Benchmarker simulationBench("Simulation task", 1);
+
+  graphLoadBench.begin();
+  ClientGeometry cg;
   RoadGraphB2018::loadB2018RoadGraph(cg.roadGraph, useFullB18Network);
+  graphLoadBench.end();
 
-  printf("2. Init\n");
+  initBench.begin();
   B18TrafficSimulator b18TrafficSimulator(deltaTime, &cg.roadGraph);
+  initBench.end();
 
-  printf("3. Create people\n");
+  peopleBench.begin();
   b18TrafficSimulator.createB2018People(startDemandH, endDemandH, limitNumPeople);
+  peopleBench.end();
 
-  printf("4. Simulate\n");
-
+  simulationBench.begin();
   if (useCPU) {
     b18TrafficSimulator.simulateInCPU_MultiPass(numOfPasses, startSimulationH,
         endSimulationH, useJohnsonRouting);
@@ -63,8 +72,7 @@ void B18CommandLineVersion::runB18Simulation() {
     b18TrafficSimulator.simulateInGPU(numOfPasses, startSimulationH, endSimulationH,
                                       useJohnsonRouting);
   }
-
-  printf(">>++ runB18Simulation\n");
+  simulationBench.end();
 }
 
 

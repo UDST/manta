@@ -62,6 +62,7 @@ HEADERS += \
     traffic/b18TrafficOD.h \
     traffic/b18TrafficPerson.h \
     traffic/b18TrafficSimulator.h \
+    benchmarker.h
 
 SOURCES += \
     Geometry/block.cpp \
@@ -87,6 +88,7 @@ SOURCES += \
     traffic/b18TrafficLaneMap.cpp \
     traffic/b18TrafficOD.cpp \
     traffic/b18TrafficSimulator.cpp \
+    benchmarker.cpp
 
 OTHER_FILES += \
         traffic/b18CUDA_trafficSimulator.cu \

@@ -1,5 +1,7 @@
 #define BOOST_TT_HAS_OPERATOR_HPP_INCLUDED
 
+#include "benchmarker.h"
+
 #ifdef B18_RUN_WITH_GUI
 #include <QApplication>
 #include "LC_UrbanMain.h"
@@ -12,6 +14,11 @@
 // NOTE: Check command_line_options for default options.
 
 int main(int argc, char *argv[]) {
+
+  Benchmarker mainBench("main function", 0);
+
+  mainBench.begin();
+
 #ifdef B18_RUN_WITH_GUI
   QApplication a(argc, argv);
   QSettings settings(QApplication::applicationDirPath() +
@@ -38,4 +45,5 @@ int main(int argc, char *argv[]) {
   printf(">>Simulation Ended\n");
 #endif
 
+  mainBench.end();
 }
