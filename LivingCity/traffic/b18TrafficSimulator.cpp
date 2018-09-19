@@ -120,6 +120,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH,
     Benchmarker initCudaBench("Init Cuda step", 3);
     Benchmarker simulateBench("Simulation step", 3);
     Benchmarker getDataBench("Data retrieve step", 3);
+    Benchmarker shortestPathBench("Shortest path step", 3);
 
     roadGenerationBench.startMeasuring();
     weigthMode = 1;
@@ -128,10 +129,12 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH,
     }
 
     if (useJohnsonRouting) {
+      shortestPathBench.startMeasuring();	    
       printf("***Start generateRoute Johnson\n");
       B18TrafficJohnson::generateRoutes(simRoadGraph->myRoadGraph_BI,
                                         trafficPersonVec, indexPathVec, edgeDescToLaneMapNum, weigthMode,
                                         peoplePathSampling[nP]);
+      shortestPathBench.stopAndEndBenchmark();
     } else {
       printf("***Start generateRoutesMulti Disktra\n");
       B18TrafficDijstra::generateRoutesMulti(simRoadGraph->myRoadGraph_BI,
