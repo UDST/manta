@@ -84,6 +84,8 @@ typedef default_assignment_associative_property_map<PredecessorMap>
 PredecessorMapInternal;
 
 void BTrafficDijstra::calculateOneRoute(
+  Benchmarker SSSPBench("Single source shortest path", 3);
+  SSSPBench.startMeasuring();
   LC::RoadGraph::roadBGLGraph_BI &roadGraph,
   int p,
   BTrafficPeople &people,
@@ -219,6 +221,7 @@ void BTrafficDijstra::calculateOneRoute(
   }
 
   people.nextEdge.push_back(0xFFFF);//ensure the perso
+  SSSPBench.stopAndEndBenchmark();
 }
 
 ////////////////

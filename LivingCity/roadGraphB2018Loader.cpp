@@ -97,9 +97,9 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
     edgeFileName = "berkeley_2018/full_edges_speed_capacity.csv";
     odFilename = "berkeley_2018/od.csv";
   } else {
-    nodesFileName = "berkeley_2018/tertiary_bay_area_strongly_nodes.csv";
-    edgeFileName = "berkeley_2018/tertiary_edges_speed_capacity.csv";
-    odFilename = "berkeley_2018/tertiary_od.csv";
+    nodesFileName = "berkeley_2018/partial_bay_area/partial_bay_area_tertiary_strongly_nodes.csv";
+    edgeFileName = "berkeley_2018/partial_bay_area/partial_edges_speed_capacity.csv";
+    odFilename = "berkeley_2018/partial_bay_area/partial_od.csv";
   }
 
   QFile baseFile(nodesFileName); // Create a file handle for the file named
