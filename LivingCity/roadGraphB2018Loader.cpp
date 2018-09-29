@@ -82,7 +82,6 @@ void saveSetToFile(QSet<uint64_t> &set, QString &filename) {
 //////////////////////////////////////////////////////////
 
 void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNetwork) {
-  printf("Loading road graph...\n");
   inRoadGraph.myRoadGraph.clear();
   inRoadGraph.myRoadGraph_BI.clear();
 
@@ -91,15 +90,15 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
 
   QString nodesFileName;
   QString edgeFileName;
-  QString odFilename;
+  QString odFileName;
   if (loadFullNetwork) {
     nodesFileName = "berkeley_2018/bay_area_full_strongly_nodes.csv";
     edgeFileName = "berkeley_2018/full_edges_speed_capacity.csv";
-    odFilename = "berkeley_2018/od.csv";
+    odFileName = "berkeley_2018/od.csv";
   } else {
     nodesFileName = "berkeley_2018/partial_bay_area/partial_bay_area_tertiary_strongly_nodes.csv";
     edgeFileName = "berkeley_2018/partial_bay_area/partial_edges_speed_capacity.csv";
-    odFilename = "berkeley_2018/partial_bay_area/partial_od.csv";
+    odFileName = "berkeley_2018/partial_bay_area/partial_od.csv";
   }
 
   QFile baseFile(nodesFileName); // Create a file handle for the file named
@@ -107,7 +106,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
   QString line;
 
   if (!baseFile.open(QIODevice::ReadOnly | QIODevice::Text)) { // Open the file
-    printf("Can't open file '%s'\n", nodesFileName.toUtf8().constData());
+    std::cerr << "[Error] Can't open file " << nodesFileName.toUtf8().constData() << std::endl;
     return;
   }
 
@@ -131,8 +130,6 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
   const int indexX = headers.indexOf("x");
   const int indexY = headers.indexOf("y");
   const int indexHigh = headers.indexOf("highway");
-
-  printf(">> Node Index %d %d %d %d\n", indexOsmid, indexX, indexY, indexHigh);
 
   while (!stream.atEnd()) {
     line = stream.readLine();
@@ -159,13 +156,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
     }
   }
 
-  printf(">> Degrees\n\tMinBox: (%f, %f)\n\tMaxBox:(%f, %f)\n\tSize:(%f, %f\)n",
-      minBox.x(), minBox.y(),
-      maxBox.x(), maxBox.y(),
-      maxBox.x() - minBox.x(), maxBox.y() - minBox.y());
-
   // Update coordenades to East-North-Up coordinates;
-
   const float lat0 = (maxBox.x() + minBox.x()) * 0.5f;
   const float lon0 = (maxBox.y() + minBox.y()) * 0.5f;
   minBox = QVector2D(FLT_MAX, FLT_MAX);
@@ -178,13 +169,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
     updateMinMax2(osmidToVertexLoc[i.key()], minBox, maxBox);
   }
 
-  printf(">> Meters\n\tMinBox: (%f, %f)\n\tMaxBox:(%f, %f)\n\tSize:(%f, %f\)n",
-      minBox.x(), minBox.y(),
-      maxBox.x(), maxBox.y(),
-      maxBox.x() - minBox.x(), maxBox.y() - minBox.y());
-
   // TERRAIN
-  printf(">> Process terrain\n");
   float scale = 1.0f;
   float sqSideSz = std::max<float>(maxBox.x() - minBox.x(),
                             maxBox.y() - minBox.y()) * scale * 0.5f; // half side
@@ -195,7 +180,6 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
 
   ///////////////////////////////
   // ADD NODES
-  printf(">> Process nodes\n");
   std::vector<RoadGraph::roadGraphVertexDesc> vertex;
   std::vector<RoadGraph::roadGraphVertexDesc> vertex_SIM;
   vertex.resize(osmidToVertexLoc.size());
@@ -204,7 +188,6 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
   int index = 0;
   QHash<uint64_t, int> dynIndToInd;
   
-
   for (i = osmidToVertexLoc.begin(); i != osmidToVertexLoc.end(); ++i) {
     uint64_t ind = i.key();
 
@@ -231,11 +214,8 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
     index++;
   }
 
-  printf(">> Red in %d mm (#nodes %d)\n", timer.elapsed(), index);
-
   ///////////////////////////////
   // EDGES
-  printf(">> Process edges\n");
   QFile linkFile(edgeFileName); // Create a file handle for the file named
 
   if (!linkFile.open(QIODevice::ReadOnly | QIODevice::Text)) { // Open the file
@@ -253,8 +233,6 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
   const int indexLanes = headers.indexOf("lanes");
   const int indexSpeedMH = headers.indexOf("speed_mph");
 
-  printf(">> Link Index %d %d %d %d %d %d\n", indexId, indexU, indexV, indexLen, indexLanes,
-      indexSpeedMH);
   QHash<int, std::pair<uint, uint>> dynEdgToEdge;
   std::pair<RoadGraph::roadGraphEdgeDesc_BI, bool> e0_pair;
   std::pair<RoadGraph::roadGraphEdgeDesc, bool> e0_pair_SIMP;
@@ -330,15 +308,13 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
     QString filename = "noAvailableNodes.txt";
     saveSetToFile(noAvailableNodes, filename);
   }
-  printf(">> Red in %d mm (#edges %d)\n", timer.elapsed(), dynEdgToEdge.size());
 
   ///////////////////////////////
   // DEMAND
-  printf(">> Process demand\n");
-  QFile demandFile(odFilename); // Create a file handle for the file named
+  QFile demandFile(odFileName); // Create a file handle for the file named
 
   if (!demandFile.open(QIODevice::ReadOnly | QIODevice::Text)) { // Open the file
-    printf("Can't open file '%s'\n", odFilename.toUtf8().constData());
+    printf("Can't open file '%s'\n", odFileName.toUtf8().constData());
     return;
   }
 
@@ -386,8 +362,12 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
     saveSetToFile(noAvailableNodesDemand, filename);
   }
 
-  printf(">> Red in %d\n\t#nodes: %d\n\t#edges: %d (total length: %2.2f)\n\t#people%d\n",
-      timer.elapsed(), index, dynEdgToEdge.size(), totalLeng, totalNumPeople);
+  std::cerr 
+    << " >> Network loaded in " << timer.elapsed() << " milliseconds with:" << std::endl
+    << "\t" << num_vertices(inRoadGraph.myRoadGraph_BI) << " vertices, " << std::endl
+    << "\t" << num_edges(inRoadGraph.myRoadGraph_BI) << " edges, " << std::endl
+    << "\t" << demandB2018.size() <<  " pairs of demand"  
+    << " and " << totalNumPeople << " people in total." << std::endl;
 }
 
 

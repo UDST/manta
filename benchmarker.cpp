@@ -38,7 +38,8 @@ void Benchmarker::endBenchmark()
 {
     outStream << margin
         << " << Ended: " << description
-        << " (elapsed time: " << elapsed.count() <<")"
+        << " (elapsed time: "
+        << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << ")"
         << std::endl;
 
     --amountOpened;
