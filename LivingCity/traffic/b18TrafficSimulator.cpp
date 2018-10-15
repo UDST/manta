@@ -186,15 +186,18 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH,
     int count = 0;
     QTime timerLoop;
 
+    std::cerr
+      << "Running main loop from " << (startTime / 3600.0f)
+      << " to " << (endTime / 3600.0f)
+      << " with " << trafficPersonVec.size()<< std::endl;
     while (currentTime < endTime) {
       count++;
       if (count % 1800 == 0) {
-        printf("Time %.2fh (%.2f --> %.2f): %.0f%% #People %d\n",
-               (currentTime / 3600.0f), (startTime / 3600.0f), (endTime / 3600.0f),
-               100.0f - (100.0f * (endTime - currentTime) / (endTime - startTime)),
-               trafficPersonVec.size());
-        printf("%.2f ms per simulation step (average over 1800)\n",
-               (timerLoop.elapsed() / 1800.0f));
+        std::cerr << std::fixed << std::setprecision(2) 
+          << "Current time: " << (currentTime / 3600.0f)
+          << " (" << (100.0f - (100.0f * (endTime - currentTime) / (endTime - startTime))) << "%)"
+          << " with " << (timerLoop.elapsed() / 1800.0f) << " ms per simulation step (average over 1800)"
+          << "\r";
         timerLoop.restart();
       }
 
@@ -227,6 +230,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH,
 #endif
       currentTime += deltaTime;
     }
+    std::cerr << std::setw(200) << " " << std::endl;
     simulateBench.stopAndEndBenchmark();
 
     getDataBench.startMeasuring();

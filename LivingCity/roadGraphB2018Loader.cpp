@@ -89,9 +89,9 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
 
   std::cerr
     << "Using: " << std::endl
-    << "\t" << nodesFileName.toUtf8().constData() << "as nodes' file" << std::endl
-    << "\t" << edgeFileName.toUtf8().constData() << "as edges' file" << std::endl
-    << "\t" << odFileName.toUtf8().constData() << "as od demands' file" << std::endl
+    << "\t" << nodesFileName.toUtf8().constData() << " as nodes' file" << std::endl
+    << "\t" << edgeFileName.toUtf8().constData() << " as edges' file" << std::endl
+    << "\t" << odFileName.toUtf8().constData() << " as od demands' file" << std::endl;
 
   /////////////////////////////////////////////////
   // READ NODES
