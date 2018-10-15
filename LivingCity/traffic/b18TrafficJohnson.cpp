@@ -116,7 +116,7 @@ void B18TrafficJohnson::generateRoutes(
 
 
   ////////////////////////
-  // CALL JOHNSO
+  // CALL JOHNSON
   bool tryReadWriteFirstJohnsonArray = weigthMode == 0; // if try to use and use street speeds
   std::string fileName = "johnson_numVertex_" + std::to_string(numVertex) + "_maxTravelTime_" + std::to_string(maxTravelTime) + ".bin"; // encode num vertext and travel time to "check" is the same input
   bool johnsonReadCorrectly = false;

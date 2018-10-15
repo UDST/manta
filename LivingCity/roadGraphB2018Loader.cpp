@@ -86,29 +86,12 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
   QString nodesFileName = networkPath + "nodes.csv";
   QString edgeFileName = networkPath + "edges.csv";
   QString odFileName = networkPath + "od_demand.csv";
-  //if (loadFullNetwork) {
-    //nodesFileName = "berkeley_2018/bay_area_full_strongly_nodes.csv";
-    //edgeFileName = "berkeley_2018/full_edges_speed_capacity.csv";
-    //odFileName = "berkeley_2018/od.csv";
-  //} else {
-    //nodesFileName = "berkeley_2018/basic_network/partial_bay_area_tertiary_strongly_nodes.csv";
-    //edgeFileName = "berkeley_2018/basic_network/partial_edges_speed_capacity.csv";
-    //odFileName = "berkeley_2018/basic_network/partial_od.csv";
-
-    ////nodesFileName = "berkeley_2018/partial_bay_area/partial_bay_area_tertiary_strongly_nodes.csv";
-    ////edgeFileName = "berkeley_2018/partial_bay_area/partial_edges_speed_capacity.csv";
-    ////odFileName = "berkeley_2018/partial_bay_area/partial_od.csv";
-
-    ////nodesFileName = "berkeley_2018/tertiary_bay_area_strongly_nodes.csv";
-    ////edgeFileName = "berkeley_2018/tertiary_edges_speed_capacity.csv";
-    ////odFileName = "berkeley_2018/tertiary_od.csv";
-  //}
 
   std::cerr
     << "Using: " << std::endl
-    << nodesFileName.toUtf8().constData() << std::endl
-    << edgeFileName.toUtf8().constData() << std::endl
-    << odFileName.toUtf8().constData() << std::endl;
+    << "\t" << nodesFileName.toUtf8().constData() << "as nodes' file" << std::endl
+    << "\t" << edgeFileName.toUtf8().constData() << "as edges' file" << std::endl
+    << "\t" << odFileName.toUtf8().constData() << "as od demands' file" << std::endl
 
   /////////////////////////////////////////////////
   // READ NODES
