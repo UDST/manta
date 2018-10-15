@@ -3,17 +3,15 @@
 *		@author igarciad
 ************************************************************************************************/
 
-#include "roadGraphB2018Loader.h"
+#include <QHash>
+#include <QVector2D>
+#include <stdexcept>
 #include <stdint.h>
 
 #include "Geometry/client_geometry.h"
-
-#include "global.h"
 #include "bTraffic/bTrafficIntersection.h"
-
-#include <QHash>
-#include <QVector2D>
-
+#include "global.h"
+#include "roadGraphB2018Loader.h"
 
 namespace LC {
 
@@ -81,33 +79,44 @@ void saveSetToFile(QSet<uint64_t> &set, QString &filename) {
 
 //////////////////////////////////////////////////////////
 
-void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNetwork) {
+void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkPath) {
   inRoadGraph.myRoadGraph.clear();
   inRoadGraph.myRoadGraph_BI.clear();
+
+  QString nodesFileName = networkPath + "nodes.csv";
+  QString edgeFileName = networkPath + "edges.csv";
+  QString odFileName = networkPath + "od_demand.csv";
+  //if (loadFullNetwork) {
+    //nodesFileName = "berkeley_2018/bay_area_full_strongly_nodes.csv";
+    //edgeFileName = "berkeley_2018/full_edges_speed_capacity.csv";
+    //odFileName = "berkeley_2018/od.csv";
+  //} else {
+    //nodesFileName = "berkeley_2018/basic_network/partial_bay_area_tertiary_strongly_nodes.csv";
+    //edgeFileName = "berkeley_2018/basic_network/partial_edges_speed_capacity.csv";
+    //odFileName = "berkeley_2018/basic_network/partial_od.csv";
+
+    ////nodesFileName = "berkeley_2018/partial_bay_area/partial_bay_area_tertiary_strongly_nodes.csv";
+    ////edgeFileName = "berkeley_2018/partial_bay_area/partial_edges_speed_capacity.csv";
+    ////odFileName = "berkeley_2018/partial_bay_area/partial_od.csv";
+
+    ////nodesFileName = "berkeley_2018/tertiary_bay_area_strongly_nodes.csv";
+    ////edgeFileName = "berkeley_2018/tertiary_edges_speed_capacity.csv";
+    ////odFileName = "berkeley_2018/tertiary_od.csv";
+  //}
+
+  std::cerr
+    << "Using: " << std::endl
+    << nodesFileName.toUtf8().constData() << std::endl
+    << edgeFileName.toUtf8().constData() << std::endl
+    << odFileName.toUtf8().constData() << std::endl;
 
   /////////////////////////////////////////////////
   // READ NODES
 
-  QString nodesFileName;
-  QString edgeFileName;
-  QString odFileName;
-  if (loadFullNetwork) {
-    nodesFileName = "berkeley_2018/bay_area_full_strongly_nodes.csv";
-    edgeFileName = "berkeley_2018/full_edges_speed_capacity.csv";
-    odFileName = "berkeley_2018/od.csv";
-  } else {
-    nodesFileName = "berkeley_2018/partial_bay_area/partial_bay_area_tertiary_strongly_nodes.csv";
-    edgeFileName = "berkeley_2018/partial_bay_area/partial_edges_speed_capacity.csv";
-    odFileName = "berkeley_2018/partial_bay_area/partial_od.csv";
-  }
-
   QFile baseFile(nodesFileName); // Create a file handle for the file named
-
   QString line;
-
   if (!baseFile.open(QIODevice::ReadOnly | QIODevice::Text)) { // Open the file
-    std::cerr << "[Error] Can't open file " << nodesFileName.toUtf8().constData() << std::endl;
-    return;
+    throw std::invalid_argument("RoadGraphB2018::loadB2018RoadGraph -> Can't open nodes files.");
   }
 
   QTextStream stream(&baseFile); // Set the stream to read from myFile
@@ -217,10 +226,8 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
   ///////////////////////////////
   // EDGES
   QFile linkFile(edgeFileName); // Create a file handle for the file named
-
   if (!linkFile.open(QIODevice::ReadOnly | QIODevice::Text)) { // Open the file
-    printf("Can't open file '%s'\n", edgeFileName.toUtf8().constData());
-    return;
+    throw std::invalid_argument("RoadGraphB2018::loadB2018RoadGraph -> Can't open edges files.");
   }
 
   QTextStream streamL(&linkFile); // Set the stream to read
@@ -314,8 +321,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
   QFile demandFile(odFileName); // Create a file handle for the file named
 
   if (!demandFile.open(QIODevice::ReadOnly | QIODevice::Text)) { // Open the file
-    printf("Can't open file '%s'\n", odFileName.toUtf8().constData());
-    return;
+    throw std::invalid_argument("RoadGraphB2018::loadB2018RoadGraph -> Can't open od demand files.");
   }
 
   QTextStream streamD(&demandFile); // Set the stream to read
@@ -368,6 +374,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNet
     << "\t" << num_edges(inRoadGraph.myRoadGraph_BI) << " edges, " << std::endl
     << "\t" << demandB2018.size() <<  " pairs of demand"  
     << " and " << totalNumPeople << " people in total." << std::endl;
+
 }
 
 

@@ -1,3 +1,5 @@
+#include <QString>
+
 #include "b18CommandLineVersion.h"
 
 #include "benchmarker.h"
@@ -11,17 +13,13 @@
 
 namespace LC {
 void B18CommandLineVersion::runB18Simulation() {
-  QSettings settings(QCoreApplication::applicationDirPath() +
-                     "/command_line_options.ini",
-                     QSettings::IniFormat);
-  bool useBasicTest = settings.value("USE_BASIC_TEST",
-                                     false).toBool(); // false = B2018; true = basic intersection
-  bool useCPU = settings.value("USE_CPU",
-                               false).toBool(); // false = GPU; true = CPU
-  bool useFullB18Network = settings.value("USE_FULL_B2018_NETWORK",
-                                          false).toBool(); // false = GPU; true = CPU
-  bool useJohnsonRouting = settings.value("USE_JOHNSON_ROUTING",
-                                          false).toBool(); // false = Disjktra; true = Johnson
+  QSettings settings(QCoreApplication::applicationDirPath() + "/command_line_options.ini",
+      QSettings::IniFormat);
+  QString networkPath = settings.value("NETWORK_PATH").toString();
+  bool addRandomPeople = settings.value("ADD_RANDOM_PEOPLE", true).toBool();
+  bool useBasicTest = settings.value("USE_BASIC_TEST", false).toBool();
+  bool useCPU = settings.value("USE_CPU", false).toBool();
+  bool useJohnsonRouting = settings.value("USE_JOHNSON_ROUTING", false).toBool();
   int limitNumPeople = settings.value("LIMIT_NUM_PEOPLE", -1).toInt(); // -1
   int numOfPasses = settings.value("NUM_PASSES", 1).toInt();
 
@@ -53,7 +51,7 @@ void B18CommandLineVersion::runB18Simulation() {
 
   graphLoadBench.startMeasuring();
   ClientGeometry cg;
-  RoadGraphB2018::loadB2018RoadGraph(cg.roadGraph, useFullB18Network);
+  RoadGraphB2018::loadB2018RoadGraph(cg.roadGraph, networkPath);
   graphLoadBench.stopAndEndBenchmark();
 
   initBench.startMeasuring();
@@ -61,7 +59,7 @@ void B18CommandLineVersion::runB18Simulation() {
   initBench.stopAndEndBenchmark();
 
   peopleBench.startMeasuring();
-  b18TrafficSimulator.createB2018People(startDemandH, endDemandH, limitNumPeople);
+  b18TrafficSimulator.createB2018People(startDemandH, endDemandH, limitNumPeople, addRandomPeople);
   peopleBench.stopAndEndBenchmark();
 
   simulationBench.startMeasuring();

@@ -59,11 +59,11 @@ void B18TrafficSimulator::createRandomPeople(float startTime, float endTime,
 }//
 #endif
 
-void B18TrafficSimulator::createB2018People(float startTime, float endTime,
-    int limitNumPeople) {
+void B18TrafficSimulator::createB2018People(float startTime, float endTime, int limitNumPeople,
+    bool addRandomPeople) {
   b18TrafficOD.resetTrafficPersonJob(trafficPersonVec);
   b18TrafficOD.loadB18TrafficPeople(startTime, endTime, trafficPersonVec,
-                                    simRoadGraph->myRoadGraph_BI, limitNumPeople);
+      simRoadGraph->myRoadGraph_BI, limitNumPeople, addRandomPeople);
 
 }
 
@@ -131,9 +131,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH,
     if (useJohnsonRouting) {
       shortestPathBench.startMeasuring();	    
       printf("***Start generateRoute Johnson\n");
-      B18TrafficJohnson::generateRoutes(simRoadGraph->myRoadGraph_BI,
-                                        trafficPersonVec, indexPathVec, edgeDescToLaneMapNum, weigthMode,
-                                        peoplePathSampling[nP]);
+      B18TrafficJohnson::generateRoutes(simRoadGraph->myRoadGraph_BI, trafficPersonVec,
+          indexPathVec, edgeDescToLaneMapNum, weigthMode, peoplePathSampling[nP]);
       shortestPathBench.stopAndEndBenchmark();
     } else {
       printf("***Start generateRoutesMulti Disktra\n");

@@ -55,8 +55,8 @@ class B18TrafficOD {
 
   // generate from b18
   void loadB18TrafficPeople(float startTimeH, float endTimeH,
-                            std::vector<B18TrafficPerson> &trafficPersonVec,
-                            RoadGraph::roadBGLGraph_BI &roadGraph, int limitNumPeople = -1);
+      std::vector<B18TrafficPerson> &trafficPersonVec, RoadGraph::roadBGLGraph_BI &roadGraph,
+      const int limitNumPeople, const bool addRandomPeople);
 
   void resetTrafficPersonJob(std::vector<B18TrafficPerson> &trafficPersonVec);
 };

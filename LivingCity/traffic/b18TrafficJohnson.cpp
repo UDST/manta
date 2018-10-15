@@ -33,6 +33,8 @@ void B18TrafficJohnson::generateRoutes(
   std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> &edgeDescToLaneMapNum,
   int weigthMode, float sample) {
 
+  std::cerr << "Traffic person vector size: " << trafficPersonVec.size() << std::endl;
+
   if (trafficPersonVec.empty()) {
     printf("ERROR generateRoutes: people empty");
     return;
@@ -52,7 +54,7 @@ void B18TrafficJohnson::generateRoutes(
   printf(">> generateRoutes Update weight edges\n");
   int numEdges = 0;
   property_map<RoadGraph::roadBGLGraph_BI, float RoadGraphEdge::*>::type
-  weight_pmap = boost::get(&RoadGraphEdge::edge_weight, roadGraph);
+    weight_pmap = boost::get(&RoadGraphEdge::edge_weight, roadGraph);
 
   RoadGraph::roadGraphEdgeIter_BI ei, eiEnd;
   float minTravelTime = FLT_MAX;
@@ -114,8 +116,8 @@ void B18TrafficJohnson::generateRoutes(
 
 
   ////////////////////////
-  // CALL JOHNSON
-  bool tryReadWriteFirstJohnsonArray = true && weigthMode==0; // if try to use and use street speeds
+  // CALL JOHNSO
+  bool tryReadWriteFirstJohnsonArray = weigthMode == 0; // if try to use and use street speeds
   std::string fileName = "johnson_numVertex_" + std::to_string(numVertex) + "_maxTravelTime_" + std::to_string(maxTravelTime) + ".bin"; // encode num vertext and travel time to "check" is the same input
   bool johnsonReadCorrectly = false;
   if (tryReadWriteFirstJohnsonArray && fileExists(fileName)) {
@@ -148,17 +150,8 @@ void B18TrafficJohnson::generateRoutes(
     }
   }
   
-  // check maxDist
   printf("Create Johnson numVertex %d Time %d ms\n", numVertex, timer.elapsed());
-  float maxDist = -1.0f;
-  for (int vN = 0; vN < numVertex; vN++) {
-    for (int vN2 = 0; vN2 < numVertex; vN2++) {
-      maxDist = maxDist < dm[vN][vN2] ? dm[vN][vN2] : maxDist;
-    }
-  }
 
-
-  printf("maxDist %f\n", maxDist);
   ////////////////////////
   // Create routes
   uint noAccesible = 0;
@@ -166,7 +159,6 @@ void B18TrafficJohnson::generateRoutes(
   QTime timer2;
   timer2.start();
   const int kMaxNumPath = 250;
-  std::vector<int> pathHistogram(kMaxNumPath, 0); // this should be around 250.
 
   for (int p = 0; p < trafficPersonVec.size(); p++) {
     if (trafficPersonVec.size() > 200) {
@@ -227,12 +219,10 @@ void B18TrafficJohnson::generateRoutes(
     int currIndex = 0;
 
     while (currvertex != tgtvertex) {
-      
       // check all outedges from currvertex which one continues to shortest path
       bool cont = false;
 
       for (boost::tie(Oei, Oei_end) = boost::out_edges(currvertex, roadGraph); Oei != Oei_end; ++Oei) {
-
         srcPosEdgeV = boost::source(*Oei, roadGraph);
         tgtPosEdgeV = boost::target(*Oei, roadGraph);
 
@@ -287,14 +277,8 @@ void B18TrafficJohnson::generateRoutes(
       indexPathVec.resize((int) (indexPathVec.size()*1.4f));// Expand 40%.
     }
     indexPathVec[currIndexPath++] = -1; // end path with -1
-    if (currIndex >= 0 && currIndex < kMaxNumPath) {
-      pathHistogram[currIndex]++;
-    } else {
-      printf("Error with pathHistogram--> currIndex %d and Size %d\n", currIndex, pathHistogram.size());
-    }
     ////////////////////////////////////////////////////////////////////////////////////////////
   }
-
   // Resize tight indexPathVec and set everyone to the first edge (maybe do in sim?)
   printf("Final Path Size %u\n", currIndexPath);
   indexPathVec.resize(currIndexPath);
@@ -302,37 +286,27 @@ void B18TrafficJohnson::generateRoutes(
     trafficPersonVec[p].indexPathCurr = trafficPersonVec[p].indexPathInit;
   }
 
-  { // Print histogram
-    
-    int maxNumSteps = INT_MAX;
-    for (int h = pathHistogram.size()-1; h >=0; h--) {
-      if (pathHistogram[h] != 0) {
-        maxNumSteps = h;
-        break;
-      }
+  std::cerr
+    << "Finished with Johnson routing:" << std::endl
+    << "No accesible ODs: " << noAccesible << std::endl
+    << "Sames src dst ODs: " << sameSrcDst << std::endl
+    << "Shortest path length (distance -> amount of ODs): " << std::endl;
+
+  std::vector<int> amountOfEdges(300, 0);
+  for (const auto p : trafficPersonVec) {
+    int d = 0;
+    int cur = p.indexPathInit;
+    while (indexPathVec.at(cur) != -1) {
+      cur++;
+      d++;
     }
-    for (int h = 0; h < maxNumSteps +1; h++) {
-      printf("pathHistogram,%d,%d\n", h, pathHistogram[h]);
-    }
+    amountOfEdges.at(d)++;
   }
-  ////////////////////
-  // Debug
-  const bool kDebugFirstPerson = true;
-  if (trafficPersonVec.size()>0 && kDebugFirstPerson) {
-    int currIndex = 0;
-    while (true) {
-      uint laneMap = indexPathVec[trafficPersonVec[0].indexPathInit + currIndex];
-      if (laneMap != -1) {
-        printf("-> %u ", laneMap);
-        currIndex++;
-      } else {
-        break;
-      }
-    }
-    printf("\n");
+  for (int i = 0; i < 300; i++) {
+    if (amountOfEdges.at(i) != 0)
+      std::cerr << '\t' << i << " -> " << amountOfEdges.at(i) << std::endl;
   }
-  printf("<< generateRoutePathsJohnson: individual routes time %d ms --> numPeople %d (No Acc %d sameSrcDst %d)\n",
-    timer2.elapsed(), trafficPersonVec.size(), noAccesible, sameSrcDst);
+
 }//
 }
 

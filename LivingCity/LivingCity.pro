@@ -12,6 +12,8 @@ unix {
       /opt/local/include/ \ 
       /usr/local/boost_1_59_0/ \
       $$PWD/glew/include/
+
+    CONFIG += debug
 }
 win32{
     # Note: OpenCV uses 2.4.12 since I compiled with VS 2013 (vc12)

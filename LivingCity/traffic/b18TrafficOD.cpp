@@ -340,9 +340,9 @@ float sampleFileDistribution() {
 }
 
 void B18TrafficOD::loadB18TrafficPeople(
-  float startTimeH, float endTimeH,
-  std::vector<B18TrafficPerson> &trafficPersonVec, // out
-  RoadGraph::roadBGLGraph_BI &roadGraph, int limitNumPeople) {
+    float startTimeH, float endTimeH,
+    std::vector<B18TrafficPerson> &trafficPersonVec, // out
+    RoadGraph::roadBGLGraph_BI &roadGraph, const int limitNumPeople, const bool addRandomPeople) {
 
   trafficPersonVec.clear();
   QTime timer;
@@ -353,8 +353,12 @@ void B18TrafficOD::loadB18TrafficPeople(
     return;
   }
 
-  int totalNumPeople = (limitNumPeople > 0) ? limitNumPeople :
-                       RoadGraphB2018::totalNumPeople;
+  const int totalNumPeople = [&limitNumPeople, &addRandomPeople] {
+    if (limitNumPeople > 0 && addRandomPeople)
+      return limitNumPeople;
+    else
+      return RoadGraphB2018::totalNumPeople;
+  }();
   trafficPersonVec.resize(totalNumPeople);
 
   boost::mt19937 rng;
@@ -391,16 +395,16 @@ void B18TrafficOD::loadB18TrafficPeople(
   }
 
   if (totalNumPeople > numPeople) {
+    std::cerr << "Current amount: " << numPeople << std::endl;
+    std::cerr << "Total amount: " << totalNumPeople << std::endl;
     printf("No enough on file --> Add random people %d\n",
            (totalNumPeople - numPeople));
     // If this happens, the user ask to generate random people.
     QList<int>  allVertexInd = RoadGraphB2018::indToOsmid.keys();
 
     for (; numPeople < totalNumPeople; numPeople++) {
-
       uint src_vertex = allVertexInd[rand() % allVertexInd.size()];
       uint tgt_vertex = allVertexInd[rand() % allVertexInd.size()];
-
 
       float goToWorkH;
 
@@ -413,7 +417,6 @@ void B18TrafficOD::loadB18TrafficPeople(
       randomPerson(numPeople, trafficPersonVec[numPeople], src_vertex, tgt_vertex,
                    goToWorkH);
     }
-
   }
 
   if (totalNumPeople != numPeople) {

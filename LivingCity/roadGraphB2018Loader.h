@@ -6,6 +6,7 @@
 #pragma once
 
 #include "RoadGraph/roadGraph.h"
+#include <QString>
 
 namespace LC {
 
@@ -29,8 +30,7 @@ class RoadGraphB2018 {
   /**
   * Load
   **/
-  static void loadB2018RoadGraph(RoadGraph &inRoadGraph, bool loadFullNetwork); // select big or small network.
-  
+  static void loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkPath);
   static std::vector<DemandB2018> demandB2018;
   static int totalNumPeople;
   static QHash<int, uint64_t> indToOsmid;

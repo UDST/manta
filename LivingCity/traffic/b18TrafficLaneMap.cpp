@@ -8,6 +8,7 @@
 *
 ************************************************************************************************/
 
+#include <ios>
 #include "b18TrafficLaneMap.h"
 
 #define LANE_DEBUG 1
@@ -85,6 +86,7 @@ void B18TrafficLaneMap::createLaneMap(
     int numLanes = inRoadGraph.myRoadGraph_BI[*ei].numberOfLanes;
 
     if (numLanes == 0) {
+      std::cerr << "Zero lines" << std::endl;
       continue;//edges with zero lines just skip
     }
 
@@ -102,8 +104,7 @@ void B18TrafficLaneMap::createLaneMap(
     int numWidthNeeded = ceil(edgesData[tNumMapWidth].length / kMaxMapWidthM); // number of width needed if > than kMaxMapWidthM
     edgesData[tNumMapWidth].numLines = numLanes;
     // next intersection
-    edgesData[tNumMapWidth].nextInters = boost::target(*ei,
-                                      inRoadGraph.myRoadGraph_BI);
+    edgesData[tNumMapWidth].nextInters = boost::target(*ei, inRoadGraph.myRoadGraph_BI);
 
     edgeDescToLaneMapNum.insert(std::make_pair(*ei, tNumMapWidth));
     laneMapNumToEdgeDesc.insert(std::make_pair(tNumMapWidth, *ei));
@@ -145,7 +146,6 @@ void B18TrafficLaneMap::createLaneMap(
     intersections[*vi].nextEvent = 0.0f;
     
     intersections[*vi].totalInOutEdges = boost::degree(*vi, inRoadGraph.myRoadGraph_BI);
-
     if (intersections[*vi].totalInOutEdges <= 0) {
       //printf("Vertex without in/out edges\n");
       continue;
@@ -156,12 +156,10 @@ void B18TrafficLaneMap::createLaneMap(
       continue;
     }
 
-    //printf("Total: %d\n",intersections[*vi].totalInOutEdges);
     //sort by angle
     QVector3D referenceVector(0, 1, 0);
     QVector3D p0, p1;
     std::vector<std::pair<LC::RoadGraph::roadGraphEdgeDesc_BI, float>> edgeAngleOut;
-    //printf("Out\n");
     int numOutEdges = 0;
 
     float angleRef = atan2(referenceVector.y(), referenceVector.x());
@@ -225,8 +223,6 @@ void B18TrafficLaneMap::createLaneMap(
 
     intersections[*vi].totalInOutEdges = numOutEdges + numInEdges;
 
-    //printf("In %d\n",numInEdges);
-    //printf("Sort\n");
     //save in sorterd way as lane number
     if (edgeAngleOut.size() > 0) {
       std::sort(edgeAngleOut.begin(), edgeAngleOut.end(), compareSecondPartTupleC);
@@ -241,8 +237,10 @@ void B18TrafficLaneMap::createLaneMap(
     int inCount = 0;
     int totalCount = 0;
 
-    //printf("count %d\n",);
-    // INTERSECTION
+    // Intersection data:
+    //  Store the edges that go in or out of this intersection
+    //  Said edges will be sorted by angle
+    //  
     //      0xFF00 0000 Num lines
     //      0x0080 0000 in out (one bit)
     //      0x007F FFFF Edge number
@@ -250,11 +248,13 @@ void B18TrafficLaneMap::createLaneMap(
       if ((outCount < edgeAngleOut.size() && inCount < edgeAngleIn.size() && 
            edgeAngleOut[outCount].second <= edgeAngleIn[inCount].second) ||
           (outCount < edgeAngleOut.size() && inCount >= edgeAngleIn.size())) {
+        assert(edgeDescToLaneMapNum[edgeAngleOut[outCount].first] < 0x007fffff && "Edge number is too high");
         intersections[*vi].edge[totalCount] = edgeDescToLaneMapNum[edgeAngleOut[outCount].first];
         intersections[*vi].edge[totalCount] |= (edgesData[intersections[*vi].edge[totalCount]].numLines << 24); //put the number of lines in each edge
         intersections[*vi].edge[totalCount] |= kMaskOutEdge; // 0x000000 mask to define out edge
         outCount++;
       } else {
+        assert(edgeDescToLaneMapNum[edgeAngleIn[inCount].first] < 0x007fffff && "Edge number is too high");
         intersections[*vi].edge[totalCount] = edgeDescToLaneMapNum[edgeAngleIn[inCount].first];
         intersections[*vi].edge[totalCount] |= (edgesData[intersections[*vi].edge[totalCount]].numLines << 24); //put the number of lines in each edge
         intersections[*vi].edge[totalCount] |= kMaskInEdge; // 0x800000 mask to define in edge
@@ -263,6 +263,7 @@ void B18TrafficLaneMap::createLaneMap(
 
       totalCount++;
     }
+
 
     if (totalCount != intersections[*vi].totalInOutEdges) {
       printf("Error totalCount!=intersections[*vi].totalInOutEdges %d %d\n",

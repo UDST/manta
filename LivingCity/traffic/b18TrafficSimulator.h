@@ -88,7 +88,7 @@ class B18TrafficSimulator {
   void createRandomPeople(float startTime, float endTime, int numberPeople,
                           PeopleJobInfoLayers &peopleJobInfoLayers);
 #endif
-  void createB2018People(float startTime, float endTime, int limitNumPeople = -1);
+  void createB2018People(float startTime, float endTime, int limitNumPeople, bool addRandomPeople);
 
   void resetPeopleJobANDintersections();
   void saveODToFile() {}; // TODO
