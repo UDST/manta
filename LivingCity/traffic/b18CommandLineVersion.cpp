@@ -17,7 +17,6 @@ void B18CommandLineVersion::runB18Simulation() {
       QSettings::IniFormat);
   QString networkPath = settings.value("NETWORK_PATH").toString();
   bool addRandomPeople = settings.value("ADD_RANDOM_PEOPLE", true).toBool();
-  bool useBasicTest = settings.value("USE_BASIC_TEST", false).toBool();
   bool useCPU = settings.value("USE_CPU", false).toBool();
   bool useJohnsonRouting = settings.value("USE_JOHNSON_ROUTING", false).toBool();
   int limitNumPeople = settings.value("LIMIT_NUM_PEOPLE", -1).toInt(); // -1
@@ -31,19 +30,6 @@ void B18CommandLineVersion::runB18Simulation() {
   float endSimulationH = endDemandH;
 
 
-  /*
-#ifdef B18_RUN_WITH_GUI
-
-  if (useBasicTest) {
-    // SIMPLE TEST: Create a basic road and basic OD to run a simulation.
-    printf("useBasicTest == true");
-    B18TestSimpleRoadAndOD::generateTest(cg.roadGraph,
-        b18TrafficSimulator.trafficPersonVec, startDemandH, endDemandH, nullptr);
-    b18TrafficSimulator.initSimulator(deltaTime, &cg.roadGraph);
-  } else
-#endif
-  */
-  // B18 CODE: Normal Simulation
   Benchmarker graphLoadBench("Load graph task", 1);
   Benchmarker initBench("Initialize traffic simulator task", 1);
   Benchmarker peopleBench("People creation task", 1);

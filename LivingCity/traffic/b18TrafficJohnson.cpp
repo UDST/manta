@@ -8,6 +8,7 @@
 #include <fstream>
 
 #define ROUTE_DEBUG 0
+//#define DEBUG_JOHNSON 0
 
 namespace LC {
 
@@ -27,14 +28,11 @@ typedef DistanceProperty::matrix_type DistanceMatrix;
 typedef DistanceProperty::matrix_map_type DistanceMatrixMap;
 
 void B18TrafficJohnson::generateRoutes(
-  LC::RoadGraph::roadBGLGraph_BI &roadGraph,
-  std::vector<B18TrafficPerson> &trafficPersonVec,
-  std::vector<uint>& indexPathVec,
-  std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> &edgeDescToLaneMapNum,
-  int weigthMode, float sample) {
-
-  std::cerr << "Traffic person vector size: " << trafficPersonVec.size() << std::endl;
-
+    LC::RoadGraph::roadBGLGraph_BI &roadGraph,
+    std::vector<B18TrafficPerson> &trafficPersonVec,
+    std::vector<uint>& indexPathVec,
+    std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> &edgeDescToLaneMapNum,
+    int weigthMode, float sample) {
   if (trafficPersonVec.empty()) {
     printf("ERROR generateRoutes: people empty");
     return;
@@ -47,8 +45,6 @@ void B18TrafficJohnson::generateRoutes(
   uint currIndexPath = 0;
   std::vector<uint> oldIndexPathVec = indexPathVec; // std::move(indexPathVec); // avoid copying
   indexPathVec.clear(); // = std::vector<uint>();
-  indexPathVec.resize(trafficPersonVec.size() * 140); // initial allocation (so we do not add)
-  //indexPathVec[currIndexPath++] = -1; // first path is empty
 
   // 1. Update weight edges
   printf(">> generateRoutes Update weight edges\n");
@@ -117,7 +113,8 @@ void B18TrafficJohnson::generateRoutes(
 
   ////////////////////////
   // CALL JOHNSON
-  bool tryReadWriteFirstJohnsonArray = weigthMode == 0; // if try to use and use street speeds
+  //const bool tryReadWriteFirstJohnsonArray = false;
+  const bool tryReadWriteFirstJohnsonArray = weigthMode == 0;
   std::string fileName = "johnson_numVertex_" + std::to_string(numVertex) + "_maxTravelTime_" + std::to_string(maxTravelTime) + ".bin"; // encode num vertext and travel time to "check" is the same input
   bool johnsonReadCorrectly = false;
   if (tryReadWriteFirstJohnsonArray && fileExists(fileName)) {
@@ -149,6 +146,16 @@ void B18TrafficJohnson::generateRoutes(
       }
     }
   }
+
+  #ifdef DEBUG_JOHNSON
+  std::cerr << std::fixed << std::setprecision(2);
+  for (int i = 0; i < numVertex; i++) {
+    for (int j = 0; j < numVertex; j++) {
+      std::cerr << " " << std::setw(10) << dm[i][j];
+    }
+    std::cerr << std::endl;
+  }
+  #endif
   
   printf("Create Johnson numVertex %d Time %d ms\n", numVertex, timer.elapsed());
 
@@ -177,14 +184,12 @@ void B18TrafficJohnson::generateRoutes(
         trafficPersonVec[p].indexPathInit = currIndexPath;
         uint index = 0;
         while (oldIndexPathVec[oldIndex + index] != -1) {
-          if (indexPathVec.size() < (currIndexPath - 2)) {  // Resize vector.
-            printf("p %d of %d ****COPY ROUTE: *indexPathVec too small -> size: %d currIndexPath: %d\n", p, trafficPersonVec.size(), indexPathVec.size(), currIndexPath);
-            indexPathVec.resize((int) (indexPathVec.size()*1.4f));// Expand 40%.
-          }
-          indexPathVec[currIndexPath++] = oldIndexPathVec[oldIndex + index];
+          indexPathVec.push_back(oldIndexPathVec.at(oldIndex + index));
+          currIndexPath++;
           index++;
         }
-        indexPathVec[currIndexPath++] = -1;
+        indexPathVec.push_back(-1);
+        currIndexPath++;
         continue;
       }
     }
@@ -198,7 +203,8 @@ void B18TrafficJohnson::generateRoutes(
     // check whether source same than target (we have arrived)
     if (tgtvertex == srcvertex) {
       //trafficPersonVec[p].indexPathInit = 0; // that index points to -1
-      indexPathVec[currIndexPath++] = -1;
+      indexPathVec.push_back(-1);
+      currIndexPath++;
       sameSrcDst++;
       continue;
     }
@@ -206,7 +212,8 @@ void B18TrafficJohnson::generateRoutes(
     // check if accesible
     if (dm[srcvertex][tgtvertex] == (std::numeric_limits < float >::max)()) {
       //trafficPersonVec[p].indexPathInit = 0; // that index points to -1
-      indexPathVec[currIndexPath++] = -1;
+      indexPathVec.push_back(-1);
+      currIndexPath++;
       noAccesible++;
       continue;
     }
@@ -240,13 +247,9 @@ void B18TrafficJohnson::generateRoutes(
               break;//break for
             }
 
-            if (indexPathVec.size() < (currIndexPath - 2)) {  // Resize vector.
-              printf("p %d of %d *****indexPathVec too small -> size: %d currIndexPath: %d\n", p, trafficPersonVec.size(), indexPathVec.size(), currIndexPath);
-              indexPathVec.resize((int) (indexPathVec.size()*1.4f));// Expand 40%.
-            }
-
             uint lane = edgeDescToLaneMapNum[edge_pair.first];
-            indexPathVec[currIndexPath++] = lane;
+            indexPathVec.push_back(lane);
+            currIndexPath++;
             currIndex++;  // this person number jumps.
 
             if (currIndex >= kMaxNumPath - 1) {  // This is very uncommon (just finish person).
@@ -272,34 +275,26 @@ void B18TrafficJohnson::generateRoutes(
       break;
     }//while find tgt
 
-    if (indexPathVec.size() < (currIndexPath - 2)) {  // Resize vector.
-      printf("p %d of %d *****indexPathVec too small -> size: %d currIndexPath: %d\n", p, trafficPersonVec.size(), indexPathVec.size(), currIndexPath);
-      indexPathVec.resize((int) (indexPathVec.size()*1.4f));// Expand 40%.
-    }
-    indexPathVec[currIndexPath++] = -1; // end path with -1
+    indexPathVec.push_back(-1);
+    currIndexPath++;
     ////////////////////////////////////////////////////////////////////////////////////////////
   }
-  // Resize tight indexPathVec and set everyone to the first edge (maybe do in sim?)
   printf("Final Path Size %u\n", currIndexPath);
-  indexPathVec.resize(currIndexPath);
   for (int p = 0; p < trafficPersonVec.size(); p++) {
     trafficPersonVec[p].indexPathCurr = trafficPersonVec[p].indexPathInit;
   }
 
   std::cerr
     << "Finished with Johnson routing:" << std::endl
-    << "No accesible ODs: " << noAccesible << std::endl
-    << "Sames src dst ODs: " << sameSrcDst << std::endl
-    << "Shortest path length (distance -> amount of ODs): " << std::endl;
+    << "- No accesible ODs: " << noAccesible << std::endl
+    << "- Sames src dst ODs: " << sameSrcDst << std::endl
+    << "- Shortest path length (distance -> amount of ODs): " << std::endl;
 
   std::vector<int> amountOfEdges(300, 0);
   for (const auto p : trafficPersonVec) {
     int d = 0;
     int cur = p.indexPathInit;
-    while (indexPathVec.at(cur) != -1) {
-      cur++;
-      d++;
-    }
+    while (indexPathVec.at(cur) != -1) { cur++; d++; }
     amountOfEdges.at(d)++;
   }
   for (int i = 0; i < 300; i++) {
@@ -307,7 +302,21 @@ void B18TrafficJohnson::generateRoutes(
       std::cerr << '\t' << i << " -> " << amountOfEdges.at(i) << std::endl;
   }
 
-}//
+
+  #ifdef DEBUG_JOHNSON
+  std::cerr << "indexPathVec: " << std::endl;
+  int i = 0;
+  for (const auto x : indexPathVec) {
+    std::cerr << i++ << " " << x << " " << std::endl;
+  }
+  std::cerr << "trafficPersonVec: " << std::endl;
+  for (const auto p : trafficPersonVec) {
+    std::cerr << p.indexPathInit << " " << p.indexPathCurr << std::endl;
+  }
+  #endif
+
 }
 
+
+}  // Closing namespace LC
 

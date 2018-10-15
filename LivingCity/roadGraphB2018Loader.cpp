@@ -88,10 +88,11 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
   QString odFileName = networkPath + "od_demand.csv";
 
   std::cerr
-    << "Using: " << std::endl
-    << "\t" << nodesFileName.toUtf8().constData() << " as nodes' file" << std::endl
-    << "\t" << edgeFileName.toUtf8().constData() << " as edges' file" << std::endl
-    << "\t" << odFileName.toUtf8().constData() << " as od demands' file" << std::endl;
+    << "Using "
+    << nodesFileName.toUtf8().constData() << " as nodes' file, "
+    << edgeFileName.toUtf8().constData() << " as edges' file, "
+    << odFileName.toUtf8().constData() << " as od demands' file"
+    << std::endl;
 
   /////////////////////////////////////////////////
   // READ NODES
@@ -352,11 +353,11 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
   }
 
   std::cerr 
-    << " >> Network loaded in " << timer.elapsed() << " milliseconds with:" << std::endl
-    << "\t" << num_vertices(inRoadGraph.myRoadGraph_BI) << " vertices, " << std::endl
-    << "\t" << num_edges(inRoadGraph.myRoadGraph_BI) << " edges, " << std::endl
-    << "\t" << demandB2018.size() <<  " pairs of demand"  
-    << " and " << totalNumPeople << " people in total." << std::endl;
+    << "Network loaded in " << timer.elapsed() << " milliseconds with "
+    << num_vertices(inRoadGraph.myRoadGraph_BI) << " vertices, "
+    << num_edges(inRoadGraph.myRoadGraph_BI) << " edges, "
+    << demandB2018.size() <<  " pairs of demand and "
+    << totalNumPeople << " people in total." << std::endl;
 
 }
 
