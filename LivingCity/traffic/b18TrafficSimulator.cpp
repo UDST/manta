@@ -149,8 +149,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH,
     initCudaBench.startMeasuring();
     bool fistInitialization = (nP == 0);
     b18InitCUDA(fistInitialization, trafficPersonVec, indexPathVec, edgesData,
-                laneMap, trafficLights, intersections, startTimeH, endTimeH,
-                accSpeedPerLinePerTimeInterval, numVehPerLinePerTimeInterval);
+        laneMap, trafficLights, intersections, startTimeH, endTimeH,
+        accSpeedPerLinePerTimeInterval, numVehPerLinePerTimeInterval);
 
     initCudaBench.stopAndEndBenchmark();
 
@@ -193,7 +193,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH,
       << std::endl;
     while (currentTime < endTime) {
       count++;
-      if (count % 1800 == 0) {
+      if (count % 180 == 0) {
         std::cerr << std::fixed << std::setprecision(2) 
           << "Current time: " << (currentTime / 3600.0f)
           << " (" << (100.0f - (100.0f * (endTime - currentTime) / (endTime - startTime))) << "%)"

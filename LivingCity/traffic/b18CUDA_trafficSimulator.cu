@@ -138,23 +138,23 @@ void b18InitCUDA(
 }//
 
 void b18FinishCUDA(void){
-	//////////////////////////////
-	// FINISH
-	cudaFree(trafficPersonVec_d);
+  //////////////////////////////
+  // FINISH
+  cudaFree(trafficPersonVec_d);
   cudaFree(indexPathVec_d);
-	cudaFree(edgesData_d);
-	cudaFree(laneMap_d);
-	cudaFree(intersections_d);
-	cudaFree(trafficLights_d);
+  cudaFree(edgesData_d);
+  cudaFree(laneMap_d);
+  cudaFree(intersections_d);
+  cudaFree(trafficLights_d);
 
   cudaFree(accSpeedPerLinePerTimeInterval_d);
   cudaFree(numVehPerLinePerTimeInterval_d);
 }//
 
  void b18GetDataCUDA(std::vector<LC::B18TrafficPerson>& trafficPersonVec){
-	 // copy back people
-	 size_t size = trafficPersonVec.size() * sizeof(LC::B18TrafficPerson);
-	 cudaMemcpy(trafficPersonVec.data(),trafficPersonVec_d,size,cudaMemcpyDeviceToHost);//cudaMemcpyHostToDevice
+   // copy back people
+   size_t size = trafficPersonVec.size() * sizeof(LC::B18TrafficPerson);
+   cudaMemcpy(trafficPersonVec.data(),trafficPersonVec_d,size,cudaMemcpyDeviceToHost);//cudaMemcpyHostToDevice
  }
 
 
@@ -224,7 +224,7 @@ void b18FinishCUDA(void){
      gap_b = 1000.0f;
    }
 
-	}//
+  }//
 
  __device__ void calculateLaneCarShouldBe(
    uint curEdgeLane,
@@ -431,24 +431,24 @@ void b18FinishCUDA(void){
 
      break;
    }
-	}//
+  }//
 
  // Kernel that executes on the CUDA device
 __global__ void kernel_trafficSimulation(
-	 int numPeople,
-	 float currentTime,
+   int numPeople,
+   float currentTime,
    uint mapToReadShift,
    uint mapToWriteShift,
-	 LC::B18TrafficPerson *trafficPersonVec,
+   LC::B18TrafficPerson *trafficPersonVec,
    uint *indexPathVec,
    LC::B18EdgeData* edgesData,
-	 uchar *laneMap,
+   uchar *laneMap,
    LC::B18IntersectionData *intersections,
-	 uchar *trafficLights
-	 )
+   uchar *trafficLights
+   )
  {
-	 int p = blockIdx.x * blockDim.x + threadIdx.x;
-	 //printf("p %d Numpe %d\n",p,numPeople);
+   int p = blockIdx.x * blockDim.x + threadIdx.x;
+   //printf("p %d Numpe %d\n",p,numPeople);
    if (p < numPeople) {//CUDA check (inside margins)
      if (trafficPersonVec[p].active == 2) {
        return;
@@ -1149,9 +1149,9 @@ __global__ void kernel_intersectionSTOPSimulation(
          }
        }
      }
-		 ///
-	 }
-	 
+     ///
+   }
+   
 }//
 
 __global__ void kernel_intersectionOneSimulation(
@@ -1159,8 +1159,8 @@ __global__ void kernel_intersectionOneSimulation(
       float currentTime,
       LC::B18IntersectionData *intersections,
       uchar *trafficLights) {
-	 int i = blockIdx.x * blockDim.x + threadIdx.x;
-	 if(i<numIntersections){//CUDA check (inside margins)
+   int i = blockIdx.x * blockDim.x + threadIdx.x;
+   if(i<numIntersections){//CUDA check (inside margins)
      const float deltaEvent = 20.0f; /// !!!!
      if (currentTime > intersections[i].nextEvent && intersections[i].totalInOutEdges > 0) {
 
@@ -1195,9 +1195,9 @@ __global__ void kernel_intersectionOneSimulation(
 
        intersections[i].nextEvent = currentTime + deltaEvent;
      }
-		 //////////////////////////////////////////////////////
-	 }
-	 
+     //////////////////////////////////////////////////////
+   }
+   
  }//
 
 // Kernel that executes on the CUDA device
@@ -1245,18 +1245,18 @@ void b18ResetPeopleLanesCUDA(uint numPeople) {
 void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersections) {
 
   intersectionBench.startMeasuring();
-	////////////////////////////////////////////////////////////
-	// 1. CHANGE MAP: set map to use and clean the other
-	if(readFirstMapC==true){
-		mapToReadShift=0;
-		mapToWriteShift=halfLaneMap;
+  ////////////////////////////////////////////////////////////
+  // 1. CHANGE MAP: set map to use and clean the other
+  if(readFirstMapC==true){
+    mapToReadShift=0;
+    mapToWriteShift=halfLaneMap;
     gpuErrchk(cudaMemset(&laneMap_d[halfLaneMap], -1, halfLaneMap*sizeof(unsigned char)));//clean second half
-	}else{
-		mapToReadShift=halfLaneMap;
-		mapToWriteShift=0;
+  }else{
+    mapToReadShift=halfLaneMap;
+    mapToWriteShift=0;
     gpuErrchk(cudaMemset(&laneMap_d[0], -1, halfLaneMap*sizeof(unsigned char)));//clean first half
-	}
-	readFirstMapC=!readFirstMapC;//next iteration invert use
+  }
+  readFirstMapC=!readFirstMapC;//next iteration invert use
 
   // Simulate intersections.
   kernel_intersectionOneSimulation << < ceil(numIntersections / 512.0f), 512 >> > (numIntersections, currentTime, intersections_d, trafficLights_d);
