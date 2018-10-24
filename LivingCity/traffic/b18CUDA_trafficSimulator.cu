@@ -9,7 +9,7 @@
 #include <vector>
 #include <iostream>
 
-#include "../../benchmarker.h"
+#include "../../src/benchmarker.h"
 
 #ifndef ushort
 #define ushort uint16_t
@@ -1092,6 +1092,7 @@ __global__ void kernel_trafficSimulation(
    }
 }//
 
+/*
 __global__ void kernel_intersectionSTOPSimulation(
      uint numIntersections, 
      float currentTime, 
@@ -1153,6 +1154,7 @@ __global__ void kernel_intersectionSTOPSimulation(
    }
    
 }//
+*/
 
 __global__ void kernel_intersectionOneSimulation(
       uint numIntersections,

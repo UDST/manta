@@ -97,9 +97,8 @@ void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
 //////////////////////////////////////////////////
 // GPU
 //////////////////////////////////////////////////
-void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH,
-                                        float endTimeH, bool useJohnsonRouting) {
-
+void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
+    bool useJohnsonRouting) {
   Benchmarker laneMapBench("Lane map", 2);
   Benchmarker passesBench("Simulation passes", 2);
   Benchmarker finishCudaBench("Cuda finish", 2);

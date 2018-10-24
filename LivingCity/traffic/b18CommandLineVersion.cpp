@@ -50,11 +50,11 @@ void B18CommandLineVersion::runB18Simulation() {
 
   simulationBench.startMeasuring();
   if (useCPU) {
-    b18TrafficSimulator.simulateInCPU_MultiPass(numOfPasses, startSimulationH,
-        endSimulationH, useJohnsonRouting);
+    b18TrafficSimulator.simulateInCPU_MultiPass(numOfPasses, startSimulationH, endSimulationH,
+        useJohnsonRouting);
   } else {
     b18TrafficSimulator.simulateInGPU(numOfPasses, startSimulationH, endSimulationH,
-                                      useJohnsonRouting);
+        useJohnsonRouting);
   }
   simulationBench.stopAndEndBenchmark();
 }
