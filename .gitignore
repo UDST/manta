@@ -17,10 +17,7 @@
 .qmake.stash
 Makefile
 
-# Output files
-*_average_speed.csv
-*_edge_route_count.csv
-*_people.csv
-*_route.csv
-*_utilization.csv
+# Ignoring generated files and outputs
+*.csv
+*.bin
 

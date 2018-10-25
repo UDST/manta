@@ -2,7 +2,7 @@
 
 #include "b18CommandLineVersion.h"
 
-#include "benchmarker.h"
+#include "src/benchmarker.h"
 
 #include "roadGraphB2018Loader.h"
 #include "qcoreapplication.h"

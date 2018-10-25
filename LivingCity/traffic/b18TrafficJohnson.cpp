@@ -1,11 +1,11 @@
-
 #include "b18TrafficJohnson.h"
 
 #include <boost/graph/johnson_all_pairs_shortest.hpp>
 #include <boost/graph/exterior_property.hpp>
-
-#include <iostream> // save johnson
+#include <iostream>
 #include <fstream>
+
+#include "src/linux_host_memory_logger.h"
 
 #define ROUTE_DEBUG 0
 //#define DEBUG_JOHNSON 0
@@ -131,7 +131,9 @@ void B18TrafficJohnson::generateRoutes(
   // Run Johnson since we could not find it or it is not the first iteration
   if (johnsonReadCorrectly == false) {
     printf("Call Johnson\n");
+    memory_logger.ChangeMessageTo("Computing Johnson");
     boost::johnson_all_pairs_shortest_paths(roadGraph, dm, weight_map(weight_pmap));
+    memory_logger.ChangeMessageTo("Storing Johnson");
     if (tryReadWriteFirstJohnsonArray) {
       // write to file
       printf("Johnson start writing...\n");
@@ -146,6 +148,7 @@ void B18TrafficJohnson::generateRoutes(
       }
     }
   }
+  memory_logger.ChangeMessageTo("End");
 
   #ifdef DEBUG_JOHNSON
   std::cerr << std::fixed << std::setprecision(2);

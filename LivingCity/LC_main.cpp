@@ -1,6 +1,7 @@
 #define BOOST_TT_HAS_OPERATOR_HPP_INCLUDED
 
-#include "benchmarker.h"
+#include "src/benchmarker.h"
+#include "src/linux_host_memory_logger.h"
 
 #ifdef B18_RUN_WITH_GUI
 #include <QApplication>
@@ -46,4 +47,7 @@ int main(int argc, char *argv[]) {
   mainBench.stopAndEndBenchmark();
   intersectionBench.endBenchmark();
   peopleBench.endBenchmark();
+  
+  memory_logger.End();
+  return 0;
 }

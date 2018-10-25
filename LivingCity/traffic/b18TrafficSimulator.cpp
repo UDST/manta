@@ -1,6 +1,6 @@
 #include "b18TrafficSimulator.h"
 
-#include "benchmarker.h"
+#include "src/benchmarker.h"
 
 #include "../global.h"
 #ifdef B18_RUN_WITH_GUI

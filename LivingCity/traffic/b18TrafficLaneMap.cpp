@@ -81,8 +81,6 @@ void B18TrafficLaneMap::createLaneMap(
 
     if (numLanes == 0) { continue; }
 
-    std::cerr << "+" << std::endl;
-    std::cerr << tNumMapWidth << std::endl;
     edgesData[tNumMapWidth].length = inRoadGraph.myRoadGraph_BI[*ei].edgeLength;
     edgesData[tNumMapWidth].maxSpeedMperSec = inRoadGraph.myRoadGraph_BI[*ei].maxSpeedMperSec;
 
@@ -92,7 +90,6 @@ void B18TrafficLaneMap::createLaneMap(
     const int numWidthNeeded = ceil(edgesData[tNumMapWidth].length / kMaxMapWidthM);
     edgesData[tNumMapWidth].numLines = numLanes;
     edgesData[tNumMapWidth].nextInters = boost::target(*ei, inRoadGraph.myRoadGraph_BI);
-    std::cerr << tNumMapWidth << std::endl;
 
     edgeDescToLaneMapNum.insert(std::make_pair(*ei, tNumMapWidth));
     laneMapNumToEdgeDesc.insert(std::make_pair(tNumMapWidth, *ei));

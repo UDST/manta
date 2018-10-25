@@ -64,7 +64,8 @@ HEADERS += \
     traffic/b18TrafficOD.h \
     traffic/b18TrafficPerson.h \
     traffic/b18TrafficSimulator.h \
-    src/benchmarker.h
+    src/benchmarker.h \
+    src/linux_host_memory_logger.h
 
 SOURCES += \
     Geometry/block.cpp \
@@ -90,7 +91,8 @@ SOURCES += \
     traffic/b18TrafficLaneMap.cpp \
     traffic/b18TrafficOD.cpp \
     traffic/b18TrafficSimulator.cpp \
-    src/benchmarker.cpp
+    src/benchmarker.cpp \
+    src/linux_host_memory_logger.cpp
 
 OTHER_FILES += \
         traffic/b18CUDA_trafficSimulator.cu \
