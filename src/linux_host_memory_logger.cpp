@@ -20,7 +20,7 @@ LinuxHostMemoryLogger::LinuxHostMemoryLogger(const int & seconds, const std::str
 
 void LinuxHostMemoryLogger::LogMemory()
 {
-    while(!log_file_stream_.is_open()) {}
+    while(!log_file_stream_.is_open()) { return; }
 
     log_file_stream_
         << "timestamp,"
