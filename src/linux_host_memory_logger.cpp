@@ -15,13 +15,11 @@ LinuxHostMemoryLogger::LinuxHostMemoryLogger(const int & seconds, const std::str
     start_(std::chrono::system_clock::now())
 {
     log_file_stream_.open(log_file_path);
-    if (log_file_stream_.fail()) { throw std::runtime_error("Could not open log file."); }
+    if (log_file_stream_.fail()) { cancellation_token_ = true; }
 }
 
 void LinuxHostMemoryLogger::LogMemory()
 {
-    while(!log_file_stream_.is_open()) { return; }
-
     log_file_stream_
         << "timestamp,"
         << "physical-memory-in-KB,"
