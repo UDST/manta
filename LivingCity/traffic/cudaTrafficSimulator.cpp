@@ -749,7 +749,7 @@ void simulateOnePersonCPU(
         //first before traffic
         trafficPersonVec[p].v == 0 && //stopped
         noFirstInLaneAfterSign ==
-        false) { // noone after the traffic light (otherwise wait before stop) !! TODO also check the beginning og next edge
+        false) { // noone after the traffic light (otherwise wait before stop) !! Todo also check the beginning og next edge
 
       trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge] =
         0x00; //reset stop
@@ -1464,7 +1464,7 @@ void CUDATrafficSimulator::simulateInCPU() {
     }
   }
 
-  /*//// !!! TODO REMOVE
+  /*//// !!! Todo REMOVE
   startTime=25200.0f;
   currentTime=25200.0f;//start at 7
   endTime=32400.0f;//end at 9 !!

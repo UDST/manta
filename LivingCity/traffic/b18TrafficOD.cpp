@@ -266,10 +266,11 @@ const float endSamples = 14.5f;
 const int numBucketsPerHour = 6;
 std::vector<float> hToWDistribution;
 const bool gaussianDistribution = false; // true = file; false = gaussian.
+
 float sampleFileDistribution() {
   // Initialized.
   if (fileDistributionInitialized == false) {
-    QFile inputFile("berkeley_2018/HtoW_trips.csv");
+    QFile inputFile("./LivingCity/berkeley_2018/HtoW_trips.csv");
 
     if (!inputFile.open(QIODevice::ReadOnly)) {
       printf("for fileDistributionInitialized must exist file berkeley_2018/HtoW_trips.csv\n");
@@ -306,15 +307,12 @@ float sampleFileDistribution() {
     // Print and normalize.
     for (int b = 0; b < hToWDistribution.size(); b++) {
       float bucketStartTime = startSamples + b * (1.0f / numBucketsPerHour);
-      printf("htoW,%.2f,%.0f\n", bucketStartTime, hToWDistribution[b]);
       hToWDistribution[b] /= float(accPeople + 1); // distribution
     }
 
     // Accumulate distribution.
     for (int b = 1; b < hToWDistribution.size(); b++) { // note starts with 1.
       hToWDistribution[b] += hToWDistribution[b - 1];
-      float bucketStartTime = startSamples + b * (1.0f / numBucketsPerHour);
-      printf("Acc,%.2f,%f\n", bucketStartTime, hToWDistribution[b]); // acumulate
     }
 
     fileDistributionInitialized = true;
@@ -467,11 +465,6 @@ void B18TrafficOD::loadB18TrafficPeople(
       }
 
       bins[targetBucket]++;
-    }
-
-    for (int b = 0; b < bins.size(); b++) {
-      float bucketStartTime = startSamples + b * (1.0f / numBucketsPerHour);
-      printf("PeopleDist,%.2f,%d\n", bucketStartTime, bins[b]); // acumulate
     }
   }
 

@@ -1,21 +1,18 @@
-
-#include "b18TrafficJohnson.h"
+#include <iostream>
+#include <fstream>
+#include <string>
 
 #include <boost/graph/johnson_all_pairs_shortest.hpp>
 #include <boost/graph/exterior_property.hpp>
+using namespace boost;
 
-#include <iostream> // save johnson
-#include <fstream>
+#include "b18TrafficJohnson.h"
 
-#define ROUTE_DEBUG 0
-//#define DEBUG_JOHNSON 0
+//#define DEBUG_JOHNSON
+
 
 namespace LC {
 
-
-////////////////
-/////////////////////////////
-using namespace boost;
 
 inline bool fileExists(const std::string& fileName) {
   std::ifstream f(fileName.c_str());

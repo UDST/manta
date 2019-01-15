@@ -88,10 +88,10 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
   QString odFileName = networkPath + "od_demand.csv";
 
   std::cerr
-    << "Using "
-    << nodesFileName.toUtf8().constData() << " as nodes' file, "
-    << edgeFileName.toUtf8().constData() << " as edges' file, "
-    << odFileName.toUtf8().constData() << " as od demands' file"
+    << "[Log] Using "
+    << "\"" << nodesFileName.toUtf8().constData() << "\"" << " as nodes' file, "
+    << "\"" << edgeFileName.toUtf8().constData() << "\"" << " as edges' file, "
+    << "\"" << odFileName.toUtf8().constData() << "\"" << " as od demands' file"
     << std::endl;
 
   /////////////////////////////////////////////////
@@ -315,7 +315,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
   const int destIndex = headers.indexOf("dest");
 
   QSet<uint64_t> noAvailableNodesDemand;
-  const bool saveNoAvailableNodesDemand = true;
+  const bool saveNoAvailableNodesDemand = false;
   totalNumPeople = 0;
 
   while (!streamD.atEnd()) {

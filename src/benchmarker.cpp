@@ -52,6 +52,3 @@ void Benchmarker::stopAndEndBenchmark()
     endBenchmark();
 }
 
-Benchmarker mainBench("main function", 0);
-Benchmarker intersectionBench("Intersections total time", 0);
-Benchmarker peopleBench("People total time", 0);

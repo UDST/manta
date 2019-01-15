@@ -1,7 +1,5 @@
 #define BOOST_TT_HAS_OPERATOR_HPP_INCLUDED
 
-#include "benchmarker.h"
-
 #ifdef B18_RUN_WITH_GUI
 #include <QApplication>
 #include "LC_UrbanMain.h"
@@ -14,10 +12,8 @@
 // NOTE: Check command_line_options for default options.
 
 int main(int argc, char *argv[]) {
+  #ifdef B18_RUN_WITH_GUI
 
-  mainBench.startMeasuring();
-
-#ifdef B18_RUN_WITH_GUI
   QApplication a(argc, argv);
   QSettings settings(QApplication::applicationDirPath() +
                      "/command_line_options.ini", QSettings::IniFormat);
@@ -33,7 +29,8 @@ int main(int argc, char *argv[]) {
     printf(">>Simulation Ended\n");
   }
 
-#else
+  #else
+
   QCoreApplication a(argc, argv);
   QSettings settings(QCoreApplication::applicationDirPath() +
                      "/command_line_options.ini", QSettings::IniFormat);
@@ -41,9 +38,6 @@ int main(int argc, char *argv[]) {
   LC::B18CommandLineVersion cl;
   cl.runB18Simulation();
   printf(">>Simulation Ended\n");
-#endif
 
-  mainBench.stopAndEndBenchmark();
-  intersectionBench.endBenchmark();
-  peopleBench.endBenchmark();
+  #endif
 }

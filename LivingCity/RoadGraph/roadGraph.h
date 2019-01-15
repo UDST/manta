@@ -142,7 +142,7 @@ class RoadGraph {
 
   typedef boost::adjacency_list
   <boost::vecS, boost::vecS, boost::bidirectionalS, RoadGraphVertex, RoadGraphEdge>
-  roadBGLGraph_BI;//bidirectionalS directedS
+  roadBGLGraph_BI;
   typedef boost::graph_traits<roadBGLGraph_BI>::vertex_descriptor
   roadGraphVertexDesc_BI;
   typedef boost::graph_traits<roadBGLGraph_BI>::edge_descriptor

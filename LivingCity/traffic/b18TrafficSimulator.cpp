@@ -1,17 +1,16 @@
-#include "b18TrafficSimulator.h"
-
-#include "benchmarker.h"
+#include <iostream>
+#include <thread>
 
 #include "../global.h"
 #ifdef B18_RUN_WITH_GUI
 #include "../LC_GLWidget3D.h"
 #include "../LC_UrbanMain.h"
 #endif
-#include <thread>
 
+#include "b18CUDA_trafficSimulator.h"
 #include "b18TrafficDijkstra.h"
 #include "b18TrafficJohnson.h"
-#include "b18CUDA_trafficSimulator.h"
+#include "b18TrafficSimulator.h"
 
 #define DEBUG_TRAFFIC 0
 #define DEBUG_SIMULATOR 0
@@ -20,7 +19,7 @@
 #ifdef __linux__
 #include <unistd.h>
 void printPercentageMemoryUsed() {
-  // TODO
+  // Todo: Not yet implemented
 }
 #elif _WIN32
 #include <windows.h>
@@ -32,7 +31,10 @@ void printPercentageMemoryUsed() {
          status.ullAvailPhys / (1024 * 1024));
 }
 #endif
+
+
 namespace LC {
+
 
 const float s_0 = 1.5f * 4.12f; // ALWAYS USED
 const float intersectionClearance = 7.8f;
@@ -99,13 +101,7 @@ void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
 //////////////////////////////////////////////////
 void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
     bool useJohnsonRouting) {
-  Benchmarker laneMapBench("Lane map", 2);
-  Benchmarker passesBench("Simulation passes", 2);
-  Benchmarker finishCudaBench("Cuda finish", 2);
-   
-  laneMapBench.startMeasuring();
   createLaneMap();
-  laneMapBench.stopAndEndBenchmark();
 
   QTime pathTimer;
   pathTimer.start();
@@ -113,47 +109,28 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
   int weigthMode;
   float peoplePathSampling[] = {1.0f, 1.0f, 0.5f, 0.25f, 0.12f, 0.67f};
 
-  passesBench.startMeasuring();
   for (int nP = 0; nP < numOfPasses; nP++) {
-    Benchmarker roadGenerationBench("Road generation", 3);
-    Benchmarker initCudaBench("Init Cuda step", 3);
-    Benchmarker simulateBench("Simulation step", 3);
-    Benchmarker getDataBench("Data retrieve step", 3);
-    Benchmarker shortestPathBench("Shortest path step", 3);
-
-    roadGenerationBench.startMeasuring();
     weigthMode = 1;
     if (nP == 0) {
       weigthMode = 0; //first time run normal weights
     }
 
     if (useJohnsonRouting) {
-      shortestPathBench.startMeasuring();	    
-      printf("***Start generateRoute Johnson\n");
       B18TrafficJohnson::generateRoutes(simRoadGraph->myRoadGraph_BI, trafficPersonVec,
           indexPathVec, edgeDescToLaneMapNum, weigthMode, peoplePathSampling[nP]);
-      shortestPathBench.stopAndEndBenchmark();
     } else {
-      printf("***Start generateRoutesMulti Disktra\n");
       B18TrafficDijstra::generateRoutesMulti(simRoadGraph->myRoadGraph_BI,
                                              trafficPersonVec, indexPathVec, edgeDescToLaneMapNum, weigthMode,
                                              peoplePathSampling[nP]);
     }
 
-    roadGenerationBench.stopAndEndBenchmark();
-
-
-    /////////////////////////////////////
-    // 1. Init Cuda
-    initCudaBench.startMeasuring();
-    bool fistInitialization = (nP == 0);
+    std::cerr << "[Log] Starting CUDA" << std::endl;
+    const bool fistInitialization = (nP == 0);
     b18InitCUDA(fistInitialization, trafficPersonVec, indexPathVec, edgesData,
         laneMap, trafficLights, intersections, startTimeH, endTimeH,
         accSpeedPerLinePerTimeInterval, numVehPerLinePerTimeInterval);
 
-    initCudaBench.stopAndEndBenchmark();
 
-    simulateBench.startMeasuring();
     float startTime = startTimeH * 3600.0f; //7.0f
     float endTime = endTimeH * 3600.0f; //8.0f//10.0f
 
@@ -231,9 +208,6 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       currentTime += deltaTime;
     }
     std::cerr << std::setw(90) << " " << "\rDone" << std::endl;
-    simulateBench.stopAndEndBenchmark();
-
-    getDataBench.startMeasuring();
 
     // 3. Finish
     b18GetDataCUDA(trafficPersonVec);
@@ -258,11 +232,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     calculateAndDisplayTrafficDensity(nP);
     savePeopleAndRoutes(nP);
     printf("  <<End One Step %d TIME: %d ms.\n", nP, timer.elapsed());
-    getDataBench.stopAndEndBenchmark();
   }
 
-  passesBench.stopAndEndBenchmark();
-  finishCudaBench.startMeasuring();
   b18FinishCUDA();
   G::global()["cuda_render_displaylist_staticRoadsBuildings"] = 3;//kill display list
 
@@ -273,7 +244,6 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
   }
 
 #endif
-  finishCudaBench.stopAndEndBenchmark();
 }//
 
 
@@ -850,7 +820,7 @@ void simulateOnePersonCPU(
         //first before traffic
         trafficPersonVec[p].v == 0 && //stopped
         noFirstInLaneAfterSign ==
-        false) { // noone after the traffic light (otherwise wait before stop) !! TODO also check the beginning of next edge
+        false) { // noone after the traffic light (otherwise wait before stop) !! Todo also check the beginning of next edge
 
       trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge] =
         0x00; //reset stop

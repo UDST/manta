@@ -91,7 +91,7 @@ class B18TrafficSimulator {
   void createB2018People(float startTime, float endTime, int limitNumPeople, bool addRandomPeople);
 
   void resetPeopleJobANDintersections();
-  void saveODToFile() {}; // TODO
+  void saveODToFile() {}; // Todo
   void loadODFromFile() {};
 
   // Traffic lights

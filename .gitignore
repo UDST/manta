@@ -16,6 +16,8 @@
 *.swp  # Vim swap files
 .qmake.stash
 Makefile
+*.o
+*.bin
 
 # Output files
 *_average_speed.csv

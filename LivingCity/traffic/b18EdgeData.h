@@ -6,8 +6,10 @@
 *
 ************************************************************************************************/
 
-#ifndef LC_B18_EDGE_DATA_H
-#define LC_B18_EDGE_DATA_H
+#ifndef LIVINGCITY_TRAFFIC_B18EDGEDATA_H_
+#define LIVINGCITY_TRAFFIC_B18EDGEDATA_H_
+
+#include <vector>
 
 #include "stdint.h"
 
@@ -26,7 +28,9 @@ const uint kMaskOutEdge = 0x000000;
 const uint kMaskInEdge = 0x800000;
 const uint kMaskLaneMap = 0x007FFFFF;
 
+
 namespace LC {
+
 
 struct B18EdgeData {
   ushort numLines;
@@ -41,7 +45,14 @@ struct B18IntersectionData {
   ushort totalInOutEdges;
   uint edge[24];// up to six arms intersection
   float nextEvent;
-};
-}
 
-#endif // LC_B18_EDGE_DATA_H
+  // TODO: Add a field that will indicate the behavior of the intersection
+  std::vector<std::vector<bool>> connections;
+};
+
+
+}  // namespace LC
+
+
+#endif  // LIVINGCITY_TRAFFIC_B18EDGEDATA_H_
+

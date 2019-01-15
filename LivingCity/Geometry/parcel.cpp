@@ -69,7 +69,7 @@ namespace LC {
 
 		typedef std::vector<polygon_2d> polygon_list;
 		polygon_list pl;
-		boost::geometry::union_<boost::geometry::ring_type<LC::misctools::Polygon3D>::type,boost::geometry::ring_type<LC::misctools::Polygon3D>::type>(this->bg_parcelContour, other.bg_parcelContour, pl);//std::back_inserter(pl));///!!!!!!!!!
+		//boost::geometry::union_<boost::geometry::ring_type<LC::misctools::Polygon3D>::type,boost::geometry::ring_type<LC::misctools::Polygon3D>::type>(this->bg_parcelContour, other.bg_parcelContour, pl);//std::back_inserter(pl));///!!!!!!!!!
 
 		if(pl.size()!=1){
 			return 0;

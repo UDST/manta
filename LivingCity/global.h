@@ -38,9 +38,8 @@
 #include <QHash>
 #include <QVariant>
 #include <QVector3D>
-#include <vector>
-
 #include <iostream>
+#include <vector>
 
 namespace LC {
 
@@ -119,12 +118,11 @@ class G {
   }
 
  private:
-  G() {}; // Private so that it can  not be called
-  G(G const &) {};           // copy constructor is private
-  G &operator=(G const &) {}; // assignment operator is private
-  //static Global* m_pInstance;
-
-
+  G() {};
+  G(G const &) {};
+  G &operator=(G const &) {
+    return *this;
+  };
 };
 
 

@@ -156,7 +156,7 @@ namespace LC {
 		QMatrix4x4 obbMat;
 		parcel.parcelContour.getMyOBB(obbSize, obbMat);
 
-		//compute split line passing through center of OBB TODO (+/- irregularity)
+		//compute split line passing through center of OBB Todo (+/- irregularity)
 		//		and with direction parallel/perpendicular to OBB main axis
 		QVector3D slEndPoint;
 		QVector3D dirVectorInit, dirVector, dirVectorOrthogonal;

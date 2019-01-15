@@ -1,10 +1,10 @@
-#ifndef BENCHMARKER__H
-#define BENCHMARKER__H
+#ifndef BENCHMARKER_H_
+#define BENCHMARKER_H_
 
-#include <string>
 #include <chrono>
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include <string>
 
 using Timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>;
 using Duration = std::chrono::nanoseconds;
@@ -31,10 +31,5 @@ class Benchmarker {
 };
 
 
-extern Benchmarker mainBench;
-extern Benchmarker intersectionBench;
-extern Benchmarker peopleBench;
-
-
-#endif  // BENCHMARKER__H
+#endif  // BENCHMARKER_H_
 

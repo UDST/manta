@@ -629,7 +629,7 @@ void LCGLWidget3D::drawScene(int drawMode) {
 
     // routes
     if (urbanMain->ui.b18RenderRoutesCheckBox->isChecked() == true) {
-      // TODO (igacarid) render routes b18TrafficSimulator.renderRoutes(vboRenderManager);
+      // Todo (igacarid) render routes b18TrafficSimulator.renderRoutes(vboRenderManager);
     }
 
     ////////////////////////////

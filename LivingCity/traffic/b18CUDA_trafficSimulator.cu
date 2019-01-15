@@ -9,8 +9,6 @@
 #include <vector>
 #include <iostream>
 
-#include "../../src/benchmarker.h"
-
 #ifndef ushort
 #define ushort uint16_t
 #endif
@@ -88,7 +86,6 @@ void b18InitCUDA(
   float startTimeH, float endTimeH,
   std::vector<float>& accSpeedPerLinePerTimeInterval,
   std::vector<float>& numVehPerLinePerTimeInterval) {
-  printf(">>b18InitCUDA fistInitialization %s\n", (fistInitialization?"INIT":"ALREADY INIT"));
   printMemoryUsage();
   { // people
     size_t size = trafficPersonVec.size() * sizeof(LC::B18TrafficPerson);
@@ -133,7 +130,6 @@ void b18InitCUDA(
     gpuErrchk(cudaMemset(&accSpeedPerLinePerTimeInterval_d[0], 0, sizeAcc));
     gpuErrchk(cudaMemset(&numVehPerLinePerTimeInterval_d[0], 0, sizeAcc));
   }
-  printf("<<b18InitCUDA\n");
   printMemoryUsage();
 }//
 
@@ -627,7 +623,7 @@ __global__ void kernel_trafficSimulation(
        //check
        if (noFirstInLaneBeforeSign == false && byteInLine < numOfCells && //first before traffic
          trafficPersonVec[p].v == 0 && //stopped
-         noFirstInLaneAfterSign == false) { // noone after the traffic light (otherwise wait before stop) !! TODO also check the beginning of next edge
+         noFirstInLaneAfterSign == false) { // noone after the traffic light (otherwise wait before stop) !! Todo also check the beginning of next edge
 
          trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge] = 0x00; //reset stop
          trafficPersonVec[p].posInLaneM = ceilf(numOfCells) + 1; //move magicly after stop
@@ -1157,50 +1153,45 @@ __global__ void kernel_intersectionSTOPSimulation(
 */
 
 __global__ void kernel_intersectionOneSimulation(
-      uint numIntersections,
-      float currentTime,
-      LC::B18IntersectionData *intersections,
-      uchar *trafficLights) {
-   int i = blockIdx.x * blockDim.x + threadIdx.x;
-   if(i<numIntersections){//CUDA check (inside margins)
-     const float deltaEvent = 20.0f; /// !!!!
-     if (currentTime > intersections[i].nextEvent && intersections[i].totalInOutEdges > 0) {
+    uint numIntersections,
+    float currentTime,
+    LC::B18IntersectionData *intersections,
+    uchar *trafficLights) {
+  const int i = blockIdx.x * blockDim.x + threadIdx.x;
+  if(i<numIntersections){
+    const float deltaEvent = 20.0f;  // 20 seconds between each change in the traffic lights
+    if (currentTime > intersections[i].nextEvent && intersections[i].totalInOutEdges > 0) {
+      uint edgeOT = intersections[i].edge[intersections[i].state];
+      uchar numLinesO = edgeOT >> 24;
+      uint edgeONum = edgeOT & kMaskLaneMap; // 0xFFFFF;
 
-       uint edgeOT = intersections[i].edge[intersections[i].state];
-       uchar numLinesO = edgeOT >> 24;
-       uint edgeONum = edgeOT & kMaskLaneMap; // 0xFFFFF;
+      // red old traffic lights
+      if ((edgeOT&kMaskInEdge) == kMaskInEdge) {  // Just do it if we were in in
+        for (int nL = 0; nL < numLinesO; nL++) {
+          trafficLights[edgeONum + nL] = 0x00; //red old traffic light
+        }
+      }
 
-       // red old traffic lights
-       if ((edgeOT&kMaskInEdge) == kMaskInEdge) {  // Just do it if we were in in
-         for (int nL = 0; nL < numLinesO; nL++) {
-           trafficLights[edgeONum + nL] = 0x00; //red old traffic light
-         }
-       }
-
-       for (int iN = 0; iN <= intersections[i].totalInOutEdges + 1; iN++) { //to give a round
-         intersections[i].state = (intersections[i].state + 1) % intersections[i].totalInOutEdges;//next light
-
-         if ((intersections[i].edge[intersections[i].state] & kMaskInEdge) == kMaskInEdge) {  // 0x800000
-           // green new traffic lights
-           uint edgeIT = intersections[i].edge[intersections[i].state];
-           uint edgeINum = edgeIT & kMaskLaneMap; //  0xFFFFF; //get edgeI
-           uchar numLinesI = edgeIT >> 24;
-
-           for (int nL = 0; nL < numLinesI; nL++) {
-             trafficLights[edgeINum + nL] = 0xFF;
-           }
-
-           //trafficLights[edgeINum]=0xFF;
-           break;
-         }
-       }//green new traffic light
-
-       intersections[i].nextEvent = currentTime + deltaEvent;
-     }
-     //////////////////////////////////////////////////////
-   }
-   
- }//
+      for (int iN = 0; iN <= intersections[i].totalInOutEdges + 1; iN++) { //to give a round
+        intersections[i].state = (intersections[i].state + 1) % intersections[i].totalInOutEdges;//next light
+        if ((intersections[i].edge[intersections[i].state] & kMaskInEdge) == kMaskInEdge) {  // 0x800000
+          // green new traffic lights
+          uint edgeIT = intersections[i].edge[intersections[i].state];
+          uint edgeINum = edgeIT & kMaskLaneMap; //  0xFFFFF; //get edgeI
+          uchar numLinesI = edgeIT >> 24;
+          
+          for (int nL = 0; nL < numLinesI; nL++) {
+            trafficLights[edgeINum + nL] = 0xFF;
+          }
+          
+          //trafficLights[edgeINum]=0xFF;
+          break;
+        }
+      }//green new traffic light
+      intersections[i].nextEvent = currentTime + deltaEvent;
+    }
+  } 
+}
 
 // Kernel that executes on the CUDA device
 __global__ void kernel_sampleTraffic(
@@ -1246,7 +1237,6 @@ void b18ResetPeopleLanesCUDA(uint numPeople) {
 
 void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersections) {
 
-  intersectionBench.startMeasuring();
   ////////////////////////////////////////////////////////////
   // 1. CHANGE MAP: set map to use and clean the other
   if(readFirstMapC==true){
@@ -1264,13 +1254,9 @@ void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersect
   kernel_intersectionOneSimulation << < ceil(numIntersections / 512.0f), 512 >> > (numIntersections, currentTime, intersections_d, trafficLights_d);
   gpuErrchk(cudaPeekAtLastError());
 
-  intersectionBench.stopMeasuring();
-  
-  peopleBench.startMeasuring();
   // Simulate people.
   kernel_trafficSimulation <<< ceil(numPeople / 384.0f), 384>> > (numPeople, currentTime, mapToReadShift, mapToWriteShift, trafficPersonVec_d, indexPathVec_d, edgesData_d, laneMap_d, intersections_d, trafficLights_d);
   gpuErrchk(cudaPeekAtLastError());
-  peopleBench.stopMeasuring();
 
   // Sample if necessary.
   if ((((float) ((int) currentTime)) == (currentTime)) &&
