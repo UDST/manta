@@ -1,6 +1,10 @@
 # traffic-simulator-extended
 Traffic Microsimulator with Extensions
 
+Traffic flow is modeled using the
+[Intelligent Driver Model (IDM)](https://en.wikipedia.org/wiki/Intelligent_driver_model)
+.
+
 ## Dependencies
 
  - Boost 1.59

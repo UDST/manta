@@ -13,8 +13,8 @@
 
 
 #include "../misctools/misctools.h"
-#include "RoadGraph/roadGraph.h"
-#include "b18EdgeData.h"
+#include "./RoadGraph/roadGraph.h"
+#include "./b18EdgeData.h"
 
 namespace LC {
 

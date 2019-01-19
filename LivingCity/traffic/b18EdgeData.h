@@ -9,7 +9,7 @@
 #ifndef LIVINGCITY_TRAFFIC_B18EDGEDATA_H_
 #define LIVINGCITY_TRAFFIC_B18EDGEDATA_H_
 
-#include <vector>
+#include <map>
 
 #include "stdint.h"
 
@@ -40,6 +40,7 @@ struct B18EdgeData {
 };
 
 struct B18IntersectionData {
+  // TODO: I'll probably remove this once the intersection changes are made
   ushort state;
   ushort stateLine;
   ushort totalInOutEdges;
@@ -47,7 +48,7 @@ struct B18IntersectionData {
   float nextEvent;
 
   // TODO: Add a field that will indicate the behavior of the intersection
-  std::vector<std::vector<bool>> connections;
+  std::map<size_t, std::map<size_t, bool>> connections;
 };
 
 

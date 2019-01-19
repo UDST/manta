@@ -4,6 +4,7 @@ TARGET = LivingCity.bin
 DESTDIR = ./
 OBJECTS_DIR = release/obj
 CUDA_OBJECTS_DIR = release/cuda
+CONFIG += c++17
 
 HEADERS += \
     ./LivingCity/Geometry/block.h \
