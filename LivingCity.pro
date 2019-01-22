@@ -1,8 +1,10 @@
 QT += core
 
+TARGET = LivingCity.bin
 # Project build directories
 DESTDIR     = $$PWD
 OBJECTS_DIR = $$DESTDIR/obj
+CONFIG += c++17
 
 unix {
     LIBS += -L/opt/local/lib -lopencv_imgcodecs -lopencv_core -lopencv_imgproc
@@ -38,62 +40,62 @@ win32{
 }
 
 HEADERS += \
-    Geometry/block.h \
-    Geometry/building.h \
-    Geometry/client_geometry.h \
-    Geometry/parcel.h \
-    Geometry/parcelBuildingAttributes.h \
-    Geometry/placeTypeInstances.h \
-    Geometry/zone.h \
-    RoadGraph/roadGraph.h \
-    RoadGraph/roadGraphEdge.h \
-    RoadGraph/roadGraphVertex.h \
-    global.h \
-    misctools/bounding_box.h \
-    misctools/common.h \
-    misctools/misctools.h \
-    misctools/polygon_3D.h \
-    roadGraphB2018Loader.h \
-    traffic/b18CUDA_trafficSimulator.h \
-    traffic/b18CommandLineVersion.h \
-    traffic/b18EdgeData.h \
-    traffic/b18GridPollution.h \
-    traffic/b18TrafficDijkstra.h \
-    traffic/b18TrafficJohnson.h \
-    traffic/b18TrafficLaneMap.h \
-    traffic/b18TrafficOD.h \
-    traffic/b18TrafficPerson.h \
-    traffic/b18TrafficSimulator.h \
+    ./LivingCity/Geometry/block.h \
+    ./LivingCity/Geometry/building.h \
+    ./LivingCity/Geometry/client_geometry.h \
+    ./LivingCity/Geometry/parcel.h \
+    ./LivingCity/Geometry/parcelBuildingAttributes.h \
+    ./LivingCity/Geometry/placeTypeInstances.h \
+    ./LivingCity/Geometry/zone.h \
+    ./LivingCity/RoadGraph/roadGraph.h \
+    ./LivingCity/RoadGraph/roadGraphEdge.h \
+    ./LivingCity/RoadGraph/roadGraphVertex.h \
+    ./LivingCity/global.h \
+    ./LivingCity/misctools/bounding_box.h \
+    ./LivingCity/misctools/common.h \
+    ./LivingCity/misctools/misctools.h \
+    ./LivingCity/misctools/polygon_3D.h \
+    ./LivingCity/roadGraphB2018Loader.h \
+    ./LivingCity/traffic/b18CUDA_trafficSimulator.h \
+    ./LivingCity/traffic/b18CommandLineVersion.h \
+    ./LivingCity/traffic/b18EdgeData.h \
+    ./LivingCity/traffic/b18GridPollution.h \
+    ./LivingCity/traffic/b18TrafficDijkstra.h \
+    ./LivingCity/traffic/b18TrafficJohnson.h \
+    ./LivingCity/traffic/b18TrafficLaneMap.h \
+    ./LivingCity/traffic/b18TrafficOD.h \
+    ./LivingCity/traffic/b18TrafficPerson.h \
+    ./LivingCity/traffic/b18TrafficSimulator.h \
     src/benchmarker.h
 
 SOURCES += \
-    Geometry/block.cpp \
-    Geometry/building.cpp \
-    Geometry/client_geometry.cpp \
-    Geometry/parcel.cpp \
-    Geometry/parcelBuildingAttributes.cpp \
-    Geometry/placeTypeInstances.cpp \
-    Geometry/zone.cpp \
-    LC_main.cpp \
-    RoadGraph/roadGraph.cpp \
-    RoadGraph/roadGraphEdge.cpp \
-    RoadGraph/roadGraphVertex.cpp \
-    global.cpp \
-    misctools/bounding_box.cpp \
-    misctools/misctools.cpp \
-    misctools/polygon_3D.cpp \
-    roadGraphB2018Loader.cpp \
-    traffic/b18CommandLineVersion.cpp \
-    traffic/b18GridPollution.cpp \
-    traffic/b18TrafficDijkstra.cpp \
-    traffic/b18TrafficJohnson.cpp \
-    traffic/b18TrafficLaneMap.cpp \
-    traffic/b18TrafficOD.cpp \
-    traffic/b18TrafficSimulator.cpp \
+    ./LivingCity/Geometry/block.cpp \
+    ./LivingCity/Geometry/building.cpp \
+    ./LivingCity/Geometry/client_geometry.cpp \
+    ./LivingCity/Geometry/parcel.cpp \
+    ./LivingCity/Geometry/parcelBuildingAttributes.cpp \
+    ./LivingCity/Geometry/placeTypeInstances.cpp \
+    ./LivingCity/Geometry/zone.cpp \
+    ./LivingCity/LC_main.cpp \
+    ./LivingCity/RoadGraph/roadGraph.cpp \
+    ./LivingCity/RoadGraph/roadGraphEdge.cpp \
+    ./LivingCity/RoadGraph/roadGraphVertex.cpp \
+    ./LivingCity/global.cpp \
+    ./LivingCity/misctools/bounding_box.cpp \
+    ./LivingCity/misctools/misctools.cpp \
+    ./LivingCity/misctools/polygon_3D.cpp \
+    ./LivingCity/roadGraphB2018Loader.cpp \
+    ./LivingCity/traffic/b18CommandLineVersion.cpp \
+    ./LivingCity/traffic/b18GridPollution.cpp \
+    ./LivingCity/traffic/b18TrafficDijkstra.cpp \
+    ./LivingCity/traffic/b18TrafficJohnson.cpp \
+    ./LivingCity/traffic/b18TrafficLaneMap.cpp \
+    ./LivingCity/traffic/b18TrafficOD.cpp \
+    ./LivingCity/traffic/b18TrafficSimulator.cpp \
     src/benchmarker.cpp
 
 OTHER_FILES += \
-        traffic/b18CUDA_trafficSimulator.cu \
+        ./LivingCity/traffic/b18CUDA_trafficSimulator.cu \
 
 
 ###################################################################
@@ -101,7 +103,7 @@ OTHER_FILES += \
 ###################################################################
 win32{
     # Cuda sources
-    CUDA_SOURCES += traffic/b18CUDA_trafficSimulator.cu
+    CUDA_SOURCES += ./LivingCity/traffic/b18CUDA_trafficSimulator.cu
 
     # Path to cuda toolkit install
     CUDA_DIR      = "D:/CUDA"
@@ -156,7 +158,7 @@ win32{
 
 unix {
   # Cuda sources
-  CUDA_SOURCES += traffic/b18CUDA_trafficSimulator.cu
+  CUDA_SOURCES += ./LivingCity/traffic/b18CUDA_trafficSimulator.cu
   # Path to cuda toolkit install
   CUDA_DIR = /usr/local/cuda-9.0
   INCLUDEPATH += $$CUDA_DIR/include
@@ -178,3 +180,5 @@ unix {
   # Tell Qt that we want add more stuff to the Makefile
   QMAKE_EXTRA_COMPILERS += cuda
 }
+
+INCLUDEPATH += $$CUDA_DIR/include ./LivingCity . ./src 

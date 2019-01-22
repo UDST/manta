@@ -91,21 +91,29 @@ void B18TrafficLaneMap::createLaneMap(
   auto & input_graph = inRoadGraph.myRoadGraph_BI;
   intersections.resize(boost::num_vertices(input_graph));
 
-  auto [begin, end] = boost::edges(input_graph);
+  auto p4 = boost::edges(input_graph);
+  auto begin = p4.first;
+  auto end = p4.second;
   for (auto it = begin; it != end; ++it) {
     std::cerr << *it << std::endl;
   }
 
-  auto [vertices_begin, vertices_end] = boost::vertices(input_graph);
+  auto p = boost::vertices(input_graph);
+  auto vertices_begin = p.first;
+  auto vertices_end = p.second;
   for (auto vertices_it = vertices_begin; vertices_it != vertices_end; ++vertices_it) {
     B18IntersectionData vertex_data;
     std::cerr << "vertex " << *vertices_it;
-    auto [in_edges_begin, in_edges_end] = boost::in_edges(*vertices_it, input_graph);
+    auto p1 = boost::in_edges(*vertices_it, input_graph);
+    auto in_edges_begin = p1.first;
+    auto in_edges_end = p1.second;
     for (auto in_edges_it = in_edges_begin; in_edges_it != in_edges_end; ++in_edges_it) {
       std::map<size_t, bool> inner_connections;
 
       std::cerr << "\n\tin-edge: " << (*in_edges_it);
-      auto [out_edges_begin, out_edges_end] = boost::out_edges(*vertices_it, input_graph);
+      auto p2 = boost::out_edges(*vertices_it, input_graph);
+      auto out_edges_begin = p2.first;
+      auto out_edges_end = p2.second;
       for (auto out_edges_it = out_edges_begin; out_edges_it != out_edges_end; ++out_edges_it) {
         // TODO: Do no add out-edges of own road
         std::cerr << "\n\t\tout-edge: " << (*out_edges_it);
