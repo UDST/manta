@@ -165,8 +165,9 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     std::cerr
       << "Running main loop from " << (startTime / 3600.0f)
       << " to " << (endTime / 3600.0f)
-      << " with " << trafficPersonVec.size() << " person..."
+      << " with " << trafficPersonVec.size() << " persons..."
       << std::endl;
+    std::cout << "amount of people: " << trafficPersonVec.size() << std::endl;
     while (currentTime < endTime) {
       count++;
       if (count % 180 == 0) {

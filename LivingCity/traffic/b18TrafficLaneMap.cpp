@@ -12,6 +12,7 @@
 #include <cassert>
 #include <map>
 #include "./b18TrafficLaneMap.h"
+#include <thrust/device_vector.h>
 
 #define LANE_DEBUG 1
 
@@ -81,6 +82,9 @@ void B18TrafficLaneMap::createLaneMap(
     edgesData[totalLaneMapChunks].nextInters = boost::target(*ei, inRoadGraph.myRoadGraph_BI);
     edgesData[totalLaneMapChunks].numLines = numLanes;
 
+    // TODO: Add a field that indicates the target vertice. It will allow to retrieve the required
+    // info
+
     edgeDescToLaneMapNum.insert(std::make_pair(*ei, totalLaneMapChunks));
     laneMapNumToEdgeDesc.insert(std::make_pair(totalLaneMapChunks, *ei));
 
@@ -88,44 +92,41 @@ void B18TrafficLaneMap::createLaneMap(
   }
   edgesData.resize(totalLaneMapChunks);
 
+  for (auto e : edgesData) std::cout << e.length << std::endl;
+
   auto & input_graph = inRoadGraph.myRoadGraph_BI;
   intersections.resize(boost::num_vertices(input_graph));
-
-  auto p4 = boost::edges(input_graph);
-  auto begin = p4.first;
-  auto end = p4.second;
-  for (auto it = begin; it != end; ++it) {
-    std::cerr << *it << std::endl;
-  }
 
   auto p = boost::vertices(input_graph);
   auto vertices_begin = p.first;
   auto vertices_end = p.second;
   for (auto vertices_it = vertices_begin; vertices_it != vertices_end; ++vertices_it) {
     B18IntersectionData vertex_data;
-    std::cerr << "vertex " << *vertices_it;
-    auto p1 = boost::in_edges(*vertices_it, input_graph);
-    auto in_edges_begin = p1.first;
-    auto in_edges_end = p1.second;
+    std::cout << "vertex " << *vertices_it;
+    auto in_edges_pair = boost::in_edges(*vertices_it, input_graph);
+    auto in_edges_begin = in_edges_pair.first;
+    auto in_edges_end = in_edges_pair.second;
     for (auto in_edges_it = in_edges_begin; in_edges_it != in_edges_end; ++in_edges_it) {
-      std::map<size_t, bool> inner_connections;
+      const auto in_mapped_idx = *in_edges_it;
+      std::cout << "\n\t"
+        << "in-edge " << *in_edges_it
+        << " with corresponding index: " << edgeDescToLaneMapNum.at(in_mapped_idx)
+        << std::endl;
 
-      std::cerr << "\n\tin-edge: " << (*in_edges_it);
       auto p2 = boost::out_edges(*vertices_it, input_graph);
       auto out_edges_begin = p2.first;
       auto out_edges_end = p2.second;
       for (auto out_edges_it = out_edges_begin; out_edges_it != out_edges_end; ++out_edges_it) {
-        // TODO: Do no add out-edges of own road
-        std::cerr << "\n\t\tout-edge: " << (*out_edges_it);
-        //inner_connections.emplace(*out_edges_it, false);
+        const auto in_mapped_idx = *in_edges_it;
+        std::cout << "\n\t\t"
+          << "out-edge " << *out_edges_it
+          << " with corresponding index: " << edgeDescToLaneMapNum.at(*out_edges_it)
+          << std::endl;
       }
-
-      //vertex_data.connections.emplace(*in_edges_it, inner_connections);
     }
-    std::cerr << std::endl;
-    intersections.at(*vertices_it) = vertex_data;
+    std::cout << std::endl;
   }
-  assert(false);
+  //assert(false);
 
   // Instantiate lane map
   laneMap.resize(kMaxMapWidthM * totalLaneMapChunks * 2); // 2: to have two maps.

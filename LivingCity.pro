@@ -182,3 +182,5 @@ unix {
 }
 
 INCLUDEPATH += $$CUDA_DIR/include ./LivingCity . ./src 
+
+QMAKE_CXXFLAGS += -Wno-sign-compare -Wno-unused-variable -Wno-deprecated-declarations -Wno-unused-parameter

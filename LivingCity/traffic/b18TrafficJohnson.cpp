@@ -110,8 +110,8 @@ void B18TrafficJohnson::generateRoutes(
 
   ////////////////////////
   // CALL JOHNSON
-  //const bool tryReadWriteFirstJohnsonArray = false;
-  const bool tryReadWriteFirstJohnsonArray = weigthMode == 0;
+  const bool tryReadWriteFirstJohnsonArray = false;
+  //const bool tryReadWriteFirstJohnsonArray = weigthMode == 0;
   std::string fileName = "johnson_numVertex_" + std::to_string(numVertex) + "_maxTravelTime_" + std::to_string(maxTravelTime) + ".bin"; // encode num vertext and travel time to "check" is the same input
   bool johnsonReadCorrectly = false;
   if (tryReadWriteFirstJohnsonArray && fileExists(fileName)) {

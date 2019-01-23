@@ -7,6 +7,8 @@
 #include "b18TrafficPerson.h"
 #include "b18EdgeData.h"
 #include <vector>
+#include <thrust/host_vector.h>
+#include <thrust/device_vector.h>
 #include <iostream>
 
 #ifndef ushort
@@ -76,17 +78,47 @@ uchar *trafficLights_d;
 float* accSpeedPerLinePerTimeInterval_d;
 float* numVehPerLinePerTimeInterval_d;
 
+struct LaneInfo
+{
+  size_t in_lane_number;
+  size_t out_lane_number;
+  bool enabled;
+};
+
+LaneInfo *connections;
+
 void b18InitCUDA(
-  bool fistInitialization,
-  std::vector<LC::B18TrafficPerson>& trafficPersonVec, 
-  std::vector<uint> &indexPathVec, 
-  std::vector<LC::B18EdgeData>& edgesData, 
-  std::vector<uchar>& laneMap, 
-  std::vector<uchar>& trafficLights, 
-  std::vector<LC::B18IntersectionData>& intersections,
-  float startTimeH, float endTimeH,
-  std::vector<float>& accSpeedPerLinePerTimeInterval,
-  std::vector<float>& numVehPerLinePerTimeInterval) {
+    bool fistInitialization,
+    std::vector<LC::B18TrafficPerson>& trafficPersonVec, 
+    std::vector<uint> &indexPathVec, 
+    std::vector<LC::B18EdgeData>& edgesData, 
+    std::vector<uchar>& laneMap, 
+    std::vector<uchar>& trafficLights, 
+    std::vector<LC::B18IntersectionData>& intersections,
+    float startTimeH, float endTimeH,
+    std::vector<float>& accSpeedPerLinePerTimeInterval,
+    std::vector<float>& numVehPerLinePerTimeInterval) {
+
+  LaneInfo l1, l2, l3;
+  l1.in_lane_number = 9;
+  l1.out_lane_number = 10;
+  l1.enabled = false;
+
+  l2.in_lane_number = 8;
+  l2.out_lane_number = 20;
+  l2.enabled = false;
+
+  l3.in_lane_number = 7;
+  l3.out_lane_number = 30;
+  l3.enabled = false;
+
+  std::vector<LaneInfo> host_connections{l1, l2, l3};
+  { // people
+    size_t size = host_connections.size() * sizeof(LaneInfo);
+    if (fistInitialization) gpuErrchk(cudaMalloc((void **) &connections, size));   // Allocate array on device
+    gpuErrchk(cudaMemcpy(connections, host_connections.data(), size, cudaMemcpyHostToDevice));
+  }
+
   printMemoryUsage();
   { // people
     size_t size = trafficPersonVec.size() * sizeof(LC::B18TrafficPerson);
@@ -439,12 +471,26 @@ __global__ void kernel_trafficSimulation(
    LC::B18EdgeData* edgesData,
    uchar *laneMap,
    LC::B18IntersectionData *intersections,
-   uchar *trafficLights
+   uchar *trafficLights,
+   LaneInfo *connections
    )
  {
+   const auto f = [currentTime] (int p) {
+     printf("[Log] %d at %f \n", p, currentTime);
+   };
    const int p = blockIdx.x * blockDim.x + threadIdx.x;
-   // Only preceed if the computed index `p` is valid
+   // Only proceed if the computed index `p` is valid
    if (p < numPeople) {
+     if (trafficPersonVec[p].active == 1) {
+       printf("%d", p);
+       f(p);
+       printf("current edge: %d\n", indexPathVec[trafficPersonVec[p].indexPathCurr]);
+       for (int i = 0; i < 3; ++i) {
+         printf("%d: %d %d %d\n", i, connections[i].in_lane_number, connections[i].out_lane_number, connections[i].enabled);
+         connections[i].in_lane_number = 99;
+       }
+       connections[1].enabled = true;
+     }
      if (trafficPersonVec[p].active == 2) {
        // Return if this person has reached its destiny
        return;
@@ -457,6 +503,8 @@ __global__ void kernel_trafficSimulation(
          return;
        }
        else {
+         f(p);
+         printf("Init %d\n", p);
          // Else initialize this person's data
          trafficPersonVec[p].indexPathCurr = trafficPersonVec[p].indexPathInit;
          const uint firstEdge = indexPathVec[trafficPersonVec[p].indexPathCurr];
@@ -1099,7 +1147,18 @@ void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersect
   gpuErrchk(cudaPeekAtLastError());
 
   // Simulate people.
-  kernel_trafficSimulation <<< ceil(numPeople / 384.0f), 384>> > (numPeople, currentTime, mapToReadShift, mapToWriteShift, trafficPersonVec_d, indexPathVec_d, edgesData_d, laneMap_d, intersections_d, trafficLights_d);
+  kernel_trafficSimulation <<< ceil(numPeople / 384.0f), 384>> > (
+    numPeople,
+    currentTime,
+    mapToReadShift,
+    mapToWriteShift,
+    trafficPersonVec_d,
+    indexPathVec_d,
+    edgesData_d,
+    laneMap_d,
+    intersections_d,
+    trafficLights_d,
+    connections);
   gpuErrchk(cudaPeekAtLastError());
 
   // Sample if necessary.

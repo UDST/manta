@@ -40,15 +40,11 @@ struct B18EdgeData {
 };
 
 struct B18IntersectionData {
-  // TODO: I'll probably remove this once the intersection changes are made
   ushort state;
   ushort stateLine;
   ushort totalInOutEdges;
   uint edge[24];// up to six arms intersection
   float nextEvent;
-
-  // TODO: Add a field that will indicate the behavior of the intersection
-  std::map<size_t, std::map<size_t, bool>> connections;
 };
 
 
