@@ -7,8 +7,6 @@
 #include "b18TrafficPerson.h"
 #include "b18EdgeData.h"
 #include <vector>
-#include <thrust/host_vector.h>
-#include <thrust/device_vector.h>
 #include <iostream>
 
 #ifndef ushort
@@ -78,14 +76,8 @@ uchar *trafficLights_d;
 float* accSpeedPerLinePerTimeInterval_d;
 float* numVehPerLinePerTimeInterval_d;
 
-struct LaneInfo
-{
-  size_t in_lane_number;
-  size_t out_lane_number;
-  bool enabled;
-};
-
-LaneInfo *connections;
+LC::ConnectionsInfo *deviceConnections;
+size_t amountOfConnections;
 
 void b18InitCUDA(
     bool fistInitialization,
@@ -97,26 +89,19 @@ void b18InitCUDA(
     std::vector<LC::B18IntersectionData>& intersections,
     float startTimeH, float endTimeH,
     std::vector<float>& accSpeedPerLinePerTimeInterval,
-    std::vector<float>& numVehPerLinePerTimeInterval) {
+    std::vector<float>& numVehPerLinePerTimeInterval,
+    const std::vector<LC::ConnectionsInfo> & hostConnections) {
 
-  LaneInfo l1, l2, l3;
-  l1.in_lane_number = 9;
-  l1.out_lane_number = 10;
-  l1.enabled = false;
-
-  l2.in_lane_number = 8;
-  l2.out_lane_number = 20;
-  l2.enabled = false;
-
-  l3.in_lane_number = 7;
-  l3.out_lane_number = 30;
-  l3.enabled = false;
-
-  std::vector<LaneInfo> host_connections{l1, l2, l3};
+  
+  printf("Starting lane info\n");
+  for (const auto & lane : hostConnections) {
+    printf("{in: %d, out: %d, on: %d}", lane.in_lane_number, lane.out_lane_number, lane.enabled);
+  }
   { // people
-    size_t size = host_connections.size() * sizeof(LaneInfo);
-    if (fistInitialization) gpuErrchk(cudaMalloc((void **) &connections, size));   // Allocate array on device
-    gpuErrchk(cudaMemcpy(connections, host_connections.data(), size, cudaMemcpyHostToDevice));
+    amountOfConnections = hostConnections.size();
+    size_t size = hostConnections.size() * sizeof(LC::ConnectionsInfo);
+    if (fistInitialization) gpuErrchk(cudaMalloc((void **) &deviceConnections, size));   // Allocate array on device
+    gpuErrchk(cudaMemcpy(deviceConnections, hostConnections.data(), size, cudaMemcpyHostToDevice));
   }
 
   printMemoryUsage();
@@ -462,7 +447,7 @@ void b18FinishCUDA(void){
 
  // Kernel that executes on the CUDA device
 __global__ void kernel_trafficSimulation(
-   int numPeople,
+   const int numPeople,
    float currentTime,
    uint mapToReadShift,
    uint mapToWriteShift,
@@ -472,25 +457,13 @@ __global__ void kernel_trafficSimulation(
    uchar *laneMap,
    LC::B18IntersectionData *intersections,
    uchar *trafficLights,
-   LaneInfo *connections
+   LC::ConnectionsInfo *connections,
+   size_t amountOfConnections
    )
  {
-   const auto f = [currentTime] (int p) {
-     printf("[Log] %d at %f \n", p, currentTime);
-   };
    const int p = blockIdx.x * blockDim.x + threadIdx.x;
    // Only proceed if the computed index `p` is valid
    if (p < numPeople) {
-     if (trafficPersonVec[p].active == 1) {
-       printf("%d", p);
-       f(p);
-       printf("current edge: %d\n", indexPathVec[trafficPersonVec[p].indexPathCurr]);
-       for (int i = 0; i < 3; ++i) {
-         printf("%d: %d %d %d\n", i, connections[i].in_lane_number, connections[i].out_lane_number, connections[i].enabled);
-         connections[i].in_lane_number = 99;
-       }
-       connections[1].enabled = true;
-     }
      if (trafficPersonVec[p].active == 2) {
        // Return if this person has reached its destiny
        return;
@@ -503,8 +476,6 @@ __global__ void kernel_trafficSimulation(
          return;
        }
        else {
-         f(p);
-         printf("Init %d\n", p);
          // Else initialize this person's data
          trafficPersonVec[p].indexPathCurr = trafficPersonVec[p].indexPathInit;
          const uint firstEdge = indexPathVec[trafficPersonVec[p].indexPathCurr];
@@ -1158,7 +1129,8 @@ void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersect
     laneMap_d,
     intersections_d,
     trafficLights_d,
-    connections);
+    deviceConnections,
+    amountOfConnections);
   gpuErrchk(cudaPeekAtLastError());
 
   // Sample if necessary.

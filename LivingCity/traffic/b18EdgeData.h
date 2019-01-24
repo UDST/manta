@@ -32,7 +32,15 @@ const uint kMaskLaneMap = 0x007FFFFF;
 namespace LC {
 
 
+struct ConnectionsInfo {
+  int in_lane_number;
+  int out_lane_number;
+  bool enabled;
+};
+
 struct B18EdgeData {
+  int original_src_vertex_index;
+  int original_target_vertex_index;
   ushort numLines;
   uint nextInters;
   float length;

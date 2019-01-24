@@ -78,7 +78,7 @@ void B18TrafficSimulator::resetPeopleJobANDintersections() {
 
 void B18TrafficSimulator::createLaneMap() { //
   b18TrafficLaneMap.createLaneMap(*simRoadGraph, laneMap, edgesData, intersections, trafficLights,
-      laneMapNumToEdgeDesc, edgeDescToLaneMapNum);
+      laneMapNumToEdgeDesc, edgeDescToLaneMapNum, connections);
 }//
 
 void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
@@ -126,9 +126,19 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 
     std::cerr << "[Log] Starting CUDA" << std::endl;
     const bool fistInitialization = (nP == 0);
-    b18InitCUDA(fistInitialization, trafficPersonVec, indexPathVec, edgesData,
-        laneMap, trafficLights, intersections, startTimeH, endTimeH,
-        accSpeedPerLinePerTimeInterval, numVehPerLinePerTimeInterval);
+    b18InitCUDA(
+        fistInitialization,
+        trafficPersonVec,
+        indexPathVec,
+        edgesData,
+        laneMap,
+        trafficLights,
+        intersections,
+        startTimeH,
+        endTimeH,
+        accSpeedPerLinePerTimeInterval,
+        numVehPerLinePerTimeInterval,
+        connections);
 
 
     float startTime = startTimeH * 3600.0f; //7.0f

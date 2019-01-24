@@ -14,15 +14,17 @@
 #include <vector>
 
 
-extern void b18InitCUDA(bool fistInitialization, // crate buffers
-                        std::vector<LC::B18TrafficPerson> &trafficPersonVec,
-                        std::vector<uint> &indexPathVec,
-                        std::vector<LC::B18EdgeData> &edgesData, std::vector<uchar> &laneMap,
-                        std::vector<uchar> &trafficLights,
-                        std::vector<LC::B18IntersectionData> &intersections,
-                        float startTimeH, float endTimeH,
-                        std::vector<float>& accSpeedPerLinePerTimeInterval,
-                        std::vector<float>& numVehPerLinePerTimeInterval);
+extern void b18InitCUDA(
+    bool fistInitialization,  // Create buffers
+    std::vector<LC::B18TrafficPerson> &trafficPersonVec,
+    std::vector<uint> &indexPathVec,
+    std::vector<LC::B18EdgeData> &edgesData, std::vector<uchar> &laneMap,
+    std::vector<uchar> &trafficLights,
+    std::vector<LC::B18IntersectionData> &intersections,
+    float startTimeH, float endTimeH,
+    std::vector<float>& accSpeedPerLinePerTimeInterval,
+    std::vector<float>& numVehPerLinePerTimeInterval,
+    const std::vector<LC::ConnectionsInfo> & hostConnections);
 extern void b18GetDataCUDA(std::vector<LC::B18TrafficPerson> &trafficPersonVec);
 extern void b18GetSampleTrafficCUDA(std::vector<float>& accSpeedPerLinePerTimeInterval, 
                                 std::vector<float>& numVehPerLinePerTimeInterval);
