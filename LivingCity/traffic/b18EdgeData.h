@@ -37,7 +37,7 @@ struct ConnectionsInfo {
 };
 
 struct B18EdgeData {
-  int original_src_vertex_index;
+  int original_source_vertex_index;
   int original_target_vertex_index;
   ushort numLines;
   uint nextInters;
