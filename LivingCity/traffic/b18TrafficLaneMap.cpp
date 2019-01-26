@@ -40,30 +40,13 @@ void B18TrafficLaneMap::createLaneMap(
     std::map<uint, RoadGraph::roadGraphEdgeDesc_BI> &laneMapNumToEdgeDesc,
     std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> &edgeDescToLaneMapNum,
     std::vector<LC::ConnectionsInfo> &connectionsInformation) {
-  // 1. Cretae edgesData and find requires sizes.
-  edgesData.resize(boost::num_edges(inRoadGraph.myRoadGraph_BI) * 4); //4 to make sure it fits
+  edgesData.resize(boost::num_edges(inRoadGraph.myRoadGraph_BI) * 4);  //4 to make sure it fits
   edgeDescToLaneMapNum.clear();
   laneMapNumToEdgeDesc.clear();
-
-  ////////////////////////////////
-  // Check distribution of street length
-  float binLength = 1.0f;//1km
-  int numBins = 31 / binLength;//maxlength is 26km
-  std::vector<int> bins(numBins, 0);
-  RoadGraph::roadGraphEdgeIter_BI ei, ei_end;
-  for (boost::tie(ei, ei_end) = boost::edges(inRoadGraph.myRoadGraph_BI); ei != ei_end; ++ei) {
-    const float metersLength = inRoadGraph.myRoadGraph_BI[*ei].edgeLength;
-    const int binN = (metersLength / 1000.0f) / binLength;
-    assert(0 <= binN && binN < numBins && "Edge over max length");
-    bins[binN]++;
-  }
-
+  connectionsInformation.clear();
   auto & input_graph = inRoadGraph.myRoadGraph_BI;
+  RoadGraph::roadGraphEdgeIter_BI ei, ei_end;
 
-  /////////////////////////////////
-  // Create EdgeData
-  // Instead of having maxWidth (for b18 would have been 26km), we define a max width for the map
-  // and we wrap down.
   int totalLaneMapChunks = 0;
   for (boost::tie(ei, ei_end) = boost::edges(inRoadGraph.myRoadGraph_BI); ei != ei_end; ++ei) {
     const int roadAmountOfLanes = inRoadGraph.myRoadGraph_BI[*ei].numberOfLanes;
@@ -72,17 +55,13 @@ void B18TrafficLaneMap::createLaneMap(
     const auto edgeLength = inRoadGraph.myRoadGraph_BI[*ei].edgeLength;
     const int numWidthNeeded = static_cast<int>(std::ceil(edgeLength / kMaxMapWidthM));
 
-
-    // TODO: Add a field that indicates the target vertice. It will allow to retrieve the required
-    // info
-    std::cout << *ei << std::endl;
-    std::cout << source(*ei, input_graph) << std::endl;
-    std::cout << target(*ei, input_graph) << std::endl;
+    edgesData[totalLaneMapChunks].original_src_vertex_index = source(*ei, input_graph);
+    edgesData[totalLaneMapChunks].original_target_vertex_index = target(*ei, input_graph);
     edgesData[totalLaneMapChunks].length = edgeLength;
     edgesData[totalLaneMapChunks].maxSpeedMperSec = inRoadGraph.myRoadGraph_BI[*ei].maxSpeedMperSec;
     edgesData[totalLaneMapChunks].nextInters = boost::target(*ei, inRoadGraph.myRoadGraph_BI);
     edgesData[totalLaneMapChunks].numLines = roadAmountOfLanes;
-    assert(false);
+    edgesData[totalLaneMapChunks].valid = true;
 
     edgeDescToLaneMapNum.insert(std::make_pair(*ei, totalLaneMapChunks));
     laneMapNumToEdgeDesc.insert(std::make_pair(totalLaneMapChunks, *ei));
@@ -90,6 +69,9 @@ void B18TrafficLaneMap::createLaneMap(
     totalLaneMapChunks += roadAmountOfLanes * numWidthNeeded;
   }
   edgesData.resize(totalLaneMapChunks);
+  std::cerr << "final size: " << edgesData.size() << std::endl;
+
+  assert(false);
 
   ConnectionsInfo l1, l2, l3;
   l1.in_lane_number = 9;
@@ -103,8 +85,6 @@ void B18TrafficLaneMap::createLaneMap(
   l3.in_lane_number = 7;
   l3.out_lane_number = 30;
   l3.enabled = false;
-
-  for (auto e : edgesData) std::cout << e.length << std::endl;
 
   intersections.resize(boost::num_vertices(input_graph));
 

@@ -9,8 +9,6 @@
 #ifndef LIVINGCITY_TRAFFIC_B18EDGEDATA_H_
 #define LIVINGCITY_TRAFFIC_B18EDGEDATA_H_
 
-#include <map>
-
 #include "stdint.h"
 
 #ifndef ushort
@@ -45,6 +43,7 @@ struct B18EdgeData {
   uint nextInters;
   float length;
   float maxSpeedMperSec;
+  bool valid = 0;
 };
 
 struct B18IntersectionData {
