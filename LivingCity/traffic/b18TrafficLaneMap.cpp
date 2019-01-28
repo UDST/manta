@@ -72,19 +72,21 @@ void B18TrafficLaneMap::createLaneMap(
 
   auto p = boost::vertices(input_graph);
   auto vertices_begin = p.first;
-  auto vertices_end = p.second;
+  const auto vertices_end = p.second;
   for (auto vertices_it = vertices_begin; vertices_it != vertices_end; ++vertices_it) {
     std::cout << "Creating connection data for " << *vertices_it << "-th vertix..." << std::endl;
     auto in_edges_pair = boost::in_edges(*vertices_it, input_graph);
     auto in_edges_begin = in_edges_pair.first;
-    auto in_edges_end = in_edges_pair.second;
+    const auto in_edges_end = in_edges_pair.second;
     for (auto in_edges_it = in_edges_begin; in_edges_it != in_edges_end; ++in_edges_it) {
-      const auto & in_edge_data = edgesData[edgeDescToLaneMapNum.at(*in_edges_it)];
+      const auto & in_edge_number = edgeDescToLaneMapNum.at(*in_edges_it);
+      const auto & in_edge_data = edgesData[in_edge_number];
       auto p2 = boost::out_edges(*vertices_it, input_graph);
       auto out_edges_begin = p2.first;
-      auto out_edges_end = p2.second;
+      const auto out_edges_end = p2.second;
       for (auto out_edges_it = out_edges_begin; out_edges_it != out_edges_end; ++out_edges_it) {
-        const auto & out_edge_data = edgesData[edgeDescToLaneMapNum.at(*out_edges_it)];
+        const auto & out_edge_number = edgeDescToLaneMapNum.at(*out_edges_it);
+        const auto & out_edge_data = edgesData[out_edge_number];
         if (in_edge_data.original_source_vertex_index == out_edge_data.original_target_vertex_index) {
           // Avoid U-turns
           continue;
@@ -97,10 +99,22 @@ void B18TrafficLaneMap::createLaneMap(
           << " (" << out_edge_data.numLines << " lanes)"
           << std::endl;
         assert(in_edge_data.original_target_vertex_index == out_edge_data.original_source_vertex_index);
+        // TODO: Save indexes of start and end of vertex connections
+        for (int in_idx = 0; in_idx < in_edge_data.numLines; in_idx++) {
+          for (int out_idx = 0; out_idx < out_edge_data.numLines; out_idx++) {
+            ConnectionsInfo connection_info;
+            connection_info.vertex_number = *vertices_it;
+            connection_info.in_edge_number = in_edge_number;
+            connection_info.out_edge_number = out_edge_number;
+            connection_info.in_lane_number = in_edge_number + in_idx;
+            connection_info.out_lane_number = out_edge_number + out_idx;
+            connection_info.enabled = false;
+            connectionsInformation.push_back(connection_info);
+          }
+        }
       }
     }
   }
-  assert(false);
 
   // Instantiate lane map
   laneMap.resize(kMaxMapWidthM * totalLaneMapChunks * 2); // 2: to have two maps.
@@ -199,12 +213,12 @@ void B18TrafficLaneMap::createLaneMap(
     // Intersection data:
     //  Store the edges that go in or out of this intersection
     //  Said edges will be sorted by angle
-    //  
+    //
     //      0xFF00 0000 Num lines
     //      0x0080 0000 in out (one bit)
     //      0x007F FFFF Edge number
     for (size_t iter = 0; iter < edgeAngleOut.size() + edgeAngleIn.size(); iter++) {
-      if ((outCount < edgeAngleOut.size() && inCount < edgeAngleIn.size() && 
+      if ((outCount < edgeAngleOut.size() && inCount < edgeAngleIn.size() &&
            edgeAngleOut[outCount].second <= edgeAngleIn[inCount].second) ||
           (outCount < edgeAngleOut.size() && inCount >= edgeAngleIn.size())) {
         assert(edgeDescToLaneMapNum[edgeAngleOut[outCount].first] < 0x007fffff

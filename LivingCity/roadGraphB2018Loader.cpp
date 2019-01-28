@@ -135,7 +135,6 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
 
     float x = fields[indexX].toFloat();
     float y = fields[indexY].toFloat();
-    //qDebug() << "x " << x << " y " << y;
     uint64_t osmid = fields[indexOsmid].toLongLong();
     osmidToVertexLoc[osmid] = QVector2D(x, y);
     updateMinMax2(QVector2D(x, y), minBox, maxBox);
@@ -195,6 +194,9 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
     pos.setX(pos.x() * -1.0f); // seems vertically rotated
 
     vertex[index] = boost::add_vertex(inRoadGraph.myRoadGraph_BI);
+    std::cout
+      << "read osmid value: " << ind
+      << " <-> stored vertex number: " << vertex[index] << std::endl;
     inRoadGraph.myRoadGraph_BI[vertex[index]].pt = pos;
     inRoadGraph.myRoadGraph_BI[vertex[index]].bType = bType;
 

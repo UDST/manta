@@ -165,7 +165,6 @@ unix {
   QMAKE_LIBDIR += $$CUDA_DIR/lib64
   # GPU architecture
   CUDA_ARCH = sm_50
-  # NVCC flags
   NVCCFLAGS = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-options=-v
   # Path to libraries
   LIBS += -lcudart -lcuda

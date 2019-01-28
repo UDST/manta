@@ -30,7 +30,21 @@ const uint kMaskLaneMap = 0x007FFFFF;
 namespace LC {
 
 
+struct VertexInfo {
+  /**
+   * Object to store vertex information
+   */
+  int connection_graph_start;
+  int connection_graph_end;
+};
+
 struct ConnectionsInfo {
+  /**
+   * Object that represent whether a connection between lanes is enabled or not
+   */
+  int vertex_number;
+  int in_edge_number;
+  int out_edge_number;
   int in_lane_number;
   int out_lane_number;
   bool enabled;
