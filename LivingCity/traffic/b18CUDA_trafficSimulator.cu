@@ -76,8 +76,10 @@ uchar *trafficLights_d;
 float* accSpeedPerLinePerTimeInterval_d;
 float* numVehPerLinePerTimeInterval_d;
 
-LC::ConnectionsInfo *deviceConnections;
+LC::Connection *deviceConnections;
 size_t amountOfConnections;
+LC::Intersection *deviceIntersections;
+size_t amountOfIntersections;
 
 void b18InitCUDA(
     bool fistInitialization,
@@ -86,22 +88,25 @@ void b18InitCUDA(
     std::vector<LC::B18EdgeData>& edgesData, 
     std::vector<uchar>& laneMap, 
     std::vector<uchar>& trafficLights, 
-    std::vector<LC::B18IntersectionData>& intersections,
+    std::vector<LC::B18IntersectionData>& intersections_old,
     float startTimeH, float endTimeH,
     std::vector<float>& accSpeedPerLinePerTimeInterval,
     std::vector<float>& numVehPerLinePerTimeInterval,
-    const std::vector<LC::ConnectionsInfo> & hostConnections) {
+    const std::vector<LC::Connection> & hostConnections,
+    const std::vector<LC::Intersection> & hostIntersections) {
 
-  
-  printf("Starting lane info\n");
-  for (const auto & lane : hostConnections) {
-    printf("{in: %d, out: %d, on: %d}", lane.in_lane_number, lane.out_lane_number, lane.enabled);
-  }
-  { // people
+  { // Connections
     amountOfConnections = hostConnections.size();
-    size_t size = hostConnections.size() * sizeof(LC::ConnectionsInfo);
+    size_t size = hostConnections.size() * sizeof(LC::Connection);
     if (fistInitialization) gpuErrchk(cudaMalloc((void **) &deviceConnections, size));   // Allocate array on device
     gpuErrchk(cudaMemcpy(deviceConnections, hostConnections.data(), size, cudaMemcpyHostToDevice));
+  }
+
+  { // Intersections
+    amountOfIntersections = hostIntersections.size();
+    size_t size = hostIntersections.size() * sizeof(LC::Intersection);
+    if (fistInitialization) gpuErrchk(cudaMalloc((void **) &deviceIntersections, size));   // Allocate array on device
+    gpuErrchk(cudaMemcpy(deviceIntersections, hostIntersections.data(), size, cudaMemcpyHostToDevice));
   }
 
   printMemoryUsage();
@@ -127,10 +132,10 @@ void b18InitCUDA(
     gpuErrchk(cudaMemcpy(laneMap_d, laneMap.data(), sizeL, cudaMemcpyHostToDevice));
     halfLaneMap = laneMap.size() / 2;
   }
-  {// intersections
-    size_t sizeI = intersections.size() * sizeof(LC::B18IntersectionData);
+  {// intersections_old
+    size_t sizeI = intersections_old.size() * sizeof(LC::B18IntersectionData);
     if (fistInitialization) gpuErrchk(cudaMalloc((void **) &intersections_d, sizeI));   // Allocate array on device
-    gpuErrchk(cudaMemcpy(intersections_d, intersections.data(), sizeI, cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(intersections_d, intersections_old.data(), sizeI, cudaMemcpyHostToDevice));
     size_t sizeT = trafficLights.size() * sizeof(uchar);//total number of lanes
     if (fistInitialization) gpuErrchk(cudaMalloc((void **) &trafficLights_d, sizeT));   // Allocate array on device
     gpuErrchk(cudaMemcpy(trafficLights_d, trafficLights.data(), sizeT, cudaMemcpyHostToDevice));
@@ -241,7 +246,7 @@ void b18FinishCUDA(void){
  __device__ void calculateLaneCarShouldBe(
    uint curEdgeLane,
    uint nextEdge,
-   LC::B18IntersectionData* intersections,
+   LC::B18IntersectionData* intersections_old,
    uint edgeNextInters,
    ushort edgeNumLanes,
    ushort &initOKLanes,
@@ -253,8 +258,8 @@ void b18FinishCUDA(void){
    ushort numExitToTake = 0;
    ushort numExists = 0;
 
-   for (int eN = intersections[edgeNextInters].totalInOutEdges - 1; eN >= 0; eN--) {  // clockwise
-     uint procEdge = intersections[edgeNextInters].edge[eN];
+   for (int eN = intersections_old[edgeNextInters].totalInOutEdges - 1; eN >= 0; eN--) {  // clockwise
+     uint procEdge = intersections_old[edgeNextInters].edge[eN];
 
      if ((procEdge & kMaskLaneMap) == curEdgeLane) { //current edge 0xFFFFF
        currentEdgeFound = true;
@@ -455,11 +460,12 @@ __global__ void kernel_trafficSimulation(
    uint *indexPathVec,
    LC::B18EdgeData* edgesData,
    uchar *laneMap,
-   LC::B18IntersectionData *intersections,
+   LC::B18IntersectionData *intersections_old,
    uchar *trafficLights,
-   LC::ConnectionsInfo *connections,
-   size_t amountOfConnections
-   )
+   LC::Connection *connections,
+   size_t amountOfConnections,
+   LC::Intersection *intersections,
+   size_t amountOfIntersections)
  {
    const int p = blockIdx.x * blockDim.x + threadIdx.x;
    // Only proceed if the computed index `p` is valid
@@ -825,7 +831,7 @@ __global__ void kernel_trafficSimulation(
            if (trafficPersonVec[p].LC_stateofLaneChanging == 1) {
              // LC 3.1 Calculate the correct lanes
              if (trafficPersonVec[p].LC_endOKLanes == 0xFF) {
-               calculateLaneCarShouldBe(currentEdge, nextEdge, intersections,
+               calculateLaneCarShouldBe(currentEdge, nextEdge, intersections_old,
                  trafficPersonVec[p].edgeNextInters, trafficPersonVec[p].edgeNumLanes,
                  trafficPersonVec[p].LC_initOKLanes, trafficPersonVec[p].LC_endOKLanes);
 
@@ -1019,13 +1025,13 @@ __global__ void kernel_trafficSimulation(
 __global__ void kernel_intersectionOneSimulation(
     uint numIntersections,
     float currentTime,
-    LC::B18IntersectionData *intersections,
+    LC::B18IntersectionData *intersections_old,
     uchar *trafficLights) {
   const int i = blockIdx.x * blockDim.x + threadIdx.x;
   if(i<numIntersections){
     const float deltaEvent = 20.0f;  // 20 seconds between each change in the traffic lights
-    if (currentTime > intersections[i].nextEvent && intersections[i].totalInOutEdges > 0) {
-      uint edgeOT = intersections[i].edge[intersections[i].state];
+    if (currentTime > intersections_old[i].nextEvent && intersections_old[i].totalInOutEdges > 0) {
+      uint edgeOT = intersections_old[i].edge[intersections_old[i].state];
       uchar numLinesO = edgeOT >> 24;
       uint edgeONum = edgeOT & kMaskLaneMap; // 0xFFFFF;
 
@@ -1036,11 +1042,11 @@ __global__ void kernel_intersectionOneSimulation(
         }
       }
 
-      for (int iN = 0; iN <= intersections[i].totalInOutEdges + 1; iN++) { //to give a round
-        intersections[i].state = (intersections[i].state + 1) % intersections[i].totalInOutEdges;//next light
-        if ((intersections[i].edge[intersections[i].state] & kMaskInEdge) == kMaskInEdge) {  // 0x800000
+      for (int iN = 0; iN <= intersections_old[i].totalInOutEdges + 1; iN++) { //to give a round
+        intersections_old[i].state = (intersections_old[i].state + 1) % intersections_old[i].totalInOutEdges;//next light
+        if ((intersections_old[i].edge[intersections_old[i].state] & kMaskInEdge) == kMaskInEdge) {  // 0x800000
           // green new traffic lights
-          uint edgeIT = intersections[i].edge[intersections[i].state];
+          uint edgeIT = intersections_old[i].edge[intersections_old[i].state];
           uint edgeINum = edgeIT & kMaskLaneMap; //  0xFFFFF; //get edgeI
           uchar numLinesI = edgeIT >> 24;
           
@@ -1052,7 +1058,7 @@ __global__ void kernel_intersectionOneSimulation(
           break;
         }
       }//green new traffic light
-      intersections[i].nextEvent = currentTime + deltaEvent;
+      intersections_old[i].nextEvent = currentTime + deltaEvent;
     }
   } 
 }
@@ -1113,7 +1119,7 @@ void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersect
   }
   readFirstMapC=!readFirstMapC;//next iteration invert use
 
-  // Simulate intersections.
+  // Simulate intersections_old.
   kernel_intersectionOneSimulation << < ceil(numIntersections / 512.0f), 512 >> > (numIntersections, currentTime, intersections_d, trafficLights_d);
   gpuErrchk(cudaPeekAtLastError());
 
@@ -1130,7 +1136,9 @@ void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersect
     intersections_d,
     trafficLights_d,
     deviceConnections,
-    amountOfConnections);
+    amountOfConnections,
+    deviceIntersections,
+    amountOfIntersections);
   gpuErrchk(cudaPeekAtLastError());
 
   // Sample if necessary.

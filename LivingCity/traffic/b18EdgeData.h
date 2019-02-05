@@ -30,29 +30,34 @@ const uint kMaskLaneMap = 0x007FFFFF;
 namespace LC {
 
 
-struct VertexInfo {
+struct Intersection {
   /**
-   * Object to store vertex information
+   * Object to store intersections information
    */
-  int connection_graph_start;
-  int connection_graph_end;
+  int connectionGraphStart;
+  int connectionGraphEnd;
 };
 
-struct ConnectionsInfo {
+struct Connection {
   /**
    * Object that represent whether a connection between lanes is enabled or not
    */
-  int vertex_number;
-  int in_edge_number;
-  int out_edge_number;
-  int in_lane_number;
-  int out_lane_number;
+  // The lane numbers are computed as the edge number + the position of that lane in said edge
+  int inLaneNumber;
+  int outLaneNumber;
+
+  // Flag indicating if the connection can be used
   bool enabled;
+
+  // Some info for easier debugging
+  int vertexNumber;
+  int inEdgeNumber;
+  int outEdgeNumber;
 };
 
 struct B18EdgeData {
-  int original_source_vertex_index;
-  int original_target_vertex_index;
+  int originalSourceVertexIndex;
+  int originalTargetVertexIndex;
   ushort numLines;
   uint nextInters;
   float length;

@@ -39,13 +39,19 @@ void B18TrafficLaneMap::createLaneMap(
     std::vector<uchar> &trafficLights,
     std::map<uint, RoadGraph::roadGraphEdgeDesc_BI> &laneMapNumToEdgeDesc,
     std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> &edgeDescToLaneMapNum,
-    std::vector<LC::ConnectionsInfo> &connectionsInformation) {
+    std::vector<LC::Connection> &connections,
+    std::vector<LC::Intersection> &updatedIntersections) {
   edgesData.resize(boost::num_edges(inRoadGraph.myRoadGraph_BI) * 4);  //4 to make sure it fits
+
   edgeDescToLaneMapNum.clear();
   laneMapNumToEdgeDesc.clear();
-  connectionsInformation.clear();
-  auto & input_graph = inRoadGraph.myRoadGraph_BI;
+  connections.clear();
+  updatedIntersections.clear();
+
+  auto & inputGraph = inRoadGraph.myRoadGraph_BI;
   RoadGraph::roadGraphEdgeIter_BI ei, ei_end;
+
+  updatedIntersections.resize(boost::num_vertices(inputGraph));
 
   int totalLaneMapChunks = 0;
   for (boost::tie(ei, ei_end) = boost::edges(inRoadGraph.myRoadGraph_BI); ei != ei_end; ++ei) {
@@ -55,8 +61,8 @@ void B18TrafficLaneMap::createLaneMap(
     const auto edgeLength = inRoadGraph.myRoadGraph_BI[*ei].edgeLength;
     const int numWidthNeeded = static_cast<int>(std::ceil(edgeLength / kMaxMapWidthM));
 
-    edgesData[totalLaneMapChunks].original_source_vertex_index = source(*ei, input_graph);
-    edgesData[totalLaneMapChunks].original_target_vertex_index = target(*ei, input_graph);
+    edgesData[totalLaneMapChunks].originalSourceVertexIndex = source(*ei, inputGraph);
+    edgesData[totalLaneMapChunks].originalTargetVertexIndex = target(*ei, inputGraph);
     edgesData[totalLaneMapChunks].length = edgeLength;
     edgesData[totalLaneMapChunks].maxSpeedMperSec = inRoadGraph.myRoadGraph_BI[*ei].maxSpeedMperSec;
     edgesData[totalLaneMapChunks].nextInters = boost::target(*ei, inRoadGraph.myRoadGraph_BI);
@@ -70,50 +76,55 @@ void B18TrafficLaneMap::createLaneMap(
   }
   edgesData.resize(totalLaneMapChunks);
 
-  auto p = boost::vertices(input_graph);
+  auto p = boost::vertices(inputGraph);
   auto vertices_begin = p.first;
   const auto vertices_end = p.second;
+  int connectionsIndex = 0;
+  std::cout << "Total vertices: " << boost::num_vertices(inputGraph) << std::endl;
   for (auto vertices_it = vertices_begin; vertices_it != vertices_end; ++vertices_it) {
     std::cout << "Creating connection data for " << *vertices_it << "-th vertix..." << std::endl;
-    auto in_edges_pair = boost::in_edges(*vertices_it, input_graph);
+    auto in_edges_pair = boost::in_edges(*vertices_it, inputGraph);
     auto in_edges_begin = in_edges_pair.first;
     const auto in_edges_end = in_edges_pair.second;
+    const auto vertexNumber = *vertices_it;
+    updatedIntersections.at(vertexNumber).connectionGraphStart = connectionsIndex;
     for (auto in_edges_it = in_edges_begin; in_edges_it != in_edges_end; ++in_edges_it) {
-      const auto & in_edge_number = edgeDescToLaneMapNum.at(*in_edges_it);
-      const auto & in_edge_data = edgesData[in_edge_number];
-      auto p2 = boost::out_edges(*vertices_it, input_graph);
-      auto out_edges_begin = p2.first;
-      const auto out_edges_end = p2.second;
-      for (auto out_edges_it = out_edges_begin; out_edges_it != out_edges_end; ++out_edges_it) {
-        const auto & out_edge_number = edgeDescToLaneMapNum.at(*out_edges_it);
-        const auto & out_edge_data = edgesData[out_edge_number];
-        if (in_edge_data.original_source_vertex_index == out_edge_data.original_target_vertex_index) {
+      const auto & inEdgeNumber = edgeDescToLaneMapNum.at(*in_edges_it);
+      const auto & inEdgeData = edgesData[inEdgeNumber];
+      auto p2 = boost::out_edges(*vertices_it, inputGraph);
+      auto outEdgesBegin = p2.first;
+      const auto outEdgesEnd = p2.second;
+      for (auto outEdgesIt = outEdgesBegin; outEdgesIt != outEdgesEnd; ++outEdgesIt) {
+        const auto & outEdgeNumber = edgeDescToLaneMapNum.at(*outEdgesIt);
+        const auto & outEdgeData = edgesData[outEdgeNumber];
+        if (inEdgeData.originalSourceVertexIndex == outEdgeData.originalTargetVertexIndex) {
           // Avoid U-turns
           continue;
         }
 
         std::cout << "\t"
-          << "Between in edge src " << in_edge_data.original_source_vertex_index
-          << " (" << in_edge_data.numLines << " lanes)"
-          << " and out edge tgt: " << out_edge_data.original_target_vertex_index
-          << " (" << out_edge_data.numLines << " lanes)"
+          << "Between in edge src " << inEdgeData.originalSourceVertexIndex
+          << " (" << inEdgeData.numLines << " lanes)"
+          << " and out edge tgt: " << outEdgeData.originalTargetVertexIndex
+          << " (" << outEdgeData.numLines << " lanes)"
           << std::endl;
-        assert(in_edge_data.original_target_vertex_index == out_edge_data.original_source_vertex_index);
-        // TODO: Save indexes of start and end of vertex connections
-        for (int in_idx = 0; in_idx < in_edge_data.numLines; in_idx++) {
-          for (int out_idx = 0; out_idx < out_edge_data.numLines; out_idx++) {
-            ConnectionsInfo connection_info;
-            connection_info.vertex_number = *vertices_it;
-            connection_info.in_edge_number = in_edge_number;
-            connection_info.out_edge_number = out_edge_number;
-            connection_info.in_lane_number = in_edge_number + in_idx;
-            connection_info.out_lane_number = out_edge_number + out_idx;
-            connection_info.enabled = false;
-            connectionsInformation.push_back(connection_info);
+        assert(inEdgeData.originalTargetVertexIndex == outEdgeData.originalSourceVertexIndex);
+        for (int inIdx = 0; inIdx < inEdgeData.numLines; inIdx++) {
+          for (int outIdx = 0; outIdx < outEdgeData.numLines; outIdx++) {
+            Connection connection;
+            connection.vertexNumber = vertexNumber;
+            connection.inEdgeNumber = inEdgeNumber;
+            connection.outEdgeNumber = outEdgeNumber;
+            connection.inLaneNumber = inEdgeNumber + inIdx;
+            connection.outLaneNumber = outEdgeNumber + outIdx;
+            connection.enabled = false;
+            connections.push_back(connection);
+            ++connectionsIndex;
           }
         }
       }
     }
+    updatedIntersections.at(vertexNumber).connectionGraphEnd = connectionsIndex;
   }
 
   // Instantiate lane map
@@ -123,7 +134,7 @@ void B18TrafficLaneMap::createLaneMap(
   RoadGraph::roadGraphVertexIter_BI vi, viEnd;
   RoadGraph::in_roadGraphEdgeIter_BI Iei, Iei_end;
   RoadGraph::out_roadGraphEdgeIter_BI Oei, Oei_end;
-  intersections.resize(boost::num_vertices(input_graph));
+  intersections.resize(boost::num_vertices(inputGraph));
   trafficLights.assign(totalLaneMapChunks, 0);
 
   for (boost::tie(vi, viEnd) = boost::vertices(inRoadGraph.myRoadGraph_BI); vi != viEnd; ++vi) {

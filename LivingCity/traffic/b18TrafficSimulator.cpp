@@ -78,7 +78,7 @@ void B18TrafficSimulator::resetPeopleJobANDintersections() {
 
 void B18TrafficSimulator::createLaneMap() { //
   b18TrafficLaneMap.createLaneMap(*simRoadGraph, laneMap, edgesData, intersections, trafficLights,
-      laneMapNumToEdgeDesc, edgeDescToLaneMapNum, connections);
+      laneMapNumToEdgeDesc, edgeDescToLaneMapNum, connections, updatedIntersections);
 }//
 
 void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
@@ -138,7 +138,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         endTimeH,
         accSpeedPerLinePerTimeInterval,
         numVehPerLinePerTimeInterval,
-        connections);
+        connections,
+        updatedIntersections);
 
 
     float startTime = startTimeH * 3600.0f; //7.0f

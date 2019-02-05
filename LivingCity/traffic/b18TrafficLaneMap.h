@@ -20,11 +20,10 @@ namespace LC {
 
 
 class B18TrafficLaneMap {
- public:
-   B18TrafficLaneMap();
-   ~B18TrafficLaneMap();
-
-  void createLaneMap(
+  public:
+    B18TrafficLaneMap();
+    ~B18TrafficLaneMap();
+    void createLaneMap(
       const RoadGraph &inRoadGraph,
       std::vector<uchar> &laneMap,
       std::vector<B18EdgeData> &edgesData,
@@ -32,13 +31,16 @@ class B18TrafficLaneMap {
       std::vector<uchar> &trafficLights,
       std::map<uint, RoadGraph::roadGraphEdgeDesc_BI> &laneMapNumToEdgeDesc,
       std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> &edgeDescToLaneMapNum,
-      std::vector<LC::ConnectionsInfo> &connectionsInformation);
-
-  void resetIntersections(std::vector<B18IntersectionData> &intersections,
-                          std::vector<uchar> &trafficLights);
-
-  
+      std::vector<LC::Connection> &connections,
+      std::vector<LC::Intersection> &updatedIntersections);
+ 
+    void resetIntersections(
+      std::vector<B18IntersectionData> &intersections,
+      std::vector<uchar> &trafficLights);
 };
+
+
 }
 
 #endif  // LC_B18_TRAFFIC_LANEMAP_H
+
