@@ -49,7 +49,7 @@ struct Connection {
   // Flag indicating if the connection can be used
   bool enabled;
 
-  // Some info for easier debugging
+  // Some extra-info for easier debugging
   int vertexNumber;
   int inEdgeNumber;
   int outEdgeNumber;

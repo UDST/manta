@@ -80,9 +80,7 @@ void B18TrafficLaneMap::createLaneMap(
   auto vertices_begin = p.first;
   const auto vertices_end = p.second;
   int connectionsIndex = 0;
-  std::cout << "Total vertices: " << boost::num_vertices(inputGraph) << std::endl;
   for (auto vertices_it = vertices_begin; vertices_it != vertices_end; ++vertices_it) {
-    std::cout << "Creating connection data for " << *vertices_it << "-th vertix..." << std::endl;
     auto in_edges_pair = boost::in_edges(*vertices_it, inputGraph);
     auto in_edges_begin = in_edges_pair.first;
     const auto in_edges_end = in_edges_pair.second;
@@ -102,12 +100,6 @@ void B18TrafficLaneMap::createLaneMap(
           continue;
         }
 
-        std::cout << "\t"
-          << "Between in edge src " << inEdgeData.originalSourceVertexIndex
-          << " (" << inEdgeData.numLines << " lanes)"
-          << " and out edge tgt: " << outEdgeData.originalTargetVertexIndex
-          << " (" << outEdgeData.numLines << " lanes)"
-          << std::endl;
         assert(inEdgeData.originalTargetVertexIndex == outEdgeData.originalSourceVertexIndex);
         for (int inIdx = 0; inIdx < inEdgeData.numLines; inIdx++) {
           for (int outIdx = 0; outIdx < outEdgeData.numLines; outIdx++) {

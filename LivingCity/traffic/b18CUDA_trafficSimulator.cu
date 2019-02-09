@@ -83,11 +83,11 @@ size_t amountOfIntersections;
 
 void b18InitCUDA(
     bool fistInitialization,
-    std::vector<LC::B18TrafficPerson>& trafficPersonVec, 
-    std::vector<uint> &indexPathVec, 
-    std::vector<LC::B18EdgeData>& edgesData, 
-    std::vector<uchar>& laneMap, 
-    std::vector<uchar>& trafficLights, 
+    std::vector<LC::B18TrafficPerson>& trafficPersonVec,
+    std::vector<uint> &indexPathVec,
+    std::vector<LC::B18EdgeData>& edgesData,
+    std::vector<uchar>& laneMap,
+    std::vector<uchar>& trafficLights,
     std::vector<LC::B18IntersectionData>& intersections_old,
     float startTimeH, float endTimeH,
     std::vector<float>& accSpeedPerLinePerTimeInterval,
@@ -115,7 +115,7 @@ void b18InitCUDA(
     if (fistInitialization) gpuErrchk(cudaMalloc((void **) &trafficPersonVec_d, size));   // Allocate array on device
     gpuErrchk(cudaMemcpy(trafficPersonVec_d, trafficPersonVec.data(), size, cudaMemcpyHostToDevice));
   }
-  
+
   { // indexPathVec
     size_t sizeIn = indexPathVec.size() * sizeof(uint);
     if (fistInitialization) gpuErrchk(cudaMalloc((void **) &indexPathVec_d, sizeIn));   // Allocate array on device
@@ -480,8 +480,7 @@ __global__ void kernel_trafficSimulation(
        if (trafficPersonVec[p].time_departure > currentTime) {
          // Return if it's not yet the time for this person
          return;
-       }
-       else {
+       } else {
          // Else initialize this person's data
          trafficPersonVec[p].indexPathCurr = trafficPersonVec[p].indexPathInit;
          const uint firstEdge = indexPathVec[trafficPersonVec[p].indexPathCurr];
@@ -496,14 +495,14 @@ __global__ void kernel_trafficSimulation(
          trafficPersonVec[p].maxSpeedMperSec = edgesData[firstEdge].maxSpeedMperSec;
 
          // Find the starting position of the current person
-         // At least `requiredAmountOfEmptyCells` are needed before the position where the car will
-         // be placed
+         // At least `requiredAmountOfEmptyCells` are needed before the position where the car will be placed
          const ushort requiredAmountOfEmptyCells = s_0;
-         const ushort numOfCells = ceil(trafficPersonVec[p].length);
-         const ushort initShift = static_cast<ushort>(0.5f * numOfCells); //number of cells it should be placed (half of road)
+         const ushort startingRoadAmountOfCells = ceil(trafficPersonVec[p].length);
+         // We will start to search from the middle of the starting road
+         const ushort initShift = static_cast<ushort>(0.5f * startingRoadAmountOfCells);
          bool placed = false;
          ushort amountOfEmptySells = 0;
-         for (ushort position = initShift; (position < numOfCells) && (placed == false); position++) {
+         for (ushort position = initShift; (position < startingRoadAmountOfCells) && (placed == false); position++) {
            const ushort numberOfRightLane = trafficPersonVec[p].edgeNumLanes - 1;
            const uchar laneChar = laneMap[mapToReadShift + kMaxMapWidthM * (firstEdge + numberOfRightLane) + position];
            if (laneChar != 0xFF) {
@@ -566,7 +565,7 @@ __global__ void kernel_trafficSimulation(
      bool nextVehicleIsATrafficLight = false;
      float thirdTerm = 0;
      int remainingCellsToCheck = max(30.0f, trafficPersonVec[p].v * deltaTime * 2); //30 or double of the speed*time
-     
+
      bool found = false;
      bool noFirstInLaneBeforeSign = false; //use for stop control (just let 1st to pass)
      bool noFirstInLaneAfterSign = false; //use for stop control (just let 1st to pass)
@@ -595,13 +594,23 @@ __global__ void kernel_trafficSimulation(
        }
      }
 
-     // If no obstacle has yet been found, check if the next intersection's traffic light is 
-     // available
+     // If no obstacle has yet been found, check if the next intersection's traffic light is available
      if (byteInLine < numOfCells && found == false && remainingCellsToCheck > 0) { //before traffic signaling (and not cell limited)
        // TODO: Here we should check if some lane of the needed edge is enabled
+       printf("[%d, %f] Checking if there is a car after the intersection\n", p, currentTime);
+       printf("[%d, %f] currentEdge: %d\n", p, currentTime, currentEdge);
+       printf("[%d, %f] src: %d, dst: %d\n", p, currentTime, edgesData[currentEdge].originalSourceVertexIndex, edgesData[currentEdge].originalTargetVertexIndex);
+
+       const int dstVertex = edgesData[currentEdge].originalTargetVertexIndex;
+
+       for (int connectionIdx = intersections[dstVertex].connectionGraphStart; connectionIdx < intersections[dstVertex].connectionGraphEnd; ++connectionIdx) {
+         const LC::Connection & connection = connections[connectionIdx];
+         printf("\t%d %d %d\n", connection.vertexNumber, connection.inEdgeNumber, connection.inLaneNumber);
+       }
+
+       // If no connection to the needed edge is enabled, then that intersection will be treated
+       // as a stopped car
        if (trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge] == 0x00) { //red
-         // If no connection to the needed edge is enabled, then that intersection will be treated
-         // as a stopped car
          s = ((float) (numOfCells - byteInLine));  // In meters
          delta_v = trafficPersonVec[p].v - 0;
          nextVehicleIsATrafficLight = true;
@@ -631,7 +640,7 @@ __global__ void kernel_trafficSimulation(
        }
      }
 
-     if (trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge] == 0x0F && remainingCellsToCheck > 0) { //stop 
+     if (trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge] == 0x0F && remainingCellsToCheck > 0) { //stop
        //check
        if (noFirstInLaneBeforeSign == false && byteInLine < numOfCells && //first before traffic
          trafficPersonVec[p].v == 0 && //stopped
@@ -1049,18 +1058,18 @@ __global__ void kernel_intersectionOneSimulation(
           uint edgeIT = intersections_old[i].edge[intersections_old[i].state];
           uint edgeINum = edgeIT & kMaskLaneMap; //  0xFFFFF; //get edgeI
           uchar numLinesI = edgeIT >> 24;
-          
+
           for (int nL = 0; nL < numLinesI; nL++) {
             trafficLights[edgeINum + nL] = 0xFF;
           }
-          
+
           //trafficLights[edgeINum]=0xFF;
           break;
         }
       }//green new traffic light
       intersections_old[i].nextEvent = currentTime + deltaEvent;
     }
-  } 
+  }
 }
 
 __global__ void kernel_sampleTraffic(
@@ -1119,12 +1128,16 @@ void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersect
   }
   readFirstMapC=!readFirstMapC;//next iteration invert use
 
-  // Simulate intersections_old.
-  kernel_intersectionOneSimulation << < ceil(numIntersections / 512.0f), 512 >> > (numIntersections, currentTime, intersections_d, trafficLights_d);
+  // Update intersections.
+  kernel_intersectionOneSimulation<<<ceil(numIntersections / 512.0f), 512>>>(
+    numIntersections,
+    currentTime,
+    intersections_d,
+    trafficLights_d);
   gpuErrchk(cudaPeekAtLastError());
 
   // Simulate people.
-  kernel_trafficSimulation <<< ceil(numPeople / 384.0f), 384>> > (
+  kernel_trafficSimulation<<<ceil(numPeople / 384.0f), 384>>>(
     numPeople,
     currentTime,
     mapToReadShift,
