@@ -178,17 +178,17 @@ void b18FinishCUDA(void){
 
 
  __device__ void calculateGapsLC(
-   uint mapToReadShift,
-   uchar* laneMap,
-   uchar trafficLightState,
-   uint laneToCheck,
-   ushort numLinesEdge,
-   float posInMToCheck,
-   float length,
-   uchar &v_a,
-   uchar &v_b,
-   float &gap_a,
-   float &gap_b) {
+     uint mapToReadShift,
+     uchar* laneMap,
+     uchar trafficLightState,
+     uint laneToCheck,
+     ushort numLinesEdge,
+     float posInMToCheck,
+     float length,
+     uchar &v_a,
+     uchar &v_b,
+     float &gap_a,
+     float &gap_b) {
    ushort numOfCells = ceil(length);
    ushort initShift = ceil(posInMToCheck);
    bool found = false;
@@ -566,8 +566,8 @@ __global__ void kernel_trafficSimulation(
      float thirdTerm = 0;
      int remainingCellsToCheck = max(30.0f, trafficPersonVec[p].v * deltaTime * 2); //30 or double of the speed*time
 
-     bool found = false;
-     bool noFirstInLaneBeforeSign = false; //use for stop control (just let 1st to pass)
+     bool obstacleFound = false;
+     bool noFirstInLaneBeforeIntersection = false; //use for stop control (just let 1st to pass)
      bool noFirstInLaneAfterSign = false; //use for stop control (just let 1st to pass)
      float s;
      float delta_v;
@@ -575,7 +575,7 @@ __global__ void kernel_trafficSimulation(
      const ushort numOfCells = ceil((trafficPersonVec[p].length - intersectionClearance));
 
      // Check if there is another car in the same lane
-     for (ushort b = byteInLine + 2; (b < numOfCells) && (found == false) && (remainingCellsToCheck > 0); b++, remainingCellsToCheck--) {
+     for (ushort b = byteInLine + 2; (b < numOfCells) && (obstacleFound == false) && (remainingCellsToCheck > 0); b++, remainingCellsToCheck--) {
        const uint posToSample =
           mapToReadShift
           + kMaxMapWidthM * (
@@ -588,39 +588,46 @@ __global__ void kernel_trafficSimulation(
        if (laneChar != 0xFF) {
          s = ((float) (b - byteInLine)); //m
          delta_v = trafficPersonVec[p].v - (laneChar / 3.0f); //laneChar is in 3*ms (to save space in array)
-         found = true;
-         noFirstInLaneBeforeSign = true;
+         obstacleFound = true;
+         noFirstInLaneBeforeIntersection = true;
          break;
        }
      }
 
-     // If no obstacle has yet been found, check if the next intersection's traffic light is available
-     if (byteInLine < numOfCells && found == false && remainingCellsToCheck > 0) { //before traffic signaling (and not cell limited)
-       // TODO: Here we should check if some lane of the needed edge is enabled
-       printf("[%d, %f] Checking if there is a car after the intersection\n", p, currentTime);
-       printf("[%d, %f] currentEdge: %d\n", p, currentTime, currentEdge);
-       printf("[%d, %f] src: %d, dst: %d\n", p, currentTime, edgesData[currentEdge].originalSourceVertexIndex, edgesData[currentEdge].originalTargetVertexIndex);
-
-       const int dstVertex = edgesData[currentEdge].originalTargetVertexIndex;
-
-       for (int connectionIdx = intersections[dstVertex].connectionGraphStart; connectionIdx < intersections[dstVertex].connectionGraphEnd; ++connectionIdx) {
+     // At this point we found an obstacle or we reached the end of the current edge
+     // If we are at the end of the current edge, check if this car's lane's connections are enabled
+     if (byteInLine < numOfCells && !obstacleFound && remainingCellsToCheck > 0) {
+       const int dstVertexNumber = edgesData[currentEdge].originalTargetVertexIndex;
+       const auto currentLaneNumber = currentEdge + trafficPersonVec[p].numOfLaneInEdge;
+       const auto nextEdgeNumber = indexPathVec[trafficPersonVec[p].indexPathCurr + 1];
+       printf("\n[%d, %f] Checking if there is a car after the intersection\n", p, currentTime);
+       printf("[%d, %f] src: %d, dst: %d\n", p, currentTime, edgesData[currentEdge].originalSourceVertexIndex, dstVertexNumber);
+       printf("[%d, %f] currentEdge: %d, currentLaneNumber: %d, nextEdgeNumber: %d\n", p, currentTime, currentEdge, currentLaneNumber, nextEdgeNumber);
+       bool atLeastOneEnabledConnection = false;
+       for (int connectionIdx = intersections[dstVertexNumber].connectionGraphStart; connectionIdx < intersections[dstVertexNumber].connectionGraphEnd; ++connectionIdx) {
+         // Check if a least one connection is enabled between the current edge and the following one
          const LC::Connection & connection = connections[connectionIdx];
-         printf("\t%d %d %d\n", connection.vertexNumber, connection.inEdgeNumber, connection.inLaneNumber);
+         if (connection.inLaneNumber == currentLaneNumber
+             && connection.outEdgeNumber == nextEdgeNumber
+             && connection.enabled) {
+           printf("\t%d %d\n", connection.outEdgeNumber, connection.outLaneNumber);
+           atLeastOneEnabledConnection = true;
+           break;
+         }
        }
 
-       // If no connection to the needed edge is enabled, then that intersection will be treated
-       // as a stopped car
-       if (trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge] == 0x00) { //red
+       // If no connection to the needed edge is enabled, then that intersection will be treated as an obstacle
+       if (!atLeastOneEnabledConnection && nextEdgeNumber != -1) {
          s = ((float) (numOfCells - byteInLine));  // In meters
          delta_v = trafficPersonVec[p].v - 0;
          nextVehicleIsATrafficLight = true;
-         found = true;
+         obstacleFound = true;
        }
      }
 
      // Check if there is another car in the same lane after the traffic light
      // TODO: With the proposed changes it does not seem to make sense to check after the intersection
-     for (ushort b = byteInLine + 2; (b < numOfCells) && (found == false) && (remainingCellsToCheck > 0); b++, remainingCellsToCheck--) {
+     for (ushort b = byteInLine + 2; (b < numOfCells) && (obstacleFound == false) && (remainingCellsToCheck > 0); b++, remainingCellsToCheck--) {
        const uint posToSample =
          mapToReadShift
          + kMaxMapWidthM * (
@@ -634,53 +641,52 @@ __global__ void kernel_trafficSimulation(
          s = ((float) (b - byteInLine)); //m
          delta_v = trafficPersonVec[p].v - (laneChar /
            3.0f); //laneChar is in 3*ms (to save space in array)
-         found = true;
+         obstacleFound = true;
          noFirstInLaneAfterSign = true;
          break;
        }
      }
 
      if (trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge] == 0x0F && remainingCellsToCheck > 0) { //stop
+       printf("Fell here\n");
        //check
-       if (noFirstInLaneBeforeSign == false && byteInLine < numOfCells && //first before traffic
-         trafficPersonVec[p].v == 0 && //stopped
-         noFirstInLaneAfterSign == false) { // noone after the traffic light (otherwise wait before stop) !! Todo also check the beginning of next edge
-
+       if (!noFirstInLaneBeforeIntersection
+           && byteInLine < numOfCells //first before traffic
+           && trafficPersonVec[p].v == 0 //stopped
+           && !noFirstInLaneAfterSign) { // noone after the traffic light (otherwise wait before stop) !! Todo also check the beginning of next edge
          trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge] = 0x00; //reset stop
          trafficPersonVec[p].posInLaneM = ceilf(numOfCells) + 1; //move magicly after stop
-
        } else { //stop before STOP
-         if (noFirstInLaneBeforeSign == false) { //just update this if it was the first one before sign
+         if (noFirstInLaneBeforeIntersection == false) { //just update this if it was the first one before sign
            s = ((float) (numOfCells - byteInLine)); //m
            delta_v = trafficPersonVec[p].v - 0; //it should be treated as an obstacle
            nextVehicleIsATrafficLight = true;
-           found = true;
+           obstacleFound = true;
          }
        }
      }
 
      // NEXT LINE
-     if (found == false && remainingCellsToCheck > 0) { //check if in next line
+     if (obstacleFound == false && remainingCellsToCheck > 0) { //check if in next line
        if ((nextEdge != -1) && (trafficPersonVec[p].edgeNextInters != trafficPersonVec[p].end_intersection)) { // we haven't arrived to destination (check next line)
          ushort nextEdgeLaneToBe = trafficPersonVec[p].numOfLaneInEdge; //same lane
 
          //printf("trafficPersonVec[p].numOfLaneInEdge %u\n",trafficPersonVec[p].numOfLaneInEdge);
          if (nextEdgeLaneToBe >= trafficPersonVec[p].nextEdgeNumLanes) {
-           nextEdgeLaneToBe = trafficPersonVec[p].nextEdgeNumLanes -
-             1; //change line if there are less roads
+           nextEdgeLaneToBe = trafficPersonVec[p].nextEdgeNumLanes - 1; //change line if there are less roads
          }
 
          //printf("2trafficPersonVec[p].numOfLaneInEdge %u\n",trafficPersonVec[p].numOfLaneInEdge);
          ushort numOfCells = ceil(trafficPersonVec[p].nextEdgeLength);
 
-         for (ushort b = 0; (b < numOfCells) && (found == false) && (remainingCellsToCheck > 0); b++, remainingCellsToCheck--) {
+         for (ushort b = 0; (b < numOfCells) && (obstacleFound == false) && (remainingCellsToCheck > 0); b++, remainingCellsToCheck--) {
            const uint posToSample = mapToReadShift + kMaxMapWidthM * (nextEdge + nextEdgeLaneToBe) + b; // b18 not changed since we check first width
            const uchar laneChar = laneMap[posToSample];
 
            if (laneChar != 0xFF) {
              s = ((float) (b)); //m
              delta_v = trafficPersonVec[p].v - (laneChar / 3.0f);  // laneChar is in 3*ms (to save space in array)
-             found = true;
+             obstacleFound = true;
              break;
            }
          }
@@ -688,7 +694,7 @@ __global__ void kernel_trafficSimulation(
      }
 
      float s_star;
-     if (found == true) { //car in front and slower than us
+     if (obstacleFound == true) { //car in front and slower than us
        // 2.1.2 calculate dv_dt
        s_star = s_0 + max(0.0f,
          (trafficPersonVec[p].v * trafficPersonVec[p].T + (trafficPersonVec[p].v *

@@ -80,6 +80,7 @@ void B18TrafficLaneMap::createLaneMap(
   auto vertices_begin = p.first;
   const auto vertices_end = p.second;
   int connectionsIndex = 0;
+  // TODO: Add traffic light schedules
   for (auto vertices_it = vertices_begin; vertices_it != vertices_end; ++vertices_it) {
     auto in_edges_pair = boost::in_edges(*vertices_it, inputGraph);
     auto in_edges_begin = in_edges_pair.first;
@@ -109,7 +110,8 @@ void B18TrafficLaneMap::createLaneMap(
             connection.outEdgeNumber = outEdgeNumber;
             connection.inLaneNumber = inEdgeNumber + inIdx;
             connection.outLaneNumber = outEdgeNumber + outIdx;
-            connection.enabled = false;
+            // TODO: Set this default value to false once the traffic light schedules are ready
+            connection.enabled = true;
             connections.push_back(connection);
             ++connectionsIndex;
           }
