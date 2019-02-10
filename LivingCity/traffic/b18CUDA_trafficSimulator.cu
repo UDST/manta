@@ -475,89 +475,90 @@ __global__ void kernel_trafficSimulation(
        return;
      }
 
-     if (trafficPersonVec[p].active == 0) {
-       // Check what should be done if the persone is still inactive
+     if (trafficPersonVec[p].active == 0){
        if (trafficPersonVec[p].time_departure > currentTime) {
-         // Return if it's not yet the time for this person
-         return;
-       } else {
-         // Else initialize this person's data
-         trafficPersonVec[p].indexPathCurr = trafficPersonVec[p].indexPathInit;
-         const uint firstEdge = indexPathVec[trafficPersonVec[p].indexPathCurr];
-         if (firstEdge == -1) {
-           // Return if this person's path has length zero
-           trafficPersonVec[p].active = 2;
-           return;
-         }
-         trafficPersonVec[p].edgeNumLanes = edgesData[firstEdge].numLines;
-         trafficPersonVec[p].edgeNextInters = edgesData[firstEdge].nextInters;
-         trafficPersonVec[p].length = edgesData[firstEdge].length;
-         trafficPersonVec[p].maxSpeedMperSec = edgesData[firstEdge].maxSpeedMperSec;
-
-         // Find the starting position of the current person
-         // At least `requiredAmountOfEmptyCells` are needed before the position where the car will be placed
-         const ushort requiredAmountOfEmptyCells = s_0;
-         const ushort startingRoadAmountOfCells = ceil(trafficPersonVec[p].length);
-         // We will start to search from the middle of the starting road
-         const ushort initShift = static_cast<ushort>(0.5f * startingRoadAmountOfCells);
-         bool placed = false;
-         ushort amountOfEmptySells = 0;
-         for (ushort position = initShift; (position < startingRoadAmountOfCells) && (placed == false); position++) {
-           const ushort numberOfRightLane = trafficPersonVec[p].edgeNumLanes - 1;
-           const uchar laneChar = laneMap[mapToReadShift + kMaxMapWidthM * (firstEdge + numberOfRightLane) + position];
-           if (laneChar != 0xFF) {
-             // If the cell is not empty reset the empty-cells counter
-             amountOfEmptySells = 0;
-             continue;
-           }
-
-           // Keep advancing until enough empty cells have been found
-           amountOfEmptySells++;
-           if (amountOfEmptySells < requiredAmountOfEmptyCells) { continue; }
-
-           // If we get to this point we can place the car
-           trafficPersonVec[p].numOfLaneInEdge = numberOfRightLane;
-           trafficPersonVec[p].posInLaneM = position; //m
-           const uchar vInMpS = (uchar) (trafficPersonVec[p].v * 3); //speed in m/s *3 (to keep more precision
-           laneMap[mapToWriteShift + kMaxMapWidthM * (firstEdge + numberOfRightLane) + position] = vInMpS;
-           placed = true;
-           break;
-         }
-
-         if (placed == false) {
-           // Return if the current road is too busy
-           return;
-         }
-
-         trafficPersonVec[p].v = 0;
-         trafficPersonVec[p].LC_stateofLaneChanging = 0;
-         trafficPersonVec[p].active = 1;
-         trafficPersonVec[p].isInIntersection = 0;
-         trafficPersonVec[p].num_steps = 1;
-         trafficPersonVec[p].co = 0.0f;
-         trafficPersonVec[p].gas = 0.0f;
-
-         const uint nextEdge = indexPathVec[trafficPersonVec[p].indexPathCurr + 1];
-         if (nextEdge != -1) {
-           trafficPersonVec[p].nextEdgemaxSpeedMperSec = edgesData[nextEdge].maxSpeedMperSec;
-           trafficPersonVec[p].nextEdgeNumLanes = edgesData[nextEdge].numLines;
-           trafficPersonVec[p].nextEdgeNextInters = edgesData[nextEdge].nextInters;
-           trafficPersonVec[p].nextEdgeLength = edgesData[nextEdge].length;
-           trafficPersonVec[p].LC_initOKLanes = 0xFF;
-           trafficPersonVec[p].LC_endOKLanes = 0xFF;
-         }
+       // Return if it's not yet the time for this person
          return;
        }
+
+       // Else initialize this person's data
+       trafficPersonVec[p].indexPathCurr = trafficPersonVec[p].indexPathInit;
+       const uint firstEdge = indexPathVec[trafficPersonVec[p].indexPathCurr];
+       if (firstEdge == -1) {
+         // Return if this person's path has length zero
+         trafficPersonVec[p].active = 2;
+         return;
+       }
+       trafficPersonVec[p].edgeNumLanes = edgesData[firstEdge].numLines;
+       trafficPersonVec[p].edgeNextInters = edgesData[firstEdge].nextInters;
+       trafficPersonVec[p].length = edgesData[firstEdge].length;
+       trafficPersonVec[p].maxSpeedMperSec = edgesData[firstEdge].maxSpeedMperSec;
+
+       // Find the starting position of the current person
+       // At least `requiredAmountOfEmptyCells` are needed before the position where the car will be placed
+       const ushort requiredAmountOfEmptyCells = s_0;
+       const ushort startingRoadAmountOfCells = ceil(trafficPersonVec[p].length);
+       // We will start to search from the middle of the starting road
+       const ushort initShift = static_cast<ushort>(0.5f * startingRoadAmountOfCells);
+       bool placed = false;
+       ushort amountOfEmptySells = 0;
+       for (ushort position = initShift; (position < startingRoadAmountOfCells) && (placed == false); position++) {
+         const ushort numberOfRightLane = trafficPersonVec[p].edgeNumLanes - 1;
+         const uchar laneChar = laneMap[mapToReadShift + kMaxMapWidthM * (firstEdge + numberOfRightLane) + position];
+         if (laneChar != 0xFF) {
+           // If the cell is not empty reset the empty-cells counter
+           amountOfEmptySells = 0;
+           continue;
+         }
+
+         // Keep advancing until enough empty cells have been found
+         amountOfEmptySells++;
+         if (amountOfEmptySells < requiredAmountOfEmptyCells) { continue; }
+
+         // If we get to this point we can place the car
+         trafficPersonVec[p].numOfLaneInEdge = numberOfRightLane;
+         trafficPersonVec[p].posInLaneM = position; //m
+         const uchar vInMpS = (uchar) (trafficPersonVec[p].v * 3); //speed in m/s *3 (to keep more precision
+         laneMap[mapToWriteShift + kMaxMapWidthM * (firstEdge + numberOfRightLane) + position] = vInMpS;
+         placed = true;
+         break;
+       }
+
+       if (!placed) {
+         // Return if the current road is too busy
+         return;
+       }
+
+       trafficPersonVec[p].v = 0;
+       trafficPersonVec[p].LC_stateofLaneChanging = 0;
+       trafficPersonVec[p].active = 1;
+       trafficPersonVec[p].isInIntersection = 0;
+       trafficPersonVec[p].num_steps = 1;
+       trafficPersonVec[p].co = 0.0f;
+       trafficPersonVec[p].gas = 0.0f;
+
+       const uint nextEdge = indexPathVec[trafficPersonVec[p].indexPathCurr + 1];
+       if (nextEdge != -1) {
+         // TODO: Storing a reference to the next edge data would be safer (instead of plainly copying it)
+         trafficPersonVec[p].nextEdgemaxSpeedMperSec = edgesData[nextEdge].maxSpeedMperSec;
+         trafficPersonVec[p].nextEdgeNumLanes = edgesData[nextEdge].numLines;
+         trafficPersonVec[p].nextEdgeNextInters = edgesData[nextEdge].nextInters;
+         trafficPersonVec[p].nextEdgeLength = edgesData[nextEdge].length;
+         trafficPersonVec[p].LC_initOKLanes = 0xFF;
+         trafficPersonVec[p].LC_endOKLanes = 0xFF;
+       }
+       return;
      }
 
-     ///////////////////////////////
-     //2. it is moving
+     // At this point we can assume (trafficPersonVec[p].active == 1)
      if (float(currentTime) == int(currentTime)) { // assuming deltatime = 0.5f --> each second
        trafficPersonVec[p].num_steps++;
      }
 
-     // Try to move current person's car.
-     // Car movement is modeled using the Intelligent Driver Model (IDM)
+     /**
+      * Gather enough information to know how the current car should be updated, using the Intelligent Driver Model (IDM)
+      */
+
      const uint currentEdge = indexPathVec[trafficPersonVec[p].indexPathCurr];
      const uint nextEdge = indexPathVec[trafficPersonVec[p].indexPathCurr + 1];
      float numMToMove;
@@ -611,6 +612,8 @@ __global__ void kernel_trafficSimulation(
              && connection.outEdgeNumber == nextEdgeNumber
              && connection.enabled) {
            printf("\t%d %d\n", connection.outEdgeNumber, connection.outLaneNumber);
+           // TODO: Here I could store the available connection so that I don't need to make this cycle again later on.
+           // For this I need to confirm if the car should keep the same lane, or if I can choose a random lane
            atLeastOneEnabledConnection = true;
            break;
          }
@@ -647,6 +650,7 @@ __global__ void kernel_trafficSimulation(
        }
      }
 
+     // TODO: Confirm if all this if statement can be removed
      if (trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge] == 0x0F && remainingCellsToCheck > 0) { //stop
        printf("Fell here\n");
        //check
