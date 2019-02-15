@@ -179,7 +179,8 @@ void b18FinishCUDA(void){
  __device__ void calculateGapsLC(
      uint mapToReadShift,
      uchar* laneMap,
-     uchar trafficLightState,
+     /*uchar trafficLightState,*/
+     bool intersectionEnabled,
      uint laneToCheck,
      ushort numLinesEdge,
      float posInMToCheck,
@@ -208,7 +209,8 @@ void b18FinishCUDA(void){
    }
 
    if (found == false) {
-     if (trafficLightState == 0x00) { //red
+     /*if (trafficLightState == 0x00) { //red*/
+     if (!intersectionEnabled) { //red
        //found=true;
        gap_a = gap_b = 1000.0f; //force to change to the line without vehicle
        v_a = v_b = 0xFF;
@@ -241,7 +243,7 @@ void b18FinishCUDA(void){
    }
 
   }//
-
+ 
  __device__ void calculateLaneCarShouldBe(
    uint curEdgeLane,
    uint nextEdge,
@@ -605,18 +607,19 @@ __global__ void kernel_trafficSimulation(
 
      // At this point we found an obstacle or we reached the end of the current edge
      // If we are at the end of the current edge, check if this car's lane's connections are enabled
+     bool atLeastOneEnabledConnection = true;
      if (byteInLine < numOfCells && !obstacleFound && remainingCellsToCheck > 0) {
+       atLeastOneEnabledConnection = false;
        const int dstVertexNumber = edgesData[currentEdge].originalTargetVertexIndex;
        const auto currentLaneNumber = currentEdge + trafficPersonVec[p].numOfLaneInEdge;
        const auto nextEdgeNumber = indexPathVec[trafficPersonVec[p].indexPathCurr + 1];
-       bool atLeastOneEnabledConnection = false;
        for (int connectionIdx = intersections[dstVertexNumber].connectionGraphStart; connectionIdx < intersections[dstVertexNumber].connectionGraphEnd; ++connectionIdx) {
          // Check if a least one connection is enabled between the current edge and the following one
          const LC::Connection & connection = connections[connectionIdx];
          if (connection.inLaneNumber == currentLaneNumber
              && connection.outEdgeNumber == nextEdgeNumber
              && connection.enabled) {
-           // TODO: Here I could store the available connection so that I don't need to make this cycle again later on
+           // TODO: Once I review how the next is chosen I need to review what gets stored here
            atLeastOneEnabledConnection = true;
            break;
          }
@@ -800,9 +803,7 @@ __global__ void kernel_trafficSimulation(
 
                uchar v_a, v_b;
                float gap_a, gap_b;
-               // TODO: Replace the following line by the a value indicating whether the corresponding intersection is enabled
-               uchar trafficLightState = trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge];
-               calculateGapsLC(mapToReadShift, laneMap, trafficLightState,
+               calculateGapsLC(mapToReadShift, laneMap, atLeastOneEnabledConnection,
                  currentEdge + laneToCheck, trafficPersonVec[p].edgeNumLanes, trafficPersonVec[p].posInLaneM,
                  trafficPersonVec[p].length, v_a, v_b, gap_a, gap_b);
 
@@ -929,9 +930,7 @@ __global__ void kernel_trafficSimulation(
 
                uchar v_a, v_b;
                float gap_a, gap_b;
-               // TODO: Replace the following line by the a value indicating whether the corresponding intersection is enabled
-               uchar trafficLightState = trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge];
-               calculateGapsLC(mapToReadShift, laneMap, trafficLightState,
+               calculateGapsLC(mapToReadShift, laneMap, atLeastOneEnabledConnection,
                  currentEdge + laneToCheck, trafficPersonVec[p].edgeNumLanes, trafficPersonVec[p].posInLaneM,
                  trafficPersonVec[p].length, v_a, v_b, gap_a, gap_b);
 
@@ -1118,7 +1117,6 @@ void b18ResetPeopleLanesCUDA(uint numPeople) {
 }
 
 void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersections) {
-
   ////////////////////////////////////////////////////////////
   // 1. CHANGE MAP: set map to use and clean the other
   if(readFirstMapC==true){
