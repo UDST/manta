@@ -30,18 +30,19 @@ const uint kMaskLaneMap = 0x007FFFFF;
 namespace LC {
 
 
+// Object to store intersections (ie vertices) information
 struct Intersection {
-  /**
-   * Object to store intersections information
-   */
+  // Start and end indexes of connections assigned to this intersection
   uint connectionGraphStart;
   uint connectionGraphEnd;
+
+  // Start and end indexes of traffic light schedules entries assigned to this intersection
+  uint trafficLightSchedulesStart;
+  uint trafficLightSchedulesEnd;
 };
 
+// Object to abstract whether a connection between two lanes is enabled or not
 struct Connection {
-  /**
-   * Object that represent whether a connection between lanes is enabled or not
-   */
   // The lane numbers are computed as the edge number + the position of that lane in said edge
   uint inLaneNumber;
   uint outLaneNumber;
@@ -55,9 +56,25 @@ struct Connection {
   uint outEdgeNumber;
 };
 
-//struct TrafficLightScheduleEntry {
+// Object to abstract traffic lights schedules
+// Each traffic light will have many groups of entries, each group sharing the schedule position
+// The position indicates the order in which the positions must be enabled
+struct TrafficLightScheduleEntry {
+  // Vertex to which this entry belongs
+  uint vertexIdx;
 
-//};
+  // Connection which must be enabled by this schedule entry
+  uint connectionIdx;
+
+  // Position in schedule
+  // Entries of the same vertex with same position indicate that they must be enabled at the same
+  // time
+  uint vertexSchedulePosition;
+
+  // Amount of time assigned to this entry
+  // Entries of the same vertex with same position should al have the same scheduled time
+  float scheduledTime;
+};
 
 struct B18EdgeData {
   uint originalSourceVertexIndex;

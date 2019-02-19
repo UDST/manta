@@ -607,6 +607,7 @@ __global__ void kernel_trafficSimulation(
         && remainingCellsToCheck > 0
         && nextEdge != -1) {
       const int dstVertexNumber = edgesData[currentEdge].originalTargetVertexIndex;
+      // TODO: Review if this addition is the correct way of obtaining the lane number
       const ushort currentLaneNumber = currentEdge + trafficPersonVec[p].numOfLaneInEdge;
       for (
           int connectionIdx = intersections[dstVertexNumber].connectionGraphStart;
@@ -620,6 +621,7 @@ __global__ void kernel_trafficSimulation(
             && connection.outEdgeNumber == nextEdge
             && connection.enabled) {
           atLeastOneEnabledConnection = true;
+          // TODO: I think here I need to substract the edgeNumber
           nextEdgeChosenLane = connection.outLaneNumber;
           break;
         }

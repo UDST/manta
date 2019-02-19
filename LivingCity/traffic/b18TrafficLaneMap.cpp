@@ -77,22 +77,28 @@ void B18TrafficLaneMap::createLaneMap(
   }
   edgesData.resize(totalLaneMapChunks);
 
+  // TODO: this vector has to be an input of the function and passed on to the CUDA code
+  std::vector<TrafficLightScheduleEntry> trafficLightSchedules;
+
   auto p = boost::vertices(inputGraph);
-  auto vertices_begin = p.first;
-  const auto vertices_end = p.second;
-  int connectionsIndex = 0;
-  // TODO: Add traffic light schedules
-  for (auto vertices_it = vertices_begin; vertices_it != vertices_end; ++vertices_it) {
-    auto in_edges_pair = boost::in_edges(*vertices_it, inputGraph);
-    auto in_edges_begin = in_edges_pair.first;
+  const auto verticesBegin = p.first;
+  const auto verticesEnd = p.second;
+  uint connectionsCount = 0;
+  for (auto vertices_it = verticesBegin; vertices_it != verticesEnd; ++vertices_it) {
+    const auto in_edges_pair = boost::in_edges(*vertices_it, inputGraph);
+    const auto in_edges_begin = in_edges_pair.first;
     const auto in_edges_end = in_edges_pair.second;
-    const auto vertexNumber = *vertices_it;
-    updatedIntersections.at(vertexNumber).connectionGraphStart = connectionsIndex;
+    const auto vertexIdx = *vertices_it;
+
+    Intersection & intersection = updatedIntersections.at(vertexIdx);
+
+    // Create connections information
+    intersection.connectionGraphStart = connectionsCount;
     for (auto in_edges_it = in_edges_begin; in_edges_it != in_edges_end; ++in_edges_it) {
       const auto & inEdgeNumber = edgeDescToLaneMapNum.at(*in_edges_it);
       const auto & inEdgeData = edgesData[inEdgeNumber];
-      auto p2 = boost::out_edges(*vertices_it, inputGraph);
-      auto outEdgesBegin = p2.first;
+      const auto p2 = boost::out_edges(*vertices_it, inputGraph);
+      const auto outEdgesBegin = p2.first;
       const auto outEdgesEnd = p2.second;
       for (auto outEdgesIt = outEdgesBegin; outEdgesIt != outEdgesEnd; ++outEdgesIt) {
         const auto & outEdgeNumber = edgeDescToLaneMapNum.at(*outEdgesIt);
@@ -103,10 +109,10 @@ void B18TrafficLaneMap::createLaneMap(
         }
 
         assert(inEdgeData.originalTargetVertexIndex == outEdgeData.originalSourceVertexIndex);
-        for (int inIdx = 0; inIdx < inEdgeData.numLines; inIdx++) {
-          for (int outIdx = 0; outIdx < outEdgeData.numLines; outIdx++) {
+        for (uint inIdx = 0; inIdx < inEdgeData.numLines; inIdx++) {
+          for (uint outIdx = 0; outIdx < outEdgeData.numLines; outIdx++) {
             Connection connection;
-            connection.vertexNumber = vertexNumber;
+            connection.vertexIdx = vertexIdx;
             connection.inEdgeNumber = inEdgeNumber;
             connection.outEdgeNumber = outEdgeNumber;
             connection.inLaneNumber = inEdgeNumber + inIdx;
@@ -114,12 +120,33 @@ void B18TrafficLaneMap::createLaneMap(
             // TODO: Set this default value to false once the traffic light schedules are ready
             connection.enabled = true;
             connections.push_back(connection);
-            ++connectionsIndex;
+            ++connectionsCount;
           }
         }
       }
     }
-    updatedIntersections.at(vertexNumber).connectionGraphEnd = connectionsIndex;
+    intersection.connectionGraphEnd = connectionsCount;
+
+    // Create traffic lights schedules
+    intersection.trafficLightSchedulesStart = trafficLightSchedules.size();
+    // NOTE: This algorithm computes a very basic traffic lights schedule where only one connection
+    // is enabled at the same time
+    const float basicScheduledTime = 20;
+    for (
+        uint connectionIdx = intersection.connectionGraphStart, uint schedulePosition = 0;
+        connectionIdx < intersection.connectionGraphEnd;
+        ++connectionIdx, ++schedulePosition) {
+      TrafficLightScheduleEntry trafficLightScheduleEntry;
+      trafficLightScheduleEntry.vertexIdx = vertexIdx;
+      trafficLightScheduleEntry.connectionIdx = connectionIdx;
+      trafficLightScheduleEntry.vertexSchedulePosition = schedulePosition;
+      trafficLightScheduleEntry.scheduledTime = basicScheduledTime;
+      trafficLightSchedules.push_back(trafficLightScheduleEntry);
+    }
+
+    assert(intersection.trafficLightSchedulesStart < trafficLightSchedules.size());
+    intersection.trafficLightSchedulesEnd = trafficLightSchedules.size();
+    assert(false);
   }
 
   // Instantiate lane map
