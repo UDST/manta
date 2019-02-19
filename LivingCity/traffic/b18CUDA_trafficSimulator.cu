@@ -677,7 +677,7 @@ __global__ void kernel_trafficSimulation(
     }
     float dv_dt = trafficPersonVec[p].a * (1.0f - std::pow((trafficPersonVec[p].v / trafficPersonVec[p].maxSpeedMperSec), 4) - thirdTerm);
 
-    const float numMToMove = max(0.0f, trafficPersonVec[p].v * DELTA_TIME + 0.5f * (dv_dt) * DELTA_TIME * DELTA_TIME);
+    float numMToMove = max(0.0f, trafficPersonVec[p].v * DELTA_TIME + 0.5f * (dv_dt) * DELTA_TIME * DELTA_TIME);
     trafficPersonVec[p].v += dv_dt * DELTA_TIME;
     if (trafficPersonVec[p].v < 0) {
       trafficPersonVec[p].v = 0;
@@ -1071,10 +1071,10 @@ __global__ void kernel_resetPeople(
 
 void b18GetSampleTrafficCUDA(std::vector<float>& accSpeedPerLinePerTimeInterval, std::vector<float>& numVehPerLinePerTimeInterval) {
   // copy back people
-  size_t size = accSpeedPerLinePerTimeInterval.size() * sizeof(float);
+  const size_t size = accSpeedPerLinePerTimeInterval.size() * sizeof(float);
   cudaMemcpy(accSpeedPerLinePerTimeInterval.data(), accSpeedPerLinePerTimeInterval_d, size, cudaMemcpyDeviceToHost);
 
-  size_t sizeI = numVehPerLinePerTimeInterval.size() * sizeof(uchar);
+  const size_t sizeI = numVehPerLinePerTimeInterval.size() * sizeof(uchar);
   cudaMemcpy(numVehPerLinePerTimeInterval.data(), numVehPerLinePerTimeInterval_d, sizeI, cudaMemcpyDeviceToHost);
 }
 

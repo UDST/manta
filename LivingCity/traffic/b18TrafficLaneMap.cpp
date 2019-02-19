@@ -31,6 +31,7 @@ namespace {
 }
 
 
+// TODO: Add traffic light schedules
 void B18TrafficLaneMap::createLaneMap(
     const RoadGraph &inRoadGraph,
     std::vector<uchar> &laneMap,
@@ -175,9 +176,7 @@ void B18TrafficLaneMap::createLaneMap(
       //edgeAngleOut.push_back(std::make_pair(edge_pair.first,angle));
     }
 
-    //printf("Out %d\n",numOutEdges);
     std::vector<std::pair<LC::RoadGraph::roadGraphEdgeDesc_BI, float>> edgeAngleIn;
-    //printf("In\n");
     int numInEdges = 0;
 
     for (boost::tie(Iei, Iei_end) = boost::in_edges(*vi, inRoadGraph.myRoadGraph_BI);

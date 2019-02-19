@@ -34,8 +34,8 @@ struct Intersection {
   /**
    * Object to store intersections information
    */
-  int connectionGraphStart;
-  int connectionGraphEnd;
+  uint connectionGraphStart;
+  uint connectionGraphEnd;
 };
 
 struct Connection {
@@ -43,21 +43,25 @@ struct Connection {
    * Object that represent whether a connection between lanes is enabled or not
    */
   // The lane numbers are computed as the edge number + the position of that lane in said edge
-  int inLaneNumber;
-  int outLaneNumber;
+  uint inLaneNumber;
+  uint outLaneNumber;
 
   // Flag indicating if the connection can be used
   bool enabled;
 
   // Some extra-info for easier debugging
-  int vertexNumber;
-  int inEdgeNumber;
-  int outEdgeNumber;
+  uint vertexNumber;
+  uint inEdgeNumber;
+  uint outEdgeNumber;
 };
 
+//struct TrafficLightScheduleEntry {
+
+//};
+
 struct B18EdgeData {
-  int originalSourceVertexIndex;
-  int originalTargetVertexIndex;
+  uint originalSourceVertexIndex;
+  uint originalTargetVertexIndex;
   ushort numLines;
   uint nextInters;
   float length;
