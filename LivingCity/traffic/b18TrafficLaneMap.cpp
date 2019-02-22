@@ -41,7 +41,8 @@ void B18TrafficLaneMap::createLaneMap(
     std::map<uint, RoadGraph::roadGraphEdgeDesc_BI> &laneMapNumToEdgeDesc,
     std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> &edgeDescToLaneMapNum,
     std::vector<LC::Connection> &connections,
-    std::vector<LC::Intersection> &updatedIntersections) {
+    std::vector<LC::Intersection> &updatedIntersections,
+    std::vector<TrafficLightScheduleEntry> &trafficLightSchedules) {
   edgesData.resize(boost::num_edges(inRoadGraph.myRoadGraph_BI) * 4);  //4 to make sure it fits
 
   edgeDescToLaneMapNum.clear();
@@ -77,9 +78,6 @@ void B18TrafficLaneMap::createLaneMap(
   }
   edgesData.resize(totalLaneMapChunks);
 
-  // TODO: this vector has to be an input of the function and passed on to the CUDA code
-  std::vector<TrafficLightScheduleEntry> trafficLightSchedules;
-
   auto p = boost::vertices(inputGraph);
   const auto verticesBegin = p.first;
   const auto verticesEnd = p.second;
@@ -112,7 +110,7 @@ void B18TrafficLaneMap::createLaneMap(
         for (uint inIdx = 0; inIdx < inEdgeData.numLines; inIdx++) {
           for (uint outIdx = 0; outIdx < outEdgeData.numLines; outIdx++) {
             Connection connection;
-            connection.vertexIdx = vertexIdx;
+            connection.vertexNumber = vertexIdx;
             connection.inEdgeNumber = inEdgeNumber;
             connection.outEdgeNumber = outEdgeNumber;
             connection.inLaneNumber = inEdgeNumber + inIdx;
@@ -127,15 +125,14 @@ void B18TrafficLaneMap::createLaneMap(
     }
     intersection.connectionGraphEnd = connectionsCount;
 
-    // Create traffic lights schedules
+    // Create traffic lights schedules with the just created connections
     intersection.trafficLightSchedulesStart = trafficLightSchedules.size();
     // NOTE: This algorithm computes a very basic traffic lights schedule where only one connection
-    // is enabled at the same time
+    // is enabled at the same time for each intersection
     const float basicScheduledTime = 20;
-    for (
-        uint connectionIdx = intersection.connectionGraphStart, uint schedulePosition = 0;
-        connectionIdx < intersection.connectionGraphEnd;
-        ++connectionIdx, ++schedulePosition) {
+    uint connectionIdx = intersection.connectionGraphStart;
+    uint schedulePosition = 0;
+    for (; connectionIdx < intersection.connectionGraphEnd; ++connectionIdx, ++schedulePosition) {
       TrafficLightScheduleEntry trafficLightScheduleEntry;
       trafficLightScheduleEntry.vertexIdx = vertexIdx;
       trafficLightScheduleEntry.connectionIdx = connectionIdx;
@@ -146,8 +143,9 @@ void B18TrafficLaneMap::createLaneMap(
 
     assert(intersection.trafficLightSchedulesStart < trafficLightSchedules.size());
     intersection.trafficLightSchedulesEnd = trafficLightSchedules.size();
-    assert(false);
   }
+
+  std::cout << "Entering deep space." << std::endl << std::flush; assert(false);
 
   // Instantiate lane map
   laneMap.resize(kMaxMapWidthM * totalLaneMapChunks * 2); // 2: to have two maps.

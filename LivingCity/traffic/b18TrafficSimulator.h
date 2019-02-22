@@ -77,6 +77,7 @@ class B18TrafficSimulator {
   std::map<uint, RoadGraph::roadGraphEdgeDesc_BI> laneMapNumToEdgeDesc;
   std::vector<LC::Connection> connections;
   std::vector<LC::Intersection> updatedIntersections;
+  std::vector<TrafficLightScheduleEntry> trafficLightSchedules;
   void createLaneMap();
 
   // car path

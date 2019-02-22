@@ -25,7 +25,8 @@ extern void b18InitCUDA(
     std::vector<float>& accSpeedPerLinePerTimeInterval,
     std::vector<float>& numVehPerLinePerTimeInterval,
     const std::vector<LC::Connection> & hostConnections,
-    const std::vector<LC::Intersection> & hostIntersections);
+    const std::vector<LC::Intersection> & hostIntersections,
+    const std::vector<LC::TrafficLightScheduleEntry> &hostTrafficLightSchedules);
 extern void b18GetDataCUDA(std::vector<LC::B18TrafficPerson> &trafficPersonVec);
 extern void b18GetSampleTrafficCUDA(std::vector<float>& accSpeedPerLinePerTimeInterval, 
                                 std::vector<float>& numVehPerLinePerTimeInterval);

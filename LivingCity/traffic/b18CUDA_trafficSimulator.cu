@@ -81,6 +81,8 @@ size_t amountOfConnections;
 LC::Intersection *deviceIntersections;
 size_t amountOfIntersections;
 
+LC::TrafficLightScheduleEntry *deviceTrafficLightSchedules;
+
 void b18InitCUDA(
     bool fistInitialization,
     std::vector<LC::B18TrafficPerson>& trafficPersonVec,
@@ -93,7 +95,8 @@ void b18InitCUDA(
     std::vector<float>& accSpeedPerLinePerTimeInterval,
     std::vector<float>& numVehPerLinePerTimeInterval,
     const std::vector<LC::Connection> & hostConnections,
-    const std::vector<LC::Intersection> & hostIntersections) {
+    const std::vector<LC::Intersection> & hostIntersections,
+    const std::vector<LC::TrafficLightScheduleEntry> &hostTrafficLightSchedules) {
 
   { // Connections
     amountOfConnections = hostConnections.size();
@@ -107,6 +110,12 @@ void b18InitCUDA(
     size_t size = hostIntersections.size() * sizeof(LC::Intersection);
     if (fistInitialization) gpuErrchk(cudaMalloc((void **) &deviceIntersections, size));   // Allocate array on device
     gpuErrchk(cudaMemcpy(deviceIntersections, hostIntersections.data(), size, cudaMemcpyHostToDevice));
+  }
+
+  { // Traffic light schedules
+    size_t size = hostTrafficLightSchedules.size() * sizeof(LC::TrafficLightScheduleEntry);
+    if (fistInitialization) gpuErrchk(cudaMalloc((void **) &deviceTrafficLightSchedules, size));   // Allocate array on device
+    gpuErrchk(cudaMemcpy(deviceTrafficLightSchedules, hostTrafficLightSchedules.data(), size, cudaMemcpyHostToDevice));
   }
 
   printMemoryUsage();
@@ -159,6 +168,7 @@ void b18InitCUDA(
 void b18FinishCUDA(void){
   cudaFree(deviceConnections);
   cudaFree(deviceIntersections);
+  cudaFree(deviceTrafficLightSchedules);
   cudaFree(trafficPersonVec_d);
   cudaFree(indexPathVec_d);
   cudaFree(edgesData_d);
@@ -461,7 +471,8 @@ __global__ void kernel_trafficSimulation(
     LC::Connection *connections,
     size_t amountOfConnections,
     LC::Intersection *intersections,
-    size_t amountOfIntersections) {
+    size_t amountOfIntersections,
+    LC::TrafficLightScheduleEntry *trafficLightSchedules) {
   const int p = blockIdx.x * blockDim.x + threadIdx.x;
   // Only proceed if the computed index `p` is valid
   if (p < numPeople) {
@@ -1123,7 +1134,8 @@ void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersect
     deviceConnections,
     amountOfConnections,
     deviceIntersections,
-    amountOfIntersections);
+    amountOfIntersections,
+    deviceTrafficLightSchedules);
   gpuErrchk(cudaPeekAtLastError());
 
   // Sample if necessary.
