@@ -31,6 +31,7 @@ namespace LC {
 
 
 // Object to store intersections (ie vertices) information
+// NOTE(ffigari): For the moment I'm assuming every intersection is a traffic light.
 struct Intersection {
   // Start and end indexes of connections assigned to this intersection
   uint connectionGraphStart;
@@ -39,6 +40,10 @@ struct Intersection {
   // Start and end indexes of traffic light schedules entries assigned to this intersection
   uint trafficLightSchedulesStart;
   uint trafficLightSchedulesEnd;
+
+  // Indicates
+  uint currentSchedulePosition;
+  uint scheduleLength;
 };
 
 // Object to abstract whether a connection between two lanes is enabled or not

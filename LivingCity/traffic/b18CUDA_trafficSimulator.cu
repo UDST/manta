@@ -465,9 +465,6 @@ __global__ void kernel_trafficSimulation(
     LC::B18EdgeData* edgesData,
     uchar *laneMap,
     LC::B18IntersectionData *b18Intersections,
-
-    uchar *trafficLights,  // TODO: Remove usage of this data
-
     LC::Connection *connections,
     size_t amountOfConnections,
     LC::Intersection *intersections,
@@ -1130,7 +1127,6 @@ void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersect
     edgesData_d,
     laneMap_d,
     intersections_d,
-    trafficLights_d,
     deviceConnections,
     amountOfConnections,
     deviceIntersections,

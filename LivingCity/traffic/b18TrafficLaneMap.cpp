@@ -141,11 +141,14 @@ void B18TrafficLaneMap::createLaneMap(
       trafficLightSchedules.push_back(trafficLightScheduleEntry);
     }
 
-    assert(intersection.trafficLightSchedulesStart < trafficLightSchedules.size());
+    intersection.scheduleLength =
+      trafficLightSchedules.size() - intersection.trafficLightSchedulesStart;
+    intersection.currentSchedulePosition = 0;
     intersection.trafficLightSchedulesEnd = trafficLightSchedules.size();
+    assert(intersection.scheduleLength > 0);
   }
 
-  std::cout << "Entering deep space." << std::endl << std::flush; assert(false);
+  //std::cout << "\n\n\tE n t e r i n g   d e e p   s p a c e.\n\n" << std::endl << std::flush; assert(false);
 
   // Instantiate lane map
   laneMap.resize(kMaxMapWidthM * totalLaneMapChunks * 2); // 2: to have two maps.
