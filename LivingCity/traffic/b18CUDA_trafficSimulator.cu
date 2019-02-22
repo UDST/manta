@@ -246,7 +246,7 @@ __device__ void calculateGapsLC(
     gap_b = 1000.0f;
   }
 }
- 
+
 __device__ void calculateLaneCarShouldBe(
     uint curEdgeLane,
     uint nextEdge,
@@ -515,7 +515,7 @@ __global__ void kernel_trafficSimulation(
           position < startingRoadAmountOfCells && !placed;
           position++) {
         const ushort numberOfRightLane = trafficPersonVec[p].edgeNumLanes - 1;
-        const uchar laneChar = 
+        const uchar laneChar =
           laneMap[mapToReadShift + kMaxMapWidthM * (firstEdge + numberOfRightLane) + position];
         if (laneChar != 0xFF) {
           // If the cell is not empty reset the empty-cells counter
@@ -1012,44 +1012,24 @@ __global__ void kernel_trafficSimulation(
 }
 
 __global__ void kernel_intersectionOneSimulation(
-    uint numIntersections,
     float currentTime,
-    LC::B18IntersectionData *b18Intersections,
-    uchar *trafficLights) {
-  // TODO: Update this function to handle new intersections
-  const int i = blockIdx.x * blockDim.x + threadIdx.x;
-  if(i<numIntersections){
-    const float deltaEvent = 20.0f;  // 20 seconds between each change in the traffic lights
-    if (currentTime > b18Intersections[i].nextEvent && b18Intersections[i].totalInOutEdges > 0) {
-      uint edgeOT = b18Intersections[i].edge[b18Intersections[i].state];
-      uchar numLinesO = edgeOT >> 24;
-      uint edgeONum = edgeOT & kMaskLaneMap; // 0xFFFFF;
+    LC::Intersection *intersections,
+    size_t amountOfIntersections,
+    LC::Connection *connections,
+    LC::TrafficLightScheduleEntry *trafficLightSchedules) {
 
-      // red old traffic lights
-      if ((edgeOT&kMaskInEdge) == kMaskInEdge) {  // Just do it if we were in in
-        for (int nL = 0; nL < numLinesO; nL++) {
-          trafficLights[edgeONum + nL] = 0x00; //red old traffic light
-        }
-      }
-
-      for (int iN = 0; iN <= b18Intersections[i].totalInOutEdges + 1; iN++) { //to give a round
-        b18Intersections[i].state = (b18Intersections[i].state + 1) % b18Intersections[i].totalInOutEdges;//next light
-        if ((b18Intersections[i].edge[b18Intersections[i].state] & kMaskInEdge) == kMaskInEdge) {  // 0x800000
-          // green new traffic lights
-          uint edgeIT = b18Intersections[i].edge[b18Intersections[i].state];
-          uint edgeINum = edgeIT & kMaskLaneMap; //  0xFFFFF; //get edgeI
-          uchar numLinesI = edgeIT >> 24;
-
-          for (int nL = 0; nL < numLinesI; nL++) {
-            trafficLights[edgeINum + nL] = 0xFF;
-          }
-
-          //trafficLights[edgeINum]=0xFF;
-          break;
-        }
-      }//green new traffic light
-      b18Intersections[i].nextEvent = currentTime + deltaEvent;
+  const int intersectionIdx = blockIdx.x * blockDim.x + threadIdx.x;
+  if (intersectionIdx < amountOfIntersections) {
+    // NOTE(ffigari): This assumes every intersection is a traffic light
+    // First disable all connections
+    for (
+        uint connectionIdx = intersections[intersectionIdx].connectionGraphStart;
+        connectionIdx < intersections[intersectionIdx].connectionGraphEnd;
+        ++connectionIdx) {
+      connections[connectionIdx].enabled = false;
     }
+
+
   }
 }
 
@@ -1111,9 +1091,10 @@ void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersect
   // Update intersections.
   kernel_intersectionOneSimulation<<<ceil(numIntersections / 512.0f), 512>>>(
     numIntersections,
-    currentTime,
-    intersections_d,
-    trafficLights_d);
+    deviceIntersections,
+    amountOfIntersections,
+    deviceConnections,
+    deviceTrafficLightSchedules);
   gpuErrchk(cudaPeekAtLastError());
 
   // Simulate people.
