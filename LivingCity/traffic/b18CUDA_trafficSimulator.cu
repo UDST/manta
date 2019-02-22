@@ -1020,16 +1020,42 @@ __global__ void kernel_intersectionOneSimulation(
 
   const int intersectionIdx = blockIdx.x * blockDim.x + threadIdx.x;
   if (intersectionIdx < amountOfIntersections) {
+    // TODO(ffigari): This will update EVERY iteration. I still need to add the scheduleTime check
+    // against the lastUpdate
     // NOTE(ffigari): This assumes every intersection is a traffic light
     // First disable all connections
+    LC::Intersection & intersection = intersections[intersectionIdx];
     for (
-        uint connectionIdx = intersections[intersectionIdx].connectionGraphStart;
-        connectionIdx < intersections[intersectionIdx].connectionGraphEnd;
+        uint connectionIdx = intersection.connectionGraphStart;
+        connectionIdx < intersection.connectionGraphEnd;
         ++connectionIdx) {
       connections[connectionIdx].enabled = false;
     }
 
+    // Then enables the connections corresponding to the current schedule position
+    const uint startingScheduleGroup = intersection.currentScheduleGroup
+    do {
+      const LC::TrafficLightScheduleEntry & scheduleEntry =
+        trafficLightSchedules[intersection.scheduleIdx];
 
+      // TODO(ffigar): Remove this check
+      if (startingScheduleGroup != scheduleEntry.scheduleGroup) {
+        printf("[%d@%f] All wrong amigo\n", intersectionIdx, currentTime);
+        return;
+      }
+
+      connections[scheduleEntry.connectionIdx].enabled = true;
+
+      ++intersection.scheduleIdx;
+    } while (intersection.scheduleIdx < intersection.trafficLightSchedulesEnd
+        || trafficLightSchedules[intersection.scheduleIdx].scheduleGroup != startingScheduleGroup);
+
+    if (intersection.scheduleIdx < intersection.trafficLightSchedulesEnd) {
+      ++intersection.currentScheduleGroup;
+    } else {
+      intersection.currentScheduleGroup = 0;
+      intersection.scheduleIdx = 0;
+    }
   }
 }
 

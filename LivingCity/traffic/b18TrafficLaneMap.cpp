@@ -136,16 +136,16 @@ void B18TrafficLaneMap::createLaneMap(
       TrafficLightScheduleEntry trafficLightScheduleEntry;
       trafficLightScheduleEntry.vertexIdx = vertexIdx;
       trafficLightScheduleEntry.connectionIdx = connectionIdx;
-      trafficLightScheduleEntry.vertexSchedulePosition = schedulePosition;
+      trafficLightScheduleEntry.scheduleGroup = schedulePosition;
       trafficLightScheduleEntry.scheduledTime = basicScheduledTime;
       trafficLightSchedules.push_back(trafficLightScheduleEntry);
     }
 
-    intersection.scheduleLength =
-      trafficLightSchedules.size() - intersection.trafficLightSchedulesStart;
-    intersection.currentSchedulePosition = 0;
+    intersection.lastUpdate = 0;
+    intersection.scheduleIdx = 0;
+    intersection.currentScheduleGroup = 0;
     intersection.trafficLightSchedulesEnd = trafficLightSchedules.size();
-    assert(intersection.scheduleLength > 0);
+    assert(trafficLightSchedules.size() - intersection.trafficLightSchedulesStart > 0);
   }
 
   //std::cout << "\n\n\tE n t e r i n g   d e e p   s p a c e.\n\n" << std::endl << std::flush; assert(false);

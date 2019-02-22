@@ -41,9 +41,10 @@ struct Intersection {
   uint trafficLightSchedulesStart;
   uint trafficLightSchedulesEnd;
 
-  // Indicates
-  uint currentSchedulePosition;
-  uint scheduleLength;
+  // Indicates index in traffic lights entries to where to keep updating on the next iteration
+  unit scheduleIdx;
+  // Indicates schedule group on which we are now set
+  uint currentScheduleGroup;
 };
 
 // Object to abstract whether a connection between two lanes is enabled or not
@@ -71,14 +72,17 @@ struct TrafficLightScheduleEntry {
   // Connection which must be enabled by this schedule entry
   uint connectionIdx;
 
-  // Position in schedule
-  // Entries of the same vertex with same position indicate that they must be enabled at the same
+  // Group to which this schedule entry belongs
+  // Entries of the same vertex with same group indicate that they must be enabled at the same
   // time
-  uint vertexSchedulePosition;
+  uint scheduleGroup;
 
   // Amount of time assigned to this entry
   // Entries of the same vertex with same position should al have the same scheduled time
   float scheduledTime;
+
+  // Last time this intersection was updated
+  float lastUpdate;
 };
 
 struct B18EdgeData {
