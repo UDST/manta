@@ -11,6 +11,7 @@
 
 #include "b18TrafficDijkstra.h"
 #include "b18TrafficJohnson.h"
+#include "b18TrafficSP.h"
 #include "b18CUDA_trafficSimulator.h"
 
 #define DEBUG_TRAFFIC 0
@@ -98,7 +99,7 @@ void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
 // GPU
 //////////////////////////////////////////////////
 void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
-    bool useJohnsonRouting) {
+    bool useJohnsonRouting, bool useSP) {
   Benchmarker laneMapBench("Lane map", 2);
   Benchmarker passesBench("Simulation passes", 2);
   Benchmarker finishCudaBench("Cuda finish", 2);
@@ -131,6 +132,12 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       shortestPathBench.startMeasuring();	    
       printf("***Start generateRoute Johnson\n");
       B18TrafficJohnson::generateRoutes(simRoadGraph->myRoadGraph_BI, trafficPersonVec,
+          indexPathVec, edgeDescToLaneMapNum, weigthMode, peoplePathSampling[nP]);
+      shortestPathBench.stopAndEndBenchmark();
+    } else if (useSP) {
+      shortestPathBench.startMeasuring();	    
+      printf("***Start generateRoute SP\n");
+      B18TrafficSP::generateRoutesSP(simRoadGraph->myRoadGraph_BI, trafficPersonVec,
           indexPathVec, edgeDescToLaneMapNum, weigthMode, peoplePathSampling[nP]);
       shortestPathBench.stopAndEndBenchmark();
     } else {

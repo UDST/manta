@@ -68,7 +68,7 @@ class B18TrafficSimulator {
   void simulateInCPU(float startTimeH, float endTimeH);
 
   void simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
-                     bool useJohnsonRouting);
+                     bool useJohnsonRouting, bool useSP);
 
   // Lanes
   std::vector<uchar> laneMap;

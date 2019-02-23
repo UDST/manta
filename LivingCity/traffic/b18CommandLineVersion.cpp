@@ -19,6 +19,7 @@ void B18CommandLineVersion::runB18Simulation() {
   bool addRandomPeople = settings.value("ADD_RANDOM_PEOPLE", true).toBool();
   bool useCPU = settings.value("USE_CPU", false).toBool();
   bool useJohnsonRouting = settings.value("USE_JOHNSON_ROUTING", false).toBool();
+  bool useSP = settings.value("USE_SP_ROUTING", false).toBool();
   int limitNumPeople = settings.value("LIMIT_NUM_PEOPLE", -1).toInt(); // -1
   int numOfPasses = settings.value("NUM_PASSES", 1).toInt();
 
@@ -54,7 +55,7 @@ void B18CommandLineVersion::runB18Simulation() {
         useJohnsonRouting);
   } else {
     b18TrafficSimulator.simulateInGPU(numOfPasses, startSimulationH, endSimulationH,
-        useJohnsonRouting);
+        useJohnsonRouting, useSP);
   }
   simulationBench.stopAndEndBenchmark();
 }
