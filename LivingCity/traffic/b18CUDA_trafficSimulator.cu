@@ -576,6 +576,8 @@ __global__ void kernel_updatePersonsCars(
     // TODO: Review if it necesary to substract the intersectionClearance
     const ushort currentLaneMaximumPosition = ceil((trafficPersonVec[p].length - intersectionClearance));
 
+    printf("[@%f] Car's current edge: %d\n", currentTime, edgesData[currentEdge].originalTargetVertexIndex);
+
     bool nextVehicleIsATrafficLight = false;
     int remainingCellsToCheck = max(30.0f, trafficPersonVec[p].v * DELTA_TIME * 2);
 
@@ -1019,17 +1021,6 @@ __global__ void kernel_updateIntersectionConnections(
     LC::TrafficLightScheduleEntry *trafficLightSchedules) {
 
   const int intersectionIdx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (intersectionIdx == 0
-      && std::floor(currentTime) == currentTime
-      && static_cast<int>(std::floor(currentTime)) % 20 == 0) {
-    printf("[@%f] Current connections: ", currentTime);
-    // TODO(ffigari): Remove this
-    for (int i = 0; i < 12; ++i) {
-      if (connections[i].enabled) printf("%d ", i);
-    }
-    printf("\n");
-  }
-
   if (intersectionIdx < amountOfIntersections) {
     // NOTE(ffigari): The current implementation assumes every intersection is a traffic light
     LC::Intersection & intersection = intersections[intersectionIdx];
@@ -1057,7 +1048,7 @@ __global__ void kernel_updateIntersectionConnections(
 
       // TODO(ffigari): Remove this check
       if (startingScheduleGroup != scheduleEntry.scheduleGroup) {
-        printf("[v:%d@%f] All wrong amigo: %d %d\n",
+        printf("[v:%d@%f] Incoherent schedules info: %d %d\n",
           intersectionIdx,
           currentTime,
           startingScheduleGroup,
