@@ -1020,9 +1020,11 @@ __global__ void kernel_updateIntersectionConnections(
 
   const int intersectionIdx = blockIdx.x * blockDim.x + threadIdx.x;
   if (intersectionIdx == 0
+      && std::floor(currentTime) == currentTime
       && static_cast<int>(std::floor(currentTime)) % 20 == 0) {
     printf("[@%f] Current connections: ", currentTime);
-    for (int i = 0; i < 6; ++i) {
+    // TODO(ffigari): Remove this
+    for (int i = 0; i < 12; ++i) {
       if (connections[i].enabled) printf("%d ", i);
     }
     printf("\n");
@@ -1055,13 +1057,18 @@ __global__ void kernel_updateIntersectionConnections(
 
       // TODO(ffigari): Remove this check
       if (startingScheduleGroup != scheduleEntry.scheduleGroup) {
-        printf("[%d@%f] All wrong amigo: %d %d\n",
-            intersectionIdx,
-            currentTime,
-            startingScheduleGroup,
-            scheduleEntry.scheduleGroup);
+        printf("[v:%d@%f] All wrong amigo: %d %d\n",
+          intersectionIdx,
+          currentTime,
+          startingScheduleGroup,
+          scheduleEntry.scheduleGroup);
         return;
       }
+
+      printf("[v:%d@%f] Enabling %d-th connection\n",
+        intersectionIdx,
+        currentTime,
+        scheduleEntry.connectionIdx);
 
       connections[scheduleEntry.connectionIdx].enabled = true;
 
@@ -1075,7 +1082,7 @@ __global__ void kernel_updateIntersectionConnections(
       ++intersection.currentScheduleGroup;
     } else {
       intersection.currentScheduleGroup = 0;
-      intersection.scheduleIdx = 0;
+      intersection.scheduleIdx = intersection.trafficLightSchedulesStart;
     }
 
     // Update next event

@@ -142,17 +142,30 @@ void B18TrafficLaneMap::createLaneMap(
     }
 
     intersection.timeOfNextUpdate = 0;
-    intersection.scheduleIdx = 0;
+    intersection.scheduleIdx = intersection.trafficLightSchedulesStart;
     intersection.currentScheduleGroup = 0;
     intersection.trafficLightSchedulesEnd = trafficLightSchedules.size();
-    std::cout << vertexIdx << "-th vertex: ";
-    for (
-        uint scheduleIdx = intersection.trafficLightSchedulesStart;
-        scheduleIdx < intersection.trafficLightSchedulesEnd;
-        ++scheduleIdx) {
-      std::cout << trafficLightSchedules.at(scheduleIdx).scheduleGroup << " ";
-    }
-    std::cout << std::endl;
+  }
+
+  std::cout << "\ntrafficLightSchedules" << std::endl;
+  for (const auto & i : trafficLightSchedules) {
+    std::cout
+      << "vertexIdx: " << i.vertexIdx << " "
+      << "connectionIdx: " << i.connectionIdx << " "
+      << "scheduleGroup: " << i.scheduleGroup << " "
+      << "scheduledTime: " << i.scheduledTime << std::endl;
+  }
+
+  std::cout << "\nintersections" << std::endl;
+  for (const auto & i : updatedIntersections) {
+    std::cout
+      << "connectionGraphStart: " << i.connectionGraphStart << " "
+      << "connectionGraphEnd: " << i.connectionGraphEnd << " "
+      << "trafficLightSchedulesStart: " << i.trafficLightSchedulesStart << " "
+      << "trafficLightSchedulesEnd: " << i.trafficLightSchedulesEnd << " "
+      << "scheduleIdx: " << i.scheduleIdx << " "
+      << "currentScheduleGroup: " << i.currentScheduleGroup << " "
+      << "timeOfNextUpdate: " << i.timeOfNextUpdate << std::endl;
   }
 
   // Instantiate lane map
