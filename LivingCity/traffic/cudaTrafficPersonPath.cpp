@@ -225,7 +225,6 @@ void CUDATrafficPersonPath::generateRoutes(
     return;
   }
 
-  printf(">> generatePathRoutes\n");
   QTime timer;
   timer.start();
   RoadGraph::roadGraphEdgeIter_BI ei, eiEnd;

@@ -32,7 +32,7 @@ extern void b18GetSampleTrafficCUDA(std::vector<float>& accSpeedPerLinePerTimeIn
                                 std::vector<float>& numVehPerLinePerTimeInterval);
 extern void b18FinishCUDA(void); // free memory
 extern void b18ResetPeopleLanesCUDA(uint numPeople); // reset people to inactive
-extern void b18SimulateTrafficCUDA(float currentTime, uint numPeople,
+extern void b18SimulateTrafficCUDA(const float currentTime, uint numPeople,
                                    uint numIntersections);
 
 #endif // B18_TRAFFIC_SIMULATION_H

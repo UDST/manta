@@ -35,7 +35,6 @@ void B18TrafficJohnson::generateRoutes(
     return;
   }
 
-  printf(">> generatePathRoutes\n");
   QTime timer;
   timer.start();
   
@@ -127,7 +126,6 @@ void B18TrafficJohnson::generateRoutes(
 
   // Run Johnson since we could not find it or it is not the first iteration
   if (johnsonReadCorrectly == false) {
-    printf("Call Johnson\n");
     boost::johnson_all_pairs_shortest_paths(roadGraph, dm, weight_map(weight_pmap));
     if (tryReadWriteFirstJohnsonArray) {
       // write to file
@@ -154,8 +152,6 @@ void B18TrafficJohnson::generateRoutes(
   }
   #endif
   
-  printf("Create Johnson numVertex %d Time %d ms\n", numVertex, timer.elapsed());
-
   ////////////////////////
   // Create routes
   uint noAccesible = 0;

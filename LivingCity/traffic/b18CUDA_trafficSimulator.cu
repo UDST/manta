@@ -455,7 +455,7 @@ __device__ void calculateLaneCarShouldBe(
   }
 }
 
-__global__ void kernel_trafficSimulation(
+__global__ void kernel_updatePersonsCars(
     const int numPeople,
     float currentTime,
     uint mapToReadShift,
@@ -1011,7 +1011,7 @@ __global__ void kernel_trafficSimulation(
   }
 }
 
-__global__ void kernel_intersectionOneSimulation(
+__global__ void kernel_updateIntersectionConnections(
     float currentTime,
     LC::Intersection *intersections,
     size_t amountOfIntersections,
@@ -1019,12 +1019,25 @@ __global__ void kernel_intersectionOneSimulation(
     LC::TrafficLightScheduleEntry *trafficLightSchedules) {
 
   const int intersectionIdx = blockIdx.x * blockDim.x + threadIdx.x;
+  if (intersectionIdx == 0
+      && static_cast<int>(std::floor(currentTime)) % 20 == 0) {
+    printf("[@%f] Current connections: ", currentTime);
+    for (int i = 0; i < 6; ++i) {
+      if (connections[i].enabled) printf("%d ", i);
+    }
+    printf("\n");
+  }
+
   if (intersectionIdx < amountOfIntersections) {
-    // TODO(ffigari): This will update EVERY iteration. I still need to add the scheduleTime check
-    // against the lastUpdate
-    // NOTE(ffigari): This assumes every intersection is a traffic light
-    // First disable all connections
+    // NOTE(ffigari): The current implementation assumes every intersection is a traffic light
     LC::Intersection & intersection = intersections[intersectionIdx];
+
+    const bool hasSchedule =
+      intersection.trafficLightSchedulesEnd - intersection.trafficLightSchedulesStart > 0;
+    const bool needsUpdate = currentTime >= intersection.timeOfNextUpdate;
+    if (!needsUpdate || !hasSchedule) { return; }
+
+    // First disable all intersection's connections
     for (
         uint connectionIdx = intersection.connectionGraphStart;
         connectionIdx < intersection.connectionGraphEnd;
@@ -1033,29 +1046,41 @@ __global__ void kernel_intersectionOneSimulation(
     }
 
     // Then enables the connections corresponding to the current schedule position
-    const uint startingScheduleGroup = intersection.currentScheduleGroup
+    const uint startingScheduleGroup = intersection.currentScheduleGroup;
+    int count = 0;
     do {
+      count++;
       const LC::TrafficLightScheduleEntry & scheduleEntry =
         trafficLightSchedules[intersection.scheduleIdx];
 
-      // TODO(ffigar): Remove this check
+      // TODO(ffigari): Remove this check
       if (startingScheduleGroup != scheduleEntry.scheduleGroup) {
-        printf("[%d@%f] All wrong amigo\n", intersectionIdx, currentTime);
+        printf("[%d@%f] All wrong amigo: %d %d\n",
+            intersectionIdx,
+            currentTime,
+            startingScheduleGroup,
+            scheduleEntry.scheduleGroup);
         return;
       }
 
       connections[scheduleEntry.connectionIdx].enabled = true;
 
       ++intersection.scheduleIdx;
-    } while (intersection.scheduleIdx < intersection.trafficLightSchedulesEnd
-        || trafficLightSchedules[intersection.scheduleIdx].scheduleGroup != startingScheduleGroup);
+    } while (
+        intersection.scheduleIdx < intersection.trafficLightSchedulesEnd
+        && trafficLightSchedules[intersection.scheduleIdx].scheduleGroup == startingScheduleGroup);
 
+    // Update indexes
     if (intersection.scheduleIdx < intersection.trafficLightSchedulesEnd) {
       ++intersection.currentScheduleGroup;
     } else {
       intersection.currentScheduleGroup = 0;
       intersection.scheduleIdx = 0;
     }
+
+    // Update next event
+    intersection.timeOfNextUpdate =
+      currentTime + trafficLightSchedules[intersection.scheduleIdx].scheduledTime;
   }
 }
 
@@ -1100,7 +1125,7 @@ void b18ResetPeopleLanesCUDA(uint numPeople) {
   cudaMemset(&laneMap_d[halfLaneMap], -1, halfLaneMap*sizeof(unsigned char));
 }
 
-void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersections) {
+void b18SimulateTrafficCUDA(const float currentTime, uint numPeople, uint numIntersections) {
   ////////////////////////////////////////////////////////////
   // 1. CHANGE MAP: set map to use and clean the other
   if(readFirstMapC==true){
@@ -1115,8 +1140,8 @@ void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersect
   readFirstMapC=!readFirstMapC;//next iteration invert use
 
   // Update intersections.
-  kernel_intersectionOneSimulation<<<ceil(numIntersections / 512.0f), 512>>>(
-    numIntersections,
+  kernel_updateIntersectionConnections<<<ceil(numIntersections / 512.0f), 512>>>(
+    currentTime,
     deviceIntersections,
     amountOfIntersections,
     deviceConnections,
@@ -1124,7 +1149,7 @@ void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersect
   gpuErrchk(cudaPeekAtLastError());
 
   // Simulate people.
-  kernel_trafficSimulation<<<ceil(numPeople / 384.0f), 384>>>(
+  kernel_updatePersonsCars<<<ceil(numPeople / 384.0f), 384>>>(
     numPeople,
     currentTime,
     mapToReadShift,

@@ -42,9 +42,12 @@ struct Intersection {
   uint trafficLightSchedulesEnd;
 
   // Indicates index in traffic lights entries to where to keep updating on the next iteration
-  unit scheduleIdx;
+  uint scheduleIdx;
   // Indicates schedule group on which we are now set
   uint currentScheduleGroup;
+
+  // Time of this intersection's last update
+  float timeOfNextUpdate;
 };
 
 // Object to abstract whether a connection between two lanes is enabled or not

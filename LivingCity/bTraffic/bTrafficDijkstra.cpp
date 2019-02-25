@@ -234,7 +234,6 @@ void BTrafficDijstra::generateRoutes(
     return;
   }
 
-  printf(">> generatePathRoutes\n");
   people.nextEdge.clear();
   QTime timer;
   timer.start();

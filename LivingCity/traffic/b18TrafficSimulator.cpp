@@ -184,11 +184,11 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     while (currentTime < endTime) {
       count++;
       if (count % 180 == 0) {
-        std::cerr << std::fixed << std::setprecision(2) 
-          << "Current time: " << (currentTime / 3600.0f)
-          << " (" << (100.0f - (100.0f * (endTime - currentTime) / (endTime - startTime))) << "%)"
-          << " with " << (timerLoop.elapsed() / 1800.0f) << " ms per simulation step (average over 1800)"
-          << "\r";
+        //std::cerr << std::fixed << std::setprecision(2) 
+          //<< "Current time: " << (currentTime / 3600.0f)
+          //<< " (" << (100.0f - (100.0f * (endTime - currentTime) / (endTime - startTime))) << "%)"
+          //<< " with " << (timerLoop.elapsed() / 1800.0f) << " ms per simulation step (average over 1800)"
+          //<< "\r";
         timerLoop.restart();
       }
 

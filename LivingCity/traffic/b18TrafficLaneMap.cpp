@@ -49,6 +49,7 @@ void B18TrafficLaneMap::createLaneMap(
   laneMapNumToEdgeDesc.clear();
   connections.clear();
   updatedIntersections.clear();
+  trafficLightSchedules.clear();
 
   auto & inputGraph = inRoadGraph.myRoadGraph_BI;
   RoadGraph::roadGraphEdgeIter_BI ei, ei_end;
@@ -115,8 +116,7 @@ void B18TrafficLaneMap::createLaneMap(
             connection.outEdgeNumber = outEdgeNumber;
             connection.inLaneNumber = inEdgeNumber + inIdx;
             connection.outLaneNumber = outEdgeNumber + outIdx;
-            // TODO: Set this default value to false once the traffic light schedules are ready
-            connection.enabled = true;
+            connection.enabled = false;
             connections.push_back(connection);
             ++connectionsCount;
           }
@@ -141,14 +141,19 @@ void B18TrafficLaneMap::createLaneMap(
       trafficLightSchedules.push_back(trafficLightScheduleEntry);
     }
 
-    intersection.lastUpdate = 0;
+    intersection.timeOfNextUpdate = 0;
     intersection.scheduleIdx = 0;
     intersection.currentScheduleGroup = 0;
     intersection.trafficLightSchedulesEnd = trafficLightSchedules.size();
-    assert(trafficLightSchedules.size() - intersection.trafficLightSchedulesStart > 0);
+    std::cout << vertexIdx << "-th vertex: ";
+    for (
+        uint scheduleIdx = intersection.trafficLightSchedulesStart;
+        scheduleIdx < intersection.trafficLightSchedulesEnd;
+        ++scheduleIdx) {
+      std::cout << trafficLightSchedules.at(scheduleIdx).scheduleGroup << " ";
+    }
+    std::cout << std::endl;
   }
-
-  //std::cout << "\n\n\tE n t e r i n g   d e e p   s p a c e.\n\n" << std::endl << std::flush; assert(false);
 
   // Instantiate lane map
   laneMap.resize(kMaxMapWidthM * totalLaneMapChunks * 2); // 2: to have two maps.
