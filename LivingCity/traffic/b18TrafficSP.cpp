@@ -87,7 +87,7 @@ void B18TrafficSP::generateRoutesSP(
 
       minSpeed = minSpeed > speed ? speed : minSpeed;
       maxSpeed = maxSpeed < speed ? speed : maxSpeed;
-      printf("Edge ID: %s, Vertex IDs: %hu %hu, Edge weight: %f\n", roadGraph[*ei].label, roadGraph[*ei].inNum, roadGraph[*ei].outNum, roadGraph[*ei].edge_weight);
+      printf("Vertex IDs of Edge: %d %d, Edge weight: %f\n", boost::source(*ei, roadGraph), boost::target(*ei, roadGraph), roadGraph[*ei].edge_weight);
     } else {
       roadGraph[*ei].edge_weight =
         100000000.0; //FLT_MAX;// if it has not lines, then the weight is inf

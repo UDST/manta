@@ -170,7 +170,6 @@ void B18TrafficJohnson::generateRoutes(
   timer2.start();
   const int kMaxNumPath = 250;
 
-  /*
   for (int p = 0; p < trafficPersonVec.size(); p++) {
     if (trafficPersonVec.size() > 200) {
       if ((p % (trafficPersonVec.size() / 20)) == 0) {
@@ -283,18 +282,7 @@ void B18TrafficJohnson::generateRoutes(
     currIndexPath++;
     ////////////////////////////////////////////////////////////////////////////////////////////
   }
-  */
-  //Get the indexPathVec from file (produced by the independent ABM code)
-  ifstream inputFile("/home/abm/build/index_path_vec.txt");
-
-  if (inputFile){
-	  double value;
-      // read the elements in the file into a vector
-          while (inputFile >> value) {
-		  indexPathVec.push_back(value);
-	  }
-  }
-  printf("Final Path Size %u\n", currIndexPath);
+ printf("Final Path Size %u\n", currIndexPath);
   for (int p = 0; p < trafficPersonVec.size(); p++) {
     trafficPersonVec[p].indexPathCurr = trafficPersonVec[p].indexPathInit;
   }
