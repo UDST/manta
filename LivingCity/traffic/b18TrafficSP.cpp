@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include "src/linux_host_memory_logger.h"
+#include "sp/graph.h"
 
 #define ROUTE_DEBUG 0
 //#define DEBUG_JOHNSON 0
@@ -77,25 +78,20 @@ void B18TrafficSP::generateRoutesSP(
       }
       float travelTime = roadGraph[*ei].edgeLength / speed;
       roadGraph[*ei].edge_weight = travelTime;
-      weight_pmap[*ei] = travelTime;
 
-      minTravelTime = minTravelTime>travelTime ? travelTime : minTravelTime;
-      maxTravelTime = maxTravelTime < travelTime ? travelTime : maxTravelTime;
-
-      minLength = minLength > roadGraph[*ei].edgeLength ? roadGraph[*ei].edgeLength : minLength;
-      maxLength = maxLength < roadGraph[*ei].edgeLength ? roadGraph[*ei].edgeLength : maxLength;
-
-      minSpeed = minSpeed > speed ? speed : minSpeed;
-      maxSpeed = maxSpeed < speed ? speed : maxSpeed;
       printf("Vertex IDs of Edge: %d %d, Edge weight: %f\n", boost::source(*ei, roadGraph), boost::target(*ei, roadGraph), roadGraph[*ei].edge_weight);
+
+      //generate ABM graph
+      /*
+      const bool directed = true;
+      auto graph = std::make_unique<abm::Graph>(directed);
+      graph->generate_simple_graph();
+      */
     } else {
       roadGraph[*ei].edge_weight =
         100000000.0; //FLT_MAX;// if it has not lines, then the weight is inf
     }
   }
-  printf("Travel time Min: %f Max: %f\n", minTravelTime, maxTravelTime);
-  printf("Length Min: %f Max: %f\n", minLength, maxLength);
-  printf("Speed Min: %f Max: %f\n", minSpeed, maxSpeed);
 
   //2. Generate route for each person
   printf(">> Printing vertex IDs, edge IDs, and weights\n");
