@@ -4,8 +4,6 @@
 #include <iostream>
 #include <fstream>
 #include "src/linux_host_memory_logger.h"
-#include "sp/graph.h"
-
 #define ROUTE_DEBUG 0
 //#define DEBUG_JOHNSON 0
 
@@ -58,6 +56,11 @@ void B18TrafficSP::generateRoutesSP(
   float maxLength = -FLT_MAX;
   float minSpeed = FLT_MAX;
   float maxSpeed = -FLT_MAX;
+
+  //make graph object
+  const bool directed = true;
+  auto graph = std::make_unique<abm::Graph>(directed);
+
   for (boost::tie(ei, eiEnd) = boost::edges(roadGraph); ei != eiEnd; ++ei) {
     numEdges++;
     if ((edgeDescToLaneMapNum.size() > 20) && (numEdges % (edgeDescToLaneMapNum.size() / 20)) == 0) {
@@ -79,13 +82,25 @@ void B18TrafficSP::generateRoutesSP(
       float travelTime = roadGraph[*ei].edgeLength / speed;
       roadGraph[*ei].edge_weight = travelTime;
 
-      printf("Vertex IDs of Edge: %d %d, Edge weight: %f\n", boost::source(*ei, roadGraph), boost::target(*ei, roadGraph), roadGraph[*ei].edge_weight);
+      //printf("Vertex IDs of Edge: %d %d, Edge weight: %f\n", boost::source(*ei, roadGraph), boost::target(*ei, roadGraph), roadGraph[*ei].edge_weight);
 
-      //generate ABM graph
+      abm::graph::vertex_t source = boost::source(*ei, roadGraph);
+      abm::graph::vertex_t target = boost::target(*ei, roadGraph);
+      abm::graph::weight_t weight = roadGraph[*ei].edge_weight;
+      abm::graph::vertex_t edge_id = numEdges;
+
+      graph->add_edge(source, target, weight, edge_id);
+
       /*
+      //generate ABM graph
       const bool directed = true;
       auto graph = std::make_unique<abm::Graph>(directed);
       graph->generate_simple_graph();
+      abm::graph::vertex_t source = 1;
+      abm::graph::vertex_t destination = 3;
+      const auto path = graph->dijkstra_vertices(source, destination);
+      // Check distances
+      printf("path size = %d\n", path.size());
       */
     } else {
       roadGraph[*ei].edge_weight =
@@ -93,7 +108,35 @@ void B18TrafficSP::generateRoutesSP(
     }
   }
 
+
+  printf("# of edges: %d\n", graph->nedges());
+
+
+
   //2. Generate route for each person
+
+  /*
+  //New ABM Dijkstra's
+  std::vector<abm::graph::vertex_t> paths;
+  std::vector<std::array<abm::graph::vertex_t, 3>> paths_idx;
+  #pragma omp parallel for schedule(dynamic)
+  for (abm::graph::vertex_t i = 0; i < graph.size(); ++i) {
+    const auto sp = graph_->dijkstra_edges(graph[i][0], graph[i][1]);
+    #pragma omp critical
+    {
+      paths_idx.emplace_back(std::array<abm::graph::vertex_t, 3>(
+          {i, static_cast<abm::graph::vertex_t>(paths.size()),
+           static_cast<abm::graph::vertex_t>(sp.size())}));
+      paths.insert(std::end(paths), std::begin(sp), std::end(sp));
+    }
+    for (auto i = sp.begin(); i != sp.end(); ++i) {
+	printf("%d\n", i);
+    }
+  }
+  */
+
+
+
   printf(">> Printing vertex IDs, edge IDs, and weights\n");
   int numVertex = boost::num_vertices(roadGraph);
   //vertex

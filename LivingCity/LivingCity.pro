@@ -60,12 +60,22 @@ HEADERS += \
     traffic/b18GridPollution.h \
     traffic/b18TrafficDijkstra.h \
     traffic/b18TrafficJohnson.h \
+    traffic/b18TrafficSP.h \
     traffic/b18TrafficLaneMap.h \
     traffic/b18TrafficOD.h \
     traffic/b18TrafficPerson.h \
     traffic/b18TrafficSimulator.h \
     src/benchmarker.h \
-    src/linux_host_memory_logger.h
+    src/linux_host_memory_logger.h \
+    traffic/sp/config.h \
+    traffic/sp/csv.h \
+    traffic/sp/graph.h \
+    traffic/sp/mpi_wrapper.h \
+    traffic/sp/unordered_map_tuple_hash.h \
+    traffic/sp/tsl/robin_growth_policy.h \
+    traffic/sp/tsl/robin_hash.h \
+    traffic/sp/tsl/robin_map.h \
+    traffic/sp/tsl/robin_set.h \
 
 SOURCES += \
     Geometry/block.cpp \
@@ -88,11 +98,13 @@ SOURCES += \
     traffic/b18GridPollution.cpp \
     traffic/b18TrafficDijkstra.cpp \
     traffic/b18TrafficJohnson.cpp \
+    traffic/b18TrafficSP.cpp \
     traffic/b18TrafficLaneMap.cpp \
     traffic/b18TrafficOD.cpp \
     traffic/b18TrafficSimulator.cpp \
     src/benchmarker.cpp \
-    src/linux_host_memory_logger.cpp
+    src/linux_host_memory_logger.cpp \
+    traffic/sp/graph.cc
 
 OTHER_FILES += \
         traffic/b18CUDA_trafficSimulator.cu \

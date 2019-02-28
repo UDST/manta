@@ -7,6 +7,12 @@
 
 #include "b18TrafficPerson.h"
 #include "../RoadGraph/roadGraph.h"
+#include "sp/graph.h"
+#include "sp/csv.h"
+#include "omp.h"
+
+#include "sp/config.h"
+#include "sp/mpi_wrapper.h"
 
 namespace LC {
 class B18TrafficSP {
