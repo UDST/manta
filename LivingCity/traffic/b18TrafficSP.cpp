@@ -1,8 +1,6 @@
 #include "b18TrafficSP.h"
 
 #include <boost/graph/exterior_property.hpp>
-#include <iostream>
-#include <fstream>
 #include "src/linux_host_memory_logger.h"
 #define ROUTE_DEBUG 0
 //#define DEBUG_JOHNSON 0
@@ -23,6 +21,100 @@ typedef exterior_vertex_property<RoadGraph::roadBGLGraph_BI, float>
 DistanceProperty;
 typedef DistanceProperty::matrix_type DistanceMatrix;
 typedef DistanceProperty::matrix_map_type DistanceMatrixMap;
+
+// Convert OD pairs to SP graph format
+std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::make_od_pairs(std::vector<B18TrafficPerson> trafficPersonVec, 
+									     int nagents) {
+  bool status = true;
+  std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_;
+  try {
+    abm::graph::vertex_t v1, v2;
+    abm::graph::weight_t weight;
+    for (int person = 0; person < trafficPersonVec.size(); person++) {
+      v1 = trafficPersonVec[person].init_intersection;
+      v2 = trafficPersonVec[person].end_intersection;
+      std::array<abm::graph::vertex_t, 2> od = {v1, v2};
+      all_od_pairs_.emplace_back(od);
+    }
+    if (nagents != std::numeric_limits<int>::max())
+      all_od_pairs_.resize(nagents);
+  } catch (std::exception& exception) {
+    std::cout << "Looping through trafficPersonVec doesn't work " << exception.what() << "\n";
+    status = false;
+  }
+  return all_od_pairs_;
+}
+
+
+
+std::vector<abm::graph::vertex_t> B18TrafficSP::compute_routes(int mpi_rank,
+                                                 int mpi_size,
+						 std::shared_ptr<abm::Graph> graph_,
+						 std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_) {
+
+  //! All paths
+  std::vector<abm::graph::vertex_t> all_paths_;
+  //! All paths indices
+  std::vector<std::array<abm::graph::vertex_t, 3>> all_paths_idx_;
+
+  std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs;
+#ifdef USE_MPI
+  // Create MPI pair type
+  MPI_Datatype pair_t;
+  MPI_Type_vector(2, 1, 1, MPI_LONG_LONG_INT, &pair_t);
+  MPI_Type_commit(&pair_t);
+
+  // Calculate chunk size to split router
+  int chunk_size = all_od_pairs_.size() / mpi_size;
+  MPI_Bcast(&chunk_size, 1, MPI_LONG_LONG_INT, 0, MPI_COMM_WORLD);
+  od_pairs.resize(chunk_size);
+  // Send route chunks to different compute nodes
+  MPI_Scatter(all_od_pairs_.data(), chunk_size, pair_t, od_pairs.data(),
+              od_pairs.size(), pair_t, 0, MPI_COMM_WORLD);
+
+  // Calculate the remaining chunk of od_pairs and add to rank 0
+  int chunk_remainder = all_od_pairs_.size() % mpi_size;
+  if (mpi_rank == 0) {
+    od_pairs.insert(od_pairs.begin(), all_od_pairs_.end() - chunk_remainder,
+                    all_od_pairs_.end());
+  }
+#else
+  od_pairs = all_od_pairs_;
+#endif
+
+  // Paths (vector of edges)
+  std::vector<abm::graph::vertex_t> paths;
+  paths.reserve(graph_->nedges());
+
+  // Indices of start of path and length for each agent
+  std::vector<std::array<abm::graph::vertex_t, 3>> paths_idx;
+  paths_idx.reserve(od_pairs.size());
+
+#pragma omp parallel for schedule(dynamic)
+  for (abm::graph::vertex_t i = 0; i < od_pairs.size(); ++i) {
+    const auto sp = graph_->dijkstra_edges(od_pairs[i][0], od_pairs[i][1]);
+#pragma omp critical
+    {
+      paths_idx.emplace_back(std::array<abm::graph::vertex_t, 3>(
+          {i, static_cast<abm::graph::vertex_t>(paths.size()),
+           static_cast<abm::graph::vertex_t>(sp.size())}));
+      paths.insert(std::end(paths), std::begin(sp), std::end(sp));
+    }
+  }
+
+  // Get all paths and indices
+  all_paths_ = abm::gather_vectors_ids(paths);
+  all_paths_idx_ = abm::gather_vector_arrays(paths_idx);
+
+#ifdef USE_MPI
+  MPI_Type_free(&pair_t);
+#endif
+
+  return all_paths_;
+}
+
+
+
 
 void B18TrafficSP::generateRoutesSP(
     LC::RoadGraph::roadBGLGraph_BI &roadGraph,
@@ -112,28 +204,19 @@ void B18TrafficSP::generateRoutesSP(
   printf("# of edges: %d\n", graph->nedges());
 
 
-
-  //2. Generate route for each person
-
   /*
-  //New ABM Dijkstra's
-  std::vector<abm::graph::vertex_t> paths;
-  std::vector<std::array<abm::graph::vertex_t, 3>> paths_idx;
-  #pragma omp parallel for schedule(dynamic)
-  for (abm::graph::vertex_t i = 0; i < graph.size(); ++i) {
-    const auto sp = graph_->dijkstra_edges(graph[i][0], graph[i][1]);
-    #pragma omp critical
-    {
-      paths_idx.emplace_back(std::array<abm::graph::vertex_t, 3>(
-          {i, static_cast<abm::graph::vertex_t>(paths.size()),
-           static_cast<abm::graph::vertex_t>(sp.size())}));
-      paths.insert(std::end(paths), std::begin(sp), std::end(sp));
-    }
-    for (auto i = sp.begin(); i != sp.end(); ++i) {
-	printf("%d\n", i);
-    }
-  }
+  //2. Generate route for each person
+  int mpi_rank = 0;
+  int mpi_size = 1;
+  std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_;
+  //all_od_pairs_ = make_od_pairs(trafficPersonVec, std::numeric_limits<int>::max()));
+  all_od_pairs_ = LC::B18TrafficSP::make_od_pairs(trafficPersonVec, 10);
+  const auto all_paths = LC::B18TrafficSP::compute_routes(mpi_rank, mpi_size, graph, all_od_pairs_);
+  //end computing shortest paths with ABM
   */
+
+
+
 
 
 

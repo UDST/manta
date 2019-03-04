@@ -68,14 +68,14 @@ HEADERS += \
     src/benchmarker.h \
     src/linux_host_memory_logger.h \
     traffic/sp/config.h \
-    traffic/sp/csv.h \
+    traffic/sp/external/csv.h \
     traffic/sp/graph.h \
     traffic/sp/mpi_wrapper.h \
     traffic/sp/unordered_map_tuple_hash.h \
-    traffic/sp/tsl/robin_growth_policy.h \
-    traffic/sp/tsl/robin_hash.h \
-    traffic/sp/tsl/robin_map.h \
-    traffic/sp/tsl/robin_set.h \
+    traffic/sp/external/tsl/robin_growth_policy.h \
+    traffic/sp/external/tsl/robin_hash.h \
+    traffic/sp/external/tsl/robin_map.h \
+    traffic/sp/external/tsl/robin_set.h \
 
 SOURCES += \
     Geometry/block.cpp \
