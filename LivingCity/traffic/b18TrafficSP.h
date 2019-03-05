@@ -28,12 +28,12 @@ class B18TrafficSP {
  public:
 	 
   static std::vector<abm::graph::vertex_t> compute_routes(int mpi_rank,
-                                                   int mpi_size,
-                                                   std::shared_ptr<abm::Graph> graph_,
-                                                   std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_);
-
+                                                   	  int mpi_size,
+                                                   	  std::shared_ptr<abm::Graph> graph_,
+                                                   	  std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_);
+  
   static std::vector<std::array<abm::graph::vertex_t, 2>> make_od_pairs(std::vector<B18TrafficPerson> trafficPersonVec,
-                                                                               int nagents);
+                                                                        int nagents);
 
   static void generateRoutesSP(
       LC::RoadGraph::roadBGLGraph_BI &roadGraph,

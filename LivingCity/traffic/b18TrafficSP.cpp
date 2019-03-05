@@ -31,6 +31,7 @@ std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::make_od_pairs(std
     abm::graph::vertex_t v1, v2;
     abm::graph::weight_t weight;
     for (int person = 0; person < trafficPersonVec.size(); person++) {
+    //for (int person = 0; person < 1; person++) {
       v1 = trafficPersonVec[person].init_intersection;
       v2 = trafficPersonVec[person].end_intersection;
       std::array<abm::graph::vertex_t, 2> od = {v1, v2};
@@ -38,13 +39,18 @@ std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::make_od_pairs(std
     }
     if (nagents != std::numeric_limits<int>::max())
       all_od_pairs_.resize(nagents);
+
+    //make sure all OD pairs are unique
+    std::sort(all_od_pairs_.begin(), all_od_pairs_.end());
+    auto last = std::unique(all_od_pairs_.begin(), all_od_pairs_.end());
+    all_od_pairs_.erase(last, all_od_pairs_.end());
+
   } catch (std::exception& exception) {
     std::cout << "Looping through trafficPersonVec doesn't work " << exception.what() << "\n";
     status = false;
   }
   return all_od_pairs_;
 }
-
 
 
 std::vector<abm::graph::vertex_t> B18TrafficSP::compute_routes(int mpi_rank,
@@ -58,6 +64,8 @@ std::vector<abm::graph::vertex_t> B18TrafficSP::compute_routes(int mpi_rank,
   std::vector<std::array<abm::graph::vertex_t, 3>> all_paths_idx_;
 
   std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs;
+
+
 #ifdef USE_MPI
   // Create MPI pair type
   MPI_Datatype pair_t;
@@ -151,7 +159,7 @@ void B18TrafficSP::generateRoutesSP(
 
   //make graph object
   const bool directed = true;
-  auto graph = std::make_unique<abm::Graph>(directed);
+  auto graph = std::make_shared<abm::Graph>(directed);
 
   for (boost::tie(ei, eiEnd) = boost::edges(roadGraph); ei != eiEnd; ++ei) {
     numEdges++;
@@ -183,17 +191,6 @@ void B18TrafficSP::generateRoutesSP(
 
       graph->add_edge(source, target, weight, edge_id);
 
-      /*
-      //generate ABM graph
-      const bool directed = true;
-      auto graph = std::make_unique<abm::Graph>(directed);
-      graph->generate_simple_graph();
-      abm::graph::vertex_t source = 1;
-      abm::graph::vertex_t destination = 3;
-      const auto path = graph->dijkstra_vertices(source, destination);
-      // Check distances
-      printf("path size = %d\n", path.size());
-      */
     } else {
       roadGraph[*ei].edge_weight =
         100000000.0; //FLT_MAX;// if it has not lines, then the weight is inf
@@ -204,16 +201,30 @@ void B18TrafficSP::generateRoutesSP(
   printf("# of edges: %d\n", graph->nedges());
 
 
-  /*
   //2. Generate route for each person
   int mpi_rank = 0;
   int mpi_size = 1;
+#ifdef USE_MPI
+  // Initialise MPI
+  MPI_Init(&argc, &argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+#endif
   std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_;
-  //all_od_pairs_ = make_od_pairs(trafficPersonVec, std::numeric_limits<int>::max()));
-  all_od_pairs_ = LC::B18TrafficSP::make_od_pairs(trafficPersonVec, 10);
+  all_od_pairs_ = make_od_pairs(trafficPersonVec, std::numeric_limits<int>::max());
+  printf("# of OD pairs = %d\n", all_od_pairs_.size());
+
   const auto all_paths = LC::B18TrafficSP::compute_routes(mpi_rank, mpi_size, graph, all_od_pairs_);
-  //end computing shortest paths with ABM
+  printf("total paths = %d\n", all_paths.size());
+  /*
+  for (int x = 0; x < all_paths.size(); x++){
+	if (all_paths[x] == -1) {
+		printf("edge %d\n", x+1);
+	}
+	printf("path = %lld\n", all_paths[x]);
+  }
   */
+  //end computing shortest paths with ABM
 
 
 
