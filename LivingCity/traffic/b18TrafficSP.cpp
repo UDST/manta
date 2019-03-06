@@ -2,6 +2,7 @@
 
 #include <boost/graph/exterior_property.hpp>
 #include "src/linux_host_memory_logger.h"
+
 #define ROUTE_DEBUG 0
 //#define DEBUG_JOHNSON 0
 
@@ -11,6 +12,7 @@ namespace LC {
 ////////////////
 /////////////////////////////
 using namespace boost;
+using namespace std::chrono;
 
 inline bool fileExists(const std::string& fileName) {
   std::ifstream f(fileName.c_str());
@@ -213,9 +215,12 @@ void B18TrafficSP::generateRoutesSP(
   std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_;
   all_od_pairs_ = make_od_pairs(trafficPersonVec, std::numeric_limits<int>::max());
   printf("# of OD pairs = %d\n", all_od_pairs_.size());
-
+  auto start = high_resolution_clock::now(); 
   const auto all_paths = LC::B18TrafficSP::compute_routes(mpi_rank, mpi_size, graph, all_od_pairs_);
-  printf("total paths = %d\n", all_paths.size());
+  auto stop = high_resolution_clock::now();
+  auto duration = duration_cast<seconds>(stop - start); 
+  printf("total time compute_routes() = %d seconds\n", duration.count());
+  printf("total paths = %d\n", all_paths.size() - all_od_pairs_.size());
   /*
   for (int x = 0; x < all_paths.size(); x++){
 	if (all_paths[x] == -1) {

@@ -6,7 +6,7 @@ OBJECTS_DIR = $$DESTDIR/obj
 
 unix {
     LIBS += -L/opt/local/lib -lopencv_imgcodecs -lopencv_core -lopencv_imgproc
-	# -L/Developer/NVIDIA/CUDA-7.5/lib -lcudart -lcublas
+	# -L/Developer/NVIDIA/CUDA-7.5/lib -lcudart -lcublas -lgomp
     INCLUDEPATH += \
       /usr/include/opencv2/ \
       /opt/local/include/ \ 
@@ -180,7 +180,9 @@ unix {
   # NVCC flags
   NVCCFLAGS = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-options=-v
   # Path to libraries
-  LIBS += -lcudart -lcuda
+  LIBS += -lcudart -lcuda -lgomp
+  QMAKE_CXXFLAGS += -fopenmp
+  LIBS += -fopenmp
   # join the includes in a line
   CUDA_INC = $$join(INCLUDEPATH,' -I','-I',' ')
   cuda.commands = $$CUDA_DIR/bin/nvcc -m64 -O3 -arch=$$CUDA_ARCH -c $$NVCCFLAGS $$CUDA_INC $$LIBS ${QMAKE_FILE_NAME} -o ${QMAKE_FILE_OUT}

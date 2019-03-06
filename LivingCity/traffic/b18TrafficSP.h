@@ -13,6 +13,8 @@
 #include <sstream>
 #include <vector>
 
+#include "src/benchmarker.h"
+#include "src/linux_host_memory_logger.h"
 #include "b18TrafficPerson.h"
 #include "../RoadGraph/roadGraph.h"
 #include "sp/graph.h"
