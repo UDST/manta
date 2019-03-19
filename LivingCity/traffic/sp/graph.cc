@@ -18,6 +18,7 @@ inline void abm::Graph::add_edge(
   // Create an edge
   auto edge = std::make_shared<Graph::Edge>(
       std::make_pair(std::make_pair(vertex1, vertex2), weight));
+  printf("edge vertex 1 = %lld, vertex 2 = %lld, weight = %f\n", edge->first.first, edge->first.second, edge->second);
   edges_[std::make_tuple(vertex1, vertex2)] = edge;
 
   // Add edge id
@@ -288,6 +289,7 @@ std::vector<abm::graph::vertex_t> abm::Graph::dijkstra_edges(
     abm::graph::vertex_t source, abm::graph::vertex_t destination) {
 
   const auto path = this->dijkstra(source, destination);
+  printf("path size = %d\n", path.size());
 
   std::vector<abm::graph::vertex_t> route_edges;
   if (path.size() > 0) {

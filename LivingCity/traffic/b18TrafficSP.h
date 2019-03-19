@@ -37,6 +37,8 @@ class B18TrafficSP {
   static std::vector<std::array<abm::graph::vertex_t, 2>> make_od_pairs(std::vector<B18TrafficPerson> trafficPersonVec,
                                                                         int nagents);
 
+ // static abm::graph::Graph read_graph_osm(const std::string& filename);
+
   static void generateRoutesSP(
       LC::RoadGraph::roadBGLGraph_BI &roadGraph,
       std::vector<B18TrafficPerson> &trafficPersonVec,

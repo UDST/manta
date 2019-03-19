@@ -370,11 +370,12 @@ void B18TrafficOD::loadB18TrafficPeople(
     rng, nd);
 
   int numPeople = 0;
-
+  printf("demandB2018 = %d\n", RoadGraphB2018::demandB2018.size());
   for (int d = 0; (d < RoadGraphB2018::demandB2018.size()) &&
        (numPeople < totalNumPeople); d++) {
     int odNumPeople = std::min<int>(totalNumPeople - numPeople,
                                     RoadGraphB2018::demandB2018[d].num_people);
+    //printf("odNumPeople = %d\n", odNumPeople);
     uint src_vertex = RoadGraphB2018::demandB2018[d].src_vertex;
     uint tgt_vertex = RoadGraphB2018::demandB2018[d].tgt_vertex;
 
@@ -393,6 +394,7 @@ void B18TrafficOD::loadB18TrafficPeople(
       numPeople++;
     }
   }
+  printf("traffic_person vec size = %d", trafficPersonVec.size());
 
   if (totalNumPeople > numPeople) {
     std::cerr << "Current amount: " << numPeople << std::endl;

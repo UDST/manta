@@ -178,11 +178,11 @@ unix {
   # GPU architecture
   CUDA_ARCH = sm_50
   # NVCC flags
-  NVCCFLAGS = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-options=-v
+  NVCCFLAGS = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-options=-v -Xcompiler -fopenmp
   # Path to libraries
   LIBS += -lcudart -lcuda -lgomp
   QMAKE_CXXFLAGS += -fopenmp
-  LIBS += -fopenmp
+  #LIBS += -fopenmp
   # join the includes in a line
   CUDA_INC = $$join(INCLUDEPATH,' -I','-I',' ')
   cuda.commands = $$CUDA_DIR/bin/nvcc -m64 -O3 -arch=$$CUDA_ARCH -c $$NVCCFLAGS $$CUDA_INC $$LIBS ${QMAKE_FILE_NAME} -o ${QMAKE_FILE_OUT}
