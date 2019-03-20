@@ -31,7 +31,6 @@ namespace {
 }
 
 
-// TODO: Add traffic light schedules
 void B18TrafficLaneMap::createLaneMap(
     const RoadGraph &inRoadGraph,
     std::vector<uchar> &laneMap,
