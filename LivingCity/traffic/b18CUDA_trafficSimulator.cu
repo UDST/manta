@@ -617,7 +617,6 @@ __global__ void kernel_updatePersonsCars(
         && remainingCellsToCheck > 0
         && nextEdge != -1) {
       const int dstVertexNumber = edgesData[currentEdge].originalTargetVertexIndex;
-      // TODO: Review if this addition is the correct way of obtaining the lane number
       const ushort currentLaneNumber = currentEdge + trafficPersonVec[p].numOfLaneInEdge;
       for (
           int connectionIdx = intersections[dstVertexNumber].connectionGraphStart;
@@ -631,8 +630,7 @@ __global__ void kernel_updatePersonsCars(
             && connection.outEdgeNumber == nextEdge
             && connection.enabled) {
           atLeastOneEnabledConnection = true;
-          // TODO: I think here I need to substract the edgeNumber
-          nextEdgeChosenLane = connection.outLaneNumber;
+          nextEdgeChosenLane = connection.outLaneNumber - connection.outEdgeNumber;
           break;
         }
       }
@@ -978,12 +976,11 @@ __global__ void kernel_updatePersonsCars(
     trafficPersonVec[p].edgeNextInters = trafficPersonVec[p].nextEdgeNextInters;
     trafficPersonVec[p].length = trafficPersonVec[p].nextEdgeLength;
     trafficPersonVec[p].posInLaneM = numMToMove;
-
-    // TODO: If an intersection has been reached the new number of lane should be
-    // min(chosen-connection-output-lane-number, trafficPersonVec[p].edgeNumLanes - 1);
-    if (trafficPersonVec[p].numOfLaneInEdge >= trafficPersonVec[p].edgeNumLanes) {
-      trafficPersonVec[p].numOfLaneInEdge = trafficPersonVec[p].edgeNumLanes - 1; //change line if there are less roads
+    if (nextEdgeChosenLane >= trafficPersonVec[p].nextEdgeNumLanes) {
+      printf("Error when computing next edge's lane number.\n");
+      return;
     }
+    trafficPersonVec[p].numOfLaneInEdge = nextEdgeChosenLane;
 
     // Update person's next edge
     const uint nextEdgeIdx = indexPathVec[trafficPersonVec[p].indexPathCurr + 1];
