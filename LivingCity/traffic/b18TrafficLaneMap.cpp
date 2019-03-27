@@ -124,26 +124,33 @@ void B18TrafficLaneMap::createLaneMap(
     }
     intersection.connectionGraphEnd = connectionsCount;
 
-    // Create traffic lights schedules with the just created connections
-    intersection.trafficLightSchedulesStart = trafficLightSchedules.size();
-    // NOTE: This algorithm computes a very basic traffic lights schedule where only one connection
-    // is enabled at the same time for each intersection
-    const float basicScheduledTime = 20;
-    uint connectionIdx = intersection.connectionGraphStart;
-    uint schedulePosition = 0;
-    for (; connectionIdx < intersection.connectionGraphEnd; ++connectionIdx, ++schedulePosition) {
-      TrafficLightScheduleEntry trafficLightScheduleEntry;
-      trafficLightScheduleEntry.vertexIdx = vertexIdx;
-      trafficLightScheduleEntry.connectionIdx = connectionIdx;
-      trafficLightScheduleEntry.scheduleGroup = schedulePosition;
-      trafficLightScheduleEntry.scheduledTime = basicScheduledTime;
-      trafficLightSchedules.push_back(trafficLightScheduleEntry);
-    }
+    const auto addTrafficLightScheduleToIntersection = [] (
+      Intersection & tgtIntersection,
+      long long vertexIdx,
+      std::vector<TrafficLightScheduleEntry> & trafficLightSchedules) {
+      // NOTE: This algorithm computes a very basic traffic lights schedule where only one connection
+      // is enabled at the same time for each intersection
+      const float basicScheduledTime = 20;
 
-    intersection.timeOfNextUpdate = 0;
-    intersection.scheduleIdx = intersection.trafficLightSchedulesStart;
-    intersection.currentScheduleGroup = 0;
-    intersection.trafficLightSchedulesEnd = trafficLightSchedules.size();
+      // Create traffic lights schedules with the just created connections
+      tgtIntersection.trafficLightSchedulesStart = trafficLightSchedules.size();
+      uint connectionIdx = tgtIntersection.connectionGraphStart;
+      uint schedulePosition = 0;
+      for (; connectionIdx < tgtIntersection.connectionGraphEnd; ++connectionIdx, ++schedulePosition) {
+        TrafficLightScheduleEntry trafficLightScheduleEntry;
+        trafficLightScheduleEntry.vertexIdx = vertexIdx;
+        trafficLightScheduleEntry.connectionIdx = connectionIdx;
+        trafficLightScheduleEntry.scheduleGroup = schedulePosition;
+        trafficLightScheduleEntry.scheduledTime = basicScheduledTime;
+        trafficLightSchedules.push_back(trafficLightScheduleEntry);
+      }
+
+      tgtIntersection.timeOfNextUpdate = 0;
+      tgtIntersection.scheduleIdx = tgtIntersection.trafficLightSchedulesStart;
+      tgtIntersection.currentScheduleGroup = 0;
+      tgtIntersection.trafficLightSchedulesEnd = trafficLightSchedules.size();
+    };
+    addTrafficLightScheduleToIntersection(intersection, vertexIdx, trafficLightSchedules);
   }
 
   std::cout << "\ntrafficLightSchedules" << std::endl;
