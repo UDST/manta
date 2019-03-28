@@ -1142,6 +1142,7 @@ void b18SimulateTrafficCUDA(const float currentTime, uint numPeople, uint numInt
     deviceConnections,
     deviceTrafficLightSchedules);
   gpuErrchk(cudaPeekAtLastError());
+  gpuErrchk(cudaDeviceSynchronize());
 
   // Simulate people.
   kernel_updatePersonsCars<<<ceil(numPeople / 384.0f), 384>>>(
@@ -1160,6 +1161,7 @@ void b18SimulateTrafficCUDA(const float currentTime, uint numPeople, uint numInt
     amountOfIntersections,
     deviceTrafficLightSchedules);
   gpuErrchk(cudaPeekAtLastError());
+  gpuErrchk(cudaDeviceSynchronize());
 
   // Sample if necessary.
   if ((((float) ((int) currentTime)) == (currentTime)) &&
