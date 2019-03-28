@@ -52,7 +52,8 @@ struct Intersection {
 
 // Object to abstract whether a connection between two lanes is enabled or not
 struct Connection {
-  // The lane numbers are computed as the edge number + the position of that lane in said edge
+  // The lane numbers have a range of possible values depending on the edge:
+  // edgeNumber <= laneNumber < edgeNumber + amountOfLanesInEdge
   uint inLaneNumber;
   uint outLaneNumber;
 

@@ -31,6 +31,30 @@ namespace {
 }
 
 
+void addTrafficLightScheduleToIntersection(Intersection & tgtIntersection, long long vertexIdx,
+    std::vector<TrafficLightScheduleEntry> & trafficLightSchedules) {
+  // NOTE: This algorithm computes a very basic traffic lights schedule where only one connection
+  // is enabled at the same time for each intersection
+  const float basicScheduledTime = 20;
+
+  // Create traffic lights schedules with the just created connections
+  tgtIntersection.trafficLightSchedulesStart = trafficLightSchedules.size();
+  uint connectionIdx = tgtIntersection.connectionGraphStart;
+  uint schedulePosition = 0;
+  for (; connectionIdx < tgtIntersection.connectionGraphEnd; ++connectionIdx, ++schedulePosition) {
+    TrafficLightScheduleEntry trafficLightScheduleEntry;
+    trafficLightScheduleEntry.vertexIdx = vertexIdx;
+    trafficLightScheduleEntry.connectionIdx = connectionIdx;
+    trafficLightScheduleEntry.scheduleGroup = schedulePosition;
+    trafficLightScheduleEntry.scheduledTime = basicScheduledTime;
+    trafficLightSchedules.push_back(trafficLightScheduleEntry);
+  }
+
+  tgtIntersection.timeOfNextUpdate = 0;
+  tgtIntersection.scheduleIdx = tgtIntersection.trafficLightSchedulesStart;
+  tgtIntersection.currentScheduleGroup = 0;
+  tgtIntersection.trafficLightSchedulesEnd = trafficLightSchedules.size();
+};
 void B18TrafficLaneMap::createLaneMap(
     const RoadGraph &inRoadGraph,
     std::vector<uchar> &laneMap,
@@ -124,32 +148,6 @@ void B18TrafficLaneMap::createLaneMap(
     }
     intersection.connectionGraphEnd = connectionsCount;
 
-    const auto addTrafficLightScheduleToIntersection = [] (
-      Intersection & tgtIntersection,
-      long long vertexIdx,
-      std::vector<TrafficLightScheduleEntry> & trafficLightSchedules) {
-      // NOTE: This algorithm computes a very basic traffic lights schedule where only one connection
-      // is enabled at the same time for each intersection
-      const float basicScheduledTime = 20;
-
-      // Create traffic lights schedules with the just created connections
-      tgtIntersection.trafficLightSchedulesStart = trafficLightSchedules.size();
-      uint connectionIdx = tgtIntersection.connectionGraphStart;
-      uint schedulePosition = 0;
-      for (; connectionIdx < tgtIntersection.connectionGraphEnd; ++connectionIdx, ++schedulePosition) {
-        TrafficLightScheduleEntry trafficLightScheduleEntry;
-        trafficLightScheduleEntry.vertexIdx = vertexIdx;
-        trafficLightScheduleEntry.connectionIdx = connectionIdx;
-        trafficLightScheduleEntry.scheduleGroup = schedulePosition;
-        trafficLightScheduleEntry.scheduledTime = basicScheduledTime;
-        trafficLightSchedules.push_back(trafficLightScheduleEntry);
-      }
-
-      tgtIntersection.timeOfNextUpdate = 0;
-      tgtIntersection.scheduleIdx = tgtIntersection.trafficLightSchedulesStart;
-      tgtIntersection.currentScheduleGroup = 0;
-      tgtIntersection.trafficLightSchedulesEnd = trafficLightSchedules.size();
-    };
     addTrafficLightScheduleToIntersection(intersection, vertexIdx, trafficLightSchedules);
   }
 
@@ -172,6 +170,17 @@ void B18TrafficLaneMap::createLaneMap(
       << "scheduleIdx: " << i.scheduleIdx << " "
       << "currentScheduleGroup: " << i.currentScheduleGroup << " "
       << "timeOfNextUpdate: " << i.timeOfNextUpdate << std::endl;
+  }
+
+  std::cout << "\nconnections" << std::endl;
+  for (const auto & i : connections) {
+    std::cout
+      << "inLaneNumber: " << i.inLaneNumber << " "
+      << "outLaneNumber: " << i.outLaneNumber << " "
+      << "enabled: " << i.enabled << " "
+      << "vertexNumber: " << i.vertexNumber << " "
+      << "inEdgeNumber: " << i.inEdgeNumber << " "
+      << "outEdgeNumber: " << i.outEdgeNumber << std::endl;
   }
 
   // Instantiate lane map
