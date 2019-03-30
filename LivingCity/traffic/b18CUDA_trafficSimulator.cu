@@ -1016,7 +1016,6 @@ __global__ void kernel_updateIntersectionConnections(
     size_t amountOfIntersections,
     LC::Connection *connections,
     LC::TrafficLightScheduleEntry *trafficLightSchedules) {
-
   const int intersectionIdx = blockIdx.x * blockDim.x + threadIdx.x;
   if (intersectionIdx < amountOfIntersections) {
     // NOTE(ffigari): The current implementation assumes every intersection is a traffic light

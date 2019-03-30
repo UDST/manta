@@ -10,14 +10,14 @@ Traffic flow is modeled using the
  - Boost 1.59
  - OpenCV (used versions: 2.4.12 in Windows; 3.2.0 in Ubuntu)
  - CUDA (used versions: 8.0.61 in Windows; 9.0 in Ubuntu)
- - g++ (used verions: 6.4.0 in Ubuntu)
- - Qt5 (used verions: 5.9.5 in Ubuntu)
- - qmake (used verions: 3.1 in Ubuntu)
+ - g++ (used versions: 6.4.0 in Ubuntu)
+ - Qt5 (used versions: 5.9.5 in Ubuntu)
+ - qmake (used versions: 3.1 in Ubuntu)
 
 ## Installation & Compilation
 
 Once the necessaries dependencies are installed you can use the following lines to make sure the
-correct verions of each one are used:
+correct versions of each one are used:
 ```bash
 export PATH=PATH=/usr/local/cuda-9.0/bin:$PATH
 export LIBRARY_PATH=/usr/local/cuda-9.0/lib64:$LIBRARY_PATH 

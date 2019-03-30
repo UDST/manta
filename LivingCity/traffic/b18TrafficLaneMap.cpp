@@ -31,7 +31,8 @@ namespace {
 }
 
 
-void addTrafficLightScheduleToIntersection(Intersection & tgtIntersection, long long vertexIdx,
+void addTrafficLightScheduleToIntersection(
+    Intersection & tgtIntersection, const long long vertexIdx,
     std::vector<TrafficLightScheduleEntry> & trafficLightSchedules) {
   // NOTE: This algorithm computes a very basic traffic lights schedule where only one connection
   // is enabled at the same time for each intersection
