@@ -81,54 +81,50 @@ std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::make_od_pairs(std
   return all_od_pairs_;
 }
 
-/*
-// Read graph file format
-abm::graph:Graph read_graph_osm(const std::string& filename) {
-  const bool directed = true;
-  auto graph = std::make_shared<abm::Graph>(directed);
+// Read OD pairs file format
+std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::read_od_pairs(const std::string& filename, int nagents) {
   bool status = true;
-  unsigned nvertices;
+  std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_;
   try {
-    int index = 0;
-    io::CSVReader<4> in(filename);
-    in.read_header(io::ignore_extra_column, "uniqueid", "u", "v", "length");
-    abm::graph::vertex_t edgeid, v1, v2;
+    csvio::CSVReader<2> in(filename);
+    in.read_header(csvio::ignore_extra_column, "origin", "destination");
+    abm::graph::vertex_t v1, v2;
     abm::graph::weight_t weight;
-    abm::graph::vertex_t nvertices = 0;
-    while (in.read_row(edgeid, v1, v2, weight)) {
-      graph->add_edge(v1, v2, weight, edgeid);
-      //printf("index = %d, edge weight = %llu\n", index, this->edges_.at(std::make_tuple(v1, v2))->second);
-      //printf("index = %d\n", index);
-      ++nvertices;
-      index++;
+    while (in.read_row(v1, v2)) {
+      std::array<abm::graph::vertex_t, 2> od = {v1, v2};
+      all_od_pairs_.emplace_back(od);
     }
-    //printf("# edges = %d\n", this->edges_.size());
-    graph->assign_nvertices(nvertices);
-    std::cout << "Graph summary #edges: " << this->edges_.size()
-              << " #vertices: " << this->nvertices_ << "\n";
-
+    if (nagents != std::numeric_limits<int>::max())
+      all_od_pairs_.resize(nagents);
   } catch (std::exception& exception) {
-    std::cout << "Read OSM file: " << exception.what() << "\n";
+    std::cout << "Read OD file: " << exception.what() << "\n";
     status = false;
   }
-
-  return graph;
+  return all_od_pairs_;
 }
-*/
 
+
+
+
+/*
 std::vector<abm::graph::vertex_t> B18TrafficSP::compute_routes(int mpi_rank,
                                                  int mpi_size,
 						 std::shared_ptr<abm::Graph> graph_,
 						 std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_) {
+						 */
+  std::vector<abm::graph::vertex_t> B18TrafficSP::compute_routes(int mpi_rank,
+                                                          int mpi_size,
+                                                          const std::shared_ptr<abm::Graph>& graph_,
+                                                          const std::vector<std::array<abm::graph::vertex_t, 2>>& all_od_pairs_) {
 
   //! All paths
   std::vector<abm::graph::vertex_t> all_paths_;
   //! All paths indices
   std::vector<std::array<abm::graph::vertex_t, 3>> all_paths_idx_;
 
-  std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs;
+ // std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs;
 
-
+/*
 #ifdef USE_MPI
   // Create MPI pair type
   MPI_Datatype pair_t;
@@ -150,20 +146,22 @@ std::vector<abm::graph::vertex_t> B18TrafficSP::compute_routes(int mpi_rank,
                     all_od_pairs_.end());
   }
 #else
+  printf("HELLO!!!\n");
   od_pairs = all_od_pairs_;
 #endif
-
+*/
   // Paths (vector of edges)
   std::vector<abm::graph::vertex_t> paths;
   paths.reserve(graph_->nedges());
 
   // Indices of start of path and length for each agent
   std::vector<std::array<abm::graph::vertex_t, 3>> paths_idx;
-  paths_idx.reserve(od_pairs.size());
+  paths_idx.reserve(all_od_pairs_.size());
 
 #pragma omp parallel for schedule(dynamic)
-  for (abm::graph::vertex_t i = 0; i < od_pairs.size(); ++i) {
-    const auto sp = graph_->dijkstra_edges(od_pairs[i][0], od_pairs[i][1]);
+  for (abm::graph::vertex_t i = 0; i < all_od_pairs_.size(); ++i) {
+    const auto sp = graph_->dijkstra_edges(all_od_pairs_[i][0], all_od_pairs_[i][1]);
+    //printf("od pair 1 o = %d, od pair 1 d = %d\n", all_od_pairs_[i][0], all_od_pairs_[i][1]);
 #pragma omp critical
     {
       paths_idx.emplace_back(std::array<abm::graph::vertex_t, 3>(
@@ -175,12 +173,15 @@ std::vector<abm::graph::vertex_t> B18TrafficSP::compute_routes(int mpi_rank,
 
   // Get all paths and indices
   all_paths_ = abm::gather_vectors_ids(paths);
+  // for (int i = 0; i < all_paths_.size(); i++) {
+  //   printf("all_paths = %d\n", all_paths_[i]);
+  //}
   all_paths_idx_ = abm::gather_vector_arrays(paths_idx);
-
+/*
 #ifdef USE_MPI
   MPI_Type_free(&pair_t);
 #endif
-
+*/
   return all_paths_;
 }
 
@@ -220,6 +221,7 @@ void B18TrafficSP::generateRoutesSP(
   float minSpeed = FLT_MAX;
   float maxSpeed = -FLT_MAX;
 
+  /*
   //make graph object
   const bool directed = true;
   auto graph = std::make_shared<abm::Graph>(directed);
@@ -254,7 +256,8 @@ void B18TrafficSP::generateRoutesSP(
       abm::graph::vertex_t edge_id = numEdges;
 
       graph->add_edge(source, target, weight, edge_id);
-      printf("index = %d\n", index);
+      printf("index = %d, edge weight = %lf\n", index, weight);
+      //printf("index = %d\n", index);
       index++;
     } else {
 	    printf("HELLO!\n");
@@ -267,13 +270,18 @@ void B18TrafficSP::generateRoutesSP(
   printf("total time creating graph = %d milliseconds\n", duration.count());
   printf("# of edges: %d\n", graph->nedges());
   printf("# of vertices: %u\n", graph->nvertices());
-
-  /*
-  //Create the graph directly from the file (don't deal with the creation of the boost graph first)
-  graph = std::make_shared<abm::Graph>(directed);
-  start = high_resolution_clock::now(); 
-  graph = read_graph_osm("tertiary_network/edges.csv");
   */
+
+  //Create the graph directly from the file (don't deal with the creation of the boost graph first or any associated weights calculations)
+  const bool directed = true;
+  const auto graph = std::make_shared<abm::Graph>(directed);
+  auto start = high_resolution_clock::now(); 
+  graph->read_graph_osm("berkeley_2018/tertiary_network/edges.csv");
+  printf("# of edges: %d\n", graph->nedges());
+  printf("# of vertices: %u\n", graph->nvertices());
+  auto stop = high_resolution_clock::now();
+  auto duration = duration_cast<milliseconds>(stop - start); 
+
   //2. Generate route for each person
   int mpi_rank = 0;
   int mpi_size = 1;
@@ -284,22 +292,18 @@ void B18TrafficSP::generateRoutesSP(
   MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 #endif
   std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_;
-  all_od_pairs_ = make_od_pairs(trafficPersonVec, std::numeric_limits<int>::max());
+  //all_od_pairs_ = make_od_pairs(trafficPersonVec, std::numeric_limits<int>::max());
+  all_od_pairs_ = read_od_pairs("berkeley_2018/tertiary_network/od_demand.csv", std::numeric_limits<int>::max());
   printf("# of OD pairs = %d\n", all_od_pairs_.size());
   start = high_resolution_clock::now(); 
-  const auto all_paths = LC::B18TrafficSP::compute_routes(mpi_rank, mpi_size, graph, all_od_pairs_);
+  const auto all_paths = compute_routes(mpi_rank, mpi_size, graph, all_od_pairs_);
+      //for (int x = 0; x < all_paths.size(); x++){
+      //  printf("path = %d\n", all_paths[x]);
+  //}
   stop = high_resolution_clock::now();
-  duration = duration_cast<seconds>(stop - start); 
-  printf("total time compute_routes() = %d seconds\n", duration.count());
-  printf("total paths = %d\n", all_paths.size());
-  /*
-  for (int x = 0; x < all_paths.size(); x++){
-	if (all_paths[x] == -1) {
-		printf("edge %d\n", x+1);
-	}
-	printf("path = %lld\n", all_paths[x]);
-  }
-  */
+  duration = duration_cast<milliseconds>(stop - start); 
+  printf("total time compute_routes() = %d milliseconds\n", duration.count());
+  printf("Collected paths = %d\n", all_paths.size());
   //end computing shortest paths with ABM
 
 

@@ -18,7 +18,7 @@ inline void abm::Graph::add_edge(
   // Create an edge
   auto edge = std::make_shared<Graph::Edge>(
       std::make_pair(std::make_pair(vertex1, vertex2), weight));
-  printf("edge vertex 1 = %lld, vertex 2 = %lld, weight = %f\n", edge->first.first, edge->first.second, edge->second);
+  //printf("edge vertex 1 = %lld, vertex 2 = %lld, weight = %f\n", edge->first.first, edge->first.second, edge->second);
   edges_[std::make_tuple(vertex1, vertex2)] = edge;
 
   // Add edge id
@@ -127,8 +127,8 @@ bool abm::Graph::read_graph_matrix_market(const std::string& filename) {
 bool abm::Graph::read_graph_osm(const std::string& filename) {
   bool status = true;
   try {
-    io::CSVReader<4> in(filename);
-    in.read_header(io::ignore_extra_column, "uniqueid", "u", "v", "length");
+    csvio::CSVReader<4> in(filename);
+    in.read_header(csvio::ignore_extra_column, "uniqueid", "u", "v", "length");
     abm::graph::vertex_t edgeid, v1, v2;
     abm::graph::weight_t weight;
     abm::graph::vertex_t nvertices = 0;
@@ -174,6 +174,7 @@ std::vector<abm::graph::vertex_t> abm::Graph::dijkstra(
          std::pair<abm::graph::weight_t, abm::graph::vertex_t> right) {
         return left.first > right.first;
       };
+
 
   // Create a priority queue to store weights and vertices
   std::priority_queue<
@@ -289,7 +290,7 @@ std::vector<abm::graph::vertex_t> abm::Graph::dijkstra_edges(
     abm::graph::vertex_t source, abm::graph::vertex_t destination) {
 
   const auto path = this->dijkstra(source, destination);
-  printf("path size = %d\n", path.size());
+  //printf("path size = %d\n", path.size());
 
   std::vector<abm::graph::vertex_t> route_edges;
   if (path.size() > 0) {

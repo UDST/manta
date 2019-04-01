@@ -311,8 +311,8 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
   QTextStream streamD(&demandFile); // Set the stream to read
   headers = (streamD.readLine()).split(",");
   const int numPeopleIndex = headers.indexOf("PERNO");
-  const int origIndex = headers.indexOf("orig");
-  const int destIndex = headers.indexOf("dest");
+  const int origIndex = headers.indexOf("origin");
+  const int destIndex = headers.indexOf("destination");
 
   QSet<uint64_t> noAvailableNodesDemand;
   const bool saveNoAvailableNodesDemand = true;
