@@ -85,7 +85,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
 
   QString nodesFileName = networkPath + "nodes.csv";
   QString edgeFileName = networkPath + "edges.csv";
-  QString odFileName = networkPath + "od_pared.csv";
+  QString odFileName = networkPath + "od_demand.csv";
 
   std::cerr
     << "Using "
