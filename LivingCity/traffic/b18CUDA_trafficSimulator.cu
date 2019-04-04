@@ -748,7 +748,8 @@ __global__ void kernel_updatePersonsCars(
     printf("trafficPersonVec[p].posInLaneM: %f\n", trafficPersonVec[p].posInLaneM);
     printf("trafficPersonVec[p].length: %d\n", trafficPersonVec[p].length);
     printf("currentLaneMaximumPosition: %d\n", currentLaneMaximumPosition);
-    const bool reachedIntersection = trafficPersonVec[p].posInLaneM > trafficPersonVec[p].length;
+    const bool reachedIntersection =
+      static_cast<ushort>(floor(trafficPersonVec[p].posInLaneM)) > currentLaneMaximumPosition ;
     printf("reachedIntersection: %d\n", reachedIntersection);
     if (reachedIntersection) { //reach intersection
       numToMove = trafficPersonVec[p].posInLaneM - trafficPersonVec[p].length;
