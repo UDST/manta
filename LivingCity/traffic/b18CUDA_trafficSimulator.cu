@@ -138,7 +138,6 @@ void b18InitCUDA(
   }
   {//laneMap
     size_t sizeL = laneMap.size() * sizeof(uchar);
-    printf("\n\nLane map size: %d\n\n", sizeL);
     if (fistInitialization) gpuErrchk(cudaMalloc((void **) &laneMap_d, sizeL));   // Allocate array on device
     gpuErrchk(cudaMemcpy(laneMap_d, laneMap.data(), sizeL, cudaMemcpyHostToDevice));
     halfLaneMap = laneMap.size() / 2;
@@ -481,6 +480,10 @@ __global__ void kernel_updatePersonsCars(
      */
     if (trafficPersonVec[p].active == 2) {
       // Return if this person has reached its destiny
+      printf(
+        "\n[%d@%f] Already reached destination.\n",
+        p,
+        currentTime);
       return;
     }
 
@@ -577,10 +580,12 @@ __global__ void kernel_updatePersonsCars(
     const uint currentEdge = indexPathVec[trafficPersonVec[p].indexPathCurr];
     const uint nextEdge = indexPathVec[trafficPersonVec[p].indexPathCurr + 1];
     const ushort currentPositionInLane = static_cast<ushort>(floor(trafficPersonVec[p].posInLaneM));
-    // TODO: Review if it necesary to substract the intersectionClearance
     const ushort currentLaneMaximumPosition = ceil(trafficPersonVec[p].length - intersectionClearance);
 
-    printf("\n\n\n\n[@%f] Car's next vertex: %d\n", currentTime, edgesData[currentEdge].originalTargetVertexIndex);
+    printf(
+      "\n[@%f] Car's next vertex: %d\n",
+      currentTime,
+      edgesData[currentEdge].originalTargetVertexIndex);
 
     bool nextVehicleIsATrafficLight = false;
     int remainingCellsToCheck = max(30.0f, trafficPersonVec[p].v * DELTA_TIME * 2);
@@ -615,15 +620,13 @@ __global__ void kernel_updatePersonsCars(
     // If we are at the end of the current edge, check if this car's lane's connections are enabled
     bool atLeastOneEnabledConnection = false;
     int nextEdgeChosenLane = -1;
-    printf("#1\n");
-    printf("%d / %d\n", currentPositionInLane, currentLaneMaximumPosition);
     if (
         currentPositionInLane < currentLaneMaximumPosition
         && !obstacleFound
         && remainingCellsToCheck > 0
         && nextEdge != -1) {
       const int dstVertexNumber = edgesData[currentEdge].originalTargetVertexIndex;
-      printf("[@%f] Checking %d-th intersection", currentTime, dstVertexNumber);
+      printf("[@%f] Checking %d-th intersection\n", currentTime, dstVertexNumber);
       const ushort currentLaneNumber = currentEdge + trafficPersonVec[p].numOfLaneInEdge;
       for (
           int connectionIdx = intersections[dstVertexNumber].connectionGraphStart;
@@ -645,7 +648,11 @@ __global__ void kernel_updatePersonsCars(
         printf(" -> not found\n");
       }
 
-      printf("[@%f] oneConnection? %d, nextEdge? %d\n", currentTime, atLeastOneEnabledConnection, nextEdgeChosenLane);
+      printf(
+        "[@%f] oneConnection? %d, nextEdgeLane? %d\n",
+        currentTime,
+        atLeastOneEnabledConnection,
+        nextEdgeChosenLane);
 
       // If no connection to the needed edge is enabled, then that intersection will be treated as
       // an obstacle
@@ -655,7 +662,12 @@ __global__ void kernel_updatePersonsCars(
         nextVehicleIsATrafficLight = true;
         obstacleFound = true;
       }
-      printf("[@%f] Intersection blocks path? %d (%f, %f)\n", currentTime, obstacleFound, distanceUntilObstacle, speedDifferenceWithNextObstacle);
+      printf(
+        "[@%f] Intersection blocks path? %d (%f, %f)\n",
+        currentTime,
+        obstacleFound,
+        distanceUntilObstacle,
+        speedDifferenceWithNextObstacle);
     }
 
     // If we still need it, check if there is an obstacle in next edge's chosen lane
@@ -691,8 +703,6 @@ __global__ void kernel_updatePersonsCars(
      * Update car's information
      */
     float thirdTerm = 0;
-    printf("obstacleFound: %d\n", obstacleFound);
-    printf("atLeastOneEnabledConnection: %d\n", atLeastOneEnabledConnection);
     if (obstacleFound) {
       const float s_star = s_0 + max(
         0.0f,
@@ -734,20 +744,14 @@ __global__ void kernel_updatePersonsCars(
             + static_cast<int>(posInLineCells / kMaxMapWidthM) * trafficPersonVec[p].edgeNumLanes
             + trafficPersonVec[p].numOfLaneInEdge)
         + posInLineCells % kMaxMapWidthM;
-      printf("$6: %d\n", posToSample);
       laneMap[posToSample] = 0;
 
-      printf("Returning\n");
       return;
     }
 
     trafficPersonVec[p].color = p << 8;
-    printf("[@%f] numToMove: %f\n", currentTime, numToMove);
     trafficPersonVec[p].posInLaneM = trafficPersonVec[p].posInLaneM + numToMove;
 
-    printf("trafficPersonVec[p].posInLaneM: %f\n", trafficPersonVec[p].posInLaneM);
-    printf("trafficPersonVec[p].length: %d\n", trafficPersonVec[p].length);
-    printf("currentLaneMaximumPosition: %d\n", currentLaneMaximumPosition);
     const bool reachedIntersection =
       static_cast<ushort>(floor(trafficPersonVec[p].posInLaneM)) > currentLaneMaximumPosition ;
     printf("reachedIntersection: %d\n", reachedIntersection);
@@ -778,7 +782,6 @@ __global__ void kernel_updatePersonsCars(
           ////////////////////////////////////////////////////
           // LC 2 NOT MANDATORY STATE
           if (trafficPersonVec[p].LC_stateofLaneChanging == 0) {
-            //if(p==40)printf("LC v %f v0 %f a %f\n",trafficPersonVec[p].v,trafficPersonVec[p].maxSpeedMperSec*0.5f,dv_dt);
             // discretionary change: v slower than the current road limit and deccelerating and moving
             if ((trafficPersonVec[p].v < (trafficPersonVec[p].maxSpeedMperSec * 0.7f)) &&
               (dv_dt < 0) && trafficPersonVec[p].v > 3.0f) {
@@ -847,7 +850,6 @@ __global__ void kernel_updatePersonsCars(
                 trafficPersonVec[p].edgeNextInters, trafficPersonVec[p].edgeNumLanes,
                 trafficPersonVec[p].LC_initOKLanes, trafficPersonVec[p].LC_endOKLanes);
 
-              //printf("p%u num lanes %u min %u max %u\n",p,trafficPersonVec[p].edgeNumLanes,trafficPersonVec[p].LC_initOKLanes,trafficPersonVec[p].LC_endOKLanes);
               if (trafficPersonVec[p].LC_initOKLanes == 0 &&
                 trafficPersonVec[p].LC_endOKLanes == 0) {
                 //exit(0);
@@ -855,8 +857,6 @@ __global__ void kernel_updatePersonsCars(
             }
 
 
-            //printf(">>LANE CHANGE\n");
-            //printf("LC 0 %u\n",trafficPersonVec[p].numOfLaneInEdge);
             bool leftLane = false, rightLane = false;
 
             // LC 3.2 CORRECT LANES--> DICRETIONARY LC WITHIN
@@ -876,14 +876,10 @@ __global__ void kernel_updatePersonsCars(
                   (trafficPersonVec[p].numOfLaneInEdge + 1 >= trafficPersonVec[p].LC_initOKLanes)
                   &&
                   (trafficPersonVec[p].numOfLaneInEdge + 1 < trafficPersonVec[p].LC_endOKLanes);
-                //printf("D\n");
               }
             }
             // LC 3.3 INCORRECT LANES--> MANDATORY LC
             else {
-              //printf("num lanes %u min %u max %u\n",trafficPersonVec[p].edgeNumLanes,trafficPersonVec[p].LC_initOKLanes,trafficPersonVec[p].LC_endOKLanes);
-              //printf("p%u num lanes %u min %u max %u\n",p,trafficPersonVec[p].edgeNumLanes,trafficPersonVec[p].LC_initOKLanes,trafficPersonVec[p].LC_endOKLanes);
-
               if (trafficPersonVec[p].numOfLaneInEdge < trafficPersonVec[p].LC_initOKLanes) {
                 rightLane = true;
               } else {
@@ -901,8 +897,6 @@ __global__ void kernel_updatePersonsCars(
                   nextEdge);
                 //exit(0);
               }
-
-              //printf("M L %d R %d nL %u\n",leftLane,rightLane,trafficPersonVec[p].numOfLaneInEdge);
             }
 
             if (leftLane == true || rightLane == true) {
@@ -932,7 +926,6 @@ __global__ void kernel_updatePersonsCars(
                 currentEdge + laneToCheck, trafficPersonVec[p].edgeNumLanes, trafficPersonVec[p].posInLaneM,
                 trafficPersonVec[p].length, v_a, v_b, gap_a, gap_b);
 
-              //printf("LC 2 %u %u %f %f\n",v_a,v_b,gap_a,gap_b);
               if (gap_a == 1000.0f && gap_b == 1000.0f) { //lag and lead car very far
                 trafficPersonVec[p].numOfLaneInEdge = laneToCheck; // CHANGE LINE
               } else { // NOT ALONE
@@ -977,7 +970,6 @@ __global__ void kernel_updatePersonsCars(
       const uchar vInMpS = (uchar) (trafficPersonVec[p].v * 3); //speed in m/s to fit in uchar
       const ushort posInLineCells = (ushort) (trafficPersonVec[p].posInLaneM);
       assert(posInLineCells < currentLaneMaximumPosition);
-      printf("Moving car to %d\n", posInLineCells);
       const uint posToSample =
         mapToWriteShift
         + kMaxMapWidthM * (
@@ -985,7 +977,6 @@ __global__ void kernel_updatePersonsCars(
             + static_cast<int>(posInLineCells / kMaxMapWidthM) * trafficPersonVec[p].edgeNumLanes
             + trafficPersonVec[p].numOfLaneInEdge)
         + posInLineCells % kMaxMapWidthM;
-      printf("$7: %d\n", posToSample);
       laneMap[posToSample] = vInMpS;
       return;
     }
@@ -995,9 +986,9 @@ __global__ void kernel_updatePersonsCars(
       return;
     }
 
-    printf("%d && %d\n", reachedIntersection, nextEdgeChosenLane >= 0);
     assert(reachedIntersection);
-    assert(nextEdgeChosenLane >= 0);
+    assert(0 <= nextEdgeChosenLane);
+    assert(nextEdgeChosenLane < trafficPersonVec[p].nextEdgeNumLanes);
 
     // Update current edge information
     trafficPersonVec[p].indexPathCurr++;
@@ -1006,11 +997,6 @@ __global__ void kernel_updatePersonsCars(
     trafficPersonVec[p].edgeNextInters = trafficPersonVec[p].nextEdgeNextInters;
     trafficPersonVec[p].length = trafficPersonVec[p].nextEdgeLength;
     trafficPersonVec[p].posInLaneM = numToMove;
-    if (nextEdgeChosenLane >= trafficPersonVec[p].nextEdgeNumLanes) {
-      printf("Error when computing next edge's lane number.\n");
-      return;
-    }
-    printf("nextEdgeChosenLane: %d\n", nextEdgeChosenLane);
     trafficPersonVec[p].numOfLaneInEdge = nextEdgeChosenLane;
 
     // Update person's next edge
@@ -1030,9 +1016,6 @@ __global__ void kernel_updatePersonsCars(
     const uchar vInMpS = static_cast<uchar>(trafficPersonVec[p].v * 3); //speed in m/s to fit in uchar
     const ushort posInLineCells = static_cast<ushort>(trafficPersonVec[p].posInLaneM);
 
-    printf("Writing new speed:\n");
-    printf("-> trafficPersonVec[p].numOfLaneInEdge:%d\n", trafficPersonVec[p].numOfLaneInEdge);
-    printf("-> posInLineCells: %d\n", posInLineCells);
     const uint posToSample =
       mapToWriteShift
       + kMaxMapWidthM * (
@@ -1040,7 +1023,6 @@ __global__ void kernel_updatePersonsCars(
           + static_cast<int>(posInLineCells / kMaxMapWidthM) * trafficPersonVec[p].edgeNumLanes
           + trafficPersonVec[p].numOfLaneInEdge)
       + posInLineCells % kMaxMapWidthM;  // note the last % should not happen
-    printf("$8: %d\n", posToSample);
     laneMap[posToSample] = vInMpS;
   }
 }
@@ -1077,15 +1059,9 @@ __global__ void kernel_updateIntersectionConnections(
       const LC::TrafficLightScheduleEntry & scheduleEntry =
         trafficLightSchedules[intersection.scheduleIdx];
 
-      // TODO(ffigari): Remove this check
-      if (startingScheduleGroup != scheduleEntry.scheduleGroup) {
-        printf("[v:%d@%f] Incoherent schedules info: %d %d\n",
-          intersectionIdx,
-          currentTime,
-          startingScheduleGroup,
-          scheduleEntry.scheduleGroup);
-        return;
-      }
+      assert(
+        startingScheduleGroup == scheduleEntry.scheduleGroup
+        && "Incoherent traffic schedules info");
 
       printf("[v:%d@%f] Enabling %d-th connection\n",
         intersectionIdx,
@@ -1167,13 +1143,6 @@ void b18SimulateTrafficCUDA(const float currentTime, uint numPeople, uint numInt
     gpuErrchk(cudaMemset(&laneMap_d[0], -1, halfLaneMap*sizeof(unsigned char)));//clean first half
   }
   readFirstMapC=!readFirstMapC;//next iteration invert use
-
-  printf(
-    "Read in [%d, %d) and write in [%d, %d)",
-    mapToReadShift,
-    mapToReadShift + halfLaneMap,
-    mapToWriteShift,
-    mapToWriteShift + halfLaneMap);
 
   // Update intersections.
   kernel_updateIntersectionConnections<<<ceil(numIntersections / 512.0f), 512>>>(
