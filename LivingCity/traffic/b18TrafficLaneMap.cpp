@@ -309,10 +309,8 @@ void B18TrafficLaneMap::createLaneMap(
 
 void B18TrafficLaneMap::resetIntersections(std::vector<B18IntersectionData>
     &intersections, std::vector<uchar> &trafficLights) {
-  // TODO: Check if this needs to be modified
   for (size_t idx = 0; idx < intersections.size(); idx++) {
-    intersections[idx].nextEvent =
-      0.0f; //otherwise they not change until reach time again
+    intersections[idx].nextEvent = 0.0f; //otherwise they not change until reach time again
     intersections[idx].state = 0; //to make the system to repeat same execution
   }
 
