@@ -626,20 +626,22 @@ __global__ void kernel_updatePersonsCars(
         && remainingCellsToCheck > 0
         && nextEdge != -1) {
       const int dstVertexNumber = edgesData[currentEdge].originalTargetVertexIndex;
-      printf("[@%f] Checking %d-th intersection\n", currentTime, dstVertexNumber);
+      printf("[@%f] Checking %d-th intersection's connections\n", currentTime, dstVertexNumber);
       const ushort currentLaneNumber = currentEdge + trafficPersonVec[p].numOfLaneInEdge;
+
+      // Check if a least one connection is enabled between the current edge and the following one
       for (
           int connectionIdx = intersections[dstVertexNumber].connectionGraphStart;
           connectionIdx < intersections[dstVertexNumber].connectionGraphEnd;
           ++connectionIdx) {
-        // Check if a least one connection is enabled between the current edge and the following
-        // one
-        printf("[@%f] Checking %d-th connection", currentTime, connectionIdx);
         const LC::Connection & connection = connections[connectionIdx];
-        if (
-            connection.inLaneNumber == currentLaneNumber
-            && connection.outEdgeNumber == nextEdge
-            && connection.enabled) {
+        const bool isRelevant =
+          connection.inLaneNumber == currentLaneNumber
+          && connection.outEdgeNumber == nextEdge;
+        if (!isRelevant) continue;
+
+        printf("[@%f] Checking %d-th connection", currentTime, connectionIdx);
+        if (connection.enabled) {
           atLeastOneEnabledConnection = true;
           nextEdgeChosenLane = connection.outLaneNumber - connection.outEdgeNumber;
           printf(" -> found\n");
