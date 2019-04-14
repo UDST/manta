@@ -32,30 +32,72 @@ namespace {
 
 
 void addTrafficLightScheduleToIntersection(
-    Intersection & tgtIntersection, const long long vertexIdx,
-    std::vector<TrafficLightScheduleEntry> & trafficLightSchedules) {
-  // NOTE: This algorithm computes a very basic traffic lights schedule where only one connection
-  // is enabled at the same time for each intersection
-  const float basicScheduledTime = 20;
-
-  // Create traffic lights schedules with the just created connections
+    Intersection & tgtIntersection,
+    const long long vertexIdx,
+    std::vector<TrafficLightScheduleEntry> & trafficLightSchedules,
+    const std::vector<LC::Connection> &connections)
+{
   tgtIntersection.trafficLightSchedulesStart = trafficLightSchedules.size();
-  uint connectionIdx = tgtIntersection.connectionGraphStart;
-  uint schedulePosition = 0;
-  for (; connectionIdx < tgtIntersection.connectionGraphEnd; ++connectionIdx, ++schedulePosition) {
-    TrafficLightScheduleEntry trafficLightScheduleEntry;
-    trafficLightScheduleEntry.vertexIdx = vertexIdx;
-    trafficLightScheduleEntry.connectionIdx = connectionIdx;
-    trafficLightScheduleEntry.scheduleGroup = schedulePosition;
-    trafficLightScheduleEntry.scheduledTime = basicScheduledTime;
-    trafficLightSchedules.push_back(trafficLightScheduleEntry);
+
+  std::unordered_set<uint> indexesOfNotYetScheduledConnections;
+  for (
+      uint connectionIdx = tgtIntersection.connectionGraphStart;
+      connectionIdx < tgtIntersection.connectionGraphEnd;
+      ++connectionIdx) {
+    indexesOfNotYetScheduledConnections.insert(connectionIdx);
+  }
+
+  const auto inEdgeNumber = [&connections] (const uint connectionIdx) {
+    return connections.at(connectionIdx).inEdgeNumber;
+  };
+
+  const auto outEdgeNumber = [&connections] (const uint connectionIdx) {
+    return connections.at(connectionIdx).outEdgeNumber;
+  };
+
+  const uint scheduledTime = 10;
+  uint scheduleGroup = 0;
+  while (!indexesOfNotYetScheduledConnections.empty()) {
+    // Choose one not yet scheduled conncetion
+    const auto currentIdxIt = indexesOfNotYetScheduledConnections.cbegin();
+    const uint currentIdx = *currentIdxIt;
+    indexesOfNotYetScheduledConnections.erase(currentIdxIt);
+
+    // Find all the connections which are compatible with this connection
+    std::unordered_set<uint> indexesOfCompatibleConnections{currentIdx};
+    for (
+        uint otherConnectionIdx = tgtIntersection.connectionGraphStart;
+        otherConnectionIdx < tgtIntersection.connectionGraphEnd;
+        ++otherConnectionIdx) {
+      const bool isCompatible =
+        otherConnectionIdx != currentIdx
+        && inEdgeNumber(otherConnectionIdx) == inEdgeNumber(currentIdx)
+        && outEdgeNumber(otherConnectionIdx) == outEdgeNumber(currentIdx);
+
+      if (!isCompatible) continue;
+
+      indexesOfCompatibleConnections.insert(otherConnectionIdx);
+      indexesOfNotYetScheduledConnections.erase(otherConnectionIdx);
+    }
+
+    // Create a new schedule group with all the compatible connections
+    for (const uint connectionIdx : indexesOfCompatibleConnections) {
+      trafficLightSchedules.emplace(
+        trafficLightSchedules.end(),
+        vertexIdx,
+        connectionIdx,
+        scheduleGroup,
+        scheduledTime);
+    }
+    scheduleGroup++;
   }
 
   tgtIntersection.timeOfNextUpdate = 0;
   tgtIntersection.scheduleIdx = tgtIntersection.trafficLightSchedulesStart;
   tgtIntersection.currentScheduleGroup = 0;
   tgtIntersection.trafficLightSchedulesEnd = trafficLightSchedules.size();
-};
+}
+
 void B18TrafficLaneMap::createLaneMap(
     const RoadGraph &inRoadGraph,
     std::vector<uchar> &laneMap,
@@ -149,7 +191,11 @@ void B18TrafficLaneMap::createLaneMap(
     }
     intersection.connectionGraphEnd = connectionsCount;
 
-    addTrafficLightScheduleToIntersection(intersection, vertexIdx, trafficLightSchedules);
+    addTrafficLightScheduleToIntersection(
+        intersection,
+        vertexIdx,
+        trafficLightSchedules,
+        connections);
   }
 
   std::cout << "\ntrafficLightSchedules" << std::endl;

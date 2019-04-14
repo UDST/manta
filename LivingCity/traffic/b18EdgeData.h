@@ -71,7 +71,7 @@ struct Connection {
 // The position indicates the order in which the positions must be enabled
 struct TrafficLightScheduleEntry {
   // Vertex to which this entry belongs
-  uint vertexIdx;
+  long long vertexIdx;
 
   // Connection which must be enabled by this schedule entry
   uint connectionIdx;
@@ -87,6 +87,17 @@ struct TrafficLightScheduleEntry {
 
   // Last time this intersection was updated
   float lastUpdate;
+
+  TrafficLightScheduleEntry(
+      long long _vertexIndex,
+      uint _connectionIdx,
+      uint _scheduleGroup,
+      float _scheduledTime) :
+    vertexIdx(_vertexIndex),
+    connectionIdx(_connectionIdx),
+    scheduleGroup(_scheduleGroup),
+    scheduledTime(_scheduledTime),
+    lastUpdate(0) {}
 };
 
 struct B18EdgeData {
