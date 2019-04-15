@@ -35,7 +35,8 @@ void addTrafficLightScheduleToIntersection(
     Intersection & tgtIntersection,
     const long long vertexIdx,
     std::vector<TrafficLightScheduleEntry> & trafficLightSchedules,
-    const std::vector<LC::Connection> &connections)
+    const std::vector<LC::Connection> & connections,
+    const std::vector<B18EdgeData> & edges)
 {
   tgtIntersection.trafficLightSchedulesStart = trafficLightSchedules.size();
 
@@ -47,18 +48,18 @@ void addTrafficLightScheduleToIntersection(
     indexesOfNotYetScheduledConnections.insert(connectionIdx);
   }
 
-  const auto inEdgeNumber = [&connections] (const uint connectionIdx) {
-    return connections.at(connectionIdx).inEdgeNumber;
+  const auto sourceVertex = [&connections, &edges] (const uint connectionIdx) {
+    return edges.at(connections.at(connectionIdx).inEdgeNumber).originalSourceVertexIndex;
   };
 
-  const auto outEdgeNumber = [&connections] (const uint connectionIdx) {
-    return connections.at(connectionIdx).outEdgeNumber;
+  const auto targetVertex = [&connections, &edges] (const uint connectionIdx) {
+    return edges.at(connections.at(connectionIdx).outEdgeNumber).originalTargetVertexIndex;
   };
 
   const uint scheduledTime = 10;
   uint scheduleGroup = 0;
   while (!indexesOfNotYetScheduledConnections.empty()) {
-    // Choose one not yet scheduled conncetion
+    // Choose one not yet scheduled connection
     const auto currentIdxIt = indexesOfNotYetScheduledConnections.cbegin();
     const uint currentIdx = *currentIdxIt;
     indexesOfNotYetScheduledConnections.erase(currentIdxIt);
@@ -69,11 +70,16 @@ void addTrafficLightScheduleToIntersection(
         uint otherConnectionIdx = tgtIntersection.connectionGraphStart;
         otherConnectionIdx < tgtIntersection.connectionGraphEnd;
         ++otherConnectionIdx) {
-      const bool isCompatible =
-        otherConnectionIdx != currentIdx
-        && inEdgeNumber(otherConnectionIdx) == inEdgeNumber(currentIdx)
-        && outEdgeNumber(otherConnectionIdx) == outEdgeNumber(currentIdx);
+      const bool isSameConnection = otherConnectionIdx == currentIdx;
+      const bool goesInSameDirection =
+        sourceVertex(otherConnectionIdx) == sourceVertex(currentIdx)
+        && targetVertex(otherConnectionIdx) == targetVertex(currentIdx);
+      const bool goesInOppositeDirection =
+        sourceVertex(otherConnectionIdx) == targetVertex(currentIdx)
+        && targetVertex(otherConnectionIdx) == sourceVertex(currentIdx);
 
+      const bool isCompatible =
+        !isSameConnection && (goesInOppositeDirection || goesInSameDirection);
       if (!isCompatible) continue;
 
       indexesOfCompatibleConnections.insert(otherConnectionIdx);
@@ -192,10 +198,11 @@ void B18TrafficLaneMap::createLaneMap(
     intersection.connectionGraphEnd = connectionsCount;
 
     addTrafficLightScheduleToIntersection(
-        intersection,
-        vertexIdx,
-        trafficLightSchedules,
-        connections);
+      intersection,
+      vertexIdx,
+      trafficLightSchedules,
+      connections,
+      edgesData);
   }
 
   std::cout << "\ntrafficLightSchedules" << std::endl;
