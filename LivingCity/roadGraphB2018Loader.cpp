@@ -15,6 +15,8 @@
 
 namespace LC {
 
+using namespace std::chrono;
+
 std::vector<DemandB2018> RoadGraphB2018::demandB2018;
 int RoadGraphB2018::totalNumPeople;
 QHash<int, uint64_t> RoadGraphB2018::indToOsmid;
@@ -360,6 +362,28 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
     << totalNumPeople << " people in total." << std::endl;
 
 }
+
+std::string RoadGraphB2018::loadABMGraph(const std::string& networkPath, const std::shared_ptr<abm::Graph>& graph_) {
+
+        const std::string& edgeFileName = networkPath + "edges.csv";
+        std::cout << edgeFileName << " as edges file\n";
+
+        const std::string& odFileName = networkPath + "od_demand.csv";
+        std::cout << odFileName << " as OD file\n";
+  // EDGES
+  //Create the graph directly from the file (don't deal with the creation of the boost graph first or any associated weights calculations)
+  //const bool directed = true;
+  //const auto graph = std::make_shared<abm::Graph>(directed);
+  auto start = high_resolution_clock::now();
+  graph_->read_graph_osm(edgeFileName);
+  printf("# of edges: %d\n", graph_->nedges());
+  printf("# of vertices: %u\n", graph_->nvertices());
+  auto stop = high_resolution_clock::now();
+  auto duration = duration_cast<milliseconds>(stop - start);
+  ///////////////////////////////
+  return odFileName;
+}
+
 
 
 }  // Closing namespace LC

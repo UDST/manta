@@ -34,31 +34,26 @@ class B18TrafficSP {
 
  public:
 	 
-	 /*
-  static std::vector<abm::graph::vertex_t> compute_routes(int mpi_rank,
-                                                   	  int mpi_size,
-                                                   	  std::shared_ptr<abm::Graph> graph_,
-                                                   	  std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_);
-*/
   static std::vector<abm::graph::vertex_t> compute_routes(int mpi_rank,
                                                           int mpi_size,
                                                           const std::shared_ptr<abm::Graph>& graph_,
-                                                          const std::vector<std::array<abm::graph::vertex_t, 2>>& all_od_pairs_);
-  
+                                                          const std::vector<std::array<abm::graph::vertex_t, 2>>& od_pairs);
+
   static std::vector<std::array<abm::graph::vertex_t, 2>> make_od_pairs(std::vector<B18TrafficPerson> trafficPersonVec,
                                                                         int nagents);
 
- static std::vector<std::array<abm::graph::vertex_t, 2>> read_od_pairs(const std::string& filename, int nagents);
- // static abm::graph::Graph read_graph_osm(const std::string& filename);
+  static std::vector<std::array<abm::graph::vertex_t, 2>> read_od_pairs(const std::string& filename, int nagents);
 
-  static void generateRoutesSP(
-      LC::RoadGraph::roadBGLGraph_BI &roadGraph,
-      std::vector<B18TrafficPerson> &trafficPersonVec,
-      std::vector<uint>& indexPathVec,
-      std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> &edgeDescToLaneMapNum,
-      int weigthMode = 0,
-      float sample = 1.0f);
+  explicit B18TrafficSP(const std::shared_ptr<abm::Graph>& graph) : graph_{graph} {};
+ private:
+  //all od pairs
+  std::shared_ptr<std::vector<std::array<abm::graph::vertex_t, 2>>> all_od_pairs_;
 
+  //graph (street network)
+  std::shared_ptr<abm::Graph> graph_;
+
+  //all paths
+  std::vector<abm::graph::vertex_t> all_paths_;
 };
 } //namespace LC
 

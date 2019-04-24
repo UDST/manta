@@ -13,6 +13,7 @@
 #include "b18TrafficJohnson.h"
 #include "b18TrafficSP.h"
 #include "b18CUDA_trafficSimulator.h"
+#include "roadGraphB2018Loader.h"
 
 #define DEBUG_TRAFFIC 0
 #define DEBUG_SIMULATOR 0
@@ -67,7 +68,6 @@ void B18TrafficSimulator::createB2018People(float startTime, float endTime, int 
       simRoadGraph->myRoadGraph_BI, limitNumPeople, addRandomPeople);
 
 }
-
 
 void B18TrafficSimulator::resetPeopleJobANDintersections() {
   b18TrafficOD.resetTrafficPersonJob(trafficPersonVec);
@@ -132,12 +132,6 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       shortestPathBench.startMeasuring();	    
       printf("***Start generateRoute Johnson\n");
       B18TrafficJohnson::generateRoutes(simRoadGraph->myRoadGraph_BI, trafficPersonVec,
-          indexPathVec, edgeDescToLaneMapNum, weigthMode, peoplePathSampling[nP]);
-      shortestPathBench.stopAndEndBenchmark();
-    } else if (useSP) {
-      shortestPathBench.startMeasuring();	    
-      printf("***Start generateRoute SP\n");
-      B18TrafficSP::generateRoutesSP(simRoadGraph->myRoadGraph_BI, trafficPersonVec,
           indexPathVec, edgeDescToLaneMapNum, weigthMode, peoplePathSampling[nP]);
       shortestPathBench.stopAndEndBenchmark();
     } else {
