@@ -2,6 +2,7 @@
 
 #include <boost/graph/exterior_property.hpp>
 #include "src/linux_host_memory_logger.h"
+#include "roadGraphB2018Loader.h"
 
 #define ROUTE_DEBUG 0
 //#define DEBUG_JOHNSON 0
@@ -93,7 +94,9 @@ std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::read_od_pairs(con
     while (in.read_row(v1, v2)) {
       std::array<abm::graph::vertex_t, 2> od = {v1, v2};
       od_pairs.emplace_back(od);
+      RoadGraphB2018::demandB2018.push_back(DemandB2018(1, v1, v2)); //there is only one person for each OD pair
     }
+    RoadGraphB2018::totalNumPeople = RoadGraphB2018::demandB2018.size();
     if (nagents != std::numeric_limits<int>::max())
       od_pairs.resize(nagents);
   } catch (std::exception& exception) {
@@ -104,10 +107,17 @@ std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::read_od_pairs(con
 }
 
 
+void B18TrafficSP::convertVector(std::vector<abm::graph::vertex_t> paths_SP, std::vector<uint>& indexPathVec) {
+	printf("paths_sp size = %d\n", paths_SP.size());
+	for (int x; x < paths_SP.size(); x++) {
+		indexPathVec.push_back(paths_SP[x]);
+	}
+	printf("indexPathVec size = %d\n", indexPathVec.size());
+}
 
 
 
-  std::vector<abm::graph::vertex_t> B18TrafficSP::compute_routes(int mpi_rank,
+std::vector<abm::graph::vertex_t> B18TrafficSP::compute_routes(int mpi_rank,
                                                           int mpi_size,
                                                           const std::shared_ptr<abm::Graph>& graph_,
                                                           const std::vector<std::array<abm::graph::vertex_t, 2>>& od_pairs) {

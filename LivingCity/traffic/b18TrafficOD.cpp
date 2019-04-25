@@ -480,6 +480,147 @@ void B18TrafficOD::loadB18TrafficPeople(
   printf("loadB18TrafficPeople: People %d\n", numPeople);
 }
 
+void B18TrafficOD::loadB18TrafficPeopleSP(
+    float startTimeH, float endTimeH,
+    std::vector<B18TrafficPerson> &trafficPersonVec, // out
+    const std::shared_ptr<abm::Graph>& graph_, const int limitNumPeople, const bool addRandomPeople) {
+
+  trafficPersonVec.clear();
+  QTime timer;
+  timer.start();
+
+  printf("demandB2018 size = %d\n", RoadGraphB2018::demandB2018.size());
+  if (RoadGraphB2018::demandB2018.size() == 0) {
+    printf("ERROR: Imposible to generate b2018 without loading b2018 demmand first\n");
+    return;
+  }
+
+  const int totalNumPeople = [&limitNumPeople, &addRandomPeople] {
+    if (limitNumPeople > 0 && addRandomPeople)
+      return limitNumPeople;
+    else
+      return RoadGraphB2018::totalNumPeople;
+  }();
+  trafficPersonVec.resize(totalNumPeople);
+
+  boost::mt19937 rng;
+  srand(45321654);
+  //boost::math::non_central_t_distribution<> td(v=2.09,delta=7.51);
+  //boost::variate_generator<boost::mt19937&, boost::math::non_central_t_distribution<> > var(rng, td);
+  boost::normal_distribution<> nd(7.5, 0.75);
+  boost::variate_generator<boost::mt19937 &, boost::normal_distribution<> > var(
+    rng, nd);
+
+  int numPeople = 0;
+  printf("demandB2018 = %d\n", RoadGraphB2018::demandB2018.size());
+  for (int d = 0; (d < RoadGraphB2018::demandB2018.size()) &&
+       (numPeople < totalNumPeople); d++) {
+    int odNumPeople = std::min<int>(totalNumPeople - numPeople,
+                                    RoadGraphB2018::demandB2018[d].num_people);
+    //printf("odNumPeople = %d\n", odNumPeople);
+    uint src_vertex = RoadGraphB2018::demandB2018[d].src_vertex;
+    uint tgt_vertex = RoadGraphB2018::demandB2018[d].tgt_vertex;
+
+    for (int p = 0; p < odNumPeople; p++) {
+      float goToWorkH;
+
+      if (gaussianDistribution) {
+        goToWorkH  = var();
+      } else {
+        goToWorkH = sampleFileDistribution();
+      }
+
+      randomPerson(numPeople, trafficPersonVec[numPeople], src_vertex, tgt_vertex,
+                   goToWorkH);
+      // printf("go to work %.2f --> %.2f\n", goToWork, (trafficPersonVec[p].time_departure / 3600.0f));
+      numPeople++;
+    }
+  }
+  printf("traffic_person vec size = %d\n", trafficPersonVec.size());
+
+  if (totalNumPeople > numPeople) {
+    std::cerr << "Current amount: " << numPeople << std::endl;
+    std::cerr << "Total amount: " << totalNumPeople << std::endl;
+    printf("No enough on file --> Add random people %d\n",
+           (totalNumPeople - numPeople));
+    // If this happens, the user ask to generate random people.
+    QList<int>  allVertexInd = RoadGraphB2018::indToOsmid.keys();
+
+    for (; numPeople < totalNumPeople; numPeople++) {
+      uint src_vertex = allVertexInd[rand() % allVertexInd.size()];
+      uint tgt_vertex = allVertexInd[rand() % allVertexInd.size()];
+
+      float goToWorkH;
+
+      if (gaussianDistribution) {
+        goToWorkH = var();
+      } else {
+        goToWorkH = sampleFileDistribution();
+      }
+
+      randomPerson(numPeople, trafficPersonVec[numPeople], src_vertex, tgt_vertex,
+                   goToWorkH);
+    }
+  }
+
+  if (totalNumPeople != numPeople) {
+    printf("ERROR: generateB2018TrafficPeople totalNumPeople != numPeople, this should not happen.");
+    exit(-1);
+  }
+
+  if (gaussianDistribution) {
+    //print histogram
+    float binLength = 0.166f;//10min
+    float numBins = ceil((endTimeH - startTimeH) / binLength);
+    printf("End time %.2f  Start time %.2f --> numBins %f\n", endTimeH, startTimeH,
+           numBins);
+    std::vector<int> bins(numBins);
+    std::fill(bins.begin(), bins.end(), 0);
+
+    for (int p = 0; p < trafficPersonVec.size(); p++) {
+      // printf("depart %.2f\n", (trafficPersonVec[p].time_departure / 3600.0f));
+      float t = (trafficPersonVec[p].time_departure / 3600.0f) - startTimeH;
+
+      int binN = t / binLength;
+
+      if (binN < 0 || binN >= numBins) {
+        printf("ERROR: Bin out of range %d of %f\n", binN, numBins);
+        continue;
+      }
+
+      bins[binN]++;
+    }
+
+    printf("\n");
+
+    for (int binN = 0; binN < bins.size(); binN++) {
+      printf("%f %d\n", startTimeH + binN * binLength, bins[binN]);
+    }
+  } else {
+    // Plot histogram of file distribution.
+    int numBuckets = ceil((endSamples - startSamples) * numBucketsPerHour);
+    std::vector<int> bins(numBuckets, 0);
+
+    for (int p = 0; p < trafficPersonVec.size(); p++) {
+      // printf("depart %.2f\n", (trafficPersonVec[p].time_departure / 3600.0f));
+      float time = (trafficPersonVec[p].time_departure / 3600.0f);
+      int targetBucket = (time - startSamples) * numBucketsPerHour;
+
+      if (targetBucket < 0 || targetBucket >= hToWDistribution.size()) {
+        continue;
+      }
+
+      bins[targetBucket]++;
+    }
+
+    for (int b = 0; b < bins.size(); b++) {
+      float bucketStartTime = startSamples + b * (1.0f / numBucketsPerHour);
+      printf("PeopleDist,%.2f,%d\n", bucketStartTime, bins[b]); // acumulate
+    }
+  }
+
+  printf("loadB18TrafficPeople: People %d\n", numPeople);
+}
 }
 
 

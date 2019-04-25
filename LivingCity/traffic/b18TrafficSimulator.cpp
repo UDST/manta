@@ -62,11 +62,17 @@ void B18TrafficSimulator::createRandomPeople(float startTime, float endTime,
 #endif
 
 void B18TrafficSimulator::createB2018People(float startTime, float endTime, int limitNumPeople,
-    bool addRandomPeople) {
+    bool addRandomPeople, bool useSP) {
   b18TrafficOD.resetTrafficPersonJob(trafficPersonVec);
   b18TrafficOD.loadB18TrafficPeople(startTime, endTime, trafficPersonVec,
       simRoadGraph->myRoadGraph_BI, limitNumPeople, addRandomPeople);
+}
 
+void B18TrafficSimulator::createB2018PeopleSP(float startTime, float endTime, int limitNumPeople,
+    bool addRandomPeople, const std::shared_ptr<abm::Graph>& graph_) {
+  b18TrafficOD.resetTrafficPersonJob(trafficPersonVec);
+  b18TrafficOD.loadB18TrafficPeopleSP(startTime, endTime, trafficPersonVec,
+      graph_, limitNumPeople, addRandomPeople);
 }
 
 void B18TrafficSimulator::resetPeopleJobANDintersections() {
@@ -99,7 +105,7 @@ void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
 // GPU
 //////////////////////////////////////////////////
 void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
-    bool useJohnsonRouting, bool useSP) {
+    bool useJohnsonRouting, bool useSP, std::vector<abm::graph::vertex_t> paths_SP) {
   Benchmarker laneMapBench("Lane map", 2);
   Benchmarker passesBench("Simulation passes", 2);
   Benchmarker finishCudaBench("Cuda finish", 2);
@@ -134,6 +140,9 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       B18TrafficJohnson::generateRoutes(simRoadGraph->myRoadGraph_BI, trafficPersonVec,
           indexPathVec, edgeDescToLaneMapNum, weigthMode, peoplePathSampling[nP]);
       shortestPathBench.stopAndEndBenchmark();
+    } else if (useSP) {
+	  printf("***convert all_paths to indexPathVec***\n");
+	  B18TrafficSP::convertVector(paths_SP, indexPathVec);
     } else {
       printf("***Start generateRoutesMulti Disktra\n");
       B18TrafficDijstra::generateRoutesMulti(simRoadGraph->myRoadGraph_BI,

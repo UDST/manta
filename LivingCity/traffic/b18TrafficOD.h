@@ -19,6 +19,7 @@
 
 #include "b18TrafficPerson.h"
 #include "RoadGraph/roadGraph.h"
+#include "sp/graph.h"
 
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 #ifdef B18_RUN_WITH_GUI
@@ -57,6 +58,10 @@ class B18TrafficOD {
   void loadB18TrafficPeople(float startTimeH, float endTimeH,
       std::vector<B18TrafficPerson> &trafficPersonVec, RoadGraph::roadBGLGraph_BI &roadGraph,
       const int limitNumPeople, const bool addRandomPeople);
+
+  void loadB18TrafficPeopleSP(float startTimeH, float endTimeH,
+    std::vector<B18TrafficPerson> &trafficPersonVec, // out
+    const std::shared_ptr<abm::Graph>& graph_, const int limitNumPeople, const bool addRandomPeople);
 
   void resetTrafficPersonJob(std::vector<B18TrafficPerson> &trafficPersonVec);
 };

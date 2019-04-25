@@ -44,6 +44,8 @@ class B18TrafficSP {
 
   static std::vector<std::array<abm::graph::vertex_t, 2>> read_od_pairs(const std::string& filename, int nagents);
 
+  static void convertVector(std::vector<abm::graph::vertex_t> paths_SP, std::vector<uint>& indexPathVec);
+
   explicit B18TrafficSP(const std::shared_ptr<abm::Graph>& graph) : graph_{graph} {};
  private:
   //all od pairs

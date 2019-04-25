@@ -67,8 +67,11 @@ class B18TrafficSimulator {
                              bool useJohnsonRouting);
   void simulateInCPU(float startTimeH, float endTimeH);
 
+  //void simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
+  //                   bool useJohnsonRouting, bool useSP);
+  
   void simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
-                     bool useJohnsonRouting, bool useSP);
+    bool useJohnsonRouting, bool useSP, std::vector<abm::graph::vertex_t> paths_SP);
 
   // Lanes
   std::vector<uchar> laneMap;
@@ -88,7 +91,9 @@ class B18TrafficSimulator {
   void createRandomPeople(float startTime, float endTime, int numberPeople,
                           PeopleJobInfoLayers &peopleJobInfoLayers);
 #endif
-  void createB2018People(float startTime, float endTime, int limitNumPeople, bool addRandomPeople);
+  void createB2018People(float startTime, float endTime, int limitNumPeople, bool addRandomPeople, bool useSP);
+  
+  void createB2018PeopleSP(float startTime, float endTime, int limitNumPeople, bool addRandomPeople, const std::shared_ptr<abm::Graph>& graph_);
 
   void resetPeopleJobANDintersections();
   void saveODToFile() {}; // TODO

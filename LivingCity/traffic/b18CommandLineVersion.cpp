@@ -48,6 +48,9 @@ void B18CommandLineVersion::runB18Simulation() {
   Benchmarker simulationBench("Simulation task", 1);
 
   ClientGeometry cg;
+  B18TrafficSimulator b18TrafficSimulator(deltaTime, &cg.roadGraph);
+  //auto all_paths = std::vector<abm::graph::vertex_t>;
+  std::vector<abm::graph::vertex_t> all_paths;
   if (useSP) {
 	  //make the graph from edges file and load the OD demand from od file
 	  const bool directed = true;
@@ -60,29 +63,24 @@ void B18CommandLineVersion::runB18Simulation() {
 	  int mpi_rank = 0;
 	  int mpi_size = 1;
 	  auto start = high_resolution_clock::now();
-	  const auto all_paths = B18TrafficSP::compute_routes(mpi_rank, mpi_size, street_graph, all_od_pairs_);
+	  all_paths = B18TrafficSP::compute_routes(mpi_rank, mpi_size, street_graph, all_od_pairs_);
 	  auto stop = high_resolution_clock::now();
 	  auto duration = duration_cast<milliseconds>(stop - start);
 	  printf("total time compute_routes() = %d milliseconds\n", duration.count());
 	  printf("Collected paths = %d\n", all_paths.size());
 
-	  //move all paths into indexPathVec and run rest of simulation
-	  //ADD CODE HERE
+	  //create a set of people for simulation (trafficPersonVec)
+	  b18TrafficSimulator.createB2018PeopleSP(startDemandH, endDemandH, limitNumPeople, addRandomPeople, street_graph);
+
   } else {
 	  graphLoadBench.startMeasuring();
 	  RoadGraphB2018::loadB2018RoadGraph(cg.roadGraph, networkPath);
 	  graphLoadBench.stopAndEndBenchmark();
-
-  }
-
-  initBench.startMeasuring();
-  B18TrafficSimulator b18TrafficSimulator(deltaTime, &cg.roadGraph);
-  initBench.stopAndEndBenchmark();
-
-  if (!useSP) {
+  
 	  peopleBench.startMeasuring();
-	  b18TrafficSimulator.createB2018People(startDemandH, endDemandH, limitNumPeople, addRandomPeople);
+	  b18TrafficSimulator.createB2018People(startDemandH, endDemandH, limitNumPeople, addRandomPeople, useSP);
 	  peopleBench.stopAndEndBenchmark();
+
   }
 
   simulationBench.startMeasuring();
@@ -90,8 +88,9 @@ void B18CommandLineVersion::runB18Simulation() {
     b18TrafficSimulator.simulateInCPU_MultiPass(numOfPasses, startSimulationH, endSimulationH,
         useJohnsonRouting);
   } else {
+	  //if useSP, convert all_paths to indexPathVec format and run simulation
     b18TrafficSimulator.simulateInGPU(numOfPasses, startSimulationH, endSimulationH,
-        useJohnsonRouting, useSP);
+        useJohnsonRouting, useSP, all_paths);
   }
   simulationBench.stopAndEndBenchmark();
 }
