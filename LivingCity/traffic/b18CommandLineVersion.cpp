@@ -51,10 +51,10 @@ void B18CommandLineVersion::runB18Simulation() {
   B18TrafficSimulator b18TrafficSimulator(deltaTime, &cg.roadGraph);
   //auto all_paths = std::vector<abm::graph::vertex_t>;
   std::vector<abm::graph::vertex_t> all_paths;
+  const bool directed = true;
+  auto street_graph = std::make_shared<abm::Graph>(directed);
   if (useSP) {
 	  //make the graph from edges file and load the OD demand from od file
-	  const bool directed = true;
-	  auto street_graph = std::make_shared<abm::Graph>(directed);
 	  std::string odFileName = RoadGraphB2018::loadABMGraph(networkPathSP, street_graph);
 	  const auto all_od_pairs_ = B18TrafficSP::read_od_pairs(odFileName, std::numeric_limits<int>::max());
 	  printf("# of OD pairs = %d\n", all_od_pairs_.size());
@@ -90,7 +90,7 @@ void B18CommandLineVersion::runB18Simulation() {
   } else {
 	  //if useSP, convert all_paths to indexPathVec format and run simulation
     b18TrafficSimulator.simulateInGPU(numOfPasses, startSimulationH, endSimulationH,
-        useJohnsonRouting, useSP, all_paths);
+        useJohnsonRouting, useSP, street_graph, all_paths);
   }
   simulationBench.stopAndEndBenchmark();
 }

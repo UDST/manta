@@ -3,9 +3,13 @@
 // Add edge
 inline void abm::Graph::add_edge(
     abm::graph::vertex_t vertex1, abm::graph::vertex_t vertex2,
+    std::vector<double> edge_vals, abm::graph::vertex_t edgeid = std::numeric_limits<abm::graph::vertex_t>::max()) {
+	abm::graph::weight_t weight = edge_vals[0];
+	/*
     abm::graph::weight_t weight = 1,
     abm::graph::vertex_t edgeid =
-        std::numeric_limits<abm::graph::vertex_t>::max()) {
+        std::numeric_limits<abm::graph::vertex_t>::max(), int lanes = 2, int speed_mph = 30) {
+	*/
   // Create a map of vertices
   if (vertices_.find(vertex1) == vertices_.end())
     vertices_[vertex1] = vertices_.size();
@@ -17,7 +21,8 @@ inline void abm::Graph::add_edge(
 
   // Create an edge
   auto edge = std::make_shared<Graph::Edge>(
-      std::make_pair(std::make_pair(vertex1, vertex2), weight));
+      //std::make_pair(std::make_pair(std::make_pair(std::make_pair(vertex1, vertex2), weight), lanes), speed_mph));
+      std::make_pair(std::make_pair(vertex1, vertex2), edge_vals));
   //printf("edge vertex 1 = %lld, vertex 2 = %lld, weight = %f\n", edge->first.first, edge->first.second, edge->second);
   edges_[std::make_tuple(vertex1, vertex2)] = edge;
 
@@ -55,7 +60,7 @@ void abm::Graph::update_edge(abm::graph::vertex_t vertex1,
   // Get pointer to specified edge connecting vertex 1 and 2
   auto edge = edges_.at(std::make_tuple(vertex1, vertex2));
   // Update edge weight
-  edge->second = weight;
+  edge->second[0] = weight;
 }
 
 // Remove edge
@@ -77,7 +82,7 @@ void abm::Graph::remove_edge(abm::graph::vertex_t vertex1,
   vertex_edges_[vertex1] = v1edge;
   vertex_edges_[vertex2] = v2edge;
 }
-
+/*
 // Read MatrixMarket graph file format
 bool abm::Graph::read_graph_matrix_market(const std::string& filename) {
   bool status = true;
@@ -122,18 +127,24 @@ bool abm::Graph::read_graph_matrix_market(const std::string& filename) {
   }
   return status;
 }
-
+*/
 // Read MatrixMarket graph file format
 bool abm::Graph::read_graph_osm(const std::string& filename) {
   bool status = true;
   try {
-    csvio::CSVReader<4> in(filename);
-    in.read_header(csvio::ignore_extra_column, "uniqueid", "u", "v", "length");
+    csvio::CSVReader<6> in(filename);
+    //in.read_header(csvio::ignore_extra_column, "uniqueid", "u", "v", "length");
+    in.read_header(csvio::ignore_extra_column, "uniqueid", "u", "v", "length", "lanes", "speed_mph");
     abm::graph::vertex_t edgeid, v1, v2;
-    abm::graph::weight_t weight;
+    //abm::graph::weight_t weight;
+    //int lanes;
+    //int speed_mph;
+    std::vector<double> edge_vals(3);
     abm::graph::vertex_t nvertices = 0;
-    while (in.read_row(edgeid, v1, v2, weight)) {
-      this->add_edge(v1, v2, weight, edgeid);
+    //while (in.read_row(edgeid, v1, v2, weight, lanes, speed_mph)) {
+    while (in.read_row(edgeid, v1, v2, edge_vals[0], edge_vals[1], edge_vals[2])) {
+	    //this->add_edge(v1, v2, weight, edgeid, lanes, speed_mph);
+	    this->add_edge(v1, v2, edge_vals);
       ++nvertices;
     }
     this->assign_nvertices(nvertices);
@@ -147,7 +158,7 @@ bool abm::Graph::read_graph_osm(const std::string& filename) {
 
   return status;
 }
-
+/*
 void abm::Graph::generate_simple_graph() {
   this->assign_nvertices(7);
   // set up a simple graph
@@ -163,7 +174,7 @@ void abm::Graph::generate_simple_graph() {
   this->add_edge(4, 5, 6.2);
   this->add_edge(5, 6, 9.7);
 }
-
+*/
 // Dijktra shortest paths from src to a vertex
 std::vector<abm::graph::vertex_t> abm::Graph::dijkstra(
     abm::graph::vertex_t source, abm::graph::vertex_t destination) {
@@ -214,7 +225,7 @@ std::vector<abm::graph::vertex_t> abm::Graph::dijkstra(
     for (const auto& edge : vertex_edges_[u]) {
       // Get vertex label and weight of neighbours of u.
       const abm::graph::vertex_t neighbour = edge->first.second;
-      const abm::graph::weight_t weight = edge->second;
+      const abm::graph::weight_t weight = edge->second[0];
 
       // Distance from source to neighbour
       // distance_u = distance to current node + weight of edge u to
@@ -313,7 +324,7 @@ abm::graph::weight_t abm::Graph::path_cost(
     const std::vector<std::array<abm::graph::vertex_t, 2>>& path) {
   abm::graph::weight_t cost = 0.;
   for (const auto& vertices : path)
-    cost += (edges_.at(std::make_tuple(vertices[0], vertices[1])))->second;
+    cost += (edges_.at(std::make_tuple(vertices[0], vertices[1])))->second[0];
   return cost;
 }
 

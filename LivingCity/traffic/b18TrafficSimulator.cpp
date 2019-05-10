@@ -81,10 +81,13 @@ void B18TrafficSimulator::resetPeopleJobANDintersections() {
 }//
 
 
-void B18TrafficSimulator::createLaneMap() { //
-  b18TrafficLaneMap.createLaneMap(*simRoadGraph, laneMap, edgesData, intersections, trafficLights,
-      laneMapNumToEdgeDesc, edgeDescToLaneMapNum);
+void B18TrafficSimulator::createLaneMap() {
+	b18TrafficLaneMap.createLaneMap(*simRoadGraph, laneMap, edgesData, intersections, trafficLights, laneMapNumToEdgeDesc, edgeDescToLaneMapNum);
 }//
+
+void B18TrafficSimulator::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph_) { //
+	b18TrafficLaneMap.createLaneMapSP(graph_, laneMap, edgesData, intersections, trafficLights, laneMapNumToEdgeDesc, edgeDescToLaneMapNum);
+}
 
 void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
   if (useJohnsonRouting) {
@@ -105,13 +108,17 @@ void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
 // GPU
 //////////////////////////////////////////////////
 void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
-    bool useJohnsonRouting, bool useSP, std::vector<abm::graph::vertex_t> paths_SP) {
+    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_, std::vector<abm::graph::vertex_t> paths_SP) {
   Benchmarker laneMapBench("Lane map", 2);
   Benchmarker passesBench("Simulation passes", 2);
   Benchmarker finishCudaBench("Cuda finish", 2);
    
   laneMapBench.startMeasuring();
-  createLaneMap();
+  if (useSP) {
+	  createLaneMapSP(graph_);
+  } else {
+	  createLaneMap();
+  }
   laneMapBench.stopAndEndBenchmark();
 
   QTime pathTimer;
@@ -143,6 +150,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     } else if (useSP) {
 	  printf("***convert all_paths to indexPathVec***\n");
 	  B18TrafficSP::convertVector(paths_SP, indexPathVec);
+	  printf("traffic_person_vec size = %d\n", trafficPersonVec.size());
     } else {
       printf("***Start generateRoutesMulti Disktra\n");
       B18TrafficDijstra::generateRoutesMulti(simRoadGraph->myRoadGraph_BI,
@@ -211,6 +219,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         timerLoop.restart();
       }
 
+      printf("trafficPersonVec size = %d\n", trafficPersonVec.size());
+      printf("intersections size = %d\n", intersections.size());
       b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
                              intersections.size());
 

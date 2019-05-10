@@ -108,12 +108,14 @@ void b18InitCUDA(
   }
   {//laneMap
     size_t sizeL = laneMap.size() * sizeof(uchar);
+    printf("laneMap size = %d\n", laneMap.size());
     if (fistInitialization) gpuErrchk(cudaMalloc((void **) &laneMap_d, sizeL));   // Allocate array on device
     gpuErrchk(cudaMemcpy(laneMap_d, laneMap.data(), sizeL, cudaMemcpyHostToDevice));
     halfLaneMap = laneMap.size() / 2;
   }
   {// intersections
     size_t sizeI = intersections.size() * sizeof(LC::B18IntersectionData);
+    printf("intersections size = %d\n", intersections.size());
     if (fistInitialization) gpuErrchk(cudaMalloc((void **) &intersections_d, sizeI));   // Allocate array on device
     gpuErrchk(cudaMemcpy(intersections_d, intersections.data(), sizeI, cudaMemcpyHostToDevice));
     size_t sizeT = trafficLights.size() * sizeof(uchar);//total number of lanes

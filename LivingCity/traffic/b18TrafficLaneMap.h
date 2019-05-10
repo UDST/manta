@@ -15,6 +15,7 @@
 #include "../misctools/misctools.h"
 #include "RoadGraph/roadGraph.h"
 #include "b18EdgeData.h"
+#include "traffic/sp/graph.h"
 
 namespace LC {
 
@@ -25,6 +26,12 @@ class B18TrafficLaneMap {
    ~B18TrafficLaneMap();
 
   void createLaneMap(const RoadGraph &inRoadGraph, std::vector<uchar> &laneMap,
+      std::vector<B18EdgeData> &edgesData, std::vector<B18IntersectionData> &intersections,
+      std::vector<uchar> &trafficLights, std::map<uint,
+      RoadGraph::roadGraphEdgeDesc_BI> &laneMapNumToEdgeDesc,
+      std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> &edgeDescToLaneMapNum);
+
+  void createLaneMapSP(const std::shared_ptr<abm::Graph>& graph_, std::vector<uchar> &laneMap,
       std::vector<B18EdgeData> &edgesData, std::vector<B18IntersectionData> &intersections,
       std::vector<uchar> &trafficLights, std::map<uint,
       RoadGraph::roadGraphEdgeDesc_BI> &laneMapNumToEdgeDesc,
