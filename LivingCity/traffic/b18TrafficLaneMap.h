@@ -32,6 +32,7 @@ class B18TrafficLaneMap {
       std::map<uint, RoadGraph::roadGraphEdgeDesc_BI> &laneMapNumToEdgeDesc,
       std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> &edgeDescToLaneMapNum,
       std::vector<LC::Connection> &connections,
+      std::vector<uint> &connectionsBlocking,
       std::vector<LC::Intersection> &updatedIntersections,
       std::vector<TrafficLightScheduleEntry> &trafficLightSchedules);
  

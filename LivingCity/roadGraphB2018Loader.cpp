@@ -109,6 +109,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
   QVector2D minBox(FLT_MAX, FLT_MAX);
   QVector2D maxBox(-FLT_MAX, -FLT_MAX);
   QHash<uint64_t, QVector2D> osmidToVertexLoc;
+  QHash<uint64_t, QVector2D> osmidToOriginalLoc;
   QHash<uint64_t, uchar> osmidToBType; // node type
 
   QHash<QString, uchar> bTypeStringTobType;
@@ -137,6 +138,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
     float y = fields[indexY].toFloat();
     uint64_t osmid = fields[indexOsmid].toLongLong();
     osmidToVertexLoc[osmid] = QVector2D(x, y);
+    osmidToOriginalLoc[osmid] = QVector2D(x, y);
     updateMinMax2(QVector2D(x, y), minBox, maxBox);
 
     if (indexHigh >= fields.size()) {
@@ -185,6 +187,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
 
     float x = osmidToVertexLoc[ind].x();
     float y = osmidToVertexLoc[ind].y();
+
     uchar bType = osmidToBType[ind];
 
     QVector3D pos(x, y, 0);
@@ -197,6 +200,10 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
     std::cout
       << "read osmid value: " << ind
       << " <-> stored vertex number: " << vertex[index] << std::endl;
+
+    inRoadGraph.myRoadGraph_BI[vertex[index]].x = osmidToOriginalLoc[ind].x();
+    inRoadGraph.myRoadGraph_BI[vertex[index]].y = osmidToOriginalLoc[ind].y();
+
     inRoadGraph.myRoadGraph_BI[vertex[index]].pt = pos;
     inRoadGraph.myRoadGraph_BI[vertex[index]].bType = bType;
 

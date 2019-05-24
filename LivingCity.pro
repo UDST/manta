@@ -66,6 +66,8 @@ HEADERS += \
     ./LivingCity/traffic/b18TrafficOD.h \
     ./LivingCity/traffic/b18TrafficPerson.h \
     ./LivingCity/traffic/b18TrafficSimulator.h \
+    ./LivingCity/traffic/boostGeometry.h \
+    ./LivingCity/traffic/laneCoordinatesComputer.h \
     src/benchmarker.h
 
 SOURCES += \
@@ -92,6 +94,8 @@ SOURCES += \
     ./LivingCity/traffic/b18TrafficLaneMap.cpp \
     ./LivingCity/traffic/b18TrafficOD.cpp \
     ./LivingCity/traffic/b18TrafficSimulator.cpp \
+    ./LivingCity/traffic/boostGeometry.cpp \
+    ./LivingCity/traffic/laneCoordinatesComputer.cpp \
     src/benchmarker.cpp
 
 OTHER_FILES += \

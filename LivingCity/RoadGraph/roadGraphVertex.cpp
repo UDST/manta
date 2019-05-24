@@ -38,7 +38,8 @@ RoadGraphVertex::RoadGraphVertex(void) {
 RoadGraphVertex::RoadGraphVertex(QVector3D inPt, float dU, float dV,
                                  float ref, int dirCount, int inRandSeed, float inDeltaTheta, bool inIsSeed,
                                  bool inIsBoundingPgonVertex, float inIrregularity, float inCurvature,
-                                 float inWidth, int inMyPlaceTypeIdx, float inSpeed) {
+                                 float inWidth, int inMyPlaceTypeIdx, float inSpeed,
+                                 float _x, float _y) {
   pt = inPt;
   distU = dU;
   distV = dV;
@@ -52,6 +53,9 @@ RoadGraphVertex::RoadGraphVertex(QVector3D inPt, float dU, float dV,
   width = inWidth;
   myPlaceTypeIdx = inMyPlaceTypeIdx;
   speed = inSpeed;
+
+  x = _x;
+  y = _y;
 }
 
 RoadGraphVertex::~RoadGraphVertex(void) {

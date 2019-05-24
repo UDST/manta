@@ -8,11 +8,13 @@
 *
 ************************************************************************************************/
 
-#include <ios>
 #include <cassert>
+#include <iomanip>
+#include <ios>
 #include <map>
+
 #include "./b18TrafficLaneMap.h"
-#include <thrust/device_vector.h>
+#include "./laneCoordinatesComputer.h"
 
 namespace LC {
 
@@ -30,6 +32,65 @@ namespace {
   }
 }
 
+void addBlockingToIntersection(
+    const uint vertexIdx,
+    const std::vector<LC::Intersection> & updatedIntersections,
+    std::vector<LC::Connection> & connections,
+    std::vector<uint> & connectionsBlocking,
+    LaneCoordinatesComputer & laneCoordinatesComputer)
+{
+  // First compute each lanes coordinates
+  const std::unordered_map<uint, BoostPoint> lanesCoordinates =
+    laneCoordinatesComputer.computeLanesCoordinatesFor(vertexIdx);
+
+  if (lanesCoordinates.size() == 0)
+    return;
+
+  const Intersection & intersection = updatedIntersections.at(vertexIdx);
+  for (
+      uint mainConnectionIdx = intersection.connectionGraphStart;
+      mainConnectionIdx < intersection.connectionGraphEnd;
+      mainConnectionIdx++) {
+    Connection & mainConnection = connections.at(mainConnectionIdx);
+    mainConnection.connectionsBlockingStart = connectionsBlocking.size();
+    const BoostSegment mainSegment{
+      lanesCoordinates.at(mainConnection.inLaneNumber),
+      lanesCoordinates.at(mainConnection.outLaneNumber)
+    };
+
+    for (
+        uint secondConnectionIdx = intersection.connectionGraphStart;
+        secondConnectionIdx < intersection.connectionGraphEnd;
+        secondConnectionIdx++) {
+      if (mainConnectionIdx == secondConnectionIdx)
+        continue;
+
+      const Connection & secondConnection = connections.at(secondConnectionIdx);
+
+      if (mainConnection.inLaneNumber == secondConnection.inLaneNumber
+          || mainConnection.inLaneNumber == secondConnection.outLaneNumber
+          || mainConnection.outLaneNumber == secondConnection.inLaneNumber
+          || mainConnection.outLaneNumber == secondConnection.outLaneNumber)
+        continue;
+
+      const BoostSegment secondSegment{
+        lanesCoordinates.at(secondConnection.inLaneNumber),
+        lanesCoordinates.at(secondConnection.outLaneNumber)
+      };
+
+      std::vector<BoostPoint> intersectionPoints;
+      boost::geometry::intersection(mainSegment, secondSegment, intersectionPoints);
+
+      if (intersectionPoints.size() == 0)
+        continue;
+
+      // If there is an intersection between the main conneciton and the second connection,
+      //   then add the second connection index to the list of connections blocked by the main one.
+      connectionsBlocking.push_back(secondConnectionIdx);
+    }
+    mainConnection.connectionsBlockingEnd = connectionsBlocking.size();
+  }
+}
 
 void addTrafficLightScheduleToIntersection(
     Intersection & tgtIntersection,
@@ -49,11 +110,11 @@ void addTrafficLightScheduleToIntersection(
   }
 
   const auto sourceVertex = [&connections, &edges] (const uint connectionIdx) {
-    return edges.at(connections.at(connectionIdx).inEdgeNumber).originalSourceVertexIndex;
+    return edges.at(connections.at(connectionIdx).inEdgeNumber).sourceVertexIndex;
   };
 
   const auto targetVertex = [&connections, &edges] (const uint connectionIdx) {
-    return edges.at(connections.at(connectionIdx).outEdgeNumber).originalTargetVertexIndex;
+    return edges.at(connections.at(connectionIdx).outEdgeNumber).targetVertexIndex;
   };
 
   const uint scheduledTime = 10;
@@ -113,6 +174,7 @@ void B18TrafficLaneMap::createLaneMap(
     std::map<uint, RoadGraph::roadGraphEdgeDesc_BI> &laneMapNumToEdgeDesc,
     std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> &edgeDescToLaneMapNum,
     std::vector<LC::Connection> &connections,
+    std::vector<uint> &connectionsBlocking,
     std::vector<LC::Intersection> &updatedIntersections,
     std::vector<TrafficLightScheduleEntry> &trafficLightSchedules) {
   edgesData.resize(boost::num_edges(inRoadGraph.myRoadGraph_BI) * 4);  //4 to make sure it fits
@@ -120,6 +182,7 @@ void B18TrafficLaneMap::createLaneMap(
   edgeDescToLaneMapNum.clear();
   laneMapNumToEdgeDesc.clear();
   connections.clear();
+  connectionsBlocking.clear();
   updatedIntersections.clear();
   trafficLightSchedules.clear();
 
@@ -136,8 +199,8 @@ void B18TrafficLaneMap::createLaneMap(
     const auto edgeLength = inRoadGraph.myRoadGraph_BI[*ei].edgeLength;
     const int numWidthNeeded = static_cast<int>(std::ceil(edgeLength / kMaxMapWidthM));
 
-    edgesData[totalLaneMapChunks].originalSourceVertexIndex = source(*ei, inputGraph);
-    edgesData[totalLaneMapChunks].originalTargetVertexIndex = target(*ei, inputGraph);
+    edgesData[totalLaneMapChunks].sourceVertexIndex = source(*ei, inputGraph);
+    edgesData[totalLaneMapChunks].targetVertexIndex = target(*ei, inputGraph);
     edgesData[totalLaneMapChunks].length = edgeLength;
     edgesData[totalLaneMapChunks].maxSpeedMperSec = inRoadGraph.myRoadGraph_BI[*ei].maxSpeedMperSec;
     edgesData[totalLaneMapChunks].nextInters = boost::target(*ei, inRoadGraph.myRoadGraph_BI);
@@ -155,11 +218,17 @@ void B18TrafficLaneMap::createLaneMap(
   const auto verticesBegin = p.first;
   const auto verticesEnd = p.second;
   uint connectionsCount = 0;
+  LaneCoordinatesComputer laneCoordinatesComputer{
+    inRoadGraph,
+    edgesData,
+    connections,
+    updatedIntersections};
+
   for (auto vertices_it = verticesBegin; vertices_it != verticesEnd; ++vertices_it) {
     const auto in_edges_pair = boost::in_edges(*vertices_it, inputGraph);
     const auto in_edges_begin = in_edges_pair.first;
     const auto in_edges_end = in_edges_pair.second;
-    const auto vertexIdx = *vertices_it;
+    const uint vertexIdx = *vertices_it;
 
     Intersection & intersection = updatedIntersections.at(vertexIdx);
 
@@ -174,12 +243,12 @@ void B18TrafficLaneMap::createLaneMap(
       for (auto outEdgesIt = outEdgesBegin; outEdgesIt != outEdgesEnd; ++outEdgesIt) {
         const auto & outEdgeNumber = edgeDescToLaneMapNum.at(*outEdgesIt);
         const auto & outEdgeData = edgesData[outEdgeNumber];
-        if (inEdgeData.originalSourceVertexIndex == outEdgeData.originalTargetVertexIndex) {
+        if (inEdgeData.sourceVertexIndex == outEdgeData.targetVertexIndex) {
           // Avoid U-turns
           continue;
         }
 
-        assert(inEdgeData.originalTargetVertexIndex == outEdgeData.originalSourceVertexIndex);
+        assert(inEdgeData.targetVertexIndex == outEdgeData.sourceVertexIndex);
         for (uint inIdx = 0; inIdx < inEdgeData.numLines; inIdx++) {
           for (uint outIdx = 0; outIdx < outEdgeData.numLines; outIdx++) {
             Connection connection;
@@ -203,7 +272,15 @@ void B18TrafficLaneMap::createLaneMap(
       trafficLightSchedules,
       connections,
       edgesData);
+    addBlockingToIntersection(
+      vertexIdx,
+      updatedIntersections,
+      connections,
+      connectionsBlocking,
+      laneCoordinatesComputer);
   }
+
+  //assert("SACAME" && false);
 
   std::cout << "\ntrafficLightSchedules" << std::endl;
   for (const auto & i : trafficLightSchedules) {

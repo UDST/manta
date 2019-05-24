@@ -54,11 +54,18 @@ struct Intersection {
 struct Connection {
   // The lane numbers have a range of possible values depending on the edge:
   // edgeNumber <= laneNumber < edgeNumber + amountOfLanesInEdge
+  // Note also that
+  //    laneNumber == edgeNumber is for the left-most lane
+  //    laneNumber == edgeNumber + amountOfLanesInEdge - 1 is for the right-most lane
   uint inLaneNumber;
   uint outLaneNumber;
 
   // Flag indicating if the connection can be used
   bool enabled;
+
+  // Start and end of indexes of connections that are blocked by this connection
+  uint connectionsBlockingStart;
+  uint connectionsBlockingEnd;
 
   // Some extra-info for easier debugging
   uint vertexNumber;
@@ -82,7 +89,7 @@ struct TrafficLightScheduleEntry {
   uint scheduleGroup;
 
   // Amount of time assigned to this entry
-  // Entries of the same vertex with same position should al have the same scheduled time
+  // Entries of the same vertex with same position should all have the same scheduled time
   float scheduledTime;
 
   // Last time this intersection was updated
@@ -101,8 +108,8 @@ struct TrafficLightScheduleEntry {
 };
 
 struct B18EdgeData {
-  uint originalSourceVertexIndex;
-  uint originalTargetVertexIndex;
+  uint sourceVertexIndex;
+  uint targetVertexIndex;
   ushort numLines;
   uint nextInters;
   float length;

@@ -1,14 +1,15 @@
 //CUDA CODE
 #include <assert.h>
 #include <stdio.h>
+#include <vector>
+#include <iostream>
+
 #include "cuda_runtime.h"
 #include "curand_kernel.h"
 #include "device_launch_parameters.h"
 
 #include "b18TrafficPerson.h"
 #include "b18EdgeData.h"
-#include <vector>
-#include <iostream>
 
 #ifndef ushort
 #define ushort uint16_t
@@ -78,6 +79,7 @@ float* numVehPerLinePerTimeInterval_d;
 
 LC::Connection *deviceConnections;
 size_t amountOfConnections;
+uint *deviceConnectionsBlocking;
 
 LC::Intersection *deviceIntersections;
 size_t amountOfIntersections;
@@ -96,6 +98,7 @@ void b18InitCUDA(
     std::vector<float>& accSpeedPerLinePerTimeInterval,
     std::vector<float>& numVehPerLinePerTimeInterval,
     const std::vector<LC::Connection> & hostConnections,
+    const std::vector<uint> & hostConnectionsBlocking,
     const std::vector<LC::Intersection> & hostIntersections,
     const std::vector<LC::TrafficLightScheduleEntry> &hostTrafficLightSchedules) {
 
@@ -104,6 +107,12 @@ void b18InitCUDA(
     size_t size = hostConnections.size() * sizeof(LC::Connection);
     if (fistInitialization) gpuErrchk(cudaMalloc((void **) &deviceConnections, size));   // Allocate array on device
     gpuErrchk(cudaMemcpy(deviceConnections, hostConnections.data(), size, cudaMemcpyHostToDevice));
+  }
+
+  { // Connections blocking
+    size_t size = hostConnectionsBlocking.size() * sizeof(uint);
+    if (fistInitialization) gpuErrchk(cudaMalloc((void **) &deviceConnectionsBlocking, size));   // Allocate array on device
+    gpuErrchk(cudaMemcpy(deviceConnectionsBlocking, hostConnectionsBlocking.data(), size, cudaMemcpyHostToDevice));
   }
 
   { // Intersections
@@ -168,6 +177,7 @@ void b18InitCUDA(
 
 void b18FinishCUDA(void){
   cudaFree(deviceConnections);
+  cudaFree(deviceConnectionsBlocking);
   cudaFree(deviceIntersections);
   cudaFree(deviceTrafficLightSchedules);
   cudaFree(trafficPersonVec_d);
@@ -469,6 +479,7 @@ __global__ void kernel_updatePersonsCars(
     LC::B18IntersectionData *b18Intersections,
     LC::Connection *connections,
     size_t amountOfConnections,
+    uint *connectionsBlocking,
     LC::Intersection *intersections,
     size_t amountOfIntersections,
     LC::TrafficLightScheduleEntry *trafficLightSchedules) {
@@ -480,10 +491,6 @@ __global__ void kernel_updatePersonsCars(
      */
     if (trafficPersonVec[p].active == 2) {
       // Return if this person has reached its destiny
-      printf(
-        "\n[%d@%f] Already reached destination.\n",
-        p,
-        currentTime);
       return;
     }
 
@@ -585,7 +592,7 @@ __global__ void kernel_updatePersonsCars(
     printf(
       "\n[@%f] Car's next vertex: %d\n",
       currentTime,
-      edgesData[currentEdge].originalTargetVertexIndex);
+      edgesData[currentEdge].targetVertexIndex);
 
     bool nextVehicleIsATrafficLight = false;
     int remainingCellsToCheck = max(30.0f, trafficPersonVec[p].v * DELTA_TIME * 2);
@@ -625,7 +632,7 @@ __global__ void kernel_updatePersonsCars(
         && !obstacleFound
         && remainingCellsToCheck > 0
         && nextEdge != -1) {
-      const int dstVertexNumber = edgesData[currentEdge].originalTargetVertexIndex;
+      const int dstVertexNumber = edgesData[currentEdge].targetVertexIndex;
       printf("[@%f] Checking %d-th intersection's connections\n", currentTime, dstVertexNumber);
       const ushort currentLaneNumber = currentEdge + trafficPersonVec[p].numOfLaneInEdge;
 
@@ -756,7 +763,6 @@ __global__ void kernel_updatePersonsCars(
 
     const bool reachedIntersection =
       static_cast<ushort>(ceil(trafficPersonVec[p].posInLaneM)) > currentLaneMaximumPosition ;
-    printf("reachedIntersection: %d\n", reachedIntersection);
     if (reachedIntersection) { //reach intersection
       numToMove = trafficPersonVec[p].posInLaneM - trafficPersonVec[p].length;
     } else { //does not research next intersection
@@ -1034,11 +1040,26 @@ __global__ void kernel_updateIntersectionConnections(
     LC::Intersection *intersections,
     size_t amountOfIntersections,
     LC::Connection *connections,
+    uint *connectionsBlocking,
     LC::TrafficLightScheduleEntry *trafficLightSchedules) {
   const int intersectionIdx = blockIdx.x * blockDim.x + threadIdx.x;
   if (intersectionIdx < amountOfIntersections) {
     // NOTE(ffigari): The current implementation assumes every intersection is a traffic light
     LC::Intersection & intersection = intersections[intersectionIdx];
+    for (
+        uint connectionIdx = intersection.connectionGraphStart;
+        connectionIdx < intersection.connectionGraphEnd;
+        connectionIdx++) {
+      const LC::Connection & connection = connections[connectionIdx];
+      printf("[%d] %d-th connection blocks: ", intersectionIdx, connectionIdx);
+      for (
+          uint blockedConnectionIdx = connectionsBlocking[connection.connectionsBlockingStart];
+          blockedConnectionIdx < connectionsBlocking[connection.connectionsBlockingEnd];
+          blockedConnectionIdx++) {
+        printf(" %d;", blockedConnectionIdx);
+      }
+      printf("\n");
+    }
 
     const bool hasSchedule =
       intersection.trafficLightSchedulesEnd - intersection.trafficLightSchedulesStart > 0;
@@ -1064,11 +1085,6 @@ __global__ void kernel_updateIntersectionConnections(
       assert(
         startingScheduleGroup == scheduleEntry.scheduleGroup
         && "Incoherent traffic schedules info");
-
-      printf("[v:%d@%f] Enabling %d-th connection\n",
-        intersectionIdx,
-        currentTime,
-        scheduleEntry.connectionIdx);
 
       connections[scheduleEntry.connectionIdx].enabled = true;
 
@@ -1152,6 +1168,7 @@ void b18SimulateTrafficCUDA(const float currentTime, uint numPeople, uint numInt
     deviceIntersections,
     amountOfIntersections,
     deviceConnections,
+    deviceConnectionsBlocking,
     deviceTrafficLightSchedules);
   gpuErrchk(cudaPeekAtLastError());
   gpuErrchk(cudaDeviceSynchronize());
@@ -1170,6 +1187,7 @@ void b18SimulateTrafficCUDA(const float currentTime, uint numPeople, uint numInt
     intersections_d,
     deviceConnections,
     amountOfConnections,
+    deviceConnectionsBlocking,
     deviceIntersections,
     amountOfIntersections,
     deviceTrafficLightSchedules);

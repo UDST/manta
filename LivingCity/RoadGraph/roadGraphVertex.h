@@ -56,7 +56,7 @@ class RoadGraphVertex {
                   int randSeed, float deltaTheta, bool isSeed, bool isBoundingPgonVertex,
                   float inIrregularity, float inCurvature,
                   float width,
-                  int inMyPlaceTypeIdx, float inSpeed);
+                  int inMyPlaceTypeIdx, float inSpeed, float _x, float _y);
 
   /**
   * Destructor.
@@ -83,6 +83,9 @@ class RoadGraphVertex {
 
     prio = ref.prio;
     type = ref.type;
+
+    x = ref.x;
+    y = ref.y;
   }
 
   /**
@@ -106,6 +109,9 @@ class RoadGraphVertex {
 
     prio = ref.prio;
     type = ref.type;
+
+    x = ref.x;
+    y = ref.y;
     return (*this);
   }
 
@@ -170,6 +176,9 @@ class RoadGraphVertex {
   // B2018
   uchar bType; // bType Node: 0 = Unknow 1 = motorway_junction 2 = traffic_signals 3 = stop 4 = turning_circle
 
+  // Intersections enhancement
+  float x;
+  float y;
 
  private:
 };
