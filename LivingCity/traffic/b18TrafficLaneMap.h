@@ -34,7 +34,8 @@ class B18TrafficLaneMap {
       std::vector<LC::Connection> &connections,
       std::vector<uint> &connectionsBlocking,
       std::vector<LC::Intersection> &updatedIntersections,
-      std::vector<TrafficLightScheduleEntry> &trafficLightSchedules);
+      std::vector<TrafficLightScheduleEntry> &trafficLightSchedules,
+      std::vector<uint> &inLanesIndexes);
  
     void resetIntersections(
       std::vector<B18IntersectionData> &intersections,

@@ -30,8 +30,9 @@ const uint kMaskLaneMap = 0x007FFFFF;
 namespace LC {
 
 
+enum IntersectionType {TrafficLight, Unsupervised};
+
 // Object to store intersections (ie vertices) information
-// NOTE(ffigari): For the moment I'm assuming every intersection is a traffic light.
 struct Intersection {
   // Start and end indexes of connections assigned to this intersection
   uint connectionGraphStart;
@@ -41,6 +42,10 @@ struct Intersection {
   uint trafficLightSchedulesStart;
   uint trafficLightSchedulesEnd;
 
+  // Start and end indexes of in-lanes indexes
+  uint inLanesIndexesStart;
+  uint inLanesIndexesEnd;
+
   // Indicates index in traffic lights entries to where to keep updating on the next iteration
   uint scheduleIdx;
   // Indicates schedule group on which we are now set
@@ -48,6 +53,8 @@ struct Intersection {
 
   // Time of this intersection's last update
   float timeOfNextUpdate;
+
+  IntersectionType intersectionType;
 };
 
 // Object to abstract whether a connection between two lanes is enabled or not
@@ -67,7 +74,6 @@ struct Connection {
   uint connectionsBlockingStart;
   uint connectionsBlockingEnd;
 
-  // Some extra-info for easier debugging
   uint vertexNumber;
   uint inEdgeNumber;
   uint outEdgeNumber;

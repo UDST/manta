@@ -121,7 +121,6 @@ std::unordered_map<uint, BoostPoint> LaneCoordinatesComputer::computeLanesCoordi
       uint connectionIdx = intersection.connectionGraphStart;
       connectionIdx < intersection.connectionGraphEnd;
       connectionIdx++) {
-    // TODO(ffigari): Implement this
     const Connection & connection = connections_.at(connectionIdx);
     computeEdgeInterface(
       connection.inEdgeNumber,

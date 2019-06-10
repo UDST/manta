@@ -79,7 +79,7 @@ void B18TrafficSimulator::resetPeopleJobANDintersections() {
 void B18TrafficSimulator::createLaneMap() { //
   b18TrafficLaneMap.createLaneMap(*simRoadGraph, laneMap, edgesData, intersections, trafficLights,
       laneMapNumToEdgeDesc, edgeDescToLaneMapNum, connections, connectionsBlocking,
-      updatedIntersections, trafficLightSchedules);
+      updatedIntersections, trafficLightSchedules, inLanesIndexes);
 }//
 
 void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
@@ -125,7 +125,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
                                              peoplePathSampling[nP]);
     }
 
-    std::cerr << "[Log] Starting CUDA" << std::endl;
+    std::cout << "[Log] Starting CUDA" << std::endl;
     const bool fistInitialization = (nP == 0);
     b18InitCUDA(
         fistInitialization,
@@ -142,7 +142,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         connections,
         connectionsBlocking,
         updatedIntersections,
-        trafficLightSchedules);
+        trafficLightSchedules,
+        inLanesIndexes);
 
 
     float startTime = startTimeH * 3600.0f; //7.0f
@@ -176,20 +177,15 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     int count = 0;
     QTime timerLoop;
 
-    std::cerr
-      << "Running main loop from " << (startTime / 3600.0f)
-      << " to " << (endTime / 3600.0f)
-      << " with " << trafficPersonVec.size() << " persons..."
-      << std::endl;
-    std::cout << "amount of people: " << trafficPersonVec.size() << std::endl;
+    std::cout << "Amount of people: " << trafficPersonVec.size() << std::endl;
     while (currentTime < endTime) {
       count++;
       if (count % 180 == 0) {
-        //std::cerr << std::fixed << std::setprecision(2) 
-          //<< "Current time: " << (currentTime / 3600.0f)
-          //<< " (" << (100.0f - (100.0f * (endTime - currentTime) / (endTime - startTime))) << "%)"
-          //<< " with " << (timerLoop.elapsed() / 1800.0f) << " ms per simulation step (average over 1800)"
-          //<< "\r";
+        std::cout << std::fixed << std::setprecision(2)
+          << "Current time: " << (currentTime / 3600.0f)
+          << " (" << (100.0f - (100.0f * (endTime - currentTime) / (endTime - startTime))) << "%)"
+          << " with " << (timerLoop.elapsed() / 180.0f) << " ms per simulation step (average over 180)"
+          << std::endl;
         timerLoop.restart();
       }
 
@@ -222,7 +218,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 #endif
       currentTime += deltaTime;
     }
-    std::cerr << std::setw(90) << " " << "\rDone" << std::endl;
+    std::cout << std::setw(90) << " " << "\rDone" << std::endl;
 
     // 3. Finish
     b18GetDataCUDA(trafficPersonVec);

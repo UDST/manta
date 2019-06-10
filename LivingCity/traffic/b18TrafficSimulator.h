@@ -79,6 +79,7 @@ class B18TrafficSimulator {
   std::vector<uint> connectionsBlocking;
   std::vector<LC::Intersection> updatedIntersections;
   std::vector<TrafficLightScheduleEntry> trafficLightSchedules;
+  std::vector<uint> inLanesIndexes;
   void createLaneMap();
 
   // car path

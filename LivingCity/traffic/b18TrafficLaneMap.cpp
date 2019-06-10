@@ -80,12 +80,11 @@ void addBlockingToIntersection(
 
       std::vector<BoostPoint> intersectionPoints;
       boost::geometry::intersection(mainSegment, secondSegment, intersectionPoints);
-
       if (intersectionPoints.size() == 0)
         continue;
 
       // If there is an intersection between the main conneciton and the second connection,
-      //   then add the second connection index to the list of connections blocked by the main one.
+      // then add the second connection index to the list of connections blocked by the main one.
       connectionsBlocking.push_back(secondConnectionIdx);
     }
     mainConnection.connectionsBlockingEnd = connectionsBlocking.size();
@@ -176,7 +175,8 @@ void B18TrafficLaneMap::createLaneMap(
     std::vector<LC::Connection> &connections,
     std::vector<uint> &connectionsBlocking,
     std::vector<LC::Intersection> &updatedIntersections,
-    std::vector<TrafficLightScheduleEntry> &trafficLightSchedules) {
+    std::vector<TrafficLightScheduleEntry> &trafficLightSchedules,
+    std::vector<uint> & inLanesIndexes) {
   edgesData.resize(boost::num_edges(inRoadGraph.myRoadGraph_BI) * 4);  //4 to make sure it fits
 
   edgeDescToLaneMapNum.clear();
@@ -185,6 +185,7 @@ void B18TrafficLaneMap::createLaneMap(
   connectionsBlocking.clear();
   updatedIntersections.clear();
   trafficLightSchedules.clear();
+  inLanesIndexes.clear();
 
   auto & inputGraph = inRoadGraph.myRoadGraph_BI;
   RoadGraph::roadGraphEdgeIter_BI ei, ei_end;
@@ -278,40 +279,46 @@ void B18TrafficLaneMap::createLaneMap(
       connections,
       connectionsBlocking,
       laneCoordinatesComputer);
+
+    // TODO: How should this be handled?
+    intersection.intersectionType = IntersectionType::Unsupervised;
+
+    intersection.inLanesIndexesStart = inLanesIndexes.size();
+    std::unordered_set<uint> intersectionInLanesIndexes;
+    for (
+        uint connectionIdx = intersection.connectionGraphStart;
+        connectionIdx < intersection.connectionGraphEnd;
+        connectionIdx++) {
+      const Connection & connection = connections.at(connectionIdx);
+      intersectionInLanesIndexes.insert(connection.inLaneNumber);
+    }
+    for (const uint & index : intersectionInLanesIndexes) {
+      inLanesIndexes.push_back(index);
+    }
+    intersection.inLanesIndexesEnd = inLanesIndexes.size();
   }
 
-  //assert("SACAME" && false);
+  for (uint idx = 0; idx < connections.size(); ++idx) {
+    const Connection & connection = connections.at(idx);
+    for (
+        uint i = connection.connectionsBlockingStart;
+        i < connection.connectionsBlockingEnd;
+        ++i) {
+      const uint blockedConnectionIdx = connectionsBlocking.at(i);
+      const Connection & blockedConnection = connections.at(blockedConnectionIdx);
+      if (blockedConnection.connectionsBlockingStart == blockedConnection.connectionsBlockingEnd)
+        continue;
 
-  std::cout << "\ntrafficLightSchedules" << std::endl;
-  for (const auto & i : trafficLightSchedules) {
-    std::cout
-      << "vertexIdx: " << i.vertexIdx << " "
-      << "connectionIdx: " << i.connectionIdx << " "
-      << "scheduleGroup: " << i.scheduleGroup << " "
-      << "scheduledTime: " << i.scheduledTime << std::endl;
-  }
-
-  std::cout << "\nintersections" << std::endl;
-  for (const auto & i : updatedIntersections) {
-    std::cout
-      << "connectionGraphStart: " << i.connectionGraphStart << " "
-      << "connectionGraphEnd: " << i.connectionGraphEnd << " "
-      << "trafficLightSchedulesStart: " << i.trafficLightSchedulesStart << " "
-      << "trafficLightSchedulesEnd: " << i.trafficLightSchedulesEnd << " "
-      << "scheduleIdx: " << i.scheduleIdx << " "
-      << "currentScheduleGroup: " << i.currentScheduleGroup << " "
-      << "timeOfNextUpdate: " << i.timeOfNextUpdate << std::endl;
-  }
-
-  std::cout << "\nconnections" << std::endl;
-  for (const auto & i : connections) {
-    std::cout
-      << "inLaneNumber: " << i.inLaneNumber << " "
-      << "outLaneNumber: " << i.outLaneNumber << " "
-      << "enabled: " << i.enabled << " "
-      << "vertexNumber: " << i.vertexNumber << " "
-      << "inEdgeNumber: " << i.inEdgeNumber << " "
-      << "outEdgeNumber: " << i.outEdgeNumber << std::endl;
+      bool found = false;
+      for (
+          uint j = blockedConnection.connectionsBlockingStart;
+          !found && j < blockedConnection.connectionsBlockingEnd;
+          ++j) {
+        const uint secondBlockedConnectionIdx = connectionsBlocking.at(j);
+        found = secondBlockedConnectionIdx == idx;
+      }
+      assert(found && "Blocked connections should be symmetric.");
+    }
   }
 
   // Instantiate lane map

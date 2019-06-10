@@ -77,6 +77,7 @@ uchar *trafficLights_d;
 float* accSpeedPerLinePerTimeInterval_d;
 float* numVehPerLinePerTimeInterval_d;
 
+uint* deviceInLanesIndexes;
 LC::Connection *deviceConnections;
 size_t amountOfConnections;
 uint *deviceConnectionsBlocking;
@@ -100,7 +101,14 @@ void b18InitCUDA(
     const std::vector<LC::Connection> & hostConnections,
     const std::vector<uint> & hostConnectionsBlocking,
     const std::vector<LC::Intersection> & hostIntersections,
-    const std::vector<LC::TrafficLightScheduleEntry> &hostTrafficLightSchedules) {
+    const std::vector<LC::TrafficLightScheduleEntry> & hostTrafficLightSchedules,
+    const std::vector<uint> & hostInLanesIndexes) {
+
+  { // In lanes indexes
+    size_t size = hostInLanesIndexes.size() * sizeof(uint);
+    if (fistInitialization) gpuErrchk(cudaMalloc((void **) &deviceInLanesIndexes, size));   // Allocate array on device
+    gpuErrchk(cudaMemcpy(deviceInLanesIndexes, hostInLanesIndexes.data(), size, cudaMemcpyHostToDevice));
+  }
 
   { // Connections
     amountOfConnections = hostConnections.size();
@@ -177,6 +185,7 @@ void b18InitCUDA(
 
 void b18FinishCUDA(void){
   cudaFree(deviceConnections);
+  cudaFree(deviceInLanesIndexes);
   cudaFree(deviceConnectionsBlocking);
   cudaFree(deviceIntersections);
   cudaFree(deviceTrafficLightSchedules);
@@ -522,7 +531,7 @@ __global__ void kernel_updatePersonsCars(
       // We will start to search from the middle of the starting road
       const ushort initShift = static_cast<ushort>(0.5f * startingRoadAmountOfCells);
       bool placed = false;
-      ushort amountOfEmptySells = 0;
+      ushort amountOfEmptyCells = 0;
       for (
           ushort position = initShift;
           position < startingRoadAmountOfCells && !placed;
@@ -532,13 +541,13 @@ __global__ void kernel_updatePersonsCars(
         const uchar laneChar = laneMap[posToSample];
         if (laneChar != 0xFF) {
           // If the cell is not empty reset the empty-cells counter
-          amountOfEmptySells = 0;
+          amountOfEmptyCells = 0;
           continue;
         }
 
         // Keep advancing until enough empty cells have been found
-        amountOfEmptySells++;
-        if (amountOfEmptySells < requiredAmountOfEmptyCells) { continue; }
+        amountOfEmptyCells++;
+        if (amountOfEmptyCells < requiredAmountOfEmptyCells) { continue; }
 
         // If we get to this point we can place the car
         trafficPersonVec[p].numOfLaneInEdge = numberOfRightLane;
@@ -589,11 +598,6 @@ __global__ void kernel_updatePersonsCars(
     const ushort currentPositionInLane = static_cast<ushort>(floor(trafficPersonVec[p].posInLaneM));
     const ushort currentLaneMaximumPosition = ceil(trafficPersonVec[p].length - intersectionClearance);
 
-    printf(
-      "\n[@%f] Car's next vertex: %d\n",
-      currentTime,
-      edgesData[currentEdge].targetVertexIndex);
-
     bool nextVehicleIsATrafficLight = false;
     int remainingCellsToCheck = max(30.0f, trafficPersonVec[p].v * DELTA_TIME * 2);
 
@@ -633,7 +637,6 @@ __global__ void kernel_updatePersonsCars(
         && remainingCellsToCheck > 0
         && nextEdge != -1) {
       const int dstVertexNumber = edgesData[currentEdge].targetVertexIndex;
-      printf("[@%f] Checking %d-th intersection's connections\n", currentTime, dstVertexNumber);
       const ushort currentLaneNumber = currentEdge + trafficPersonVec[p].numOfLaneInEdge;
 
       // Check if a least one connection is enabled between the current edge and the following one
@@ -647,21 +650,12 @@ __global__ void kernel_updatePersonsCars(
           && connection.outEdgeNumber == nextEdge;
         if (!isRelevant) continue;
 
-        printf("[@%f] Checking %d-th connection", currentTime, connectionIdx);
         if (connection.enabled) {
           atLeastOneEnabledConnection = true;
           nextEdgeChosenLane = connection.outLaneNumber - connection.outEdgeNumber;
-          printf(" -> found\n");
           break;
         }
-        printf(" -> not found\n");
       }
-
-      printf(
-        "[@%f] oneConnection? %d, nextEdgeLane? %d\n",
-        currentTime,
-        atLeastOneEnabledConnection,
-        nextEdgeChosenLane);
 
       // If no connection to the needed edge is enabled, then that intersection will be treated as
       // an obstacle
@@ -671,12 +665,6 @@ __global__ void kernel_updatePersonsCars(
         nextVehicleIsATrafficLight = true;
         obstacleFound = true;
       }
-      printf(
-        "[@%f] Intersection blocks path? %d (%f, %f)\n",
-        currentTime,
-        obstacleFound,
-        distanceUntilObstacle,
-        speedDifferenceWithNextObstacle);
     }
 
     // If we still need it, check if there is an obstacle in next edge's chosen lane
@@ -1035,75 +1023,240 @@ __global__ void kernel_updatePersonsCars(
   }
 }
 
-__global__ void kernel_updateIntersectionConnections(
+__device__ void updateTrafficLight(
+    const int intersectionIdx,
     float currentTime,
     LC::Intersection *intersections,
-    size_t amountOfIntersections,
     LC::Connection *connections,
     uint *connectionsBlocking,
     LC::TrafficLightScheduleEntry *trafficLightSchedules) {
-  const int intersectionIdx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (intersectionIdx < amountOfIntersections) {
-    // NOTE(ffigari): The current implementation assumes every intersection is a traffic light
-    LC::Intersection & intersection = intersections[intersectionIdx];
-    for (
-        uint connectionIdx = intersection.connectionGraphStart;
-        connectionIdx < intersection.connectionGraphEnd;
-        connectionIdx++) {
-      const LC::Connection & connection = connections[connectionIdx];
-      printf("[%d] %d-th connection blocks: ", intersectionIdx, connectionIdx);
-      for (
-          uint blockedConnectionIdx = connectionsBlocking[connection.connectionsBlockingStart];
-          blockedConnectionIdx < connectionsBlocking[connection.connectionsBlockingEnd];
-          blockedConnectionIdx++) {
-        printf(" %d;", blockedConnectionIdx);
-      }
-      printf("\n");
+  LC::Intersection & intersection = intersections[intersectionIdx];
+  const bool hasSchedule =
+    intersection.trafficLightSchedulesEnd - intersection.trafficLightSchedulesStart > 0;
+  if (!hasSchedule)
+    return;
+
+  // First disable all intersection's connections
+  for (
+      uint connectionIdx = intersection.connectionGraphStart;
+      connectionIdx < intersection.connectionGraphEnd;
+      ++connectionIdx) {
+    connections[connectionIdx].enabled = false;
+  }
+
+  // Then enables the connections corresponding to the current schedule position
+  const uint startingScheduleGroup = intersection.currentScheduleGroup;
+  int count = 0;
+  do {
+    count++;
+    const LC::TrafficLightScheduleEntry & scheduleEntry =
+      trafficLightSchedules[intersection.scheduleIdx];
+
+    assert(
+      startingScheduleGroup == scheduleEntry.scheduleGroup
+      && "Incoherent traffic schedules info");
+
+    connections[scheduleEntry.connectionIdx].enabled = true;
+
+    ++intersection.scheduleIdx;
+  } while (
+      intersection.scheduleIdx < intersection.trafficLightSchedulesEnd
+      && trafficLightSchedules[intersection.scheduleIdx].scheduleGroup == startingScheduleGroup);
+
+  // Update indexes
+  if (intersection.scheduleIdx < intersection.trafficLightSchedulesEnd) {
+    ++intersection.currentScheduleGroup;
+  } else {
+    intersection.currentScheduleGroup = 0;
+    intersection.scheduleIdx = intersection.trafficLightSchedulesStart;
+  }
+
+  // Update next event
+  intersection.timeOfNextUpdate =
+    currentTime + trafficLightSchedules[intersection.scheduleIdx].scheduledTime;
+}
+
+__device__ float inLaneScore(
+    const uint laneIdx,
+    const LC::Intersection & intersection,
+    const LC::Connection * connections,
+    const LC::B18EdgeData * edgesData,
+    const uint mapToReadShift,
+    const uchar * laneMap) {
+  const size_t maxDistanceToCheck = 30;
+  uint correspondingEdgeIdx = -1;
+  for (
+      uint connectionIdx = intersection.connectionGraphStart;
+      connectionIdx < intersection.connectionGraphEnd;
+      ++connectionIdx) {
+    if (connections[connectionIdx].inLaneNumber == laneIdx) {
+      correspondingEdgeIdx = connections[connectionIdx].inEdgeNumber;
+      break;
     }
+  }
+  assert(correspondingEdgeIdx != -1);
+  const ushort laneMaximumPosition =
+    ceil(edgesData[correspondingEdgeIdx].length - intersectionClearance);
 
-    const bool hasSchedule =
-      intersection.trafficLightSchedulesEnd - intersection.trafficLightSchedulesStart > 0;
-    const bool needsUpdate = currentTime >= intersection.timeOfNextUpdate;
-    if (!needsUpdate || !hasSchedule) { return; }
+  // Find the closest car in the lane
+  int currentDistance = 0;
+  int currentPosition = laneMaximumPosition;
+  while (currentDistance < maxDistanceToCheck && currentPosition > 0) {
+    size_t posToSample = mapToReadShift + kMaxMapWidthM * laneIdx + currentPosition;
+    const uchar laneChar = laneMap[posToSample];
+    if (laneChar != 0xFF) {
+      // A car was found in the lane
+      break;
+    }
+    --currentPosition;
+    ++currentDistance;
+  }
+  float score = currentDistance;
+  return score;
+}
 
-    // First disable all intersection's connections
+/*
+ * Sort the corresponding chunk of the entering lanes indexes using insertion sort and using the
+ * in lanes scores.
+ */
+__device__ void sortByInLaneScore(
+    float currentTime,
+    uint * inLanesIndexes,
+    const LC::Intersection & intersection,
+    const uchar *laneMap,
+    const LC::Connection * connections,
+    const LC::B18EdgeData * edgesData,
+    uint mapToReadShift) {
+  const auto score = [&] (const uint laneIdx) {
+    return inLaneScore(laneIdx, intersection, connections, edgesData, mapToReadShift, laneMap);
+  };
+
+  const uint from = intersection.inLanesIndexesStart;
+  const uint to = intersection.inLanesIndexesEnd;
+
+  uint mainIdx, secondIdx, tmpValue;
+  mainIdx = from + 1;
+  while (mainIdx < to) {
+    secondIdx = mainIdx;
+    while (
+        secondIdx > 0
+        && score(inLanesIndexes[secondIdx - 1]) > score(inLanesIndexes[secondIdx])) {
+      tmpValue = inLanesIndexes[secondIdx];
+      inLanesIndexes[secondIdx] = inLanesIndexes[secondIdx - 1];
+      inLanesIndexes[secondIdx - 1] = tmpValue;
+      --secondIdx;
+    }
+    ++mainIdx;
+  }
+}
+
+__device__ void updateUnsupervised(
+    const int intersectionIdx,
+    float currentTime,
+    uint mapToReadShift,
+    const uchar *laneMap,
+    LC::Intersection *intersections,
+    LC::Connection *connections,
+    LC::B18EdgeData *edgesData,
+    uint *connectionsBlocking,
+    uint *inLanesIndexes) {
+  LC::Intersection & intersection = intersections[intersectionIdx];
+
+  sortByInLaneScore(
+    currentTime,
+    inLanesIndexes,
+    intersection,
+    laneMap,
+    connections,
+    edgesData,
+    mapToReadShift
+  );
+
+  // Enable the intersection's connections
+  for (
+      uint connectionIdx = intersection.connectionGraphStart;
+      connectionIdx < intersection.connectionGraphEnd;
+      ++connectionIdx) {
+    connections[connectionIdx].enabled = true;
+  }
+
+  for (
+      uint inLaneIdx = intersection.inLanesIndexesStart;
+      inLaneIdx < intersection.inLanesIndexesEnd;
+      ++inLaneIdx) {
+    uint targetLane = inLanesIndexes[inLaneIdx];
+    // For each entering lane...
     for (
         uint connectionIdx = intersection.connectionGraphStart;
         connectionIdx < intersection.connectionGraphEnd;
         ++connectionIdx) {
-      connections[connectionIdx].enabled = false;
+      // ..for each connection starting from that lane...
+      const LC::Connection & connection = connections[connectionIdx];
+      if (connection.inLaneNumber != targetLane)
+        continue;
+
+      if (!connection.enabled)
+        continue;
+
+      // ..keep it enabled and disable the corresponding blocked connections
+      for (
+          uint i = connection.connectionsBlockingStart;
+          i < connection.connectionsBlockingEnd;
+          ++i) {
+        const uint blockedConnectionIdx = connectionsBlocking[i];
+        assert(connectionIdx != blockedConnectionIdx);
+        connections[blockedConnectionIdx].enabled = false;
+      }
     }
+  }
 
-    // Then enables the connections corresponding to the current schedule position
-    const uint startingScheduleGroup = intersection.currentScheduleGroup;
-    int count = 0;
-    do {
-      count++;
-      const LC::TrafficLightScheduleEntry & scheduleEntry =
-        trafficLightSchedules[intersection.scheduleIdx];
+  // Update every 6 seconds
+  intersection.timeOfNextUpdate = currentTime + 6;
+}
 
-      assert(
-        startingScheduleGroup == scheduleEntry.scheduleGroup
-        && "Incoherent traffic schedules info");
+__global__ void kernel_updateIntersectionConnections(
+    float currentTime,
+    uint mapToReadShift,
+    LC::Intersection *intersections,
+    size_t amountOfIntersections,
+    LC::Connection *connections,
+    uint *connectionsBlocking,
+    LC::TrafficLightScheduleEntry *trafficLightSchedules,
+    uint *inLanesIndexes,
+    LC::B18EdgeData * edgesData,
+    const uchar *laneMap) {
+  const int intersectionIdx = blockIdx.x * blockDim.x + threadIdx.x;
+  if (intersectionIdx < amountOfIntersections) {
+    LC::Intersection & intersection = intersections[intersectionIdx];
 
-      connections[scheduleEntry.connectionIdx].enabled = true;
+    const int amountOfConnections =
+      intersection.connectionGraphEnd - intersection.connectionGraphStart;
+    const bool hasConnections = amountOfConnections > 0;
+    const bool needsUpdate = currentTime >= intersection.timeOfNextUpdate;
 
-      ++intersection.scheduleIdx;
-    } while (
-        intersection.scheduleIdx < intersection.trafficLightSchedulesEnd
-        && trafficLightSchedules[intersection.scheduleIdx].scheduleGroup == startingScheduleGroup);
+    if (!needsUpdate || !hasConnections)
+      return;
 
-    // Update indexes
-    if (intersection.scheduleIdx < intersection.trafficLightSchedulesEnd) {
-      ++intersection.currentScheduleGroup;
-    } else {
-      intersection.currentScheduleGroup = 0;
-      intersection.scheduleIdx = intersection.trafficLightSchedulesStart;
+    const auto type = intersection.intersectionType;
+    if (type == LC::IntersectionType::TrafficLight) {
+      updateTrafficLight(
+          intersectionIdx,
+          currentTime,
+          intersections,
+          connections,
+          trafficLightSchedules);
+    } else if (type == LC::IntersectionType::Unsupervised) {
+      updateUnsupervised(
+          intersectionIdx,
+          currentTime,
+          mapToReadShift,
+          laneMap,
+          intersections,
+          connections,
+          edgesData,
+          connectionsBlocking,
+          inLanesIndexes);
     }
-
-    // Update next event
-    intersection.timeOfNextUpdate =
-      currentTime + trafficLightSchedules[intersection.scheduleIdx].scheduledTime;
   }
 }
 
@@ -1165,11 +1318,15 @@ void b18SimulateTrafficCUDA(const float currentTime, uint numPeople, uint numInt
   // Update intersections.
   kernel_updateIntersectionConnections<<<ceil(numIntersections / 512.0f), 512>>>(
     currentTime,
+    mapToReadShift,
     deviceIntersections,
     amountOfIntersections,
     deviceConnections,
     deviceConnectionsBlocking,
-    deviceTrafficLightSchedules);
+    deviceTrafficLightSchedules,
+    deviceInLanesIndexes,
+    edgesData_d,
+    laneMap_d);
   gpuErrchk(cudaPeekAtLastError());
   gpuErrchk(cudaDeviceSynchronize());
 
