@@ -207,6 +207,13 @@ void B18TrafficLaneMap::createLaneMap(
     edgesData[totalLaneMapChunks].nextInters = boost::target(*ei, inRoadGraph.myRoadGraph_BI);
     edgesData[totalLaneMapChunks].numLines = roadAmountOfLanes;
     edgesData[totalLaneMapChunks].valid = true;
+    // TODO: Load this next value from inputGraph
+    edgesData[totalLaneMapChunks].startsAtHighway = true;
+
+    std::cout
+      << ">> source is motorway? "
+      << (inputGraph[source(*ei, inputGraph)].bType == 1)
+      << std::endl;
 
     edgeDescToLaneMapNum.insert(std::make_pair(*ei, totalLaneMapChunks));
     laneMapNumToEdgeDesc.insert(std::make_pair(totalLaneMapChunks, *ei));
@@ -214,6 +221,8 @@ void B18TrafficLaneMap::createLaneMap(
     totalLaneMapChunks += roadAmountOfLanes * numWidthNeeded;
   }
   edgesData.resize(totalLaneMapChunks);
+
+  assert(false);
 
   auto p = boost::vertices(inputGraph);
   const auto verticesBegin = p.first;
@@ -280,7 +289,7 @@ void B18TrafficLaneMap::createLaneMap(
       connectionsBlocking,
       laneCoordinatesComputer);
 
-    // TODO: How should this be handled?
+    // TODO: Read this from the input graph
     intersection.intersectionType = IntersectionType::Unsupervised;
 
     intersection.inLanesIndexesStart = inLanesIndexes.size();

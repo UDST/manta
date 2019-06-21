@@ -87,7 +87,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
   QString edgeFileName = networkPath + "edges.csv";
   QString odFileName = networkPath + "od_demand.csv";
 
-  std::cerr
+  std::cout
     << "[Log] Using "
     << "\"" << nodesFileName.toUtf8().constData() << "\"" << " as nodes' file, "
     << "\"" << edgeFileName.toUtf8().constData() << "\"" << " as edges' file, "
@@ -127,7 +127,8 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
 
   while (!stream.atEnd()) {
     line = stream.readLine();
-    QStringList fields = line.split(',', QString::SkipEmptyParts);
+    std::cout << line.toUtf8().constData() << std::endl;
+    QStringList fields = line.split(',');
 
     if (indexX >= fields.size() || indexY >= fields.size()) {
       qDebug() << "ERROR line " << line << " --> SKIP";
@@ -141,13 +142,9 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
     osmidToOriginalLoc[osmid] = QVector2D(x, y);
     updateMinMax2(QVector2D(x, y), minBox, maxBox);
 
-    if (indexHigh >= fields.size()) {
-      osmidToBType[osmid] = 0;
-    } else {
-      QString bType = fields[indexHigh];
-      osmidToBType[osmid] = (!bTypeStringTobType.contains(bType)) ? 0 :
-                            bTypeStringTobType[bType];
-    }
+    QString bType = fields[indexHigh];
+    osmidToBType[osmid] = !bTypeStringTobType.contains(bType) ? 0 : bTypeStringTobType[bType];
+    std::cout << osmid << "-th osmid is motorway? " << (osmidToBType[osmid] == 1) << std::endl;
   }
 
   // Update coordenades to East-North-Up coordinates;
@@ -361,7 +358,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
     saveSetToFile(noAvailableNodesDemand, filename);
   }
 
-  std::cerr 
+  std::cout 
     << "Network loaded in " << timer.elapsed() << " milliseconds with "
     << num_vertices(inRoadGraph.myRoadGraph_BI) << " vertices, "
     << num_edges(inRoadGraph.myRoadGraph_BI) << " edges, "

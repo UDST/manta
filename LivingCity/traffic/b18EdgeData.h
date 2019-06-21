@@ -121,7 +121,7 @@ struct B18EdgeData {
   float length;
   float maxSpeedMperSec;
   bool valid = 0;
-  bool startsAtHighway = true;
+  bool startsAtHighway = false;
 };
 
 struct B18IntersectionData {
