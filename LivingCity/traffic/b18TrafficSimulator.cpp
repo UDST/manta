@@ -76,10 +76,11 @@ void B18TrafficSimulator::resetPeopleJobANDintersections() {
 }//
 
 
-void B18TrafficSimulator::createLaneMap() { //
+void B18TrafficSimulator::createLaneMap(
+    const std::map<RoadGraph::roadGraphVertexDesc, uchar> & intersection_types = {}) { //
   b18TrafficLaneMap.createLaneMap(*simRoadGraph, laneMap, edgesData, intersections, trafficLights,
       laneMapNumToEdgeDesc, edgeDescToLaneMapNum, connections, connectionsBlocking,
-      updatedIntersections, trafficLightSchedules, inLanesIndexes);
+      updatedIntersections, trafficLightSchedules, inLanesIndexes, intersection_types);
 }//
 
 void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
@@ -101,8 +102,9 @@ void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
 // GPU
 //////////////////////////////////////////////////
 void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
-    bool useJohnsonRouting) {
-  createLaneMap();
+    bool useJohnsonRouting,
+    const std::map<RoadGraph::roadGraphVertexDesc, uchar> & intersection_types) {
+  createLaneMap(intersection_types);
 
   QTime pathTimer;
   pathTimer.start();

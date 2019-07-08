@@ -31,7 +31,8 @@ void B18CommandLineVersion::runB18Simulation() {
   const int numOfPasses = settings.value("NUM_PASSES", 1).toInt();
 
   ClientGeometry cg;
-  RoadGraphB2018::loadB2018RoadGraph(cg.roadGraph, networkPath);
+  std::map<RoadGraph::roadGraphVertexDesc, uchar> intersection_types;
+  RoadGraphB2018::loadB2018RoadGraph(cg.roadGraph, networkPath, intersection_types);
 
   B18TrafficSimulator b18TrafficSimulator(deltaTime, &cg.roadGraph);
 
@@ -42,7 +43,7 @@ void B18CommandLineVersion::runB18Simulation() {
       numOfPasses, startSimulationH, endSimulationH, useJohnsonRouting);
   } else {
     b18TrafficSimulator.simulateInGPU(
-      numOfPasses, startSimulationH, endSimulationH, useJohnsonRouting);
+      numOfPasses, startSimulationH, endSimulationH, useJohnsonRouting, intersection_types);
   }
 }
 

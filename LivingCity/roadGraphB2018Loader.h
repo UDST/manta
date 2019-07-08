@@ -30,7 +30,10 @@ class RoadGraphB2018 {
   /**
   * Load
   **/
-  static void loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkPath);
+  static void loadB2018RoadGraph(
+      RoadGraph &inRoadGraph,
+      QString networkPath,
+      std::map<RoadGraph::roadGraphVertexDesc, uchar> & intersection_types);
   static std::vector<DemandB2018> demandB2018;
   static int totalNumPeople;
   static QHash<int, uint64_t> indToOsmid;

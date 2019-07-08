@@ -79,7 +79,11 @@ void saveSetToFile(QSet<uint64_t> &set, QString &filename) {
 
 //////////////////////////////////////////////////////////
 
-void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkPath) {
+void RoadGraphB2018::loadB2018RoadGraph(
+    RoadGraph &inRoadGraph,
+    QString networkPath,
+    std::map<RoadGraph::roadGraphVertexDesc, uchar> & intersection_types) {
+  intersection_types.clear();
   inRoadGraph.myRoadGraph.clear();
   inRoadGraph.myRoadGraph_BI.clear();
 
@@ -87,7 +91,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
   QString edgeFileName = networkPath + "edges.csv";
   QString odFileName = networkPath + "od_demand.csv";
 
-  std::cout
+  std::cerr
     << "[Log] Using "
     << "\"" << nodesFileName.toUtf8().constData() << "\"" << " as nodes' file, "
     << "\"" << edgeFileName.toUtf8().constData() << "\"" << " as edges' file, "
@@ -127,7 +131,6 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
 
   while (!stream.atEnd()) {
     line = stream.readLine();
-    std::cout << line.toUtf8().constData() << std::endl;
     QStringList fields = line.split(',');
 
     if (indexX >= fields.size() || indexY >= fields.size()) {
@@ -144,7 +147,6 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
 
     QString bType = fields[indexHigh];
     osmidToBType[osmid] = !bTypeStringTobType.contains(bType) ? 0 : bTypeStringTobType[bType];
-    std::cout << osmid << "-th osmid is motorway? " << (osmidToBType[osmid] == 1) << std::endl;
   }
 
   // Update coordenades to East-North-Up coordinates;
@@ -173,17 +175,33 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
   // ADD NODES
   std::vector<RoadGraph::roadGraphVertexDesc> vertex;
   std::vector<RoadGraph::roadGraphVertexDesc> vertex_SIM;
-  vertex.resize(osmidToVertexLoc.size());
-  vertex_SIM.resize(osmidToVertexLoc.size());
+  //vertex.resize(osmidToVertexLoc.size());
+  //vertex_SIM.resize(osmidToVertexLoc.size());
 
   int index = 0;
   QHash<uint64_t, int> dynIndToInd;
-  
-  for (i = osmidToVertexLoc.begin(); i != osmidToVertexLoc.end(); ++i) {
-    uint64_t ind = i.key();
 
-    float x = osmidToVertexLoc[ind].x();
-    float y = osmidToVertexLoc[ind].y();
+  // Create vertices
+  for (i = osmidToVertexLoc.begin(); i != osmidToVertexLoc.end(); ++i) {
+    const uint64_t ind = i.key();
+
+    const auto new_bi_vertex_descriptor = boost::add_vertex(inRoadGraph.myRoadGraph_BI);
+    vertex.push_back(new_bi_vertex_descriptor);
+    const auto new_vertex_descriptor = boost::add_vertex(inRoadGraph.myRoadGraph);
+    vertex_SIM.push_back(new_vertex_descriptor);
+
+    dynIndToInd[ind] = index;
+    indToOsmid[index] = ind;
+    index++;
+  }
+
+  // Load data into vertices
+  for (i = osmidToVertexLoc.begin(); i != osmidToVertexLoc.end(); ++i) {
+    const uint64_t ind = i.key();
+    const auto index = dynIndToInd[ind];
+
+    const float x = osmidToVertexLoc[ind].x();
+    const float y = osmidToVertexLoc[ind].y();
 
     uchar bType = osmidToBType[ind];
 
@@ -193,24 +211,15 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
     pos += centerAfterSc;
     pos.setX(pos.x() * -1.0f); // seems vertically rotated
 
-    vertex[index] = boost::add_vertex(inRoadGraph.myRoadGraph_BI);
-    std::cout
-      << "read osmid value: " << ind
-      << " <-> stored vertex number: " << vertex[index] << std::endl;
+    const auto bi_vertex_descriptor = vertex[index];
+    intersection_types.emplace(bi_vertex_descriptor, bType);
+    inRoadGraph.myRoadGraph_BI[bi_vertex_descriptor].x = osmidToOriginalLoc[ind].x();
+    inRoadGraph.myRoadGraph_BI[bi_vertex_descriptor].y = osmidToOriginalLoc[ind].y();
+    inRoadGraph.myRoadGraph_BI[bi_vertex_descriptor].pt = pos;
 
-    inRoadGraph.myRoadGraph_BI[vertex[index]].x = osmidToOriginalLoc[ind].x();
-    inRoadGraph.myRoadGraph_BI[vertex[index]].y = osmidToOriginalLoc[ind].y();
-
-    inRoadGraph.myRoadGraph_BI[vertex[index]].pt = pos;
-    inRoadGraph.myRoadGraph_BI[vertex[index]].bType = bType;
-
-    vertex_SIM[index] = boost::add_vertex(inRoadGraph.myRoadGraph);
-    inRoadGraph.myRoadGraph[vertex_SIM[index]].pt = pos;
-    inRoadGraph.myRoadGraph[vertex_SIM[index]].bType = bType;
-
-    dynIndToInd[ind] = index;
-    indToOsmid[index] = ind;
-    index++;
+    const auto vertex_descriptor = vertex_SIM[index];
+    inRoadGraph.myRoadGraph[vertex_descriptor].pt = pos;
+    inRoadGraph.myRoadGraph[vertex_descriptor].bType = bType;
   }
 
   ///////////////////////////////
@@ -358,13 +367,12 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
     saveSetToFile(noAvailableNodesDemand, filename);
   }
 
-  std::cout 
+  std::cerr
     << "Network loaded in " << timer.elapsed() << " milliseconds with "
     << num_vertices(inRoadGraph.myRoadGraph_BI) << " vertices, "
     << num_edges(inRoadGraph.myRoadGraph_BI) << " edges, "
     << demandB2018.size() <<  " pairs of demand and "
     << totalNumPeople << " people in total." << std::endl;
-
 }
 
 

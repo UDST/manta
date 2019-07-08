@@ -68,7 +68,8 @@ class B18TrafficSimulator {
   void simulateInCPU(float startTimeH, float endTimeH);
 
   void simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
-                     bool useJohnsonRouting);
+                     bool useJohnsonRouting,
+    const std::map<RoadGraph::roadGraphVertexDesc, uchar> & intersection_types);
 
   // Lanes
   std::vector<uchar> laneMap;
@@ -80,7 +81,8 @@ class B18TrafficSimulator {
   std::vector<LC::Intersection> updatedIntersections;
   std::vector<TrafficLightScheduleEntry> trafficLightSchedules;
   std::vector<uint> inLanesIndexes;
-  void createLaneMap();
+  void createLaneMap(
+      const std::map<RoadGraph::roadGraphVertexDesc, uchar> & intersection_types);
 
   // car path
   void generateCarPaths(bool useJohnsonRouting);

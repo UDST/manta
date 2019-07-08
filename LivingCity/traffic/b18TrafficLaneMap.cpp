@@ -176,7 +176,8 @@ void B18TrafficLaneMap::createLaneMap(
     std::vector<uint> &connectionsBlocking,
     std::vector<LC::Intersection> &updatedIntersections,
     std::vector<TrafficLightScheduleEntry> &trafficLightSchedules,
-    std::vector<uint> & inLanesIndexes) {
+    std::vector<uint> & inLanesIndexes,
+    const std::map<RoadGraph::roadGraphVertexDesc, uchar> & intersection_types) {
   edgesData.resize(boost::num_edges(inRoadGraph.myRoadGraph_BI) * 4);  //4 to make sure it fits
 
   edgeDescToLaneMapNum.clear();
@@ -193,6 +194,9 @@ void B18TrafficLaneMap::createLaneMap(
   updatedIntersections.resize(boost::num_vertices(inputGraph));
 
   int totalLaneMapChunks = 0;
+  for (const auto & [k, v] : intersection_types) {
+    std::cerr << k << " -> " << v << std::endl;
+  }
   for (boost::tie(ei, ei_end) = boost::edges(inRoadGraph.myRoadGraph_BI); ei != ei_end; ++ei) {
     const int roadAmountOfLanes = inRoadGraph.myRoadGraph_BI[*ei].numberOfLanes;
     if (roadAmountOfLanes == 0) { continue; }
@@ -207,13 +211,8 @@ void B18TrafficLaneMap::createLaneMap(
     edgesData[totalLaneMapChunks].nextInters = boost::target(*ei, inRoadGraph.myRoadGraph_BI);
     edgesData[totalLaneMapChunks].numLines = roadAmountOfLanes;
     edgesData[totalLaneMapChunks].valid = true;
-    // TODO: Load this next value from inputGraph
-    edgesData[totalLaneMapChunks].startsAtHighway = true;
-
-    std::cout
-      << ">> source is motorway? "
-      << (inputGraph[source(*ei, inputGraph)].bType == 1)
-      << std::endl;
+    edgesData[totalLaneMapChunks].startsAtHighway =
+      intersection_types.at(source(*ei, inputGraph)) == 1;
 
     edgeDescToLaneMapNum.insert(std::make_pair(*ei, totalLaneMapChunks));
     laneMapNumToEdgeDesc.insert(std::make_pair(totalLaneMapChunks, *ei));
