@@ -537,7 +537,7 @@ void B18TrafficOD::loadB18TrafficPeopleSP(
     }
   }
   printf("traffic_person vec size = %d\n", trafficPersonVec.size());
-
+  /*
   if (totalNumPeople > numPeople) {
     std::cerr << "Current amount: " << numPeople << std::endl;
     std::cerr << "Total amount: " << totalNumPeople << std::endl;
@@ -562,6 +562,7 @@ void B18TrafficOD::loadB18TrafficPeopleSP(
                    goToWorkH);
     }
   }
+  */
 
   if (totalNumPeople != numPeople) {
     printf("ERROR: generateB2018TrafficPeople totalNumPeople != numPeople, this should not happen.");

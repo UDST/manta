@@ -28,7 +28,7 @@ class Graph {
   //! Edge {{v1, v2}, weight}
   using Edge =
       //std::pair<std::pair<graph::vertex_t, graph::vertex_t>, graph::weight_t>;
-      std::pair<std::pair<graph::vertex_t, graph::vertex_t>, std::vector<double>>;
+      std::pair<std::pair<graph::vertex_t, graph::vertex_t>, std::vector<float>>;
       //std::pair<std::pair<std::pair<std::pair<graph::vertex_t, graph::vertex_t>, graph::weight_t>, int lanes>, int speed_mph>;
 
   //! Construct directed / undirected graph
@@ -48,7 +48,7 @@ class Graph {
   //! \param[in] edge_id ID of edge
   //void add_edge(graph::vertex_t vertex1, graph::vertex_t vertex2,
   //              graph::weight_t weight, graph::vertex_t edgeid, int lanes, int speed_mph);
-  void add_edge(graph::vertex_t vertex1, graph::vertex_t vertex2, std::vector<double> edge_vals, graph::vertex_t edgeid);
+  void add_edge(graph::vertex_t vertex1, graph::vertex_t vertex2, std::vector<float> edge_vals, graph::vertex_t edgeid);
   //! Update edge of a graph
   //! \param[in] vertex1 ID of vertex1
   //! \param[in] vertex2 ID of vertex2
@@ -113,7 +113,7 @@ class Graph {
   //! \retval cost Cost of traversed path
   abm::graph::weight_t path_cost(const std::vector<graph::vertex_t>& path);
 
- private:
+// private:
   //! Assign number of vertices
   //! \param[in] nvertices Number of vertices in graph
   void assign_nvertices(unsigned nvertices) { this->nvertices_ = nvertices; }

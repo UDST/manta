@@ -3,7 +3,7 @@
 // Add edge
 inline void abm::Graph::add_edge(
     abm::graph::vertex_t vertex1, abm::graph::vertex_t vertex2,
-    std::vector<double> edge_vals, abm::graph::vertex_t edgeid = std::numeric_limits<abm::graph::vertex_t>::max()) {
+    std::vector<float> edge_vals, abm::graph::vertex_t edgeid = std::numeric_limits<abm::graph::vertex_t>::max()) {
 	abm::graph::weight_t weight = edge_vals[0];
 	/*
     abm::graph::weight_t weight = 1,
@@ -24,6 +24,7 @@ inline void abm::Graph::add_edge(
       //std::make_pair(std::make_pair(std::make_pair(std::make_pair(vertex1, vertex2), weight), lanes), speed_mph));
       std::make_pair(std::make_pair(vertex1, vertex2), edge_vals));
   //printf("edge vertex 1 = %lld, vertex 2 = %lld, weight = %f\n", edge->first.first, edge->first.second, edge->second);
+	//std::cout << "weight = " << edge->second[0] << "lane_num = " << edge->second[1] << "speed = " << edge->second[2] << "\n";
   edges_[std::make_tuple(vertex1, vertex2)] = edge;
 
   // Add edge id
@@ -61,6 +62,7 @@ void abm::Graph::update_edge(abm::graph::vertex_t vertex1,
   auto edge = edges_.at(std::make_tuple(vertex1, vertex2));
   // Update edge weight
   edge->second[0] = weight;
+  //std::cout << "weight = " << std::get<1>(x) << "\n";
 }
 
 // Remove edge
@@ -134,15 +136,24 @@ bool abm::Graph::read_graph_osm(const std::string& filename) {
   try {
     csvio::CSVReader<6> in(filename);
     //in.read_header(csvio::ignore_extra_column, "uniqueid", "u", "v", "length");
-    in.read_header(csvio::ignore_extra_column, "uniqueid", "u", "v", "length", "lanes", "speed_mph");
+    //in.read_header(csvio::ignore_extra_column, "uniqueid", "u", "v", "length", "lanes", "speed_mph");
+    in.read_header(csvio::ignore_no_column, "uniqueid", "u", "v", "length", "lanes", "speed_mph");
     abm::graph::vertex_t edgeid, v1, v2;
     //abm::graph::weight_t weight;
-    //int lanes;
-    //int speed_mph;
-    std::vector<double> edge_vals(3);
+    std::vector<float> edge_vals(3);
     abm::graph::vertex_t nvertices = 0;
+    float length, lanes, speed_mph;
+    //int lanes, speed_mph;
     //while (in.read_row(edgeid, v1, v2, weight, lanes, speed_mph)) {
-    while (in.read_row(edgeid, v1, v2, edge_vals[0], edge_vals[1], edge_vals[2])) {
+    //while (in.read_row(edgeid, v1, v2, edge_vals[0], edge_vals[1], edge_vals[2])) {
+    while (in.read_row(edgeid, v1, v2, length, lanes, speed_mph)) {
+	    //printf("weight = %f, lanes = %f, speed_mph = %f\n", length, lanes, speed_mph);
+	    edge_vals[0] = length;
+	    edge_vals[1] = lanes;
+	    edge_vals[2] = speed_mph;
+	    //printf("weight = %f, lanes = %f, speed_mph = %f\n", edge_vals[0], edge_vals[1], edge_vals[2]);
+	    //printf("v1 = %lu v2 = %lu\n", v1, v2);
+	    //printf("id = %lu\n", edgeid);
 	    //this->add_edge(v1, v2, weight, edgeid, lanes, speed_mph);
 	    this->add_edge(v1, v2, edge_vals);
       ++nvertices;
