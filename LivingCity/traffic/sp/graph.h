@@ -132,6 +132,12 @@ class Graph {
   // adjacency list with iteration over each edge
   tsl::robin_map<graph::vertex_t, std::vector<std::shared_ptr<Edge>>>
       vertex_edges_;
+
+  tsl::robin_map<graph::vertex_t, std::vector<std::shared_ptr<Edge>>>
+      vertex_in_edges_;
+
+  tsl::robin_map<graph::vertex_t, std::vector<std::shared_ptr<Edge>>>
+      vertex_out_edges_;
   // Vertices and counts
   tsl::robin_map<graph::vertex_t, graph::vertex_t> vertices_;
   // Global edges

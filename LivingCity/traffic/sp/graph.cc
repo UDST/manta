@@ -44,13 +44,33 @@ inline void abm::Graph::add_edge(
   vertex1_edges.emplace_back(edge);
   vertex_edges_[vertex1] =
       std::vector<std::shared_ptr<Graph::Edge>>(vertex1_edges);
-
+  //out edges vertex 1
+  auto vertex1_out_edges = vertex_out_edges_[vertex1];
+  vertex1_out_edges.emplace_back(edge);
+  vertex_out_edges_[vertex1] =
+      std::vector<std::shared_ptr<Graph::Edge>>(vertex1_out_edges);
+  //in edges vertex 2
+  auto vertex2_in_edges = vertex_in_edges_[vertex2];
+  vertex2_in_edges.emplace_back(edge);
+  vertex_in_edges_[vertex2] =
+      std::vector<std::shared_ptr<Graph::Edge>>(vertex2_in_edges);
   if (!this->directed_) {
     // Vertex 2
     auto vertex2_edges = vertex_edges_[vertex2];
     vertex2_edges.emplace_back(edge);
     vertex_edges_[vertex2] =
         std::vector<std::shared_ptr<Graph::Edge>>(vertex2_edges);
+
+  //out edges vertex 2
+  auto vertex2_out_edges = vertex_out_edges_[vertex2];
+  vertex2_out_edges.emplace_back(edge);
+  vertex_out_edges_[vertex2] =
+      std::vector<std::shared_ptr<Graph::Edge>>(vertex2_out_edges);
+  //in edges vertex 1
+  auto vertex1_in_edges = vertex_in_edges_[vertex1];
+  vertex1_in_edges.emplace_back(edge);
+  vertex_in_edges_[vertex1] =
+      std::vector<std::shared_ptr<Graph::Edge>>(vertex1_in_edges);
   }
 }
 

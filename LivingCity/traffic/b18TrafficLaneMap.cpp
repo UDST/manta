@@ -36,7 +36,7 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
       std::vector<uchar> &trafficLights, std::map<uint,
       RoadGraph::roadGraphEdgeDesc_BI> &laneMapNumToEdgeDesc,
       std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> &edgeDescToLaneMapNum) {
-  
+  	printf("edgesData size = %d\n", edgesData.size());
 	/* FOR DATA ACCESS SANITY
 	for (auto const& x : graph_->edges_) {
 		//std::cout << "vertex = " << std::get<1>(std::get<0>(x)) << "\n"; //gets the second vertex value of edge
@@ -55,6 +55,8 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
   int tNumMapWidth = 0;
   int tNumLanes = 0;
   
+  edgesData.resize(graph_->nedges() * 4); //4 to make sure it fits
+  
   edgeDescToLaneMapNum.clear();
   laneMapNumToEdgeDesc.clear();
 
@@ -63,31 +65,26 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
   int numBins = 31 / binLength;//maxlength is 26km
   std::vector<int> bins(numBins, 0);
   for (auto const& x : graph_->edges_) {
-  //for (boost::tie(ei, ei_end) = boost::edges(inRoadGraph.myRoadGraph_BI); ei != ei_end; ++ei) {
 	  const float metersLength = std::get<1>(x)->second[0];
 	  const int binN = (metersLength / 1000.0f) / binLength;
 	  assert(0 <= binN && binN < numBins && "Edge over max length");
 	  bins[binN]++;
   }
+  printf("bin size = %d\n", bins.size());
   for (int binN = 0; binN < bins.size(); binN++) {
     printf("%.0fkm, %d\n", (binN * binLength+1.0f), bins[binN]);
   }
-
 
   /////////////////////////////////
   // Create EdgeData
   // Instead of having maxWidth (for b18 would have been 26km), we define a max width for the map and we wrap down.
   float maxLength = 0;
   int maxNumLanes = 0;
-  //for (boost::tie(ei, ei_end) = boost::edges(inRoadGraph.myRoadGraph_BI); ei != ei_end; ++ei) {
   for (auto const& x : graph_->edges_) {
-    //const int numLanes = inRoadGraph.myRoadGraph_BI[*ei].numberOfLanes;
 	  const int numLanes = std::get<1>(x)->second[1];
 
     if (numLanes == 0) { continue; }
 
-    //edgesData[tNumMapWidth].length = inRoadGraph.myRoadGraph_BI[*ei].edgeLength;
-    //edgesData[tNumMapWidth].maxSpeedMperSec = inRoadGraph.myRoadGraph_BI[*ei].maxSpeedMperSec;
     edgesData[tNumMapWidth].length = std::get<1>(x)->second[0];
     edgesData[tNumMapWidth].maxSpeedMperSec = std::get<1>(x)->second[2];
 
@@ -96,14 +93,12 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
 
     const int numWidthNeeded = ceil(edgesData[tNumMapWidth].length / kMaxMapWidthM);
     edgesData[tNumMapWidth].numLines = numLanes;
-		//std::cout << "vertex = " << std::get<1>(std::get<0>(x)) << "\n"; //gets the second vertex value of edge
     edgesData[tNumMapWidth].nextInters = std::get<1>(std::get<0>(x));
-    //edgesData[tNumMapWidth].nextInters = boost::target(*ei, inRoadGraph.myRoadGraph_BI);
 
-    //edgeDescToLaneMapNum.insert(std::make_pair(std::get<0>(x), tNumMapWidth));
-    //laneMapNumToEdgeDesc.insert(std::make_pair(tNumMapWidth, std::get<0>(x)));
     //edgeDescToLaneMapNum.insert(std::make_pair(*ei, tNumMapWidth));
     //laneMapNumToEdgeDesc.insert(std::make_pair(tNumMapWidth, *ei));
+    //edgeDescToLaneMapNum.insert(std::make_pair(x, tNumMapWidth)); //TODO(pavan): must see whether we need these two lines
+    //laneMapNumToEdgeDesc.insert(std::make_pair(tNumMapWidth, x));
 
     tNumMapWidth += numLanes * numWidthNeeded;
     tNumLanes += numLanes;
@@ -122,7 +117,7 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
   printf("Total Memory %d\n", kMaxMapWidthM * tNumMapWidth * 2);
   laneMap.resize(kMaxMapWidthM * tNumMapWidth * 2); // 2: to have two maps.
   memset(laneMap.data(), -1, laneMap.size()*sizeof(unsigned char)); //
-/*
+
   //////////////////////////////////////////////////////////
   // GENERATE INTERSECTION INFO
   printf("Start intersection info\n");
@@ -130,26 +125,29 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
   RoadGraph::in_roadGraphEdgeIter_BI Iei, Iei_end;
   RoadGraph::out_roadGraphEdgeIter_BI Oei, Oei_end;
   //intersections.resize(boost::num_vertices(inRoadGraph.myRoadGraph_BI));//as many as vertices
-  intersections.resize(graph->nvertices);//as many as vertices
+  intersections.resize(graph_->nvertices_);//as many as vertices
   trafficLights.assign(tNumMapWidth, 0);
   //trafficLights.resize(tNumMapWidth); // we could use tNumLanes but then the edge number would not match and we would need to add logic.
   //memset(trafficLights.data(), 0, trafficLights.size()*sizeof(uchar));
 
-  //for (boost::tie(vi, viEnd) = boost::vertices(inRoadGraph.myRoadGraph_BI); vi != viEnd; ++vi) {
-  for (const auto& vertex : graph->vertex_edges_) {
-    intersections[*vertex].state = 0;
-    intersections[*vertex].nextEvent = 0.0f;
-    intersections[*vertex].totalInOutEdges = boost::degree(*vi, inRoadGraph.myRoadGraph_BI); //TODO(pavan, krishna): How do we get degree of node?
-    if (intersections[*vertex].totalInOutEdges <= 0) {
+  //for (boost::tie(vi, viEnd) = boost::vertices(inRoadGraph.myRoadGraph_BI); vi != viEnd; ++vi) {}
+  int index = 0;
+  for (const auto& vertex : graph_->vertex_edges_) {
+    intersections[index].state = 0;
+    intersections[index].nextEvent = 0.0f;
+    intersections[index].totalInOutEdges = vertex.second.size();
+    if (intersections[index].totalInOutEdges <= 0) {
       printf("Vertex without in/out edges\n");
       continue;
     }
 
-    if (intersections[*vertex].totalInOutEdges >= 20) {
+  if (intersections[index].totalInOutEdges >= 20) {
       printf("Vertex with more than 20 in/out edges\n");
       continue;
     }
-
+    index++;
+  }
+/*
     //sort by angle
     QVector3D referenceVector(0, 1, 0);
     QVector3D p0, p1;
@@ -158,43 +156,48 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
 
     float angleRef = atan2(referenceVector.y(), referenceVector.x());
 
-    //for (boost::tie(Oei, Oei_end) = boost::out_edges(*vi, inRoadGraph.myRoadGraph_BI);
-        //Oei != Oei_end; ++Oei) {
-    for (auto const& x : graph_->edges_) { //TODO(pavan, krishna): Loop through the out edges of the vertex
-      if (std::get<1>(x)->second[1] == 0) { continue; }
+    for (const auto& edge : graph_->vertex_out_edges_[std::get<0>(vertex)]) {
       //if (inRoadGraph.myRoadGraph_BI[*Oei].numberOfLanes == 0) { continue; }
-      //std::get<1>(std::get<0>(x));
-      p0 = std::get<0>(std::get<0>(x));
-      p1 = std::get<1>(std::get<0>(x));
+      //if (std::get<1>(x)->second[1] == 0) { continue; }
+      if (edge->second[1] == 0) { continue; }
+
       //p0 = inRoadGraph.myRoadGraph_BI[boost::source(*Oei, inRoadGraph.myRoadGraph_BI)].pt;
       //p1 = inRoadGraph.myRoadGraph_BI[boost::target(*Oei, inRoadGraph.myRoadGraph_BI)].pt;
+      //p0 = std::get<0>(std::get<0>(x));
+      //p1 = std::get<1>(std::get<0>(x));
+      p0 = std::get<0>(vertex);
+      p1 = edge->first.second;
       QVector3D edgeDir = (p1 - p0).normalized();
       float angle = angleRef - atan2(edgeDir.y(), edgeDir.x());
-      LC::RoadGraph::roadGraphVertexDesc_BI sV = std::get<0>(std::get<0>(x));
-      LC::RoadGraph::roadGraphVertexDesc_BI tV = std::get<1>(std::get<0>(x));
       //LC::RoadGraph::roadGraphVertexDesc_BI sV=boost::source(*Oei, inRoadGraph.myRoadGraph_BI);
       //LC::RoadGraph::roadGraphVertexDesc_BI tV=boost::target(*Oei, inRoadGraph.myRoadGraph_BI);
+      //LC::RoadGraph::roadGraphVertexDesc_BI sV = std::get<0>(std::get<0>(x));
+      //LC::RoadGraph::roadGraphVertexDesc_BI tV = std::get<1>(std::get<0>(x));
       //std::pair<RoadGraph::roadGraphEdgeDesc,bool> edge_pair =
       //  boost::edge(sV,tV,inRoadGraph.myRoadGraph_BI);
       //edgeAngleOut.push_back(std::make_pair(*Oei, angle));
-      edgeAngleOut.push_back(std::make_pair(x, angle));
+      edgeAngleOut.push_back(std::make_pair(edge, angle));
 
-      if (edgeDescToLaneMapNum.find(x) == edgeDescToLaneMapNum.end()) {
+      if (edgeDescToLaneMapNum.find(edge) == edgeDescToLaneMapNum.end()) {
         printf("->ERROR OUT\n");//edge desc not found in map
       }
 
       numOutEdges++;
       //edgeAngleOut.push_back(std::make_pair(edge_pair.first,angle));
     }
-
-    //printf("Out %d\n",numOutEdges);
+    
+  //printf("Out %d\n",numOutEdges);
     std::vector<std::pair<LC::RoadGraph::roadGraphEdgeDesc_BI, float>> edgeAngleIn;
     //printf("In\n");
     int numInEdges = 0;
 
     //for (boost::tie(Iei, Iei_end) = boost::in_edges(*vi, inRoadGraph.myRoadGraph_BI);
-    //    Iei != Iei_end; ++Iei) {
-    for (auto const& x : graph_->edges_) { //TODO(pavan, krishna): Loop through the in edges of the vertex
+    //    Iei != Iei_end; ++Iei) {}
+    for (const auto& x : graph_->vertex_in_edges_[vertex]) {
+    for (const auto& edge : graph_->vertex_in_edges_[std::get<0>(vertex)]) {
+      //if (inRoadGraph.myRoadGraph_BI[*Oei].numberOfLanes == 0) { continue; }
+      //if (std::get<1>(x)->second[1] == 0) { continue; }
+      if (edge->second[1] == 0) { continue; }
       //if (inRoadGraph.myRoadGraph_BI[*Iei].numberOfLanes == 0) { continue; }
       if (std::get<1>(x)->second[1] == 0) { continue; }
       p0 = std::get<0>(std::get<0>(x));
@@ -216,7 +219,7 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
       //edgeAngleIn.push_back(std::make_pair(edge_pair.first,angle));
     }
 
-    intersections[*vertex].totalInOutEdges = numOutEdges + numInEdges;
+    intersections[index].totalInOutEdges = numOutEdges + numInEdges;
 
     //save in sorterd way as lane number
     if (edgeAngleOut.size() > 0) {
@@ -244,15 +247,15 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
            edgeAngleOut[outCount].second <= edgeAngleIn[inCount].second) ||
           (outCount < edgeAngleOut.size() && inCount >= edgeAngleIn.size())) {
         assert(edgeDescToLaneMapNum[edgeAngleOut[outCount].first] < 0x007fffff && "Edge number is too high");
-        intersections[*vertex].edge[totalCount] = edgeDescToLaneMapNum[edgeAngleOut[outCount].first];
-        intersections[*vertex].edge[totalCount] |= (edgesData[intersections[*vi].edge[totalCount]].numLines << 24); //put the number of lines in each edge
-        intersections[*vertex].edge[totalCount] |= kMaskOutEdge; // 0x000000 mask to define out edge
+        intersections[index].edge[totalCount] = edgeDescToLaneMapNum[edgeAngleOut[outCount].first];
+        intersections[index].edge[totalCount] |= (edgesData[intersections[*vi].edge[totalCount]].numLines << 24); //put the number of lines in each edge
+        intersections[index].edge[totalCount] |= kMaskOutEdge; // 0x000000 mask to define out edge
         outCount++;
       } else {
         assert(edgeDescToLaneMapNum[edgeAngleIn[inCount].first] < 0x007fffff && "Edge number is too high");
-        intersections[*vertex].edge[totalCount] = edgeDescToLaneMapNum[edgeAngleIn[inCount].first];
-        intersections[*vertex].edge[totalCount] |= (edgesData[intersections[*vi].edge[totalCount]].numLines << 24); //put the number of lines in each edge
-        intersections[*vertex].edge[totalCount] |= kMaskInEdge; // 0x800000 mask to define in edge
+        intersections[index].edge[totalCount] = edgeDescToLaneMapNum[edgeAngleIn[inCount].first];
+        intersections[index].edge[totalCount] |= (edgesData[intersections[*vi].edge[totalCount]].numLines << 24); //put the number of lines in each edge
+        intersections[index].edge[totalCount] |= kMaskInEdge; // 0x800000 mask to define in edge
         inCount++;
       }
 
@@ -266,7 +269,6 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
     }
   }
 */
-
 }
 /*
   //////////////////////////////////////////////////////////
