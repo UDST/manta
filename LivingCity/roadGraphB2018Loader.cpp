@@ -6,7 +6,6 @@
 #include <QHash>
 #include <QVector2D>
 #include <stdexcept>
-#include <stdint.h>
 
 #include "Geometry/client_geometry.h"
 #include "bTraffic/bTrafficIntersection.h"
@@ -368,21 +367,29 @@ std::string RoadGraphB2018::loadABMGraph(const std::string& networkPath, const s
         const std::string& edgeFileName = networkPath + "edges.csv";
         std::cout << edgeFileName << " as edges file\n";
 
+        const std::string& nodeFileName = networkPath + "nodes.csv";
+        std::cout << nodeFileName << " as nodes file\n";
+
         const std::string& odFileName = networkPath + "od_demand.csv";
         std::cout << odFileName << " as OD file\n";
-  // EDGES
-  //Create the graph directly from the file (don't deal with the creation of the boost graph first or any associated weights calculations)
   //const bool directed = true;
   //const auto graph = std::make_shared<abm::Graph>(directed);
   auto start = high_resolution_clock::now();
+  //EDGES
+  //Create the graph directly from the file (don't deal with the creation of the boost graph first or any associated weights calculations)
   graph_->read_graph_osm(edgeFileName);
   printf("# of edges: %d\n", graph_->nedges());
-  printf("# of vertices: %u\n", graph_->nvertices());
+  //printf("# of vertices: %u\n", graph_->nvertices());
+  
+  //NODES
+  graph_->read_vertices(nodeFileName);
+  
   auto stop = high_resolution_clock::now();
   auto duration = duration_cast<milliseconds>(stop - start);
   ///////////////////////////////
   return odFileName;
 }
+
 
 
 

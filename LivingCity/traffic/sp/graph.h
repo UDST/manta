@@ -13,6 +13,10 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
+#include <QVector2D>
+#include <QVector3D>
+#include <stdint.h>
+#include <cfloat>
 
 #include "external/csv.h"
 #include "tsl/robin_map.h"
@@ -74,6 +78,11 @@ class Graph {
   //! \retval status File read status
   bool read_graph_osm(const std::string& filename);
 
+  //! Read OSM graph file format
+  //! \param[in] filename Name of input MatrixMarket file
+  //! \retval status File read status
+  bool read_vertices(const std::string& filename);
+
   //! Compute the shortest path using priority queue
   //! \param[in] source ID of source vertex1
   //! \param[in] destination ID of destination vertex
@@ -126,6 +135,8 @@ class Graph {
   graph::vertex_t edgeid_{0};
   // Max id of vertex
   graph::vertex_t max_vertex_id_{std::numeric_limits<graph::vertex_t>::min()};
+  //Vertex data
+  std::map<graph::vertex_t, QVector3D> vertices_data_;
   // Edges
   std::map<std::tuple<graph::vertex_t, graph::vertex_t>, std::shared_ptr<Edge>>
       edges_;

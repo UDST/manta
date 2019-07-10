@@ -179,13 +179,48 @@ bool abm::Graph::read_graph_osm(const std::string& filename) {
       ++nvertices;
     }
     this->assign_nvertices(nvertices);
-    std::cout << "Graph summary #edges: " << this->edges_.size()
-              << " #vertices: " << this->nvertices_ << "\n";
+    std::cout << "Graph summary #edges: " << this->edges_.size() << "\n";
+              //<< " #vertices: " << this->nvertices_ << "\n";
 
   } catch (std::exception& exception) {
     std::cout << "Read OSM file: " << exception.what() << "\n";
     status = false;
   }
+
+  return status;
+}
+
+bool abm::Graph::read_vertices(const std::string& filename) {
+	QVector2D minBox(FLT_MAX, FLT_MAX);
+	QVector2D maxBox(-FLT_MAX, -FLT_MAX);
+	  float scale = 1.0f;
+	  float sqSideSz = std::max<float>(maxBox.x() - minBox.x(),
+				    maxBox.y() - minBox.y()) * scale * 0.5f; // half side
+	  QVector3D centerV(-minBox.x(), -minBox.y(), 0);
+	  QVector3D centerAfterSc(-sqSideSz, -sqSideSz, 0);
+  bool status = true;
+  try {
+    csvio::CSVReader<3> in(filename);
+    in.read_header(csvio::ignore_extra_column, "osmid", "x", "y");
+    abm::graph::vertex_t vertex;
+    float lat, lon;
+    while (in.read_row(vertex, lat, lon)) {
+	  //std::cout << "osmid = " << vertex << "lat = " << lat << "lon = " << lon << "\n";
+	  //convert to QVector3D
+	    QVector3D pos(lat, lon, 0);
+	    pos += centerV;//center
+	    pos *= scale;
+	    pos += centerAfterSc;
+	    pos.setX(pos.x() * -1.0f); // seems vertically rotated
+	    vertices_data_[vertex] = pos;
+    }
+    std::cout << "Graph summary # vertices: " << vertices_data_.size() << "\n";
+
+  } catch (std::exception& exception) {
+    std::cout << "Read OSM file: " << exception.what() << "\n";
+    status = false;
+  }
+
 
   return status;
 }
