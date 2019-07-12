@@ -29,20 +29,29 @@ namespace {
     const std::pair<LC::RoadGraph::roadGraphEdgeDesc_BI, float> &j) {
     return (i.second < j.second);
   }
-	/*
-  bool compareSecondPartTupleC(const std::pair<abm::graph::vertex_t, std::vector<std::shared_ptr<Edge>>, float> &i,
-		  	       const std::pair<abm::graph::vertex_t, std::vector<std::shared_ptr<Edge>>, float> &j) {
+  bool compareSecondPartTupleCNew(const std::pair<std::shared_ptr<abm::Graph::Edge>, float> &i,
+		  	       const std::pair<std::shared_ptr<abm::Graph::Edge>, float> &j) {
     return (i.second < j.second);
   }
 
+	/*
+  bool compareSecondPartTupleCNew(float i,
+    float j) {
+    return (i < j);
+  }
 */
 }
 
 void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph_, std::vector<uchar> &laneMap,
       std::vector<B18EdgeData> &edgesData, std::vector<B18IntersectionData> &intersections,
-      std::vector<uchar> &trafficLights, std::map<uint,
-      RoadGraph::roadGraphEdgeDesc_BI> &laneMapNumToEdgeDesc,
-      std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> &edgeDescToLaneMapNum) {
+      std::vector<uchar> &trafficLights, 
+      //std::map<uint,
+      //RoadGraph::roadGraphEdgeDesc_BI> &laneMapNumToEdgeDesc,
+      //std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> &edgeDescToLaneMapNum) {
+      std::map<uint, std::shared_ptr<abm::Graph::Edge>> &laneMapNumToEdgeDescSP,
+      std::map<std::shared_ptr<abm::Graph::Edge>, uint> &edgeDescToLaneMapNumSP) {
+      //std::tuple<graph::vertex_t, graph::vertex_t>, std::shared_ptr<Edge>> &laneMapNumToEdgeDesc,
+      //std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> &edgeDescToLaneMapNum) {
   	printf("edgesData size = %d\n", edgesData.size());
 	/* FOR DATA ACCESS SANITY
 	for (auto const& x : graph_->edges_) {
@@ -64,8 +73,8 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
   
   edgesData.resize(graph_->nedges() * 4); //4 to make sure it fits
   
-  edgeDescToLaneMapNum.clear();
-  laneMapNumToEdgeDesc.clear();
+  edgeDescToLaneMapNumSP.clear();
+  laneMapNumToEdgeDescSP.clear();
 
   // Check distribution of street length
   float binLength = 1.0f;//1km
@@ -104,8 +113,8 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
 
     //edgeDescToLaneMapNum.insert(std::make_pair(*ei, tNumMapWidth));
     //laneMapNumToEdgeDesc.insert(std::make_pair(tNumMapWidth, *ei));
-    //edgeDescToLaneMapNum.insert(std::make_pair(x, tNumMapWidth)); //TODO(pavan): must see whether we need these two lines
-    //laneMapNumToEdgeDesc.insert(std::make_pair(tNumMapWidth, x));
+    edgeDescToLaneMapNumSP.insert(std::make_pair(std::get<1>(x), tNumMapWidth));
+    laneMapNumToEdgeDescSP.insert(std::make_pair(tNumMapWidth, std::get<1>(x)));
 
     tNumMapWidth += numLanes * numWidthNeeded;
     tNumLanes += numLanes;
@@ -140,15 +149,15 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
   //for (boost::tie(vi, viEnd) = boost::vertices(inRoadGraph.myRoadGraph_BI); vi != viEnd; ++vi) {}
   int index = 0;
   for (const auto& vertex : graph_->vertex_edges_) {
-    intersections[index].state = 0;
-    intersections[index].nextEvent = 0.0f;
-    intersections[index].totalInOutEdges = vertex.second.size();
-    if (intersections[index].totalInOutEdges <= 0) {
+    intersections[std::get<0>(vertex)].state = 0;
+    intersections[std::get<0>(vertex)].nextEvent = 0.0f;
+    intersections[std::get<0>(vertex)].totalInOutEdges = vertex.second.size();
+    if (intersections[std::get<0>(vertex)].totalInOutEdges <= 0) {
       printf("Vertex without in/out edges\n");
       continue;
     }
 
-  if (intersections[index].totalInOutEdges >= 20) {
+  if (intersections[std::get<0>(vertex)].totalInOutEdges >= 20) {
       printf("Vertex with more than 20 in/out edges\n");
       continue;
     }
@@ -159,8 +168,7 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
     QVector3D referenceVector(0, 1, 0);
     QVector3D p0, p1;
     //std::vector<std::pair<LC::RoadGraph::roadGraphEdgeDesc_BI, float>> edgeAngleOut;
-    //std::vector<std::pair<abm::graph::vertex_t, std::vector<std::shared_ptr<Edge>>, float>> edgeAngleOut;
-    std::vector<float> edgeAngleOut;
+    std::vector<std::pair<std::shared_ptr<abm::Graph::Edge>, float>> edgeAngleOut;
     int numOutEdges = 0;
 
     float angleRef = atan2(referenceVector.y(), referenceVector.x());
@@ -182,23 +190,21 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
       //std::pair<RoadGraph::roadGraphEdgeDesc,bool> edge_pair =
       //  boost::edge(sV,tV,inRoadGraph.myRoadGraph_BI);
       //edgeAngleOut.push_back(std::make_pair(*Oei, angle));
-      //edgeAngleOut.push_back(std::make_pair(edge, angle));
-      edgeAngleOut.push_back(angle);
+      edgeAngleOut.push_back(std::make_pair(edge, angle));
 
-      //if (edgeDescToLaneMapNum.find(edge) == edgeDescToLaneMapNum.end()) {
-      //  printf("->ERROR OUT\n");//edge desc not found in map
-      //}
+      if (edgeDescToLaneMapNumSP.find(edge) == edgeDescToLaneMapNumSP.end()) {
+        printf("->ERROR OUT\n");//edge desc not found in map
+      }
 
       numOutEdges++;
       //edgeAngleOut.push_back(std::make_pair(edge_pair.first,angle));
     }
     
   printf("Out %d\n",numOutEdges);
-    
+   
   //std::vector<std::pair<LC::RoadGraph::roadGraphEdgeDesc_BI, float>> edgeAngleIn;
     //std::vector<std::pair<abm::graph::vertex_t, std::vector<std::shared_ptr<Edge>>, float>> edgeAngleIn;
-    //printf("In\n");
-    std::vector<float> edgeAngleIn;
+    std::vector<std::pair<std::shared_ptr<abm::Graph::Edge>, float>> edgeAngleIn;
     int numInEdges = 0;
 
     //for (boost::tie(Iei, Iei_end) = boost::in_edges(*vi, inRoadGraph.myRoadGraph_BI);
@@ -207,45 +213,41 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
       //if (inRoadGraph.myRoadGraph_BI[*Iei].numberOfLanes == 0) { continue; }
       if (edge->second[1] == 0) { continue; }
 
-      //p0 = inRoadGraph.myRoadGraph_BI[boost::source(*Iei, inRoadGraph.myRoadGraph_BI)].pt;
-      //p1 = inRoadGraph.myRoadGraph_BI[boost::target(*Iei, inRoadGraph.myRoadGraph_BI)].pt;
       p0 = graph_->vertices_data_[std::get<0>(vertex)];
       p1 = graph_->vertices_data_[edge->first.second];
 
       QVector3D edgeDir = (p0 - p1).normalized();
       float angle = angleRef - atan2(edgeDir.y(), edgeDir.x());
-      //std::pair<RoadGraph::roadGraphEdgeDesc, bool> edge_pair = boost::edge(boost::source(*Iei, inRoadGraph.myRoadGraph_BI),boost::target(*Iei, inRoadGraph.myRoadGraph_BI),inRoadGraph.myRoadGraph_BI);
+      
       //edgeAngleIn.push_back(std::make_pair(*Iei, angle));
-      //edgeAngleIn.push_back(std::make_pair(x, angle));
-      edgeAngleIn.push_back(angle);
+      edgeAngleIn.push_back(std::make_pair(edge, angle));
 
       
-      //if (edgeDescToLaneMapNum.find(x) == edgeDescToLaneMapNum.end()) {
-      //  printf("->ERROR IN\n");//edge desc not found in map
-      //  continue;
-      //}
+      if (edgeDescToLaneMapNumSP.find(edge) == edgeDescToLaneMapNumSP.end()) {
+        printf("->ERROR IN\n");//edge desc not found in map
+        continue;
+      }
 
       numInEdges++;
       //edgeAngleIn.push_back(std::make_pair(edge_pair.first,angle));
     }
-  }
-/*
+    printf("In %d\n",numInEdges);
 
-    intersections[index].totalInOutEdges = numOutEdges + numInEdges;
+    intersections[std::get<0>(vertex)].totalInOutEdges = numOutEdges + numInEdges;
     //save in sorterd way as lane number
     if (edgeAngleOut.size() > 0) {
-      std::sort(edgeAngleOut.begin(), edgeAngleOut.end(), compareSecondPartTupleC);
+      std::sort(edgeAngleOut.begin(), edgeAngleOut.end(), compareSecondPartTupleCNew);
     }
 
     if (edgeAngleIn.size() > 0) {
-      std::sort(edgeAngleIn.begin(), edgeAngleIn.end(), compareSecondPartTupleC);
+      std::sort(edgeAngleIn.begin(), edgeAngleIn.end(), compareSecondPartTupleCNew);
     }
-
     //!!!!
     int outCount = 0;
     int inCount = 0;
     int totalCount = 0;
 
+    // Use intersections[std::get<0>(vertex)] = blah blah to set those values for each vertex
     // Intersection data:
     //  Store the edges that go in or out of this intersection
     //  Said edges will be sorted by angle
@@ -255,31 +257,31 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
     //      0x007F FFFF Edge number
     for (int iter = 0; iter < edgeAngleOut.size() + edgeAngleIn.size(); iter++) {
       if ((outCount < edgeAngleOut.size() && inCount < edgeAngleIn.size() && 
-           edgeAngleOut[outCount].second <= edgeAngleIn[inCount].second) ||
+           edgeAngleOut[outCount] <= edgeAngleIn[inCount]) ||
           (outCount < edgeAngleOut.size() && inCount >= edgeAngleIn.size())) {
-        assert(edgeDescToLaneMapNum[edgeAngleOut[outCount].first] < 0x007fffff && "Edge number is too high");
-        intersections[index].edge[totalCount] = edgeDescToLaneMapNum[edgeAngleOut[outCount].first];
-        intersections[index].edge[totalCount] |= (edgesData[intersections[*vi].edge[totalCount]].numLines << 24); //put the number of lines in each edge
-        intersections[index].edge[totalCount] |= kMaskOutEdge; // 0x000000 mask to define out edge
+        assert(edgeDescToLaneMapNumSP[edgeAngleOut[outCount].first] < 0x007fffff && "Edge number is too high");
+        intersections[std::get<0>(vertex)].edge[totalCount] = edgeDescToLaneMapNumSP[edgeAngleOut[outCount].first];
+        intersections[std::get<0>(vertex)].edge[totalCount] |= (edgesData[intersections[std::get<0>(vertex)].edge[totalCount]].numLines << 24); //put the number of lines in each edge
+        intersections[std::get<0>(vertex)].edge[totalCount] |= kMaskOutEdge; // 0x000000 mask to define out edge
         outCount++;
       } else {
-        assert(edgeDescToLaneMapNum[edgeAngleIn[inCount].first] < 0x007fffff && "Edge number is too high");
-        intersections[index].edge[totalCount] = edgeDescToLaneMapNum[edgeAngleIn[inCount].first];
-        intersections[index].edge[totalCount] |= (edgesData[intersections[*vi].edge[totalCount]].numLines << 24); //put the number of lines in each edge
-        intersections[index].edge[totalCount] |= kMaskInEdge; // 0x800000 mask to define in edge
+        assert(edgeDescToLaneMapNumSP[edgeAngleIn[inCount].first] < 0x007fffff && "Edge number is too high");
+        intersections[std::get<0>(vertex)].edge[totalCount] = edgeDescToLaneMapNumSP[edgeAngleIn[inCount].first];
+        intersections[std::get<0>(vertex)].edge[totalCount] |= (edgesData[intersections[std::get<0>(vertex)].edge[totalCount]].numLines << 24); //put the number of lines in each edge
+        intersections[std::get<0>(vertex)].edge[totalCount] |= kMaskInEdge; // 0x800000 mask to define in edge
         inCount++;
       }
 
       totalCount++;
+      std::cout << "intersections data " << intersections[std::get<0>(vertex)].edge[totalCount] << "\n";
     }
 
 
     if (totalCount != intersections[*vi].totalInOutEdges) {
-      printf("Error totalCount!=intersections[*vi].totalInOutEdges %d %d\n",
+      printf("Error totalCount!=intersections[std::get<0>(vertex)].totalInOutEdges %d %d\n",
              totalCount, intersections[*vi].totalInOutEdges);
     }
   }
-*/
 }
 
 void B18TrafficLaneMap::createLaneMap(
