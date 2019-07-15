@@ -175,7 +175,7 @@ bool abm::Graph::read_graph_osm(const std::string& filename) {
 	    //printf("v1 = %lu v2 = %lu\n", v1, v2);
 	    //printf("id = %lu\n", edgeid);
 	    //this->add_edge(v1, v2, weight, edgeid, lanes, speed_mph);
-	    this->add_edge(v1, v2, edge_vals);
+	    this->add_edge(v1, v2, edge_vals, edgeid);
       ++nvertices;
     }
     this->assign_nvertices(nvertices);

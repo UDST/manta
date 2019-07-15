@@ -220,8 +220,6 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         timerLoop.restart();
       }
 
-      printf("trafficPersonVec size = %d\n", trafficPersonVec.size());
-      printf("intersections size = %d\n", intersections.size());
       b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
                              intersections.size());
 
@@ -295,6 +293,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 
 #endif
   finishCudaBench.stopAndEndBenchmark();
+    printf("trafficPersonVec size = %d\n", trafficPersonVec.size());
+    printf("intersections size = %d\n", intersections.size());
 }//
 
 
