@@ -137,9 +137,13 @@ class Graph {
   graph::vertex_t max_vertex_id_{std::numeric_limits<graph::vertex_t>::min()};
   //Vertex data
   std::map<graph::vertex_t, QVector3D> vertices_data_;
+  //Vertex to an index
+  std::map<graph::vertex_t, graph::vertex_t> vertex_map_;
   // Edges
   std::map<std::tuple<graph::vertex_t, graph::vertex_t>, std::shared_ptr<Edge>>
       edges_;
+  //Edges to an index
+  std::map <graph::vertex_t, graph::vertex_t> edge_vertex_map_;
   // adjacency list with iteration over each edge
   tsl::robin_map<graph::vertex_t, std::vector<std::shared_ptr<Edge>>>
       vertex_edges_;

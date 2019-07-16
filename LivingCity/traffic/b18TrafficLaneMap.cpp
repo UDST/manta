@@ -10,6 +10,7 @@
 
 #include <ios>
 #include <cassert>
+#include <cmath>
 #include "b18TrafficLaneMap.h"
 #include "sp/graph.h"
 
@@ -41,7 +42,6 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
       std::vector<uchar> &trafficLights, 
       std::map<uint, std::shared_ptr<abm::Graph::Edge>> &laneMapNumToEdgeDescSP,
       std::map<std::shared_ptr<abm::Graph::Edge>, uint> &edgeDescToLaneMapNumSP) {
-  	printf("edgesData size = %d\n", edgesData.size());
 	/* FOR DATA ACCESS SANITY
 	for (auto const& x : graph_->edges_) {
 		//std::cout << "vertex = " << std::get<1>(std::get<0>(x)) << "\n"; //gets the second vertex value of edge
@@ -115,6 +115,7 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
     printf("Num edges %d Num Lanes %d Num Lanes Width %d Max Leng %f Max num lanes %d\n",
         edge_count, tNumLanes, tNumMapWidth, maxLength, maxNumLanes);
   }
+    printf("edgesData size = %d\n", edgesData.size());
 
   // 2. RESIZE LANE MAP
 
@@ -129,14 +130,15 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
   RoadGraph::in_roadGraphEdgeIter_BI Iei, Iei_end;
   RoadGraph::out_roadGraphEdgeIter_BI Oei, Oei_end;
   //intersections.resize(boost::num_vertices(inRoadGraph.myRoadGraph_BI));//as many as vertices
-  intersections.resize(graph_->nvertices_);//as many as vertices
+  intersections.resize(graph_->vertex_edges_.size());//as many as vertices
+  std::cout << "intersections size = " << intersections.size() << "\n";
   trafficLights.assign(tNumMapWidth, 0);
   //trafficLights.resize(tNumMapWidth); // we could use tNumLanes but then the edge number would not match and we would need to add logic.
   //memset(trafficLights.data(), 0, trafficLights.size()*sizeof(uchar));
 
-  //for (boost::tie(vi, viEnd) = boost::vertices(inRoadGraph.myRoadGraph_BI); vi != viEnd; ++vi) {}
   int index = 0;
   for (const auto& vertex : graph_->vertex_edges_) {
+    std::cout << "GET<0> VERTEX = " << std::get<0>(vertex) << "\n";
     intersections[std::get<0>(vertex)].state = 0;
     intersections[std::get<0>(vertex)].nextEvent = 0.0f;
     intersections[std::get<0>(vertex)].totalInOutEdges = vertex.second.size();

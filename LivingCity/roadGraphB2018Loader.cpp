@@ -378,8 +378,7 @@ std::string RoadGraphB2018::loadABMGraph(const std::string& networkPath, const s
   //EDGES
   //Create the graph directly from the file (don't deal with the creation of the boost graph first or any associated weights calculations)
   graph_->read_graph_osm(edgeFileName);
-  printf("# of edges: %d\n", graph_->nedges());
-  //printf("# of vertices: %u\n", graph_->nvertices());
+  //printf("# of edges: %d\n", graph_->nedges());
   
   //NODES
   graph_->read_vertices(nodeFileName);

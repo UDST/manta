@@ -394,7 +394,7 @@ void B18TrafficOD::loadB18TrafficPeople(
       numPeople++;
     }
   }
-  printf("traffic_person vec size = %d", trafficPersonVec.size());
+  //printf("trafficPersonVec size = %d", trafficPersonVec.size());
 
   if (totalNumPeople > numPeople) {
     std::cerr << "Current amount: " << numPeople << std::endl;
@@ -489,7 +489,7 @@ void B18TrafficOD::loadB18TrafficPeopleSP(
   QTime timer;
   timer.start();
 
-  printf("demandB2018 size = %d\n", RoadGraphB2018::demandB2018.size());
+  //printf("demandB2018 size = %d\n", RoadGraphB2018::demandB2018.size());
   if (RoadGraphB2018::demandB2018.size() == 0) {
     printf("ERROR: Imposible to generate b2018 without loading b2018 demmand first\n");
     return;
@@ -512,7 +512,6 @@ void B18TrafficOD::loadB18TrafficPeopleSP(
     rng, nd);
 
   int numPeople = 0;
-  printf("demandB2018 = %d\n", RoadGraphB2018::demandB2018.size());
   for (int d = 0; (d < RoadGraphB2018::demandB2018.size()) &&
        (numPeople < totalNumPeople); d++) {
     int odNumPeople = std::min<int>(totalNumPeople - numPeople,
@@ -536,7 +535,6 @@ void B18TrafficOD::loadB18TrafficPeopleSP(
       numPeople++;
     }
   }
-  printf("traffic_person vec size = %d\n", trafficPersonVec.size());
   /*
   if (totalNumPeople > numPeople) {
     std::cerr << "Current amount: " << numPeople << std::endl;

@@ -86,7 +86,6 @@ void B18TrafficSimulator::createLaneMap() {
 }//
 
 void B18TrafficSimulator::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph_) { //
-	//b18TrafficLaneMap.createLaneMapSP(graph_, laneMap, edgesData, intersections, trafficLights, laneMapNumToEdgeDesc, edgeDescToLaneMapNum);
 	b18TrafficLaneMap.createLaneMapSP(graph_, laneMap, edgesData, intersections, trafficLights, laneMapNumToEdgeDescSP, edgeDescToLaneMapNumSP);
 }
 
