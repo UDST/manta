@@ -177,11 +177,9 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
 
       edgeAngleOut.push_back(std::make_pair(edge, angle));
 
-        /*
       if (edgeDescToLaneMapNumSP.find(edge) == edgeDescToLaneMapNumSP.end()) {
         printf("->ERROR OUT\n");//edge desc not found in map
       }
-        */
 
       numOutEdges++;
       //edgeAngleOut.push_back(std::make_pair(edge_pair.first,angle));
@@ -202,12 +200,10 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
       
       edgeAngleIn.push_back(std::make_pair(edge, angle));
 
-      /*
       if (edgeDescToLaneMapNumSP.find(edge) == edgeDescToLaneMapNumSP.end()) {
         printf("->ERROR IN\n");//edge desc not found in map
         continue;
       }
-      */
 
       numInEdges++;
     }
@@ -257,12 +253,10 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
     //std::cout << "outCount = " << outCount << " inCount = " << inCount << "\n";
 
 
-    /*
     if (totalCount != intersections[graph_->vertex_map_[std::get<0>(vertex)]].totalInOutEdges) {
       printf("Error totalCount!=intersections[std::get<0>(vertex)].totalInOutEdges %d %d\n",
              totalCount, intersections[graph_->vertex_map_[std::get<0>(vertex)]].totalInOutEdges);
     }
-    */
   }
 }
 
