@@ -64,6 +64,7 @@ void B18CommandLineVersion::runB18Simulation() {
 	  int mpi_size = 1;
 	  auto start = high_resolution_clock::now();
 	  all_paths = B18TrafficSP::compute_routes(mpi_rank, mpi_size, street_graph, all_od_pairs_);
+      std::cout << "# of paths = " << all_paths.size() << "\n";
 	  auto stop = high_resolution_clock::now();
 	  auto duration = duration_cast<milliseconds>(stop - start);
 	  printf("total time compute_routes() = %d milliseconds\n", duration.count());

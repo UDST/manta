@@ -108,6 +108,7 @@ std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::read_od_pairs(con
 
 
 void B18TrafficSP::convertVector(std::vector<abm::graph::vertex_t> paths_SP, std::vector<uint>& indexPathVec) {
+	std::cout << "paths SP size = " << paths_SP.size() << "\n";
     for (auto& x: paths_SP) {
         indexPathVec.emplace_back(x);
     }

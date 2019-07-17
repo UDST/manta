@@ -168,12 +168,12 @@ bool abm::Graph::read_graph_osm(const std::string& filename) {
     //while (in.read_row(edgeid, v1, v2, edge_vals[0], edge_vals[1], edge_vals[2])) {
     abm::graph::vertex_t index = 0;
     while (in.read_row(edgeid, v1, v2, length, lanes, speed_mph)) {
-        std::cout << "v1 = " << v1 << "\n";
-        std::cout << "index = " << index << "\n";
+        //std::cout << "v1 = " << v1 << "\n";
+        //std::cout << "index = " << index << "\n";
         //map edge vertex ids to smaller values
         //edge_vertex_map_.insert(std::pair<abm::graph::vertex_t, abm::graph::vertex_t>(v1, index));
         edge_vertex_map_[v1] = index;
-        std::cout << "v1 map = " << edge_vertex_map_[v1] << "\n";
+        //std::cout << "v1 map = " << edge_vertex_map_[v1] << "\n";
         ++index;
     }
     csvio::CSVReader<6> in_new(filename);
@@ -188,7 +188,7 @@ bool abm::Graph::read_graph_osm(const std::string& filename) {
 	    //printf("v1 = %lu v2 = %lu\n", v1, v2);
 	    //printf("id = %lu\n", edgeid);
 	    //this->add_edge(v1, v2, weight, edgeid, lanes, speed_mph);
-        std::cout << "edge_vertex map " << edge_vertex_map_[v1] << "\n";
+        //std::cout << "edge_vertex map " << edge_vertex_map_[v1] << "\n";
 	    this->add_edge(edge_vertex_map_[v1], edge_vertex_map_[v2], edge_vals, edgeid);
         ++nvertices;
     }
@@ -204,43 +204,7 @@ bool abm::Graph::read_graph_osm(const std::string& filename) {
 
   return status;
 }
-/*
-bool abm::Graph::read_vertices(const std::string& filename) {
-	QVector2D minBox(FLT_MAX, FLT_MAX);
-	QVector2D maxBox(-FLT_MAX, -FLT_MAX);
-	  float scale = 1.0f;
-	  float sqSideSz = std::max<float>(maxBox.x() - minBox.x(),
-				    maxBox.y() - minBox.y()) * scale * 0.5f; // half side
-	  QVector3D centerV(-minBox.x(), -minBox.y(), 0);
-	  QVector3D centerAfterSc(-sqSideSz, -sqSideSz, 0);
-  bool status = true;
-  try {
-    csvio::CSVReader<3> in(filename);
-    in.read_header(csvio::ignore_extra_column, "osmid", "x", "y");
-    abm::graph::vertex_t vertex;
-    float lat, lon;
-    while (in.read_row(vertex, lat, lon)) {
-	  //std::cout << "osmid = " << vertex << "lat = " << lat << "lon = " << lon << "\n";
-	  //convert to QVector3D
-        //std::cout << "node " << vertex_index;
-	    QVector3D pos(lat, lon, 0);
-	    pos += centerV;//center
-	    pos *= scale;
-	    pos += centerAfterSc;
-	    pos.setX(pos.x() * -1.0f); // seems vertically rotated
-	    vertices_data_[vertex] = pos;
-    }
-    std::cout << "# of vertices: " << vertices_data_.size() << "\n";
 
-  } catch (std::exception& exception) {
-    std::cout << "Read OSM file: " << exception.what() << "\n";
-    status = false;
-  }
-
-
-  return status;
-}
-*/
 bool abm::Graph::read_vertices(const std::string& filename) {
 	QVector2D minBox(FLT_MAX, FLT_MAX);
 	QVector2D maxBox(-FLT_MAX, -FLT_MAX);
@@ -257,11 +221,11 @@ bool abm::Graph::read_vertices(const std::string& filename) {
     float lat, lon;
     abm::graph::vertex_t index = 0;
     while (in.read_row(vertex, lat, lon)) {
-        std::cout << "vertex = " << vertex << "\n";
-        std::cout << "index = " << index << "\n";
+        //std::cout << "vertex = " << vertex << "\n";
+        //std::cout << "index = " << index << "\n";
         //map edge vertex ids to smaller values
         vertex_map_[vertex] = index;
-        std::cout << "vertex map = " << vertex_map_[vertex] << "\n";
+        //std::cout << "vertex map = " << vertex_map_[vertex] << "\n";
         ++index;
     }
     csvio::CSVReader<3> in_new(filename);
