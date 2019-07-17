@@ -148,9 +148,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
           indexPathVec, edgeDescToLaneMapNum, weigthMode, peoplePathSampling[nP]);
       shortestPathBench.stopAndEndBenchmark();
     } else if (useSP) {
-	  printf("***convert all_paths to indexPathVec***\n");
 	  B18TrafficSP::convertVector(paths_SP, indexPathVec);
-	  printf("traffic_person_vec size = %d\n", trafficPersonVec.size());
+	  printf("trafficPersonVec size = %d\n", trafficPersonVec.size());
     } else {
       printf("***Start generateRoutesMulti Disktra\n");
       B18TrafficDijstra::generateRoutesMulti(simRoadGraph->myRoadGraph_BI,
@@ -2314,6 +2313,7 @@ void B18TrafficSimulator::savePeopleAndRoutes(int numOfPass) {
           uint laneMapNum = indexPathVec[trafficPersonVec[p].indexPathInit + index];
 
           if (laneMapNumToEdgeDesc.count(laneMapNum) > 0) { // laneMapNum in map
+            //TODO(pavan): make it so that it writes the output of the shortest path from abm graph, not the myRoadGraph_BI graph
             streamR << "," <<
                     simRoadGraph->myRoadGraph_BI[laneMapNumToEdgeDesc[laneMapNum]].faci; // get id of the edge from the roadgraph
             laneMapNumCount.insert(laneMapNum, laneMapNumCount.value(laneMapNum,
@@ -2322,7 +2322,7 @@ void B18TrafficSimulator::savePeopleAndRoutes(int numOfPass) {
               simRoadGraph->myRoadGraph_BI[laneMapNumToEdgeDesc[laneMapNum]].edgeLength;
             index++;
           } else {
-            printf("Save route: This should not happen\n");
+            //printf("Save route: This should not happen\n");
             break;
           }
 

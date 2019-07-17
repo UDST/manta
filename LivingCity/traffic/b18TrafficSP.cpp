@@ -108,7 +108,6 @@ std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::read_od_pairs(con
 
 
 void B18TrafficSP::convertVector(std::vector<abm::graph::vertex_t> paths_SP, std::vector<uint>& indexPathVec) {
-	std::cout << "paths SP size = " << paths_SP.size() << "\n";
     for (auto& x: paths_SP) {
         indexPathVec.emplace_back(x);
     }
@@ -156,15 +155,14 @@ std::vector<abm::graph::vertex_t> B18TrafficSP::compute_routes(int mpi_rank,
   // Paths (vector of edges)
   std::vector<abm::graph::vertex_t> paths;
   paths.reserve(graph_->nedges());
-    std::cout << "# of edges allotted = " << graph_->nedges() << "\n";
   // Indices of start of path and length for each agent
   std::vector<std::array<abm::graph::vertex_t, 3>> paths_idx;
   paths_idx.reserve(od_pairs.size());
-    std::cout << "# of OD pairs allotted = " << od_pairs.size() << "\n";
 
 #pragma omp parallel for schedule(dynamic)
   for (abm::graph::vertex_t i = 0; i < od_pairs.size(); ++i) {
-    const auto sp = graph_->dijkstra_edges(graph_->vertex_map_[od_pairs[i][0]], graph_->vertex_map_[od_pairs[i][1]]);
+    //const auto sp = graph_->dijkstra_edges(graph_->vertex_map_[od_pairs[i][0]], graph_->vertex_map_[od_pairs[i][1]]);
+    const auto sp = graph_->dijkstra_edges(od_pairs[i][0], od_pairs[i][1]);
     //printf("od pair 1 o = %d, od pair 1 d = %d\n", od_pairs[i][0], od_pairs[i][1]);
 #pragma omp critical
     {

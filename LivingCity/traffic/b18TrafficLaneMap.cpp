@@ -101,8 +101,8 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
 
     //edgeDescToLaneMapNum.insert(std::make_pair(*ei, tNumMapWidth));
     //laneMapNumToEdgeDesc.insert(std::make_pair(tNumMapWidth, *ei));
-    edgeDescToLaneMapNumSP.insert(std::make_pair(std::get<1>(x), tNumMapWidth));
-    laneMapNumToEdgeDescSP.insert(std::make_pair(tNumMapWidth, std::get<1>(x)));
+    edgeDescToLaneMapNumSP.insert(std::make_pair(x.second, tNumMapWidth));
+    laneMapNumToEdgeDescSP.insert(std::make_pair(tNumMapWidth, x.second));
 
     tNumMapWidth += numLanes * numWidthNeeded;
     tNumLanes += numLanes;
@@ -169,8 +169,9 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
       //if (inRoadGraph.myRoadGraph_BI[*Oei].numberOfLanes == 0) { continue; }
       if (edge->second[1] == 0) { continue; }
 
-      p0 = graph_->vertices_data_[std::get<0>(vertex)];
+      p0 = graph_->vertices_data_[edge->first.first];
       p1 = graph_->vertices_data_[edge->first.second];
+      
 
       QVector3D edgeDir = (p1 - p0).normalized();
       float angle = angleRef - atan2(edgeDir.y(), edgeDir.x());
@@ -178,6 +179,8 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
       edgeAngleOut.push_back(std::make_pair(edge, angle));
 
       if (edgeDescToLaneMapNumSP.find(edge) == edgeDescToLaneMapNumSP.end()) {
+        std::cout << "p0 = " << edge->first.first << "\n";
+        std::cout << "p1 = " << edge->first.second << "\n";
         printf("->ERROR OUT\n");//edge desc not found in map
       }
 
@@ -192,7 +195,7 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
     for (const auto& edge : graph_->vertex_in_edges_[std::get<0>(vertex)]) {
       if (edge->second[1] == 0) { continue; }
 
-      p0 = graph_->vertices_data_[std::get<0>(vertex)];
+      p0 = graph_->vertices_data_[edge->first.first];
       p1 = graph_->vertices_data_[edge->first.second];
 
       QVector3D edgeDir = (p0 - p1).normalized();
@@ -254,7 +257,7 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
 
 
     if (totalCount != intersections[graph_->vertex_map_[std::get<0>(vertex)]].totalInOutEdges) {
-      printf("Error totalCount!=intersections[std::get<0>(vertex)].totalInOutEdges %d %d\n",
+      printf("Error totalCount!=intersections[vertex].totalInOutEdges %d %d\n",
              totalCount, intersections[graph_->vertex_map_[std::get<0>(vertex)]].totalInOutEdges);
     }
   }
