@@ -273,7 +273,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     }
     //
     calculateAndDisplayTrafficDensity(nP);
-    savePeopleAndRoutes(nP);
+    //savePeopleAndRoutes(nP);
+    savePeopleAndRoutesSP(nP, graph_);
     printf("  <<End One Step %d TIME: %d ms.\n", nP, timer.elapsed());
     getDataBench.stopAndEndBenchmark();
   }
@@ -291,8 +292,6 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 
 #endif
   finishCudaBench.stopAndEndBenchmark();
-    printf("trafficPersonVec size = %d\n", trafficPersonVec.size());
-    printf("intersections size = %d\n", intersections.size());
 }//
 
 
@@ -2283,6 +2282,84 @@ void B18TrafficSimulator::render(VBORenderManager &rendManager) {
 }//
 #endif
 
+void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared_ptr<abm::Graph>& graph_) {
+  const bool saveToFile = true;
+
+  if (saveToFile) {
+    /////////////////////////////////
+    // SAVE TO FILE
+    QFile peopleFile(QString::number(numOfPass) + "_people.csv");
+    QFile routeFile(QString::number(numOfPass) + "_route.csv");
+    QFile routeCount(QString::number(numOfPass) + "_edge_route_count.csv");
+
+    if (peopleFile.open(QIODevice::ReadWrite) &&
+        routeFile.open(QIODevice::ReadWrite) && routeCount.open(QIODevice::ReadWrite)) {
+
+      /////////////
+      // People Route
+      printf("Save route %d\n", trafficPersonVec.size());
+      QHash<uint, uint> laneMapNumCount;
+      QTextStream streamR(&routeFile);
+      std::vector<float> personDistance(trafficPersonVec.size(), 0.0f);
+      streamR << "p,route\n";
+
+      //for (int x = 0; x < indexPathVec.size(); x++) {
+      //      std::cout << "index = " << x << "indexPathVec = " << indexPathVec[x] << "\n";
+      //}
+            
+
+      for (int p = 0; p < trafficPersonVec.size(); p++) {
+        streamR << p;
+        // Save route
+        uint index = 0;
+
+        while (indexPathVec[index] != -1) {
+        //while (indexPathVec[trafficPersonVec[p].indexPathInit + index] != -1) {
+            //abm::graph::vertex_t edge_id_val = indexPathVec[trafficPersonVec[p].indexPathInit + index];
+            abm::graph::vertex_t edge_id_val = indexPathVec[index];
+            //std::cout << "index = " << index << "indexPathVec = " << indexPathVec[index] << "\n";
+ 
+            streamR << "," << edge_id_val;
+            personDistance[p] += graph_->edges_[graph_->edge_ids_to_vertices[edge_id_val]]->second[0];
+            //std::cout << "edge length = " << graph_->edges_[graph_->edge_ids_to_vertices[edge_id_val]]->second[0] << "\n";
+            index++;
+        }
+        streamR << "\n";
+      } // people
+
+      routeFile.close();
+
+      ///////////////
+      // People
+      printf("Save people %d\n", trafficPersonVec.size());
+      QTextStream streamP(&peopleFile);
+      streamP <<
+              "p,init_intersection,end_intersection,time_departure,num_steps,co,gas,distance,a,b,T\n";
+
+      for (int p = 0; p < trafficPersonVec.size(); p++) {
+        streamP << p;
+        streamP << "," << trafficPersonVec[p].init_intersection;
+        streamP << "," << trafficPersonVec[p].end_intersection;
+        streamP << "," << trafficPersonVec[p].time_departure;
+        streamP << "," << trafficPersonVec[p].num_steps;
+        streamP << "," << trafficPersonVec[p].co;
+        streamP << "," << trafficPersonVec[p].gas;
+        streamP << "," << personDistance[p];
+
+        streamP << "," << trafficPersonVec[p].a;
+        streamP << "," << trafficPersonVec[p].b;
+        streamP << "," << trafficPersonVec[p].T;
+        streamP << "\n";
+      } // people
+
+      peopleFile.close();
+
+    }
+  }
+
+  printf("\n<<calculateAndDisplayTrafficDensity\n");
+}//
+
 void B18TrafficSimulator::savePeopleAndRoutes(int numOfPass) {
   const bool saveToFile = true;
 
@@ -2313,7 +2390,6 @@ void B18TrafficSimulator::savePeopleAndRoutes(int numOfPass) {
           uint laneMapNum = indexPathVec[trafficPersonVec[p].indexPathInit + index];
 
           if (laneMapNumToEdgeDesc.count(laneMapNum) > 0) { // laneMapNum in map
-            //TODO(pavan): make it so that it writes the output of the shortest path from abm graph, not the myRoadGraph_BI graph
             streamR << "," <<
                     simRoadGraph->myRoadGraph_BI[laneMapNumToEdgeDesc[laneMapNum]].faci; // get id of the edge from the roadgraph
             laneMapNumCount.insert(laneMapNum, laneMapNumCount.value(laneMapNum,
@@ -2633,3 +2709,5 @@ void B18TrafficLightRender::getInterpolated(uchar newTrafficLight,
 }//
 
 }
+
+

@@ -158,6 +158,9 @@ class Graph {
   // Global edges
   std::map<std::tuple<graph::vertex_t, graph::vertex_t>, graph::vertex_t>
       edge_ids_;
+
+  std::map<graph::vertex_t, std::tuple<graph::vertex_t, graph::vertex_t>>
+      edge_ids_to_vertices;
   // Vertices and counts
   tsl::robin_map<graph::vertex_t, graph::weight_t> edge_costs_;
 };

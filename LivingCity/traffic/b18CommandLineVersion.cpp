@@ -34,8 +34,8 @@ void B18CommandLineVersion::runB18Simulation() {
   int limitNumPeople = settings.value("LIMIT_NUM_PEOPLE", -1).toInt(); // -1
   int numOfPasses = settings.value("NUM_PASSES", 1).toInt();
 
-  //const float deltaTime = 0.5f; //Time step of 30 minutes
-  const float deltaTime = .0167f; //Time step of 1 minutes
+  const float deltaTime = 0.5f; //Time step of 30 minutes
+  //const float deltaTime = .0167f; //Time step of 1 minute
   const float startDemandH = 5.00f; //Start time for the simulation (hour)
   const float endDemandH = 6.00f; //End time for the simulation (hour)
 
@@ -69,7 +69,7 @@ void B18CommandLineVersion::runB18Simulation() {
 	  auto duration = duration_cast<milliseconds>(stop - start);
 	  std::cout << "# of paths = " << all_paths.size() << "\n";
 	  
-      std::cout << "total time to compute shortest paths = " << duration.count() << "\n";
+      std::cout << "total time to compute shortest paths = " << duration.count() << "ms \n";
 
 	  //create a set of people for simulation (trafficPersonVec)
 	  b18TrafficSimulator.createB2018PeopleSP(startDemandH, endDemandH, limitNumPeople, addRandomPeople, street_graph);

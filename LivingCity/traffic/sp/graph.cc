@@ -35,6 +35,7 @@ inline void abm::Graph::add_edge(
     this->edgeid_ += 1;
   } else {
     edge_ids_[std::make_tuple(vertex1, vertex2)] = edgeid;
+    edge_ids_to_vertices[edgeid] = std::make_tuple(vertex1, vertex2);
     // Add edge cost
     edge_costs_[edgeid] = weight;
   }
