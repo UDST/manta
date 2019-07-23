@@ -209,7 +209,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       << std::endl;
     while (currentTime < endTime) {
       count++;
-      if (count % 180 == 0) {
+      if (count % 1800 == 0) {
         std::cerr << std::fixed << std::setprecision(2) 
           << "Current time: " << (currentTime / 3600.0f)
           << " (" << (100.0f - (100.0f * (endTime - currentTime) / (endTime - startTime))) << "%)"

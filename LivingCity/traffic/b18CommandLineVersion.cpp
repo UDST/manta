@@ -34,10 +34,11 @@ void B18CommandLineVersion::runB18Simulation() {
   int limitNumPeople = settings.value("LIMIT_NUM_PEOPLE", -1).toInt(); // -1
   int numOfPasses = settings.value("NUM_PASSES", 1).toInt();
 
-  const float deltaTime = 0.5f; //Time step of 30 minutes
+  //const float deltaTime = 0.5f; //Time step of 30 minutes
   //const float deltaTime = .0167f; //Time step of 1 minute
+  const float deltaTime = .00028f; //Time step of 1 minute
   const float startDemandH = 5.00f; //Start time for the simulation (hour)
-  const float endDemandH = 6.00f; //End time for the simulation (hour)
+  const float endDemandH = 12.00f; //End time for the simulation (hour)
 
   float startSimulationH = startDemandH;
   float endSimulationH = endDemandH;
