@@ -2308,22 +2308,26 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared
       //}
             
 
+      int index = 0;
       for (int p = 0; p < trafficPersonVec.size(); p++) {
         streamR << p;
-        // Save route
-        uint index = 0;
-
-        while (indexPathVec[index] != -1) {
-        //while (indexPathVec[trafficPersonVec[p].indexPathInit + index] != -1) {
-            //abm::graph::vertex_t edge_id_val = indexPathVec[trafficPersonVec[p].indexPathInit + index];
-            abm::graph::vertex_t edge_id_val = indexPathVec[index];
-            //std::cout << "index = " << index << "indexPathVec = " << indexPathVec[index] << "\n";
- 
-            streamR << "," << edge_id_val;
-            personDistance[p] += graph_->edges_[graph_->edge_ids_to_vertices[edge_id_val]]->second[0];
-            //std::cout << "edge length = " << graph_->edges_[graph_->edge_ids_to_vertices[edge_id_val]]->second[0] << "\n";
-            index++;
-        }
+        
+	// Save route for each person
+	for (int i = 0; i < indexPathVec.size(); i++) {
+		if (indexPathVec[index] != -1) {
+		    abm::graph::vertex_t edge_id_val = indexPathVec[index];
+		    streamR << "," << edge_id_val;
+		    //streamR << "," << indexPathVec[index];
+		    personDistance[p] += graph_->edges_[graph_->edge_ids_to_vertices[edge_id_val]]->second[0];
+		    //std::cout << "edge length = " << graph_->edges_[graph_->edge_ids_to_vertices[edge_id_val]]->second[0] << "\n";
+		    //index++;
+		    index++; 	
+		} else {
+	       		index++;
+       	       		break;
+		}		       
+		//index++;
+	}
         streamR << "\n";
       } // people
 
