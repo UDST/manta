@@ -22,14 +22,15 @@ extern void b18InitCUDA(bool fistInitialization, // crate buffers
                         std::vector<LC::B18IntersectionData> &intersections,
                         float startTimeH, float endTimeH,
                         std::vector<float>& accSpeedPerLinePerTimeInterval,
-                        std::vector<float>& numVehPerLinePerTimeInterval);
+                        std::vector<float>& numVehPerLinePerTimeInterval,
+                        float deltaTime);
 extern void b18GetDataCUDA(std::vector<LC::B18TrafficPerson> &trafficPersonVec);
 extern void b18GetSampleTrafficCUDA(std::vector<float>& accSpeedPerLinePerTimeInterval, 
                                 std::vector<float>& numVehPerLinePerTimeInterval);
 extern void b18FinishCUDA(void); // free memory
 extern void b18ResetPeopleLanesCUDA(uint numPeople); // reset people to inactive
 extern void b18SimulateTrafficCUDA(float currentTime, uint numPeople,
-                                   uint numIntersections);
+                                   uint numIntersections, float deltaTime);
 
 #endif // B18_TRAFFIC_SIMULATION_H
 

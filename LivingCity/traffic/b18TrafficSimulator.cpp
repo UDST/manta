@@ -166,7 +166,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     bool fistInitialization = (nP == 0);
     b18InitCUDA(fistInitialization, trafficPersonVec, indexPathVec, edgesData,
         laneMap, trafficLights, intersections, startTimeH, endTimeH,
-        accSpeedPerLinePerTimeInterval, numVehPerLinePerTimeInterval);
+        accSpeedPerLinePerTimeInterval, numVehPerLinePerTimeInterval, deltaTime);
 
     initCudaBench.stopAndEndBenchmark();
 
@@ -219,7 +219,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       }
 
       b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
-                             intersections.size());
+                             intersections.size(), deltaTime);
 
 #ifdef B18_RUN_WITH_GUI
 
@@ -247,6 +247,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 #endif
       currentTime += deltaTime;
     }
+	printf("Total # iterations = %d\n", count);
     std::cerr << std::setw(90) << " " << "\rDone" << std::endl;
     simulateBench.stopAndEndBenchmark();
 

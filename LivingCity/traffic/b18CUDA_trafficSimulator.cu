@@ -57,11 +57,11 @@ LC::B18EdgeData *edgesData_d;
 __constant__ bool calculatePollution = true;
 __constant__ float cellSize = 1.0f;
 
-__constant__ float deltaTime = 0.5f;
-const float deltaTimeH = 0.5f;
+//__constant__ float deltaTime = 0.5f;
+//const float deltaTimeH = 0.5f;
 
-const uint numStepsPerSample = 30.0f / deltaTimeH; //each min
-const uint numStepsTogether = 12; //change also in density (10 per hour)
+//const uint numStepsPerSample = 30.0f / deltaTimeH; //each min
+//const uint numStepsTogether = 12; //change also in density (10 per hour)
 
 uchar *laneMap_d;
 bool readFirstMapC=true;
@@ -87,9 +87,13 @@ void b18InitCUDA(
   std::vector<LC::B18IntersectionData>& intersections,
   float startTimeH, float endTimeH,
   std::vector<float>& accSpeedPerLinePerTimeInterval,
-  std::vector<float>& numVehPerLinePerTimeInterval) {
+  std::vector<float>& numVehPerLinePerTimeInterval,
+  float deltaTime) {
   printf(">>b18InitCUDA fistInitialization %s\n", (fistInitialization?"INIT":"ALREADY INIT"));
   printMemoryUsage();
+
+  const uint numStepsPerSample = 30.0f / deltaTime; //each min
+  const uint numStepsTogether = 12; //change also in density (10 per hour)
   { // people
     size_t size = trafficPersonVec.size() * sizeof(LC::B18TrafficPerson);
     if (fistInitialization) gpuErrchk(cudaMalloc((void **) &trafficPersonVec_d, size));   // Allocate array on device
@@ -124,7 +128,7 @@ void b18InitCUDA(
   }
   {
     startTime = startTimeH * 3600.0f;
-    uint numSamples = ceil(((endTimeH*3600.0f - startTimeH*3600.0f) / (deltaTimeH * numStepsPerSample * numStepsTogether))) + 1; //!!!
+    uint numSamples = ceil(((endTimeH*3600.0f - startTimeH*3600.0f) / (deltaTime * numStepsPerSample * numStepsTogether))) + 1; //!!!
     accSpeedPerLinePerTimeInterval.clear();
     numVehPerLinePerTimeInterval.clear();
     accSpeedPerLinePerTimeInterval.resize(numSamples * trafficLights.size());
@@ -446,7 +450,8 @@ __global__ void kernel_trafficSimulation(
    LC::B18EdgeData* edgesData,
    uchar *laneMap,
    LC::B18IntersectionData *intersections,
-   uchar *trafficLights
+   uchar *trafficLights,
+   float deltaTime
    )
  {
    int p = blockIdx.x * blockDim.x + threadIdx.x;
@@ -1246,9 +1251,11 @@ void b18ResetPeopleLanesCUDA(uint numPeople) {
   cudaMemset(&laneMap_d[halfLaneMap], -1, halfLaneMap*sizeof(unsigned char));
 }
 
-void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersections) {
+void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersections, float deltaTime) {
+
 
   intersectionBench.startMeasuring();
+  const uint numStepsTogether = 12; //change also in density (10 per hour)
   ////////////////////////////////////////////////////////////
   // 1. CHANGE MAP: set map to use and clean the other
   if(readFirstMapC==true){
@@ -1270,7 +1277,7 @@ void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersect
   
   peopleBench.startMeasuring();
   // Simulate people.
-  kernel_trafficSimulation <<< ceil(numPeople / 384.0f), 384>> > (numPeople, currentTime, mapToReadShift, mapToWriteShift, trafficPersonVec_d, indexPathVec_d, edgesData_d, laneMap_d, intersections_d, trafficLights_d);
+  kernel_trafficSimulation <<< ceil(numPeople / 384.0f), 384>> > (numPeople, currentTime, mapToReadShift, mapToWriteShift, trafficPersonVec_d, indexPathVec_d, edgesData_d, laneMap_d, intersections_d, trafficLights_d, deltaTime);
   gpuErrchk(cudaPeekAtLastError());
   peopleBench.stopMeasuring();
 

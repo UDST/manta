@@ -26,6 +26,7 @@ void B18CommandLineVersion::runB18Simulation() {
   bool useCPU = settings.value("USE_CPU", false).toBool();
   bool useJohnsonRouting = settings.value("USE_JOHNSON_ROUTING", false).toBool();
   bool useSP = settings.value("USE_SP_ROUTING", false).toBool();
+  bool usePrevPaths = settings.value("USE_PREV_PATHS", false).toBool();
 
   QString networkPath = settings.value("NETWORK_PATH").toString();
   std::string networkPathSP = networkPath.toStdString();
@@ -34,9 +35,7 @@ void B18CommandLineVersion::runB18Simulation() {
   int limitNumPeople = settings.value("LIMIT_NUM_PEOPLE", -1).toInt(); // -1
   int numOfPasses = settings.value("NUM_PASSES", 1).toInt();
 
-  //const float deltaTime = 0.5f; //Time step of 30 minutes
-  const float deltaTime = .0167f; //Time step of 1 minute
-  //const float deltaTime = .00028f; //Time step of 1 minute
+  const float deltaTime = 0.5f; //Time step of .5 seconds
   const float startDemandH = 5.00f; //Start time for the simulation (hour)
   const float endDemandH = 12.00f; //End time for the simulation (hour)
 
@@ -65,7 +64,27 @@ void B18CommandLineVersion::runB18Simulation() {
 	  int mpi_rank = 0;
 	  int mpi_size = 1;
 	  auto start = high_resolution_clock::now();
-	  all_paths = B18TrafficSP::compute_routes(mpi_rank, mpi_size, street_graph, all_od_pairs_);
+      if (usePrevPaths) {
+            // open file    
+            std::ifstream inputFile("./all_paths.txt");
+            // test file open   
+            if (inputFile) {        
+                abm::graph::vertex_t value;
+                // read the elements in the file into a vector  
+                while (inputFile >> value) {
+                    all_paths.push_back(value);
+                    }
+            }
+      } else {
+	    all_paths = B18TrafficSP::compute_routes(mpi_rank, mpi_size, street_graph, all_od_pairs_);
+        //write paths to file so that we can just load them instead
+        std::ofstream output_file("./all_paths.txt");
+        std::ostream_iterator<abm::graph::vertex_t> output_iterator(output_file, "\n");
+        std::copy(all_paths.begin(), all_paths.end(), output_iterator);
+      }
+
+      
+
 	  auto stop = high_resolution_clock::now();
 	  auto duration = duration_cast<milliseconds>(stop - start);
 	  std::cout << "# of paths = " << all_paths.size() << "\n";
