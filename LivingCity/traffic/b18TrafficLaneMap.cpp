@@ -15,6 +15,7 @@
 
 #include "./b18TrafficLaneMap.h"
 #include "./laneCoordinatesComputer.h"
+#include "OSMConstants.h"
 
 namespace LC {
 
@@ -176,7 +177,8 @@ void B18TrafficLaneMap::createLaneMap(
     std::vector<uint> &connectionsBlocking,
     std::vector<LC::Intersection> &updatedIntersections,
     std::vector<TrafficLightScheduleEntry> &trafficLightSchedules,
-    std::vector<uint> & inLanesIndexes) {
+    std::vector<uint> & inLanesIndexes,
+    const std::map<RoadGraph::roadGraphVertexDesc, uchar> & intersection_types) {
   edgesData.resize(boost::num_edges(inRoadGraph.myRoadGraph_BI) * 4);  //4 to make sure it fits
 
   edgeDescToLaneMapNum.clear();
@@ -192,7 +194,6 @@ void B18TrafficLaneMap::createLaneMap(
 
   updatedIntersections.resize(boost::num_vertices(inputGraph));
 
-  int totalLaneMapChunks = 0;
   for (boost::tie(ei, ei_end) = boost::edges(inRoadGraph.myRoadGraph_BI); ei != ei_end; ++ei) {
     const int roadAmountOfLanes = inRoadGraph.myRoadGraph_BI[*ei].numberOfLanes;
     if (roadAmountOfLanes == 0) { continue; }
@@ -207,6 +208,8 @@ void B18TrafficLaneMap::createLaneMap(
     edgesData[totalLaneMapChunks].nextInters = boost::target(*ei, inRoadGraph.myRoadGraph_BI);
     edgesData[totalLaneMapChunks].numLines = roadAmountOfLanes;
     edgesData[totalLaneMapChunks].valid = true;
+    edgesData[totalLaneMapChunks].startsAtHighway =
+      intersection_types.at(source(*ei, inputGraph)) == OSM_MOTORWAY_JUNCTION;
 
     edgeDescToLaneMapNum.insert(std::make_pair(*ei, totalLaneMapChunks));
     laneMapNumToEdgeDesc.insert(std::make_pair(totalLaneMapChunks, *ei));
@@ -280,8 +283,9 @@ void B18TrafficLaneMap::createLaneMap(
       connectionsBlocking,
       laneCoordinatesComputer);
 
-    // TODO: How should this be handled?
-    intersection.intersectionType = IntersectionType::Unsupervised;
+    intersection.intersectionType = intersection_types.at(vertexIdx) == OSM_TRAFFIC_SIGNALS
+      ? IntersectionType::TrafficLight
+      : IntersectionType::Unsupervised;
 
     intersection.inLanesIndexesStart = inLanesIndexes.size();
     std::unordered_set<uint> intersectionInLanesIndexes;

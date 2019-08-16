@@ -1028,7 +1028,6 @@ __device__ void updateTrafficLight(
     float currentTime,
     LC::Intersection *intersections,
     LC::Connection *connections,
-    uint *connectionsBlocking,
     LC::TrafficLightScheduleEntry *trafficLightSchedules) {
   LC::Intersection & intersection = intersections[intersectionIdx];
   const bool hasSchedule =
@@ -1076,6 +1075,9 @@ __device__ void updateTrafficLight(
     currentTime + trafficLightSchedules[intersection.scheduleIdx].scheduledTime;
 }
 
+/*
+ * Compute the score of the input lane. Lower score means the lane has more priority.
+ * */
 __device__ float inLaneScore(
     const uint laneIdx,
     const LC::Intersection & intersection,
@@ -1112,6 +1114,8 @@ __device__ float inLaneScore(
     ++currentDistance;
   }
   float score = currentDistance;
+  if (edgesData[correspondingEdgeIdx].startsAtHighway)
+    score /= 2;
   return score;
 }
 
