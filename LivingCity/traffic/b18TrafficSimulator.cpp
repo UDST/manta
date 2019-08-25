@@ -150,6 +150,13 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     } else if (useSP) {
 	  B18TrafficSP::convertVector(paths_SP, indexPathVec);
 	  printf("trafficPersonVec size = %d\n", trafficPersonVec.size());
+
+      //set the indexPathInit of each person in trafficPersonVec to the correct one
+      for (int p = 0; p < trafficPersonVec.size(); p++) {
+        trafficPersonVec[p].indexPathInit = graph_->person_to_init_edge_[p];
+        //std::cout << p << " indexPathInit " << trafficPersonVec[p].indexPathInit << "\n";
+      }
+
     } else {
       printf("***Start generateRoutesMulti Disktra\n");
       B18TrafficDijstra::generateRoutesMulti(simRoadGraph->myRoadGraph_BI,
@@ -247,7 +254,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 #endif
       currentTime += deltaTime;
     }
-	printf("Total # iterations = %d\n", count);
+	std::cout << "Total # iterations = " << count << "\n";
     std::cerr << std::setw(90) << " " << "\rDone" << std::endl;
     simulateBench.stopAndEndBenchmark();
 
@@ -263,6 +270,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       float totalCO = 0;
 
       for (int p = 0; p < trafficPersonVec.size(); p++) {
+        //std::cout << "num_steps " << trafficPersonVec[p].num_steps << "for person " << p << "\n";
         totalNumSteps += trafficPersonVec[p].num_steps;
         totalCO += trafficPersonVec[p].co;
       }
@@ -2307,33 +2315,30 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared
       //for (int x = 0; x < indexPathVec.size(); x++) {
       //      std::cout << "index = " << x << "indexPathVec = " << indexPathVec[x] << "\n";
       //}
-            
 
-      int index = 0;
-      for (int p = 0; p < trafficPersonVec.size(); p++) {
-        streamR << p << ":[";
-        
+	//write paths to file so that we can just load them instead
+    std::ofstream output_file("./indexPathVec.txt");
+    std::ostream_iterator<abm::graph::vertex_t> output_iterator(output_file, "\n");
+    std::copy(indexPathVec.begin(), indexPathVec.end(), output_iterator);
+
+    int p = 0;
 	// Save route for each person
+    streamR << p << ":[";
 	for (int i = 0; i < indexPathVec.size(); i++) {
-		if (indexPathVec[index] != -1) {
-		    abm::graph::vertex_t edge_id_val = indexPathVec[index];
+		if (indexPathVec[i] != -1) {
+		    abm::graph::vertex_t edge_id_val = indexPathVec[i];
 		    //streamR << "," << edge_id_val;
 		    streamR << edge_id_val << ",";
 		    //streamR << "," << indexPathVec[index];
 		    personDistance[p] += graph_->edges_[graph_->edge_ids_to_vertices[edge_id_val]]->second[0];
 		    //std::cout << "edge length = " << graph_->edges_[graph_->edge_ids_to_vertices[edge_id_val]]->second[0] << "\n";
-		    //index++;
-		    index++; 	
 		} else {
-	       		index++;
-       	       		break;
-		}		       
-		//index++;
+                    streamR << "]\n";
+                    p++;
+                    streamR << p << ":[";
+        }
 	}
-        streamR << "]\n";
-      } // people
-
-      routeFile.close();
+    routeFile.close();
 
       ///////////////
       // People

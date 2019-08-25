@@ -66,7 +66,8 @@ void B18CommandLineVersion::runB18Simulation() {
 	  auto start = high_resolution_clock::now();
       if (usePrevPaths) {
             // open file    
-            std::ifstream inputFile("./all_paths.txt");
+            std::ifstream inputFile("./all_paths_incl_zeros.txt");
+            //std::ifstream inputFile("./all_paths.txt");
             // test file open   
             if (inputFile) {        
                 abm::graph::vertex_t value;
@@ -82,6 +83,41 @@ void B18CommandLineVersion::runB18Simulation() {
         std::ostream_iterator<abm::graph::vertex_t> output_iterator(output_file, "\n");
         std::copy(all_paths.begin(), all_paths.end(), output_iterator);
       }
+
+
+    //map person to their initial edge
+    int count = 0;
+    /*
+	for (int i = 0; i < all_paths.size(); i++) {
+        if ((all_paths[i] == -1) && (i == 0)) {
+            street_graph->person_to_init_edge_[count] = -1;
+            count++;
+		} else if ((all_paths[i] == -1) && (all_paths[i+1] == -1)) {
+            street_graph->person_to_init_edge_[count] = -1;
+            count++;
+        } else if ((all_paths[i] != -1) && (all_paths[i-1] == -1)) {
+            street_graph->person_to_init_edge_[count] = all_paths[i];
+            count++;
+        } else if ((all_paths[i] == -1) && (i == (all_paths.size() - 1))) {
+            break;
+        }
+	}
+    */
+	for (int i = 0; i < all_paths.size(); i++) {
+        if ((all_paths[i] == -1) && (i == 0)) {
+            street_graph->person_to_init_edge_[count] = i;
+            count++;
+		} else if ((all_paths[i] == -1) && (all_paths[i+1] == -1)) {
+            street_graph->person_to_init_edge_[count] = i;
+            count++;
+        } else if ((all_paths[i] != -1) && (all_paths[i-1] == -1)) {
+            street_graph->person_to_init_edge_[count] = i;
+            count++;
+        } else if ((all_paths[i] == -1) && (i == (all_paths.size() - 1))) {
+            break;
+        }
+	}
+    std::cout << "person_to_init_edge size " << street_graph->person_to_init_edge_.size() << "\n";
 
       
 

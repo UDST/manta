@@ -471,9 +471,12 @@ __global__ void kernel_trafficSimulation(
          //printf("   1.1 Person: %d wait\n",p);
          return;
        } else { //start
+         //printf("p %d edge = %u\n", p, trafficPersonVec[p].indexPathInit);
          //1.2 find first edge
          trafficPersonVec[p].indexPathCurr = trafficPersonVec[p].indexPathInit; // reset index.
          uint firstEdge = indexPathVec[trafficPersonVec[p].indexPathCurr];
+         //printf("indexPathVec %d = %u nextEdge = %u\n", p, indexPathVec[trafficPersonVec[p].indexPathCurr], indexPathVec[trafficPersonVec[p].indexPathCurr + 1]);
+        
 
          if (firstEdge == -1) {
            trafficPersonVec[p].active = 2;
@@ -485,7 +488,8 @@ __global__ void kernel_trafficSimulation(
 
          // COPY DATA FROM EDGE TO PERSON
          trafficPersonVec[p].edgeNumLanes = edgesData[firstEdge].numLines;
-         trafficPersonVec[p].edgeNextInters = edgesData[firstEdge].nextInters;
+         trafficPersonVec[p].edgeNextInters = edgesData[firstEdge].nextIntersMapped;
+         //printf("edgeNextInters %u = %u\n", firstEdge, edgesData[firstEdge].nextIntersMapped);
 
          trafficPersonVec[p].length = edgesData[firstEdge].length;
          trafficPersonVec[p].maxSpeedMperSec = edgesData[firstEdge].maxSpeedMperSec;
@@ -550,7 +554,7 @@ __global__ void kernel_trafficSimulation(
            trafficPersonVec[p].nextEdgemaxSpeedMperSec =
              edgesData[nextEdge].maxSpeedMperSec;
            trafficPersonVec[p].nextEdgeNumLanes = edgesData[nextEdge].numLines;
-           trafficPersonVec[p].nextEdgeNextInters = edgesData[nextEdge].nextInters;
+           trafficPersonVec[p].nextEdgeNextInters = edgesData[nextEdge].nextIntersMapped;
            trafficPersonVec[p].nextEdgeLength = edgesData[nextEdge].length;
            //trafficPersonVec[p].nextPathEdge++;
            trafficPersonVec[p].LC_initOKLanes = 0xFF;
@@ -883,6 +887,7 @@ __global__ void kernel_trafficSimulation(
            if (trafficPersonVec[p].LC_stateofLaneChanging == 1) {
              // LC 3.1 Calculate the correct lanes
              if (trafficPersonVec[p].LC_endOKLanes == 0xFF) {
+		//printf("currentEdge = %u, nextEdge = %u, edgeNextInters = %u, edgeNumLanes = %u\n", currentEdge, nextEdge, trafficPersonVec[p].edgeNextInters, trafficPersonVec[p].edgeNumLanes);
                calculateLaneCarShouldBe(currentEdge, nextEdge, intersections,
                  trafficPersonVec[p].edgeNextInters, trafficPersonVec[p].edgeNumLanes,
                  trafficPersonVec[p].LC_initOKLanes, trafficPersonVec[p].LC_endOKLanes);
@@ -1085,7 +1090,7 @@ __global__ void kernel_trafficSimulation(
        trafficPersonVec[p].nextEdgemaxSpeedMperSec =
          edgesData[nextNEdge].maxSpeedMperSec;
        trafficPersonVec[p].nextEdgeNumLanes = edgesData[nextNEdge].numLines;
-       trafficPersonVec[p].nextEdgeNextInters = edgesData[nextNEdge].nextInters;
+       trafficPersonVec[p].nextEdgeNextInters = edgesData[nextNEdge].nextIntersMapped;
        trafficPersonVec[p].nextEdgeLength = edgesData[nextNEdge].length;
      }
 

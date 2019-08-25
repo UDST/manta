@@ -400,8 +400,8 @@ std::vector<abm::graph::vertex_t> abm::Graph::dijkstra_edges(
           route_edges.emplace_back((*map_itr).second);
       }
     }
-    route_edges.emplace_back(-1);
   }
+  route_edges.emplace_back(-1);
   return route_edges;
 }
 

@@ -159,6 +159,9 @@ class Graph {
   std::map<std::tuple<graph::vertex_t, graph::vertex_t>, graph::vertex_t>
       edge_ids_;
 
+  //person to their initial edge
+  std::map<graph::vertex_t, graph::vertex_t> person_to_init_edge_;
+
   std::map<graph::vertex_t, std::tuple<graph::vertex_t, graph::vertex_t>>
       edge_ids_to_vertices;
   // Vertices and counts
