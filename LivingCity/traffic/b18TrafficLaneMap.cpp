@@ -194,6 +194,7 @@ void B18TrafficLaneMap::createLaneMap(
 
   updatedIntersections.resize(boost::num_vertices(inputGraph));
 
+  int totalLaneMapChunks = 0;
   for (boost::tie(ei, ei_end) = boost::edges(inRoadGraph.myRoadGraph_BI); ei != ei_end; ++ei) {
     const int roadAmountOfLanes = inRoadGraph.myRoadGraph_BI[*ei].numberOfLanes;
     if (roadAmountOfLanes == 0) { continue; }
