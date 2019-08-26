@@ -34,10 +34,13 @@ void B18CommandLineVersion::runB18Simulation() {
   bool addRandomPeople = settings.value("ADD_RANDOM_PEOPLE", true).toBool();
   int limitNumPeople = settings.value("LIMIT_NUM_PEOPLE", -1).toInt(); // -1
   int numOfPasses = settings.value("NUM_PASSES", 1).toInt();
+  const float deltaTime = settings.value("TIME_STEP", .5).toFloat();
+  const float startDemandH = settings.value("START_HR", 5).toFloat();
+  const float endDemandH = settings.value("END_HR", 12).toFloat();
 
-  const float deltaTime = 0.5f; //Time step of .5 seconds
-  const float startDemandH = 5.00f; //Start time for the simulation (hour)
-  const float endDemandH = 12.00f; //End time for the simulation (hour)
+  //const float deltaTime = 0.5f; //Time step of .5 seconds
+  //const float startDemandH = 5.00f; //Start time for the simulation (hour)
+  //const float endDemandH = 12.00f; //End time for the simulation (hour)
 
   float startSimulationH = startDemandH;
   float endSimulationH = endDemandH;

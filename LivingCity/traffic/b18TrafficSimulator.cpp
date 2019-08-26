@@ -279,6 +279,10 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       printf("Total num steps %u Avg %.2f min Avg CO %.2f. Calculated in %d ms\n",
              totalNumSteps, avgTravelTime, totalCO / trafficPersonVec.size(),
              timer.elapsed());
+
+        //write paths to file so that we can just load them instead
+        std::ofstream output_file("./num_steps.txt");
+	output_file << totalNumSteps;
     }
     //
     calculateAndDisplayTrafficDensity(nP);
@@ -2335,7 +2339,9 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared
 		} else {
                     streamR << "]\n";
                     p++;
-                    streamR << p << ":[";
+		    if (i != indexPathVec.size() - 1) {
+                    	streamR << p << ":[";
+		    }
         }
 	}
     routeFile.close();
