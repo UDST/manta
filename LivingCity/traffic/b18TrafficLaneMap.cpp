@@ -237,6 +237,9 @@ void B18TrafficLaneMap::createLaneMap(
 
     Intersection & intersection = updatedIntersections.at(vertexIdx);
 
+    // Check whether this intersection is a stop junction
+    intersection.isStopIntersection = intersection_types.at(vertexIdx) == OSM_STOP_JUNCTION;
+
     // Create connections information
     intersection.connectionGraphStart = connectionsCount;
     for (auto in_edges_it = in_edges_begin; in_edges_it != in_edges_end; ++in_edges_it) {

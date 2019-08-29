@@ -691,7 +691,6 @@ void simulateOnePersonCPU(
       }
 
       trafficPersonVec[p].active = 1;
-      trafficPersonVec[p].isInIntersection = 0;
       trafficPersonVec[p].num_steps = 1;
       trafficPersonVec[p].co = 0.0f;
       trafficPersonVec[p].gas = 0.0f;

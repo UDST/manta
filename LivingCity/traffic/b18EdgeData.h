@@ -55,6 +55,8 @@ struct Intersection {
   float timeOfNextUpdate;
 
   IntersectionType intersectionType;
+
+  bool isStopIntersection = false;
 };
 
 // Object to abstract whether a connection between two lanes is enabled or not

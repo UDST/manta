@@ -1,6 +1,6 @@
 osmid,x,y,ref,highway
 0,0,2,,
 1,0,0,,motorway_junction
-2,2,2,,motorway_junction
+2,2,2,,
 3,2,0,,
-4,1,1,,traffic_signals
+4,1,1,,stop

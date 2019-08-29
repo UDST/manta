@@ -86,8 +86,6 @@ struct CUDATrafficPerson {
   unsigned short LC_initOKLanes;
   unsigned short LC_endOKLanes;
   unsigned short LC_stateofLaneChanging;
-
-  int isInIntersection;
 };
 
 }

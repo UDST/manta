@@ -135,8 +135,6 @@ class BTrafficPeople {
   unsigned short LC_endOKLanes;
   unsigned short LC_stateofLaneChanging;
 
-  int isInIntersection;*/
-
   //////////////////////////////////////////////////
   // FUNCTIONS
 

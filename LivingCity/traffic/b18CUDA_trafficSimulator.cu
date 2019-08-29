@@ -47,8 +47,17 @@ inline void printMemoryUsage() {
 /* Constants */
 
 __constant__ float intersectionClearance = 7.8f;
+
+
 // `s_0` refers to the minimum spacing distance used in the Intelligent Driver Model (IDM)
 __constant__ float s_0 = 7.0f;
+
+
+// Distance from which stopping before an intersection will be considered as having stopped for the
+// intersection itself.
+// This value should take into account the intersection cleareance (and be greater than it).
+__constant__ float relevantStopDistance = 10.0f;
+
 
 __constant__ bool calculatePollution = true;
 
@@ -567,10 +576,12 @@ __global__ void kernel_updatePersonsCars(
       trafficPersonVec[p].v = 0;
       trafficPersonVec[p].LC_stateofLaneChanging = 0;
       trafficPersonVec[p].active = 1;
-      trafficPersonVec[p].isInIntersection = 0;
       trafficPersonVec[p].num_steps = 1;
       trafficPersonVec[p].co = 0.0f;
       trafficPersonVec[p].gas = 0.0f;
+      trafficPersonVec[p].isApproachingStopJunction = false;
+      trafficPersonVec[p].distanceUntilIntersection = INT_MAX >> 2;
+      trafficPersonVec[p].stoppedBeforeNextIntersection = false;
 
       const uint nextEdge = indexPathVec[trafficPersonVec[p].indexPathCurr + 1];
       if (nextEdge != -1) {
@@ -583,7 +594,6 @@ __global__ void kernel_updatePersonsCars(
       }
       return;
     }
-
     // At this point we can assume the current person is already active
     if (float(currentTime) == int(currentTime)) { // assuming deltatime = 0.5f --> each second
       trafficPersonVec[p].num_steps++;
@@ -639,28 +649,42 @@ __global__ void kernel_updatePersonsCars(
       const int dstVertexNumber = edgesData[currentEdge].targetVertexIndex;
       const ushort currentLaneNumber = currentEdge + trafficPersonVec[p].numOfLaneInEdge;
 
-      // Check if a least one connection is enabled between the current edge and the following one
-      for (
-          int connectionIdx = intersections[dstVertexNumber].connectionGraphStart;
-          connectionIdx < intersections[dstVertexNumber].connectionGraphEnd;
-          ++connectionIdx) {
-        const LC::Connection & connection = connections[connectionIdx];
-        const bool isRelevant =
-          connection.inLaneNumber == currentLaneNumber
-          && connection.outEdgeNumber == nextEdge;
-        if (!isRelevant) continue;
+      const int distanceUntilIntersection = currentLaneMaximumPosition - currentPositionInLane;
+      trafficPersonVec[p].isApproachingStopJunction = intersections[dstVertexNumber].isStopIntersection;
+      trafficPersonVec[p].distanceUntilIntersection = distanceUntilIntersection;
 
-        if (connection.enabled) {
-          atLeastOneEnabledConnection = true;
-          nextEdgeChosenLane = connection.outLaneNumber - connection.outEdgeNumber;
-          break;
+      // If the car is approaching a stop intersection and it has not yet stopped then the
+      // intersection must be treated as an obstacle
+      bool mustTreatIntersectionAsObstacle =
+        trafficPersonVec[p].isApproachingStopJunction
+        && !trafficPersonVec[p].stoppedBeforeNextIntersection;
+
+      if (!mustTreatIntersectionAsObstacle) {
+        // Check if a least one connection is enabled between the current edge and the following one
+        for (
+            int connectionIdx = intersections[dstVertexNumber].connectionGraphStart;
+            connectionIdx < intersections[dstVertexNumber].connectionGraphEnd;
+            ++connectionIdx) {
+          const LC::Connection & connection = connections[connectionIdx];
+          const bool isRelevant =
+            connection.inLaneNumber == currentLaneNumber
+            && connection.outEdgeNumber == nextEdge;
+          if (!isRelevant) continue;
+
+          if (connection.enabled) {
+            atLeastOneEnabledConnection = true;
+            nextEdgeChosenLane = connection.outLaneNumber - connection.outEdgeNumber;
+            break;
+          }
         }
       }
 
       // If no connection to the needed edge is enabled, then that intersection will be treated as
       // an obstacle
-      if (!atLeastOneEnabledConnection) {
-        distanceUntilObstacle = ((float) (currentLaneMaximumPosition - currentPositionInLane));
+      mustTreatIntersectionAsObstacle |= !atLeastOneEnabledConnection;
+
+      if (mustTreatIntersectionAsObstacle) {
+        distanceUntilObstacle = (float) distanceUntilIntersection;
         speedDifferenceWithNextObstacle = trafficPersonVec[p].v - 0;
         nextVehicleIsATrafficLight = true;
         obstacleFound = true;
@@ -715,6 +739,10 @@ __global__ void kernel_updatePersonsCars(
       trafficPersonVec[p].v = 0;
       dv_dt = 0.0f;
     }
+
+    trafficPersonVec[p].stoppedBeforeNextIntersection |=
+      trafficPersonVec[p].distanceUntilIntersection < relevantStopDistance
+      && trafficPersonVec[p].v < 0.0001;
 
     // Note: compute CO and Gas values each second
     if (calculatePollution && ((float(currentTime) == int(currentTime)))) { // enabled and each second (assuming DELTA_TIME 0.5f)
@@ -994,6 +1022,9 @@ __global__ void kernel_updatePersonsCars(
     trafficPersonVec[p].length = trafficPersonVec[p].nextEdgeLength;
     trafficPersonVec[p].posInLaneM = numToMove;
     trafficPersonVec[p].numOfLaneInEdge = nextEdgeChosenLane;
+    trafficPersonVec[p].isApproachingStopJunction = false;
+    trafficPersonVec[p].distanceUntilIntersection = INT_MAX >> 2;
+    trafficPersonVec[p].stoppedBeforeNextIntersection = false;
 
     // Update person's next edge
     const uint nextEdgeIdx = indexPathVec[trafficPersonVec[p].indexPathCurr + 1];

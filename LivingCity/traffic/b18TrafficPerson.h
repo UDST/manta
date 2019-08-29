@@ -11,6 +11,8 @@
 #ifndef LC_B18_TRAFFIC_PERSON_H
 #define LC_B18_TRAFFIC_PERSON_H
 
+#include <climits>
+
 namespace LC {
 
 struct B18TrafficPerson {
@@ -39,6 +41,15 @@ struct B18TrafficPerson {
   unsigned int indexPathInit;
   unsigned int indexPathCurr;
 
+  /*
+   * The main idea behind stop junction is to handle them as obstacles in the IDM.
+   * Cars however should only need to stop once before the stop signal, which is what the following
+   * members are for.
+   * */
+  bool isApproachingStopJunction = false;
+  int distanceUntilIntersection = INT_MAX >> 2;
+  bool stoppedBeforeNextIntersection = false;
+
   // data
   unsigned short num_steps;
   unsigned int color;
@@ -54,8 +65,6 @@ struct B18TrafficPerson {
   unsigned short LC_initOKLanes;
   unsigned short LC_endOKLanes;
   unsigned short LC_stateofLaneChanging;
-
-  int isInIntersection;
 };
 
 }

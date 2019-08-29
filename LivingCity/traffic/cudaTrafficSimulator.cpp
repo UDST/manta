@@ -636,7 +636,6 @@ void simulateOnePersonCPU(
       }
 
       trafficPersonVec[p].active = 1;
-      trafficPersonVec[p].isInIntersection = 0;
       trafficPersonVec[p].num_steps = 1;
       trafficPersonVec[p].gas = 0;
       //trafficPersonVec[p].nextPathEdge++;//incremet so it continues in next edge
