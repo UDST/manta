@@ -89,6 +89,23 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
 
     if (numLanes == 0) { continue; }
 
+    /*
+    for (int g = tNumMapWidth; g < g + (numLanes*numWidthNeeded); g++) {
+            edgesData[g].length = std::get<1>(x)->second[0];
+            edgesData[g].maxSpeedMperSec = std::get<1>(x)->second[2];
+
+            if (maxLength < edgesData[g].length) { maxLength = edgesData[g].length; }
+            if (maxNumLanes < numLanes) { maxNumLanes = numLanes; }
+
+            const int numWidthNeeded = ceil(edgesData[g].length / kMaxMapWidthM);
+            edgesData[g].numLines = numLanes;
+            edgesData[g].nextInters = std::get<1>(std::get<0>(x));
+            edgesData[g].nextInters = graph_->vertex_map_[std::get<1>(std::get<0>(x))];
+            //std::cout << " edge " << edge_count << " nextInters " << edgesData[g].nextInters << "\n";
+            //std::cout << " g " <<g << " nextInters " << edgesData[g].nextInters << "\n";
+    }
+    */
+
     edgesData[tNumMapWidth].length = std::get<1>(x)->second[0];
     edgesData[tNumMapWidth].maxSpeedMperSec = std::get<1>(x)->second[2];
 
@@ -109,6 +126,7 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
 
     tNumMapWidth += numLanes * numWidthNeeded;
     tNumLanes += numLanes;
+    //std::cout << "tNumMapWidth = " << tNumMapWidth << "\n";
     edge_count++;
   }
 

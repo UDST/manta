@@ -492,8 +492,10 @@ __global__ void kernel_trafficSimulation(
          //printf("edgeNextInters %u = %u\n", firstEdge, edgesData[firstEdge].nextIntersMapped);
 
          trafficPersonVec[p].length = edgesData[firstEdge].length;
+                
+         //printf("edgesData length %f\n",edgesData[firstEdge].length);
          trafficPersonVec[p].maxSpeedMperSec = edgesData[firstEdge].maxSpeedMperSec;
-         //printf("edgesData %.10f\n",edgesData[firstEdge].maxSpeedCellsPerDeltaTime);
+         //printf("edgesData %.10f\n",edgesData[firstEdge].maxSpeedMperSec);
          //1.4 try to place it in middle of edge
          ushort numOfCells = ceil(trafficPersonVec[p].length);
          ushort initShift = (ushort) (0.5f * numOfCells); //number of cells it should be placed (half of road)
@@ -503,7 +505,7 @@ __global__ void kernel_trafficSimulation(
 
          ushort numCellsEmptyToBePlaced = s_0;
          ushort countEmptyCells = 0;
-
+         //printf("b = %d, numOfCells = %d\n", initShift, numOfCells);
          for (ushort b = initShift; (b < numOfCells) && (placed == false); b++) {
            ushort lN = trafficPersonVec[p].edgeNumLanes - 1; //just right LANE !!!!!!!
            laneChar = laneMap[mapToReadShift + kMaxMapWidthM * (firstEdge + lN) +
@@ -567,7 +569,7 @@ __global__ void kernel_trafficSimulation(
      ///////////////////////////////
      //2. it is moving
      if (float(currentTime) == int(currentTime)) { // assuming deltatime = 0.5f --> each second
-       trafficPersonVec[p].num_steps++;
+     trafficPersonVec[p].num_steps++;
      }
      //2.1 try to move
      float numMToMove;
@@ -692,6 +694,7 @@ __global__ void kernel_trafficSimulation(
          (trafficPersonVec[p].v * trafficPersonVec[p].T + (trafficPersonVec[p].v *
          delta_v) / (2 * sqrtf(trafficPersonVec[p].a * trafficPersonVec[p].b))));
        thirdTerm =powf(((s_star) / (s)), 2);
+       //printf("s_star[%d] = %f\n", p, s_star);
        //printf(">FOUND s_star %f thirdTerm %f!!!!\n",s_star,thirdTerm);
      }
 
@@ -710,6 +713,17 @@ __global__ void kernel_trafficSimulation(
        trafficPersonVec[p].v = 0;
        dv_dt = 0.0f;
      }
+     /*
+     if (p == 13) {
+             printf("thirdTerm[%d] = %f\n", p, thirdTerm);
+             printf("a [%d] = %f\n", p, trafficPersonVec[p].a);
+             printf("speed [%d] = %f\n", p, trafficPersonVec[p].maxSpeedMperSec);
+             printf("v [%d] = %f\n", p, trafficPersonVec[p].v);
+             printf("dv_dt[%d] = %f\n", p, dv_dt);
+     }
+     */
+     trafficPersonVec[p].cum_v += trafficPersonVec[p].v;
+     //printf("vel person %d = %f\n", p, trafficPersonVec[p].cum_v);
 
      if (calculatePollution && ((float(currentTime) == int(currentTime)))) { // enabled and each second (assuming deltaTime 0.5f)
        // CO Calculation

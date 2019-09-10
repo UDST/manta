@@ -171,10 +171,14 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     // 1. Init Cuda
     initCudaBench.startMeasuring();
     bool fistInitialization = (nP == 0);
+    uint count = 0;
     b18InitCUDA(fistInitialization, trafficPersonVec, indexPathVec, edgesData,
         laneMap, trafficLights, intersections, startTimeH, endTimeH,
         accSpeedPerLinePerTimeInterval, numVehPerLinePerTimeInterval, deltaTime);
 
+    //for (int x = 0; x < 30; x++) {
+    //    printf("index %d edgesData length %f\n", x, edgesData[x].length);
+    //}
     initCudaBench.stopAndEndBenchmark();
 
     simulateBench.startMeasuring();
@@ -188,7 +192,12 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         currentTime = trafficPersonVec[p].time_departure;
       }
     }
-
+      
+    /*
+    for (int i = 0; i < edgesData.size(); i++) {
+        std::cout << "i = " << i << "speed = " << edgesData[i].maxSpeedMperSec << "\n";
+    }
+    */
     int numInt = currentTime / deltaTime;//floor
     currentTime = numInt * deltaTime;
     uint steps = 0;
@@ -206,7 +215,6 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     b18ResetPeopleLanesCUDA(trafficPersonVec.size());
     // 2. Execute
     printf("First time_departure %f\n", currentTime);
-    int count = 0;
     QTime timerLoop;
 
     std::cerr
@@ -215,6 +223,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       << " with " << trafficPersonVec.size() << " person..."
       << std::endl;
     while (currentTime < endTime) {
+      //std::cout << "Current Time " << currentTime << "\n";
+      //std::cout << "count " << count << "\n";
       count++;
       if (count % 1800 == 0) {
         std::cerr << std::fixed << std::setprecision(2) 
@@ -270,7 +280,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       float totalCO = 0;
 
       for (int p = 0; p < trafficPersonVec.size(); p++) {
-        //std::cout << "num_steps " << trafficPersonVec[p].num_steps << "for person " << p << "\n";
+        //std::cout << "num_steps " << trafficPersonVec[p].num_steps << " for person " << p << "\n";
         totalNumSteps += trafficPersonVec[p].num_steps;
         totalCO += trafficPersonVec[p].co;
       }
@@ -2351,7 +2361,7 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared
       printf("Save people %d\n", trafficPersonVec.size());
       QTextStream streamP(&peopleFile);
       streamP <<
-              "p,init_intersection,end_intersection,time_departure,num_steps,co,gas,distance,a,b,T\n";
+              "p,init_intersection,end_intersection,time_departure,num_steps,co,gas,distance,a,b,T,avg_v(mph)\n";
 
       for (int p = 0; p < trafficPersonVec.size(); p++) {
         streamP << p;
@@ -2366,6 +2376,7 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared
         streamP << "," << trafficPersonVec[p].a;
         streamP << "," << trafficPersonVec[p].b;
         streamP << "," << trafficPersonVec[p].T;
+        streamP << "," << (trafficPersonVec[p].cum_v / trafficPersonVec[p].num_steps) * 3600 / 1609.34;
         streamP << "\n";
       } // people
 
