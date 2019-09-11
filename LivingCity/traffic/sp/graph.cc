@@ -26,6 +26,7 @@ inline void abm::Graph::add_edge(
   //printf("edge vertex 1 = %lld, vertex 2 = %lld, weight = %f\n", edge->first.first, edge->first.second, edge->second);
 	//std::cout << "weight = " << edge->second[0] << "lane_num = " << edge->second[1] << "speed = " << edge->second[2] << "\n";
   edges_[std::make_tuple(vertex1, vertex2)] = edge;
+  edge_pointer_to_vertices_[edge] = std::make_tuple(vertex1, vertex2);
 
   // Add edge id
   if (edgeid == std::numeric_limits<abm::graph::vertex_t>::max()) {

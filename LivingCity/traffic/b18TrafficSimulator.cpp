@@ -148,7 +148,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
           indexPathVec, edgeDescToLaneMapNum, weigthMode, peoplePathSampling[nP]);
       shortestPathBench.stopAndEndBenchmark();
     } else if (useSP) {
-	  B18TrafficSP::convertVector(paths_SP, indexPathVec);
+	  B18TrafficSP::convertVector(paths_SP, indexPathVec, edgeDescToLaneMapNumSP, graph_);
 	  printf("trafficPersonVec size = %d\n", trafficPersonVec.size());
 
       //set the indexPathInit of each person in trafficPersonVec to the correct one
@@ -2344,8 +2344,8 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared
 		    //streamR << "," << edge_id_val;
 		    streamR << edge_id_val << ",";
 		    //streamR << "," << indexPathVec[index];
-		    personDistance[p] += graph_->edges_[graph_->edge_ids_to_vertices[edge_id_val]]->second[0];
-		    //std::cout << "edge length = " << graph_->edges_[graph_->edge_ids_to_vertices[edge_id_val]]->second[0] << "\n";
+            //std::cout << "edge_id val = " << edge_id_val << "\n";
+		    personDistance[p] += graph_->edges_[graph_->edge_pointer_to_vertices_[laneMapNumToEdgeDescSP[edge_id_val]]]->second[0];
 		} else {
                     streamR << "]\n";
                     p++;

@@ -107,17 +107,16 @@ std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::read_od_pairs(con
 }
 
 
-void B18TrafficSP::convertVector(std::vector<abm::graph::vertex_t> paths_SP, std::vector<uint>& indexPathVec) {
-    uint index = 0;
+void B18TrafficSP::convertVector(std::vector<abm::graph::vertex_t> paths_SP, std::vector<uint>& indexPathVec, std::map<std::shared_ptr<abm::Graph::Edge>, uint> &edgeDescToLaneMapNumSP, const std::shared_ptr<abm::Graph>& graph_) {
     for (auto& x: paths_SP) {
-        indexPathVec.emplace_back(x);
-        //std::cout << "index = " << index << " x = " << x << "\n";
-        //std::cout << "index = " << index << " indexPathVec = " << indexPathVec[index] << "\n";
-        index++;
+        if (x != -1) {
+            indexPathVec.emplace_back(edgeDescToLaneMapNumSP[graph_->edges_[graph_->edge_ids_to_vertices[x]]]);
+        } else {
+            indexPathVec.emplace_back(-1);
+        }
     }
 	std::cout << "indexPathVec size = " << indexPathVec.size() << "\n";
 }
-
 
 
 std::vector<abm::graph::vertex_t> B18TrafficSP::compute_routes(int mpi_rank,
