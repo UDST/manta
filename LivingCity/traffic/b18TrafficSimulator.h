@@ -17,6 +17,7 @@
 #endif
 
 #include "b18GridPollution.h"
+#include "./simulatorConfiguration.h"
 
 
 namespace LC {
@@ -46,57 +47,52 @@ class B18TrafficLightRender {
 class B18TrafficSimulator {
 
  public:
-  B18TrafficSimulator(float deltaTime, RoadGraph *geoRoadGraph, LCUrbanMain *urbanMain = nullptr);
-  ~B18TrafficSimulator();
+  B18TrafficSimulator(const SimulatorConfiguration & simulatorConfiguration);
 
   // init data
-  RoadGraph *simRoadGraph;
-  LCUrbanMain *clientMain;
+  std::shared_ptr<RoadGraph> simRoadGraph_shared_ptr_;
+  std::shared_ptr<abm::Graph> street_graph_shared_ptr_;
+  const SimulatorConfiguration & configuration_;
 
-  float deltaTime;
+  LCUrbanMain *clientMain;
   int threadNumber;
   float avgTravelTime;
 
-  //PM
-  B18TrafficOD b18TrafficOD;
-  B18TrafficLaneMap b18TrafficLaneMap;
+  B18TrafficOD b18TrafficOD_;
+  SimulatorDataInitializer simulatorDataInitializer_;
 
-  void simulateInCPU_MultiPass(int numOfPasses,
-                               float startTimeH, float endTimeH, bool useJohnsonRouting);
-  void simulateInCPU_Onepass(float startTimeH, float endTimeH,
-                             bool useJohnsonRouting);
-  void simulateInCPU(float startTimeH, float endTimeH);
+  void simulateInCPU_MultiPass(void);
+  void simulateInCPU(void);
+  void simulateInGPU(void);
 
-  void simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
-                     bool useJohnsonRouting,
-    const std::map<RoadGraph::roadGraphVertexDesc, uchar> & intersection_types);
-
-  // Lanes
+  // Internal data structures
   std::vector<uchar> laneMap;
   std::vector<B18EdgeData> edgesData;
-  std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> edgeDescToLaneMapNum;
-  std::map<uint, RoadGraph::roadGraphEdgeDesc_BI> laneMapNumToEdgeDesc;
   std::vector<LC::Connection> connections;
   std::vector<uint> connectionsBlocking;
   std::vector<LC::Intersection> updatedIntersections;
   std::vector<TrafficLightScheduleEntry> trafficLightSchedules;
   std::vector<uint> inLanesIndexes;
-  void createLaneMap(
-      const std::map<RoadGraph::roadGraphVertexDesc, uchar> & intersection_types);
-
-  // car path
-  void generateCarPaths(bool useJohnsonRouting);
-
-  // People
   std::vector<B18TrafficPerson> trafficPersonVec;
   std::vector<uint> indexPathVec;
+  std::map<RoadGraph::roadGraphVertexDesc, uchar> intersectionTypes_;
+
+  // Mappings between edges of the graphs and positions in laneMap
+  std::map<std::shared_ptr<abm::Graph::Edge>, uint> edgeDescToLaneMapNumSP;
+  std::map<uint, std::shared_ptr<abm::Graph::Edge>> laneMapNumToEdgeDescSP;
+  std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> edgeDescToLaneMapNum;
+  std::map<uint, RoadGraph::roadGraphEdgeDesc_BI> laneMapNumToEdgeDesc;
+
+  // SP routing paths. Elments of this vector are the edges of street_graph_shared_ptr_, not the
+  // ones from edgesData.
+  std::vector<abm::graph::vertex_t> all_paths_;
+
+  void enerateCarPaths(bool useJohnsonRouting);
 
 #ifdef B18_RUN_WITH_GUI
   void createRandomPeople(float startTime, float endTime, int numberPeople,
                           PeopleJobInfoLayers &peopleJobInfoLayers);
 #endif
-  void createB2018People(float startTime, float endTime, int limitNumPeople, bool addRandomPeople);
-
   void resetPeopleJobANDintersections();
   void saveODToFile() {}; // Todo
   void loadODFromFile() {};
@@ -111,6 +107,7 @@ class B18TrafficSimulator {
 
   void calculateAndDisplayTrafficDensity(int numOfPass);
   void savePeopleAndRoutes(int numOfPass);
+  void savePeopleAndRoutesSP(int numOfPass, const std::shared_ptr<abm::Graph>& street_graph_shared_ptr_);
 #ifdef B18_RUN_WITH_GUI
   void render(VBORenderManager &rendManager);
 #endif

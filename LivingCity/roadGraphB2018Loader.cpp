@@ -6,7 +6,6 @@
 #include <QHash>
 #include <QVector2D>
 #include <stdexcept>
-#include <stdint.h>
 
 #include "Geometry/client_geometry.h"
 #include "bTraffic/bTrafficIntersection.h"
@@ -15,6 +14,8 @@
 #include "OSMConstants.h"
 
 namespace LC {
+
+using namespace std::chrono;
 
 std::vector<DemandB2018> RoadGraphB2018::demandB2018;
 int RoadGraphB2018::totalNumPeople;
@@ -81,26 +82,17 @@ void saveSetToFile(QSet<uint64_t> &set, QString &filename) {
 //////////////////////////////////////////////////////////
 
 void RoadGraphB2018::loadB2018RoadGraph(
-    RoadGraph &inRoadGraph,
-    QString networkPath,
+    std::shared_ptr<RoadGraph> inRoadGraph,
+    const QString & networkPath,
     std::map<RoadGraph::roadGraphVertexDesc, uchar> & intersection_types) {
   intersection_types.clear();
-  inRoadGraph.myRoadGraph.clear();
-  inRoadGraph.myRoadGraph_BI.clear();
+  inRoadGraph->myRoadGraph.clear();
+  inRoadGraph->myRoadGraph_BI.clear();
 
   QString nodesFileName = networkPath + "nodes.csv";
-  QString edgeFileName = networkPath + "edges.csv";
-  QString odFileName = networkPath + "od_demand.csv";
-
   std::cerr
-    << "[Log] Using "
-    << "\"" << nodesFileName.toUtf8().constData() << "\"" << " as nodes' file, "
-    << "\"" << edgeFileName.toUtf8().constData() << "\"" << " as edges' file, "
-    << "\"" << odFileName.toUtf8().constData() << "\"" << " as od demands' file"
-    << std::endl;
-
-  /////////////////////////////////////////////////
-  // READ NODES
+    << "[Log] Loading nodes (using \"" << nodesFileName.toUtf8().constData()
+    << "\"" << " as input)." << std::endl;
 
   QFile baseFile(nodesFileName); // Create a file handle for the file named
   QString line;
@@ -184,9 +176,9 @@ void RoadGraphB2018::loadB2018RoadGraph(
   for (i = osmidToVertexLoc.begin(); i != osmidToVertexLoc.end(); ++i) {
     const uint64_t ind = i.key();
 
-    const auto new_bi_vertex_descriptor = boost::add_vertex(inRoadGraph.myRoadGraph_BI);
+    const auto new_bi_vertex_descriptor = boost::add_vertex(inRoadGraph->myRoadGraph_BI);
     vertex.push_back(new_bi_vertex_descriptor);
-    const auto new_vertex_descriptor = boost::add_vertex(inRoadGraph.myRoadGraph);
+    const auto new_vertex_descriptor = boost::add_vertex(inRoadGraph->myRoadGraph);
     vertex_SIM.push_back(new_vertex_descriptor);
 
     dynIndToInd[ind] = index;
@@ -212,17 +204,20 @@ void RoadGraphB2018::loadB2018RoadGraph(
 
     const auto bi_vertex_descriptor = vertex[index];
     intersection_types.emplace(bi_vertex_descriptor, bType);
-    inRoadGraph.myRoadGraph_BI[bi_vertex_descriptor].x = osmidToOriginalLoc[ind].x();
-    inRoadGraph.myRoadGraph_BI[bi_vertex_descriptor].y = osmidToOriginalLoc[ind].y();
-    inRoadGraph.myRoadGraph_BI[bi_vertex_descriptor].pt = pos;
+    inRoadGraph->myRoadGraph_BI[bi_vertex_descriptor].x = osmidToOriginalLoc[ind].x();
+    inRoadGraph->myRoadGraph_BI[bi_vertex_descriptor].y = osmidToOriginalLoc[ind].y();
+    inRoadGraph->myRoadGraph_BI[bi_vertex_descriptor].pt = pos;
 
     const auto vertex_descriptor = vertex_SIM[index];
-    inRoadGraph.myRoadGraph[vertex_descriptor].pt = pos;
-    inRoadGraph.myRoadGraph[vertex_descriptor].bType = bType;
+    inRoadGraph->myRoadGraph[vertex_descriptor].pt = pos;
+    inRoadGraph->myRoadGraph[vertex_descriptor].bType = bType;
   }
 
-  ///////////////////////////////
-  // EDGES
+  QString edgeFileName = networkPath + "edges.csv";
+  std::cerr
+    << "[Log] Loading edges (using \"" << edgeFileName.toUtf8().constData()
+    << "\"" << " as input)." << std::endl;
+
   QFile linkFile(edgeFileName); // Create a file handle for the file named
   if (!linkFile.open(QIODevice::ReadOnly | QIODevice::Text)) { // Open the file
     throw std::invalid_argument("RoadGraphB2018::loadB2018RoadGraph -> Can't open edges files.");
@@ -286,24 +281,24 @@ void RoadGraphB2018::loadB2018RoadGraph(
 
     // add edge if not already there or update num lanes
     if (boost::edge(vertex_SIM[dynIndToInd[start]], vertex_SIM[dynIndToInd[end]],
-                    inRoadGraph.myRoadGraph).second == false) {
+                    inRoadGraph->myRoadGraph).second == false) {
       e0_pair_SIMP = boost::add_edge(vertex[dynIndToInd[start]],
-                                     vertex[dynIndToInd[end]], inRoadGraph.myRoadGraph);
-      inRoadGraph.myRoadGraph[e0_pair_SIMP.first].numberOfLanes = numLanes;
-      inRoadGraph.myRoadGraph[e0_pair_SIMP.first].edgeLength = length;
+                                     vertex[dynIndToInd[end]], inRoadGraph->myRoadGraph);
+      inRoadGraph->myRoadGraph[e0_pair_SIMP.first].numberOfLanes = numLanes;
+      inRoadGraph->myRoadGraph[e0_pair_SIMP.first].edgeLength = length;
 
     } else {
-      inRoadGraph.myRoadGraph[boost::edge(vertex_SIM[dynIndToInd[start]],
+      inRoadGraph->myRoadGraph[boost::edge(vertex_SIM[dynIndToInd[start]],
                                           vertex_SIM[dynIndToInd[end]],
-                                          inRoadGraph.myRoadGraph).first].numberOfLanes += numLanes;
+                                          inRoadGraph->myRoadGraph).first].numberOfLanes += numLanes;
     }
 
     e0_pair = boost::add_edge(vertex[dynIndToInd[start]], vertex[dynIndToInd[end]],
-                              inRoadGraph.myRoadGraph_BI);
-    inRoadGraph.myRoadGraph_BI[e0_pair.first].numberOfLanes = numLanes;
-    inRoadGraph.myRoadGraph_BI[e0_pair.first].edgeLength = length;
-    inRoadGraph.myRoadGraph_BI[e0_pair.first].maxSpeedMperSec = speedMS;
-    inRoadGraph.myRoadGraph_BI[e0_pair.first].faci = ind;
+                              inRoadGraph->myRoadGraph_BI);
+    inRoadGraph->myRoadGraph_BI[e0_pair.first].numberOfLanes = numLanes;
+    inRoadGraph->myRoadGraph_BI[e0_pair.first].edgeLength = length;
+    inRoadGraph->myRoadGraph_BI[e0_pair.first].maxSpeedMperSec = speedMS;
+    inRoadGraph->myRoadGraph_BI[e0_pair.first].faci = ind;
     // add to edge
     dynEdgToEdge[ind] = std::make_pair(dynIndToInd[start], dynIndToInd[end]);
   }
@@ -314,8 +309,11 @@ void RoadGraphB2018::loadB2018RoadGraph(
     saveSetToFile(noAvailableNodes, filename);
   }
 
-  ///////////////////////////////
-  // DEMAND
+  QString odFileName = networkPath + "od_demand.csv";
+  std::cerr
+    << "[Log] Loading demand (using \"" << odFileName.toUtf8().constData()
+    << "\"" << " as input)." << std::endl;
+
   QFile demandFile(odFileName); // Create a file handle for the file named
 
   if (!demandFile.open(QIODevice::ReadOnly | QIODevice::Text)) { // Open the file
@@ -325,8 +323,12 @@ void RoadGraphB2018::loadB2018RoadGraph(
   QTextStream streamD(&demandFile); // Set the stream to read
   headers = (streamD.readLine()).split(",");
   const int numPeopleIndex = headers.indexOf("PERNO");
-  const int origIndex = headers.indexOf("orig");
-  const int destIndex = headers.indexOf("dest");
+  const int origIndex = headers.indexOf("origin");
+  const int destIndex = headers.indexOf("destination");
+
+  if (numPeopleIndex < 0 || origIndex < 0 || destIndex < 0)
+    throw std::runtime_error(
+      "RoadGraphB2018::loadB2018RoadGraph -> Demand file has incorrect format. Required columns are 'PERNO', 'origin' and 'destination'.");
 
   QSet<uint64_t> noAvailableNodesDemand;
   const bool saveNoAvailableNodesDemand = false;
@@ -367,12 +369,41 @@ void RoadGraphB2018::loadB2018RoadGraph(
   }
 
   std::cerr
-    << "Network loaded in " << timer.elapsed() << " milliseconds with "
-    << num_vertices(inRoadGraph.myRoadGraph_BI) << " vertices, "
-    << num_edges(inRoadGraph.myRoadGraph_BI) << " edges, "
+    << "[Log] Network loaded in " << timer.elapsed() << " milliseconds with "
+    << num_vertices(inRoadGraph->myRoadGraph_BI) << " vertices, "
+    << num_edges(inRoadGraph->myRoadGraph_BI) << " edges, "
     << demandB2018.size() <<  " pairs of demand and "
     << totalNumPeople << " people in total." << std::endl;
 }
+
+std::string RoadGraphB2018::loadABMGraph(const std::string& networkPath, const std::shared_ptr<abm::Graph>& graph_) {
+
+        const std::string& edgeFileName = networkPath + "edges.csv";
+        std::cout << edgeFileName << " as edges file\n";
+
+        const std::string& nodeFileName = networkPath + "nodes.csv";
+        std::cout << nodeFileName << " as nodes file\n";
+
+        const std::string& odFileName = networkPath + "od_demand.csv";
+        std::cout << odFileName << " as OD file\n";
+  //const bool directed = true;
+  //const auto graph = std::make_shared<abm::Graph>(directed);
+  auto start = high_resolution_clock::now();
+  //EDGES
+  //Create the graph directly from the file (don't deal with the creation of the boost graph first or any associated weights calculations)
+  graph_->read_graph_osm(edgeFileName);
+  //printf("# of edges: %d\n", graph_->nedges());
+  
+  //NODES
+  graph_->read_vertices(nodeFileName);
+  
+  auto stop = high_resolution_clock::now();
+  auto duration = duration_cast<milliseconds>(stop - start);
+  ///////////////////////////////
+  return odFileName;
+}
+
+
 
 
 }  // Closing namespace LC

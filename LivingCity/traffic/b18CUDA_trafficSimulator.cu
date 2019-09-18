@@ -104,7 +104,8 @@ void b18InitCUDA(
     std::vector<uchar>& laneMap,
     std::vector<uchar>& trafficLights,
     std::vector<LC::B18IntersectionData>& b18Intersections,
-    float startTimeH, float endTimeH,
+    float startTimeH,
+    float endTimeH,
     std::vector<float>& accSpeedPerLinePerTimeInterval,
     std::vector<float>& numVehPerLinePerTimeInterval,
     const std::vector<LC::Connection> & hostConnections,
@@ -145,7 +146,6 @@ void b18InitCUDA(
     gpuErrchk(cudaMemcpy(deviceTrafficLightSchedules, hostTrafficLightSchedules.data(), size, cudaMemcpyHostToDevice));
   }
 
-  printMemoryUsage();
   { // people
     size_t size = trafficPersonVec.size() * sizeof(LC::B18TrafficPerson);
     if (fistInitialization) gpuErrchk(cudaMalloc((void **) &trafficPersonVec_d, size));   // Allocate array on device
@@ -189,7 +189,6 @@ void b18InitCUDA(
     gpuErrchk(cudaMemset(&accSpeedPerLinePerTimeInterval_d[0], 0, sizeAcc));
     gpuErrchk(cudaMemset(&numVehPerLinePerTimeInterval_d[0], 0, sizeAcc));
   }
-  printMemoryUsage();
 }//
 
 void b18FinishCUDA(void){

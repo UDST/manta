@@ -19,19 +19,23 @@
 
 #include "b18TrafficPerson.h"
 #include "RoadGraph/roadGraph.h"
+#include "sp/graph.h"
 
 #include <boost/graph/dijkstra_shortest_paths.hpp>
+
 #ifdef B18_RUN_WITH_GUI
 #include "../VBOPeopleJobInfoLayer.h"
 #endif
+
 #include <random>
+#include "./routing.h"
+#include "./simulatorConfiguration.h"
 
 namespace LC {
 class B18TrafficOD {
 
  public:
-  B18TrafficOD();
-  ~B18TrafficOD();
+  B18TrafficOD(const SimulatorConfiguration & configuration) : configuration_(configuration) {};
 
   cv::Mat *peopleDistribution;
   cv::Mat *jobDistribution;
@@ -53,12 +57,12 @@ class B18TrafficOD {
                           LC::RoadGraph::roadBGLGraph_BI &roadGraph);
 #endif
 
-  // generate from b18
-  void loadB18TrafficPeople(float startTimeH, float endTimeH,
-      std::vector<B18TrafficPerson> &trafficPersonVec, RoadGraph::roadBGLGraph_BI &roadGraph,
-      const int limitNumPeople, const bool addRandomPeople);
+  void loadB18TrafficPeople(std::vector<B18TrafficPerson> &trafficPersonVec);
 
   void resetTrafficPersonJob(std::vector<B18TrafficPerson> &trafficPersonVec);
+
+ private:
+  const SimulatorConfiguration & configuration_;
 };
 }
 

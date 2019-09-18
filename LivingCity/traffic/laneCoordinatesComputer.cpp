@@ -29,14 +29,16 @@ void LaneCoordinatesComputer::computeEdgeInterface(
     : edge.targetVertexIndex;
 
   // Otherwise compute it and store it
+  const auto intersectionCoordinates = coordinatesRetriever_(intersectionVertexIdx);
   const BoostPoint intersectionCoordinate(
-    roadNetwork_.myRoadGraph_BI[intersectionVertexIdx].x,
-    roadNetwork_.myRoadGraph_BI[intersectionVertexIdx].y
+    intersectionCoordinates.first,
+    intersectionCoordinates.second
   );
 
+  const auto otherIntersectionCoordinates = coordinatesRetriever_(otherVertexIdx);
   const BoostPoint otherExtremeCoordinate(
-    roadNetwork_.myRoadGraph_BI[otherVertexIdx].x,
-    roadNetwork_.myRoadGraph_BI[otherVertexIdx].y
+    otherIntersectionCoordinates.first,
+    otherIntersectionCoordinates.second
   );
 
   const BoostPoint edgeOutDirection = normalizeVector(
@@ -87,11 +89,11 @@ void LaneCoordinatesComputer::computeLaneCoordinates(
 }
 
 LaneCoordinatesComputer::LaneCoordinatesComputer(
-    const RoadGraph & roadNetwork,
+    const CoordinatesRetriever & coordinatesRetriever,
     const std::vector<B18EdgeData> & edgesData,
     const std::vector<LC::Connection> & connections,
     const std::vector<LC::Intersection> & updatedIntersections) :
-  roadNetwork_(roadNetwork),
+  coordinatesRetriever_(coordinatesRetriever),
   edgesData_(edgesData),
   connections_(connections),
   updatedIntersections_(updatedIntersections) {}

@@ -33,7 +33,6 @@ HEADERS += \
     ./LivingCity/traffic/b18TrafficOD.h \
     ./LivingCity/traffic/b18TrafficPerson.h \
     ./LivingCity/traffic/b18TrafficSimulator.h \
-    ./src/benchmarker.h
 
 SOURCES += \
     ./LivingCity/Geometry/block.cpp \
@@ -59,7 +58,6 @@ SOURCES += \
     ./LivingCity/traffic/b18TrafficLaneMap.cpp \
     ./LivingCity/traffic/b18TrafficOD.cpp \
     ./LivingCity/traffic/b18TrafficSimulator.cpp \
-    ./src/benchmarker.cpp
 
 CUDA_SOURCES += ./LivingCity/traffic/b18CUDA_trafficSimulator.cu
 

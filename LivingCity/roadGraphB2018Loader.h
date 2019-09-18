@@ -7,9 +7,10 @@
 
 #include "RoadGraph/roadGraph.h"
 #include <QString>
+#include "traffic/b18TrafficSP.h"
+#include "traffic/sp/graph.h"
 
 namespace LC {
-
 
 class DemandB2018 {
 public:
@@ -27,17 +28,15 @@ class RoadGraphB2018 {
 
  public:
 
-  /**
-  * Load
-  **/
   static void loadB2018RoadGraph(
-      RoadGraph &inRoadGraph,
-      QString networkPath,
+      std::shared_ptr<RoadGraph> inRoadGraph,
+      const QString & networkPath,
       std::map<RoadGraph::roadGraphVertexDesc, uchar> & intersection_types);
+
+  static std::string loadABMGraph(const std::string& networkPath, const std::shared_ptr<abm::Graph>& graph_);
   static std::vector<DemandB2018> demandB2018;
   static int totalNumPeople;
   static QHash<int, uint64_t> indToOsmid;
- private:
 
 };
 

@@ -8,8 +8,6 @@ using namespace boost;
 
 #include "b18TrafficJohnson.h"
 
-//#define DEBUG_JOHNSON
-
 
 namespace LC {
 
@@ -30,10 +28,7 @@ void B18TrafficJohnson::generateRoutes(
     std::vector<uint>& indexPathVec,
     std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> &edgeDescToLaneMapNum,
     int weigthMode, float sample) {
-  if (trafficPersonVec.empty()) {
-    printf("ERROR generateRoutes: people empty");
-    return;
-  }
+  assert(!trafficPersonVec.empty());
 
   QTime timer;
   timer.start();
@@ -43,7 +38,6 @@ void B18TrafficJohnson::generateRoutes(
   indexPathVec.clear(); // = std::vector<uint>();
 
   // 1. Update weight edges
-  printf(">> generateRoutes Update weight edges\n");
   int numEdges = 0;
   property_map<RoadGraph::roadBGLGraph_BI, float RoadGraphEdge::*>::type
     weight_pmap = boost::get(&RoadGraphEdge::edge_weight, roadGraph);
@@ -57,9 +51,6 @@ void B18TrafficJohnson::generateRoutes(
   float maxSpeed = -FLT_MAX;
   for (boost::tie(ei, eiEnd) = boost::edges(roadGraph); ei != eiEnd; ++ei) {
     numEdges++;
-    if ((edgeDescToLaneMapNum.size() > 20) && (numEdges % (edgeDescToLaneMapNum.size() / 20)) == 0) {
-      printf("Edge %d of %d (%2.0f%%)\n", numEdges, edgeDescToLaneMapNum.size(), (100.0f * numEdges) / edgeDescToLaneMapNum.size());
-    }
     if (roadGraph[*ei].numberOfLanes > 0) {
       float speed;
       if (weigthMode == 0 || roadGraph[*ei].averageSpeed.size() <= 0) {
@@ -90,12 +81,7 @@ void B18TrafficJohnson::generateRoutes(
         100000000.0; //FLT_MAX;// if it has not lines, then the weight is inf
     }
   }
-  printf("Travel time Min: %f Max: %f\n", minTravelTime, maxTravelTime);
-  printf("Length Min: %f Max: %f\n", minLength, maxLength);
-  printf("Speed Min: %f Max: %f\n", minSpeed, maxSpeed);
-
   //2. Generate route for each person
-  printf(">> generateRoutesGenerate\n");
   int numVertex = boost::num_vertices(roadGraph);
   //vertex
   typedef LC::RoadGraph::roadGraphVertexDesc_BI VertexDescriptor;
@@ -114,14 +100,14 @@ void B18TrafficJohnson::generateRoutes(
   std::string fileName = "johnson_numVertex_" + std::to_string(numVertex) + "_maxTravelTime_" + std::to_string(maxTravelTime) + ".bin"; // encode num vertext and travel time to "check" is the same input
   bool johnsonReadCorrectly = false;
   if (tryReadWriteFirstJohnsonArray && fileExists(fileName)) {
-    printf("Loading Johnson...\n");
+    std::cerr << "[Log] Started reading johnson file" << std::endl;
     // if exists try to read.
     std::ifstream in(fileName, std::ios::in | std::ios::binary);
     for (int vN = 0; vN < numVertex; vN++) {
       in.read((char *) &dm[vN][0], numVertex * sizeof(float));
     }
-    printf("Johnson Loaded\n");
     johnsonReadCorrectly = true;
+    std::cerr << "[Log] Finished reading johnson file" << std::endl;
   }
 
   // Run Johnson since we could not find it or it is not the first iteration
@@ -272,29 +258,9 @@ void B18TrafficJohnson::generateRoutes(
     currIndexPath++;
     ////////////////////////////////////////////////////////////////////////////////////////////
   }
-  printf("Final Path Size %u\n", currIndexPath);
   for (int p = 0; p < trafficPersonVec.size(); p++) {
     trafficPersonVec[p].indexPathCurr = trafficPersonVec[p].indexPathInit;
   }
-
-  std::cerr
-    << "Finished with Johnson routing:" << std::endl
-    << "- No accesible ODs: " << noAccesible << std::endl
-    << "- Sames src dst ODs: " << sameSrcDst << std::endl
-    << "- Shortest path length (distance -> amount of ODs): " << std::endl;
-
-  std::vector<int> amountOfEdges(300, 0);
-  for (const auto p : trafficPersonVec) {
-    int d = 0;
-    int cur = p.indexPathInit;
-    while (indexPathVec.at(cur) != -1) { cur++; d++; }
-    amountOfEdges.at(d)++;
-  }
-  for (int i = 0; i < 300; i++) {
-    if (amountOfEdges.at(i) != 0)
-      std::cerr << '\t' << i << " -> " << amountOfEdges.at(i) << std::endl;
-  }
-
 
   #ifdef DEBUG_JOHNSON
   std::cerr << "indexPathVec: " << std::endl;

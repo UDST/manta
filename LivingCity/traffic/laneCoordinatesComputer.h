@@ -1,7 +1,9 @@
 #include <vector>
 #include <unordered_map>
+#include <functional>
 
 #include "./RoadGraph/roadGraph.h"
+#include "./types_definitions.h"
 #include "./b18EdgeData.h"
 #include "./boostGeometry.h"
 
@@ -28,12 +30,14 @@ struct EdgeInterface
     direction_(normalizeVector(side, center)) {}
 };
 
+using CoordinatesRetriever = std::function<std::pair<double, double>(const uint vertexIdx)>;
+
 class LaneCoordinatesComputer
 {
 
   public:
     LaneCoordinatesComputer(
-      const RoadGraph & roadNetwork,
+      const CoordinatesRetriever & coordinatesRetriever,
       const std::vector<B18EdgeData> & edgesData,
       const std::vector<LC::Connection> & connections,
       const std::vector<LC::Intersection> & updatedIntersections
@@ -45,7 +49,7 @@ class LaneCoordinatesComputer
     std::unordered_map<uint, BoostPoint> lanesCoordinates_;
     uint maxLanesInEdge_;
 
-    const RoadGraph & roadNetwork_;
+    const CoordinatesRetriever & coordinatesRetriever_;
     const std::vector<B18EdgeData> & edgesData_;
     const std::vector<LC::Connection> & connections_;
     const std::vector<LC::Intersection> & updatedIntersections_;

@@ -8,7 +8,7 @@ CONFIG += c++17
 
 unix {
     LIBS += -L/opt/local/lib -lopencv_imgcodecs -lopencv_core -lopencv_imgproc
-	# -L/Developer/NVIDIA/CUDA-7.5/lib -lcudart -lcublas
+	# -L/Developer/NVIDIA/CUDA-7.5/lib -lcudart -lcublas -lgomp
     INCLUDEPATH += \
       /usr/include/opencv2/ \
       /opt/local/include/ \ 
@@ -65,10 +65,20 @@ HEADERS += \
     ./LivingCity/traffic/b18TrafficLaneMap.h \
     ./LivingCity/traffic/b18TrafficOD.h \
     ./LivingCity/traffic/b18TrafficPerson.h \
+    ./LivingCity/traffic/b18TrafficSP.h \
     ./LivingCity/traffic/b18TrafficSimulator.h \
     ./LivingCity/traffic/boostGeometry.h \
     ./LivingCity/traffic/laneCoordinatesComputer.h \
-    src/benchmarker.h
+    ./LivingCity/traffic/simulatorConfiguration.h \
+    ./LivingCity/traffic/sp/config.h \
+    ./LivingCity/traffic/sp/external/csv.h \
+    ./LivingCity/traffic/sp/external/tsl/robin_growth_policy.h \
+    ./LivingCity/traffic/sp/external/tsl/robin_hash.h \
+    ./LivingCity/traffic/sp/external/tsl/robin_map.h \
+    ./LivingCity/traffic/sp/external/tsl/robin_set.h \
+    ./LivingCity/traffic/sp/graph.h \
+    ./LivingCity/traffic/sp/mpi_wrapper.h \
+    ./LivingCity/traffic/sp/unordered_map_tuple_hash.h \
 
 SOURCES += \
     ./LivingCity/Geometry/block.cpp \
@@ -93,10 +103,12 @@ SOURCES += \
     ./LivingCity/traffic/b18TrafficJohnson.cpp \
     ./LivingCity/traffic/b18TrafficLaneMap.cpp \
     ./LivingCity/traffic/b18TrafficOD.cpp \
+    ./LivingCity/traffic/b18TrafficSP.cpp \
     ./LivingCity/traffic/b18TrafficSimulator.cpp \
     ./LivingCity/traffic/boostGeometry.cpp \
     ./LivingCity/traffic/laneCoordinatesComputer.cpp \
-    src/benchmarker.cpp
+    ./LivingCity/traffic/simulatorConfiguration.cpp \
+    ./LivingCity/traffic/sp/graph.cc
 
 OTHER_FILES += \
         ./LivingCity/traffic/b18CUDA_trafficSimulator.cu \
@@ -169,9 +181,11 @@ unix {
   QMAKE_LIBDIR += $$CUDA_DIR/lib64
   # GPU architecture
   CUDA_ARCH = sm_50
-  NVCCFLAGS = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-options=-v
+  NVCCFLAGS = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-options=-v -Xcompiler -fopenmp
   # Path to libraries
-  LIBS += -lcudart -lcuda
+  LIBS += -lcudart -lcuda -lgomp
+  QMAKE_CXXFLAGS += -fopenmp
+  #LIBS += -fopenmp
   # join the includes in a line
   CUDA_INC = $$join(INCLUDEPATH,' -I','-I',' ')
   cuda.commands = $$CUDA_DIR/bin/nvcc -m64 -O3 -arch=$$CUDA_ARCH -c $$NVCCFLAGS $$CUDA_INC $$LIBS ${QMAKE_FILE_NAME} -o ${QMAKE_FILE_OUT}

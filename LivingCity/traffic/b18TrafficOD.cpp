@@ -12,11 +12,6 @@
 
 namespace LC {
 
-B18TrafficOD::B18TrafficOD() {
-}//
-B18TrafficOD::~B18TrafficOD() {
-}//
-
 #ifdef B18_RUN_WITH_GUI
 void B18TrafficOD::sampleDistribution(int numberToSample,
                                       PeopleJobOneLayer &dist, std::vector<QVector2D> &samples, QString &name) {
@@ -62,7 +57,6 @@ void B18TrafficOD::sampleDistribution(int numberToSample,
       }
     }
 
-    //printf("aN %d randAmpl %f accPro[aN] %f\n",aN,randAmpl,accProbability[aN]);
     if (found == false) {
       printf("ERROR randAmpl not found\n");
     }
@@ -192,8 +186,7 @@ void B18TrafficOD::randomPerson(int p, B18TrafficPerson &person,
   randomPerson(p, person, srcvertex, tgtvertex, startTimeH);
 }
 
-void B18TrafficOD::resetTrafficPersonJob(std::vector<B18TrafficPerson>
-    &trafficPersonVec) {
+void B18TrafficOD::resetTrafficPersonJob(std::vector<B18TrafficPerson> &trafficPersonVec) {
   for (int p = 0; p < trafficPersonVec.size(); p++) {
     trafficPersonVec[p].active = 0;
   }
@@ -337,21 +330,21 @@ float sampleFileDistribution() {
   return randTimeWithinBucket + bucketStartTime;
 }
 
-void B18TrafficOD::loadB18TrafficPeople(
-    float startTimeH, float endTimeH,
-    std::vector<B18TrafficPerson> &trafficPersonVec, // out
-    RoadGraph::roadBGLGraph_BI &roadGraph, const int limitNumPeople, const bool addRandomPeople) {
-
+void B18TrafficOD::loadB18TrafficPeople(std::vector<B18TrafficPerson> &trafficPersonVec)
+{
   trafficPersonVec.clear();
-  QTime timer;
-  timer.start();
 
   if (RoadGraphB2018::demandB2018.size() == 0) {
-    printf("ERROR: Imposible to generate b2018 without loading b2018 demmand first\n");
-    return;
+    throw std::runtime_error(
+      "B18TrafficOD::loadB18TrafficPeople -> Imposible to generate b2018 without loading b2018 demmand first.");
   }
 
-  const int totalNumPeople = [&limitNumPeople, &addRandomPeople] {
+  float startTimeH = configuration_.SimulationStartingHour();
+  float endTimeH = configuration_.SimulationEndingHour();
+  int limitNumPeople = configuration_.LimitOfPeople();
+  bool addRandomPeople = configuration_.AddRandomPeople();
+  Routing routing = configuration_.SimulationRouting();
+  int totalNumPeople = [&limitNumPeople, &addRandomPeople] {
     if (limitNumPeople > 0 && addRandomPeople)
       return limitNumPeople;
     else
@@ -368,7 +361,6 @@ void B18TrafficOD::loadB18TrafficPeople(
     rng, nd);
 
   int numPeople = 0;
-
   for (int d = 0; (d < RoadGraphB2018::demandB2018.size()) &&
        (numPeople < totalNumPeople); d++) {
     int odNumPeople = std::min<int>(totalNumPeople - numPeople,
@@ -387,7 +379,6 @@ void B18TrafficOD::loadB18TrafficPeople(
 
       randomPerson(numPeople, trafficPersonVec[numPeople], src_vertex, tgt_vertex,
                    goToWorkH);
-      // printf("go to work %.2f --> %.2f\n", goToWork, (trafficPersonVec[p].time_departure / 3600.0f));
       numPeople++;
     }
   }
@@ -418,16 +409,15 @@ void B18TrafficOD::loadB18TrafficPeople(
   }
 
   if (totalNumPeople != numPeople) {
-    printf("ERROR: generateB2018TrafficPeople totalNumPeople != numPeople, this should not happen.");
-    exit(-1);
+    throw std::runtime_error(
+      "ERROR: generateB2018TrafficPeople totalNumPeople != numPeople, this should not happen.");
   }
 
   if (gaussianDistribution) {
     //print histogram
     float binLength = 0.166f;//10min
     float numBins = ceil((endTimeH - startTimeH) / binLength);
-    printf("End time %.2f  Start time %.2f --> numBins %f\n", endTimeH, startTimeH,
-           numBins);
+    printf("End time %.2f  Start time %.2f --> numBins %f\n", endTimeH, startTimeH, numBins);
     std::vector<int> bins(numBins);
     std::fill(bins.begin(), bins.end(), 0);
 
@@ -456,7 +446,6 @@ void B18TrafficOD::loadB18TrafficPeople(
     std::vector<int> bins(numBuckets, 0);
 
     for (int p = 0; p < trafficPersonVec.size(); p++) {
-      // printf("depart %.2f\n", (trafficPersonVec[p].time_departure / 3600.0f));
       float time = (trafficPersonVec[p].time_departure / 3600.0f);
       int targetBucket = (time - startSamples) * numBucketsPerHour;
 
@@ -467,8 +456,6 @@ void B18TrafficOD::loadB18TrafficPeople(
       bins[targetBucket]++;
     }
   }
-
-  printf("loadB18TrafficPeople: People %d\n", numPeople);
 }
 
 }

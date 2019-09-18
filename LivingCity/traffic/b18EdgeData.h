@@ -6,20 +6,10 @@
 *
 ************************************************************************************************/
 
+#include "./types_definitions.h"
+
 #ifndef LIVINGCITY_TRAFFIC_B18EDGEDATA_H_
 #define LIVINGCITY_TRAFFIC_B18EDGEDATA_H_
-
-#include "stdint.h"
-
-#ifndef ushort
-#define ushort uint16_t
-#endif
-#ifndef uint
-#define uint uint32_t
-#endif
-#ifndef uchar
-#define uchar uint8_t
-#endif
 
 const int kMaxMapWidthM = 1024;
 const uint kMaskOutEdge = 0x000000;
@@ -127,11 +117,15 @@ struct B18EdgeData {
 };
 
 struct B18IntersectionData {
-  ushort state;
-  ushort stateLine;
   ushort totalInOutEdges;
   uint edge[24];// up to six arms intersection
-  float nextEvent;
+
+
+  // This attributes below are not being used by the actual simulator CUDA code. Should be removed
+  // but old code (that is outdated) depends on it for compilation.
+  ushort state;
+  ushort stateLine;
+  float nextEvent; 
 };
 
 

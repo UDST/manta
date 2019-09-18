@@ -177,8 +177,8 @@ class RoadGraphVertex {
   uchar bType; // bType Node: 0 = Unknow 1 = motorway_junction 2 = traffic_signals 3 = stop 4 = turning_circle
 
   // Intersections enhancement
-  float x;
-  float y;
+  double x;
+  double y;
 
  private:
 };
