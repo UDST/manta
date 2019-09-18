@@ -743,6 +743,8 @@ __global__ void kernel_updatePersonsCars(
       trafficPersonVec[p].distanceUntilIntersection < relevantStopDistance
       && trafficPersonVec[p].v < 0.0001;
 
+    trafficPersonVec[p].cumulative_velocity += trafficPersonVec[p].v;
+
     // Note: compute CO and Gas values each second
     if (calculatePollution && ((float(currentTime) == int(currentTime)))) { // enabled and each second (assuming DELTA_TIME 0.5f)
 
