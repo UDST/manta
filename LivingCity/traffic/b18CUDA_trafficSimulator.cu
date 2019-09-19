@@ -994,7 +994,6 @@ __global__ void kernel_updatePersonsCars(
       // Update person' speed
       const uchar vInMpS = (uchar) (trafficPersonVec[p].v * 3); //speed in m/s to fit in uchar
       ushort posInLineCells = (ushort) (trafficPersonVec[p].posInLaneM);
-      printf("posInLineCells: %d, currentLaneMaximumPosition: %d", posInLineCells, currentLaneMaximumPosition);
       if (posInLineCells >= currentLaneMaximumPosition)
         posInLineCells = currentLaneMaximumPosition - 1;
       const uint posToSample =
@@ -1014,7 +1013,6 @@ __global__ void kernel_updatePersonsCars(
     }
 
     assert(reachedIntersection);
-    printf("nextEdge: %d, maxEdge: %d\n", nextEdgeChosenLane, trafficPersonVec[p].nextEdgeNumLanes);
     if (nextEdgeChosenLane < 0 || nextEdgeChosenLane >= trafficPersonVec[p].nextEdgeNumLanes)
       nextEdgeChosenLane = 0;
 
