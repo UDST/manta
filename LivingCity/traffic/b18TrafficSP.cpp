@@ -29,7 +29,7 @@ bool myfunction (std::array<abm::graph::vertex_t, 2> i, std::array<abm::graph::v
 }
 
 // Convert OD pairs to SP graph format
-std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::make_od_pairs(std::vector<B18TrafficPerson> trafficPersonVec, 
+std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::make_od_pairs(std::vector<B18TrafficPerson> trafficPersonVec,
 									     int nagents) {
   bool status = true;
   std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs;
@@ -46,7 +46,7 @@ std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::make_od_pairs(std
     }
     if (nagents != std::numeric_limits<int>::max())
       od_pairs.resize(nagents);
-    
+
     sort( od_pairs.begin(), od_pairs.end() );
     //od_pairs.erase( unique( od_pairs.begin(), od_pairs.end() ), od_pairs.end() );
 
@@ -106,15 +106,18 @@ std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::read_od_pairs(con
 }
 
 
-void B18TrafficSP::convertVector(std::vector<abm::graph::vertex_t> paths_SP, std::vector<uint>& indexPathVec) {
-    uint index = 0;
-    for (auto& x: paths_SP) {
-        indexPathVec.emplace_back(x);
-        //std::cout << "index = " << index << " x = " << x << "\n";
-        //std::cout << "index = " << index << " indexPathVec = " << indexPathVec[index] << "\n";
-        index++;
+void B18TrafficSP::convertVector(
+    std::vector<abm::graph::vertex_t> paths_SP,
+    std::vector<uint>& indexPathVec,
+    std::map<std::shared_ptr<abm::Graph::Edge>, uint> &edgeDescToLaneMapNumSP,
+    const std::shared_ptr<abm::Graph>& graph_) {
+  for (auto& x: paths_SP) {
+    if (x != -1) {
+      indexPathVec.emplace_back(edgeDescToLaneMapNumSP[graph_->edges_[graph_->edge_ids_to_vertices[x]]]);
+    } else {
+      indexPathVec.emplace_back(-1);
     }
-	std::cout << "indexPathVec size = " << indexPathVec.size() << "\n";
+  }
 }
 
 

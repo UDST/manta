@@ -170,7 +170,8 @@ void B18TrafficSimulator::simulateInGPU(void) {
       B18TrafficJohnson::generateRoutes(simRoadGraph_shared_ptr_->myRoadGraph_BI, trafficPersonVec,
           indexPathVec, edgeDescToLaneMapNum, weigthMode, peoplePathSampling[nP]);
     } else if (configuration_.SimulationRouting() == Routing::SP) {
-      B18TrafficSP::convertVector(all_paths_, indexPathVec);
+      B18TrafficSP::convertVector(
+          all_paths_, indexPathVec, edgeDescToLaneMapNumSP, street_graph_shared_ptr_);
 
       //set the indexPathInit of each person in trafficPersonVec to the correct one
       for (int p = 0; p < trafficPersonVec.size(); p++) {
@@ -186,7 +187,7 @@ void B18TrafficSimulator::simulateInGPU(void) {
     const float startTimeH = configuration_.SimulationStartingHour();
     const float endTimeH = configuration_.SimulationEndingHour();
 
-    std::cout << "[Log] Starting CUDA" << std::endl;
+    std::cerr << "[Log] Starting CUDA" << std::endl;
     b18InitCUDA(
         firstInitialization,
         trafficPersonVec,
@@ -234,7 +235,7 @@ void B18TrafficSimulator::simulateInGPU(void) {
 
     QTime timerLoop;
     int amountOfIterations = 1;
-    const int iterationsPerLog = 180;
+    const int iterationsPerLog = 10;
     std::cerr
       << "[Log] Starting main loop for " << trafficPersonVec.size()
       << " persons from " << (startTime / 3600.0f) << " to " << (endTime / 3600.0f) << std::endl;
@@ -279,7 +280,7 @@ void B18TrafficSimulator::simulateInGPU(void) {
       currentTime += configuration_.DeltaTime();
     }
 
-    std::cout
+    std::cerr
       << "[Log] Finished main loop with a total of " << amountOfIterations
       << " iterations." << std::endl;
 

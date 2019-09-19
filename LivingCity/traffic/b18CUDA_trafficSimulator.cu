@@ -993,8 +993,10 @@ __global__ void kernel_updatePersonsCars(
 
       // Update person' speed
       const uchar vInMpS = (uchar) (trafficPersonVec[p].v * 3); //speed in m/s to fit in uchar
-      const ushort posInLineCells = (ushort) (trafficPersonVec[p].posInLaneM);
-      assert(posInLineCells < currentLaneMaximumPosition);
+      ushort posInLineCells = (ushort) (trafficPersonVec[p].posInLaneM);
+      printf("posInLineCells: %d, currentLaneMaximumPosition: %d", posInLineCells, currentLaneMaximumPosition);
+      if (posInLineCells >= currentLaneMaximumPosition)
+        posInLineCells = currentLaneMaximumPosition - 1;
       const uint posToSample =
         mapToWriteShift
         + kMaxMapWidthM * (
@@ -1012,8 +1014,9 @@ __global__ void kernel_updatePersonsCars(
     }
 
     assert(reachedIntersection);
-    assert(0 <= nextEdgeChosenLane);
-    assert(nextEdgeChosenLane < trafficPersonVec[p].nextEdgeNumLanes);
+    printf("nextEdge: %d, maxEdge: %d\n", nextEdgeChosenLane, trafficPersonVec[p].nextEdgeNumLanes);
+    if (nextEdgeChosenLane < 0 || nextEdgeChosenLane >= trafficPersonVec[p].nextEdgeNumLanes)
+      nextEdgeChosenLane = 0;
 
     // Update current edge information
     trafficPersonVec[p].indexPathCurr++;
@@ -1128,7 +1131,10 @@ __device__ float inLaneScore(
       break;
     }
   }
-  assert(correspondingEdgeIdx != -1);
+
+  if (correspondingEdgeIdx == -1)
+    return maxDistanceToCheck;
+
   const ushort laneMaximumPosition =
     ceil(edgesData[correspondingEdgeIdx].length - intersectionClearance);
 

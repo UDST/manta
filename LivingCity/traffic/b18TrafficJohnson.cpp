@@ -95,6 +95,8 @@ void B18TrafficJohnson::generateRoutes(
 
   ////////////////////////
   // CALL JOHNSON
+  // The Johnson cached file doesn't seem to be working. This could be both because it's stored
+  // incorrectly or because it's read incorrectly.
   const bool tryReadWriteFirstJohnsonArray = false;
   //const bool tryReadWriteFirstJohnsonArray = weigthMode == 0;
   std::string fileName = "johnson_numVertex_" + std::to_string(numVertex) + "_maxTravelTime_" + std::to_string(maxTravelTime) + ".bin"; // encode num vertext and travel time to "check" is the same input
@@ -112,7 +114,9 @@ void B18TrafficJohnson::generateRoutes(
 
   // Run Johnson since we could not find it or it is not the first iteration
   if (johnsonReadCorrectly == false) {
+    std::cerr << ">> Johnson" << std::endl;
     boost::johnson_all_pairs_shortest_paths(roadGraph, dm, weight_map(weight_pmap));
+    std::cerr << "<< Johnson" << std::endl;
     if (tryReadWriteFirstJohnsonArray) {
       // write to file
       printf("Johnson start writing...\n");
@@ -147,12 +151,6 @@ void B18TrafficJohnson::generateRoutes(
   const int kMaxNumPath = 250;
 
   for (int p = 0; p < trafficPersonVec.size(); p++) {
-    if (trafficPersonVec.size() > 200) {
-      if ((p % (trafficPersonVec.size() / 20)) == 0) {
-        printf("Route %d of %d (%2.0f%%)\n", p, trafficPersonVec.size(), (100.0f * p) / trafficPersonVec.size());
-      }
-    }
-
     ////////////////////////////////////////////////////////////////////////////////////////////
     // Some people do not change route.
     if (sample != 1.0f) {
