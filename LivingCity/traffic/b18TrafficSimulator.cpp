@@ -88,16 +88,16 @@ B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulato
     int count = 0;
     for (int i = 0; i < all_paths_.size(); i++) {
       if ((all_paths_[i] == -1) && (i == 0)) {
-          street_graph_shared_ptr_->person_to_init_edge_[count] = i;
-          count++;
-              } else if ((all_paths_[i] == -1) && (all_paths_[i+1] == -1)) {
-          street_graph_shared_ptr_->person_to_init_edge_[count] = i;
-          count++;
+        street_graph_shared_ptr_->person_to_init_edge_[count] = i;
+        count++;
+      } else if ((all_paths_[i] == -1) && (all_paths_[i+1] == -1)) {
+        street_graph_shared_ptr_->person_to_init_edge_[count] = i;
+        count++;
       } else if ((all_paths_[i] != -1) && (all_paths_[i-1] == -1)) {
-          street_graph_shared_ptr_->person_to_init_edge_[count] = i;
-          count++;
+        street_graph_shared_ptr_->person_to_init_edge_[count] = i;
+        count++;
       } else if ((all_paths_[i] == -1) && (i == (all_paths_.size() - 1))) {
-          break;
+        break;
       }
     }
     std::cout << "person_to_init_edge size " << street_graph_shared_ptr_->person_to_init_edge_.size() << "\n";
@@ -116,6 +116,8 @@ B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulato
     b18TrafficOD_.loadB18TrafficPeople(trafficPersonVec);
   }
 
+  assert(!intersectionTypes_.empty());
+
   simulatorDataInitializer_.resetIntersections(intersections, trafficLights);
   simulatorDataInitializer_.initializeDataStructures(
       laneMap,
@@ -132,6 +134,18 @@ B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulato
       trafficLightSchedules,
       inLanesIndexes,
       intersectionTypes_);
+
+  assert(!laneMap.empty());
+  assert(!edgesData.empty());
+  assert(!intersections.empty());
+  assert(!trafficLights.empty());
+  assert(!edgeDescToLaneMapNumSP.empty());
+  assert(!laneMapNumToEdgeDescSP.empty());
+  assert(!connections.empty());
+  assert(!connectionsBlocking.empty());
+  assert(!updatedIntersections.empty());
+  assert(!trafficLightSchedules.empty());
+  assert(!inLanesIndexes.empty());
 }
 
 #ifdef B18_RUN_WITH_GUI
