@@ -22,6 +22,7 @@
 #include "tsl/robin_map.h"
 
 #include "config.h"
+#include "../../OSMConstants.h"
 
 namespace abm {
 
@@ -135,10 +136,19 @@ class Graph {
   graph::vertex_t edgeid_{0};
   // Max id of vertex
   graph::vertex_t max_vertex_id_{std::numeric_limits<graph::vertex_t>::min()};
-  //Vertex data
-  std::map<graph::vertex_t, QVector3D> vertices_data_;
-  //Vertex to an index
+
+
+  // Maps OSM intersection indexes to graph's internal vertex indexes
   std::map<graph::vertex_t, graph::vertex_t> vertex_map_;
+
+  // Maps OSM intersection indexes to their corresponding real life position
+  std::map<graph::vertex_t, QVector3D> vertices_data_;
+
+  // Maps OSM intersection indexes to their corresponding OSM type
+  std::map<graph::vertex_t, OSMConstant> vertex_OSM_type_;
+
+
+
   // Edges
   std::map<std::tuple<graph::vertex_t, graph::vertex_t>, std::shared_ptr<Edge>>
       edges_;
