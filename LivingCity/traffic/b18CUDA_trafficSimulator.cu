@@ -593,6 +593,7 @@ __global__ void kernel_updatePersonsCars(
       }
       return;
     }
+
     // At this point we can assume the current person is already active
     if (float(currentTime) == int(currentTime)) { // assuming deltatime = 0.5f --> each second
       trafficPersonVec[p].num_steps++;
@@ -606,6 +607,16 @@ __global__ void kernel_updatePersonsCars(
     const uint nextEdge = indexPathVec[trafficPersonVec[p].indexPathCurr + 1];
     const ushort currentPositionInLane = static_cast<ushort>(floor(trafficPersonVec[p].posInLaneM));
     const ushort currentLaneMaximumPosition = ceil(trafficPersonVec[p].length - intersectionClearance);
+
+    printf(
+      "{currentTime: %.2f, id: %d, speed: %5.2f, edgeId: %d, currentPositionInLane: %02d, maximumPositionInLane: %02d}\n",
+      currentTime,
+      p,
+      trafficPersonVec[p].v,
+      currentEdge,
+      currentPositionInLane,
+      currentLaneMaximumPosition);
+
 
     bool nextVehicleIsATrafficLight = false;
     int remainingCellsToCheck = max(30.0f, trafficPersonVec[p].v * DELTA_TIME * 2);
@@ -1277,15 +1288,14 @@ __global__ void kernel_updateIntersectionConnections(
     if (!needsUpdate || !hasConnections)
       return;
 
-    const auto type = intersection.intersectionType;
-    if (type == LC::IntersectionType::TrafficLight) {
+    if (intersection.trafficControl == TrafficControl::TrafficLight) {
       updateTrafficLight(
           intersectionIdx,
           currentTime,
           intersections,
           connections,
           trafficLightSchedules);
-    } else if (type == LC::IntersectionType::Unsupervised) {
+    } else if (intersection.trafficControl == TrafficControl::Unsupervised) {
       updateUnsupervised(
           intersectionIdx,
           currentTime,

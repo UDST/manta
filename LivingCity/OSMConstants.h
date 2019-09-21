@@ -1,5 +1,18 @@
-const uchar OSM_EMPTY = 0;
-const uchar OSM_MOTORWAY_JUNCTION = 1;
-const uchar OSM_TRAFFIC_SIGNALS = 2;
-const uchar OSM_STOP_JUNCTION = 3;
-const uchar OSM_TURNING_CIRCLE = 4;
+#ifndef LIVING_CITY_OSM_CONSTANTS_H_
+#define LIVING_CITY_OSM_CONSTANTS_H_
+
+#include <string>
+
+enum class OSMConstant
+{
+    Empty,
+    MotorwayJunction,
+    TrafficSignals,
+    StopJunction,
+    TurningCircle
+};
+
+OSMConstant mapStringToOSMConstant(const std::string stringId);
+
+
+#endif  // LIVING_CITY_OSM_CONSTANTS_H_

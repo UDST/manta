@@ -11,7 +11,7 @@ unix {
 	# -L/Developer/NVIDIA/CUDA-7.5/lib -lcudart -lcublas -lgomp
     INCLUDEPATH += \
       /usr/include/opencv2/ \
-      /opt/local/include/ \ 
+      /opt/local/include/ \
       /usr/local/boost_1_59_0/ \
       $$PWD/glew/include/
 
@@ -79,6 +79,8 @@ HEADERS += \
     ./LivingCity/traffic/sp/graph.h \
     ./LivingCity/traffic/sp/mpi_wrapper.h \
     ./LivingCity/traffic/sp/unordered_map_tuple_hash.h \
+    ./LivingCity/OSMConstants.h \
+    ./LivingCity/trafficControl.h \
 
 SOURCES += \
     ./LivingCity/Geometry/block.cpp \
@@ -108,7 +110,9 @@ SOURCES += \
     ./LivingCity/traffic/boostGeometry.cpp \
     ./LivingCity/traffic/laneCoordinatesComputer.cpp \
     ./LivingCity/traffic/simulatorConfiguration.cpp \
-    ./LivingCity/traffic/sp/graph.cc
+    ./LivingCity/traffic/sp/graph.cc \
+    ./LivingCity/OSMConstants.cpp \
+    ./LivingCity/trafficControl.cpp \
 
 OTHER_FILES += \
         ./LivingCity/traffic/b18CUDA_trafficSimulator.cu \
@@ -198,6 +202,6 @@ unix {
   QMAKE_EXTRA_COMPILERS += cuda
 }
 
-INCLUDEPATH += $$CUDA_DIR/include ./LivingCity . ./src 
+INCLUDEPATH += $$CUDA_DIR/include ./LivingCity . ./src
 
 QMAKE_CXXFLAGS += -Wno-sign-compare -Wno-unused-variable -Wno-deprecated-declarations -Wno-unused-parameter

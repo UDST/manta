@@ -83,9 +83,7 @@ void saveSetToFile(QSet<uint64_t> &set, QString &filename) {
 
 void RoadGraphB2018::loadB2018RoadGraph(
     std::shared_ptr<RoadGraph> inRoadGraph,
-    const QString & networkPath,
-    std::map<RoadGraph::roadGraphVertexDesc, uchar> & intersection_types) {
-  intersection_types.clear();
+    const QString & networkPath) {
   inRoadGraph->myRoadGraph.clear();
   inRoadGraph->myRoadGraph_BI.clear();
 
@@ -107,14 +105,7 @@ void RoadGraphB2018::loadB2018RoadGraph(
   QVector2D maxBox(-FLT_MAX, -FLT_MAX);
   QHash<uint64_t, QVector2D> osmidToVertexLoc;
   QHash<uint64_t, QVector2D> osmidToOriginalLoc;
-  QHash<uint64_t, uchar> osmidToBType; // node type
-
-  QHash<QString, uchar> bTypeStringTobType;
-  bTypeStringTobType[""] = OSM_EMPTY;
-  bTypeStringTobType["motorway_junction"] = OSM_MOTORWAY_JUNCTION;
-  bTypeStringTobType["traffic_signals"] = OSM_TRAFFIC_SIGNALS;
-  bTypeStringTobType["stop"] = OSM_STOP_JUNCTION;
-  bTypeStringTobType["turning_circle"] = OSM_TURNING_CIRCLE;
+  QHash<uint64_t, OSMConstant> OSMIdToOSMType; // node type
 
   QStringList headers = stream.readLine().split(",");
   const int indexOsmid = headers.indexOf("osmid");
@@ -138,8 +129,7 @@ void RoadGraphB2018::loadB2018RoadGraph(
     osmidToOriginalLoc[osmid] = QVector2D(x, y);
     updateMinMax2(QVector2D(x, y), minBox, maxBox);
 
-    QString bType = fields[indexHigh];
-    osmidToBType[osmid] = !bTypeStringTobType.contains(bType) ? 0 : bTypeStringTobType[bType];
+    OSMIdToOSMType[osmid] = mapStringToOSMConstant(fields[indexHigh].toStdString());
   }
 
   // Update coordenades to East-North-Up coordinates;
@@ -194,8 +184,6 @@ void RoadGraphB2018::loadB2018RoadGraph(
     const float x = osmidToVertexLoc[ind].x();
     const float y = osmidToVertexLoc[ind].y();
 
-    uchar bType = osmidToBType[ind];
-
     QVector3D pos(x, y, 0);
     pos += centerV;//center
     pos *= scale;
@@ -203,14 +191,15 @@ void RoadGraphB2018::loadB2018RoadGraph(
     pos.setX(pos.x() * -1.0f); // seems vertically rotated
 
     const auto bi_vertex_descriptor = vertex[index];
-    intersection_types.emplace(bi_vertex_descriptor, bType);
+    inRoadGraph->myRoadGraph_BI[bi_vertex_descriptor].x = osmidToOriginalLoc[ind].x();
     inRoadGraph->myRoadGraph_BI[bi_vertex_descriptor].x = osmidToOriginalLoc[ind].x();
     inRoadGraph->myRoadGraph_BI[bi_vertex_descriptor].y = osmidToOriginalLoc[ind].y();
     inRoadGraph->myRoadGraph_BI[bi_vertex_descriptor].pt = pos;
+    inRoadGraph->myRoadGraph[bi_vertex_descriptor].intersectionType = OSMIdToOSMType[ind];
 
     const auto vertex_descriptor = vertex_SIM[index];
     inRoadGraph->myRoadGraph[vertex_descriptor].pt = pos;
-    inRoadGraph->myRoadGraph[vertex_descriptor].bType = bType;
+    inRoadGraph->myRoadGraph[vertex_descriptor].intersectionType = OSMIdToOSMType[ind];
   }
 
   QString edgeFileName = networkPath + "edges.csv";

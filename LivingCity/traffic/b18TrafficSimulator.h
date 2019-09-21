@@ -75,7 +75,6 @@ class B18TrafficSimulator {
   std::vector<uint> inLanesIndexes;
   std::vector<B18TrafficPerson> trafficPersonVec;
   std::vector<uint> indexPathVec;
-  std::map<RoadGraph::roadGraphVertexDesc, uchar> intersectionTypes_;
 
   // Mappings between edges of the graphs and positions in laneMap
   std::map<std::shared_ptr<abm::Graph::Edge>, uint> edgeDescToLaneMapNumSP;

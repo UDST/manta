@@ -42,8 +42,7 @@ public:
         std::vector<uint> &connectionsBlocking,
         std::vector<LC::Intersection> &updatedIntersections,
         std::vector<TrafficLightScheduleEntry> &trafficLightSchedules,
-        std::vector<uint> &inLanesIndexes,
-        const std::map<RoadGraph::roadGraphVertexDesc, uchar> & intersection_types) const;
+        std::vector<uint> &inLanesIndexes) const;
     void resetIntersections(
         std::vector<B18IntersectionData> &intersections,
         std::vector<uchar> &trafficLights) const;

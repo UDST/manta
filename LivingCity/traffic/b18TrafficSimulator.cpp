@@ -57,7 +57,7 @@ B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulato
     const bool directed = true;
     street_graph_shared_ptr_ = std::make_shared<abm::Graph>(directed);
     std::string networkPathSP = configuration_.NetworkPath().toStdString();
-    // TODO: Initialize intersectionTypes_. Should be done by extending the loadABMGraph function
+    // TODO: Initialize intersection types in graph
     std::string odFileName = RoadGraphB2018::loadABMGraph(networkPathSP, street_graph_shared_ptr_);
     const auto all_od_pairs_ = B18TrafficSP::read_od_pairs(odFileName, std::numeric_limits<int>::max());
     //compute the routes for every OD pair
@@ -109,15 +109,12 @@ B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulato
     std::cerr << "[Log] Loading road graph." << std::endl;
     RoadGraphB2018::loadB2018RoadGraph(
         simRoadGraph_shared_ptr_,
-        configuration_.NetworkPath(),
-        intersectionTypes_);
+        configuration_.NetworkPath());
 
     std::cerr << "[Log] Initializing persons vector." << std::endl;
     b18TrafficOD_.resetTrafficPersonJob(trafficPersonVec);
     b18TrafficOD_.loadB18TrafficPeople(trafficPersonVec);
   }
-
-  assert(!intersectionTypes_.empty());
 
   simulatorDataInitializer_.resetIntersections(intersections, trafficLights);
   simulatorDataInitializer_.initializeDataStructures(
@@ -133,15 +130,12 @@ B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulato
       connectionsBlocking,
       updatedIntersections,
       trafficLightSchedules,
-      inLanesIndexes,
-      intersectionTypes_);
+      inLanesIndexes);
 
   assert(!laneMap.empty());
   assert(!edgesData.empty());
   assert(!intersections.empty());
   assert(!trafficLights.empty());
-  assert(!edgeDescToLaneMapNumSP.empty());
-  assert(!laneMapNumToEdgeDescSP.empty());
   assert(!connections.empty());
   assert(!connectionsBlocking.empty());
   assert(!updatedIntersections.empty());

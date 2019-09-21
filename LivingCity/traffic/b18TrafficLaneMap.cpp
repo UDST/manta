@@ -177,8 +177,7 @@ void SimulatorDataInitializer::initializeDataStructures(
     std::vector<uint> &connectionsBlocking,
     std::vector<LC::Intersection> &updatedIntersections,
     std::vector<TrafficLightScheduleEntry> &trafficLightSchedules,
-    std::vector<uint> &inLanesIndexes,
-    const std::map<RoadGraph::roadGraphVertexDesc, uchar> & intersection_types) const
+    std::vector<uint> &inLanesIndexes) const
 {
   const auto & boost_input_graph = boost_street_graph_shared_ptr_->myRoadGraph_BI;
   const int amount_of_edges = use_boost_graph_
@@ -244,7 +243,7 @@ void SimulatorDataInitializer::initializeDataStructures(
         source(*ei, boost_input_graph),
         target(*ei, boost_input_graph),
         boost_input_graph[*ei].maxSpeedMperSec,
-        intersection_types.at(source(*ei, boost_input_graph)) == OSM_MOTORWAY_JUNCTION);
+        boost_input_graph[source(*ei, boost_input_graph)].intersectionType == OSMConstant::MotorwayJunction);
     }
   } else {
     for (auto const& x : abm_street_graph_shared_ptr_->edges_) {
@@ -258,7 +257,7 @@ void SimulatorDataInitializer::initializeDataStructures(
         abm_street_graph_shared_ptr_->vertex_map_[std::get<0>(std::get<0>(x))],
         abm_street_graph_shared_ptr_->vertex_map_[std::get<1>(std::get<0>(x))],
         std::get<1>(x)->second[2],
-        intersection_types.at(source(*ei, boost_input_graph)) == OSM_MOTORWAY_JUNCTION);
+        boost_input_graph[source(*ei, boost_input_graph)].intersectionType == OSMConstant::MotorwayJunction);
     }
   }
   edgesData.resize(totalLaneMapChunks);
@@ -311,7 +310,10 @@ void SimulatorDataInitializer::initializeDataStructures(
     Intersection & intersection = updatedIntersections.at(vertexIdx);
 
     // Check whether this intersection is a stop junction
-    intersection.isStopIntersection = intersection_types.at(vertexIdx) == OSM_STOP_JUNCTION;
+    // TODO: SP
+    intersection.isStopIntersection = use_boost_graph_
+      ? boost_input_graph[vertexIdx].intersectionType == OSMConstant::StopJunction
+      : boost_input_graph[vertexIdx].intersectionType == OSMConstant::StopJunction;
 
     // Create connections information
     intersection.connectionGraphStart = connectionsCount;
@@ -352,9 +354,10 @@ void SimulatorDataInitializer::initializeDataStructures(
       connectionsBlocking,
       laneCoordinatesComputer);
 
-    intersection.intersectionType = intersection_types.at(vertexIdx) == OSM_TRAFFIC_SIGNALS
-      ? IntersectionType::TrafficLight
-      : IntersectionType::Unsupervised;
+    // TODO: SP
+    intersection.trafficControl = mapOSMConstantToTrafficControl(use_boost_graph_
+      ? boost_input_graph[vertexIdx].intersectionType
+      : boost_input_graph[vertexIdx].intersectionType);
 
     intersection.inLanesIndexesStart = inLanesIndexes.size();
     std::unordered_set<uint> intersectionInLanesIndexes;

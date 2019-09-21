@@ -7,6 +7,7 @@
 ************************************************************************************************/
 
 #include "./types_definitions.h"
+#include "../trafficControl.h"
 
 #ifndef LIVINGCITY_TRAFFIC_B18EDGEDATA_H_
 #define LIVINGCITY_TRAFFIC_B18EDGEDATA_H_
@@ -19,8 +20,6 @@ const uint kMaskLaneMap = 0x007FFFFF;
 
 namespace LC {
 
-
-enum IntersectionType {TrafficLight, Unsupervised};
 
 // Object to store intersections (ie vertices) information
 struct Intersection {
@@ -44,7 +43,7 @@ struct Intersection {
   // Time of this intersection's last update
   float timeOfNextUpdate;
 
-  IntersectionType intersectionType;
+  TrafficControl trafficControl;
 
   bool isStopIntersection = false;
 };
