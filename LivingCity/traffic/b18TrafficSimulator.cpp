@@ -61,8 +61,7 @@ B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulato
     std::string odFileName = RoadGraphB2018::loadABMGraph(networkPathSP, street_graph_shared_ptr_);
     const auto all_od_pairs_ = B18TrafficSP::read_od_pairs(odFileName, std::numeric_limits<int>::max());
     //compute the routes for every OD pair
-    int mpi_rank = 0;
-    int mpi_size = 1;
+    bool paths_were_cached = false;
     if (configuration_.TryToReadPreviousPaths()) {
       // open file
       std::ifstream inputFile("./all_paths_incl_zeros.txt");
@@ -73,10 +72,12 @@ B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulato
         while (inputFile >> value) {
           all_paths_.push_back(value);
         }
-      } else {
-        throw std::runtime_error("Could not read input file for SP routing.");
+        paths_were_cached = true;
       }
-    } else {
+    }
+    if (!paths_were_cached) {
+      int mpi_rank = 0;
+      int mpi_size = 1;
       all_paths_ = B18TrafficSP::compute_routes(mpi_rank, mpi_size, street_graph_shared_ptr_, all_od_pairs_);
       //write paths to file so that we can just load them instead
       std::ofstream output_file("./all_paths_.txt");
