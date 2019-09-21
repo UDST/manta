@@ -250,14 +250,13 @@ void SimulatorDataInitializer::initializeDataStructures(
       edgeDescToLaneMapNumSP.insert(std::make_pair(x.second, totalLaneMapChunks));
       laneMapNumToEdgeDescSP.insert(std::make_pair(totalLaneMapChunks, x.second));
 
-      // TODO: Correctly read OSM data once it's loaded into the graph
       initialize_edge_data(
         std::get<1>(x)->second[1],
         std::get<1>(x)->second[0],
-        abm_street_graph_shared_ptr_->vertex_map_[std::get<0>(std::get<0>(x))],
-        abm_street_graph_shared_ptr_->vertex_map_[std::get<1>(std::get<0>(x))],
+        abm_street_graph_shared_ptr_->vertex_map_.at(std::get<0>(std::get<0>(x))),
+        abm_street_graph_shared_ptr_->vertex_map_.at(std::get<1>(std::get<0>(x))),
         std::get<1>(x)->second[2],
-        boost_input_graph[source(*ei, boost_input_graph)].intersectionType == OSMConstant::MotorwayJunction);
+        abm_street_graph_shared_ptr_->vertex_OSM_type_.at(std::get<0>(std::get<0>(x))) == OSMConstant::MotorwayJunction);
     }
   }
   edgesData.resize(totalLaneMapChunks);
@@ -294,6 +293,7 @@ void SimulatorDataInitializer::initializeDataStructures(
 
   const CoordinatesRetriever coordinatesRetriever = [&] (const uint & vertexIdx) {
     // TODO: Implement this 
+    if (!use_boost_graph_) throw std::runtime_error("Not yet implemented. #2");
     const std::pair<double, double> coordinates = use_boost_graph_
       ? std::make_pair(boost_input_graph[vertexIdx].x, boost_input_graph[vertexIdx].y)
       : std::make_pair(0.0, 0.0);
@@ -311,6 +311,7 @@ void SimulatorDataInitializer::initializeDataStructures(
 
     // Check whether this intersection is a stop junction
     // TODO: SP
+    if (!use_boost_graph_) throw std::runtime_error("Not yet implemented. #3");
     intersection.isStopIntersection = use_boost_graph_
       ? boost_input_graph[vertexIdx].intersectionType == OSMConstant::StopJunction
       : boost_input_graph[vertexIdx].intersectionType == OSMConstant::StopJunction;
@@ -338,6 +339,7 @@ void SimulatorDataInitializer::initializeDataStructures(
       }
     } else {
       // TODO: Initialize connections for SP routing
+      if (!use_boost_graph_) throw std::runtime_error("Not yet implemented. #4");
     }
     intersection.connectionGraphEnd = connectionsCount;
 
@@ -355,6 +357,7 @@ void SimulatorDataInitializer::initializeDataStructures(
       laneCoordinatesComputer);
 
     // TODO: SP
+    if (!use_boost_graph_) throw std::runtime_error("Not yet implemented. #5");
     intersection.trafficControl = mapOSMConstantToTrafficControl(use_boost_graph_
       ? boost_input_graph[vertexIdx].intersectionType
       : boost_input_graph[vertexIdx].intersectionType);
@@ -386,6 +389,7 @@ void SimulatorDataInitializer::initializeDataStructures(
     }
   } else {
     // TODO: Implement this
+    if (!use_boost_graph_) throw std::runtime_error("Not yet implemented. #6");
   }
 
   for (uint idx = 0; idx < connections.size(); ++idx) {
@@ -423,6 +427,7 @@ void SimulatorDataInitializer::initializeDataStructures(
   RoadGraph::in_roadGraphEdgeIter_BI Iei, Iei_end;
   RoadGraph::out_roadGraphEdgeIter_BI Oei, Oei_end;
   // TODO: Implement this so that it works with SP routing too
+  if (!use_boost_graph_) throw std::runtime_error("Not yet implemented. #7");
   for (boost::tie(vi, viEnd) = boost::vertices(boost_input_graph); vi != viEnd; ++vi) {
     intersections.at(*vi).totalInOutEdges = boost::degree(*vi, boost_input_graph);
 
