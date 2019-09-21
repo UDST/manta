@@ -4,7 +4,13 @@ namespace LC
 {
 
 SimulatorConfiguration::SimulatorConfiguration(const char * settings_path) :
-    settings_(settings_path, QSettings::IniFormat) {}
+    settings_(settings_path, QSettings::IniFormat)
+{
+    if (settings_.value("USE_JOHNSON_ROUTING", false).toBool()
+            && settings_.value("USE_SP_ROUTING", false).toBool())
+        throw std::runtime_error(
+            "Can not use both Johnson routing and SP routing. Check initialization options.");
+}
 
 bool SimulatorConfiguration::TryToReadPreviousPaths(void) const
 {
