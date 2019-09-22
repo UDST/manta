@@ -185,7 +185,7 @@ void SimulatorDataInitializer::initializeDataStructures(
     : abm_street_graph_shared_ptr_->nedges();
   const int amount_of_vertices = use_boost_graph_
     ? boost::num_vertices(boost_input_graph)
-    : abm_street_graph_shared_ptr_->nvertices();
+    : abm_street_graph_shared_ptr_->amount_of_vertices_;
 
   edgesData.resize(amount_of_edges * 4);  //4 to make sure it fits
 

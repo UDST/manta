@@ -99,61 +99,13 @@ void abm::Graph::remove_edge(abm::graph::vertex_t vertex1,
   vertex_edges_[vertex1] = v1edge;
   vertex_edges_[vertex2] = v2edge;
 }
-/*
-// Read MatrixMarket graph file format
-bool abm::Graph::read_graph_matrix_market(const std::string& filename) {
-  bool status = true;
-  try {
-    std::fstream file;
-    file.open(filename.c_str(), std::ios::in);
-    if (file.is_open() && file.good()) {
-      // Line
-      std::string line;
-      bool header = true;
-      double ignore;
-      while (std::getline(file, line)) {
-        std::istringstream istream(line);
-        int v1, v2;
-        double weight;
-        unsigned nvertices;
-        // ignore comment lines (# or !) or blank lines
-        if ((line.find('#') == std::string::npos) &&
-            (line.find('%') == std::string::npos) && (line != "")) {
-          if (header) {
-            // Ignore header
-            istream >> nvertices;
-            while (istream.good()) istream >> ignore;
-            header = false;
-            this->assign_nvertices(nvertices + 1);
-          }
-          while (istream.good()) {
-            // Read vertices edges and weights
-            istream >> v1 >> v2 >> weight;
-            this->add_edge(v1, v2, weight);
-          }
-        }
-      }
-      std::cout << "Graph summary #edges: " << this->edges_.size()
-                << " #vertices: " << this->nvertices_ << "\n";
-    } else {
-      throw std::runtime_error("Input file not found");
-    }
-  } catch (std::exception& exception) {
-    std::cout << "Read matrix market file: " << exception.what() << "\n";
-    status = false;
-  }
-  return status;
-}
-*/
-// Read MatrixMarket graph file format
+
 bool abm::Graph::read_graph_osm(const std::string& filename) {
-  // TODO: Read OSM data here too
   bool status = true;
   try {
     csvio::CSVReader<6> in(filename);
     abm::graph::vertex_t edge_osm_id, source_osm_id, target_osm_id;
     std::vector<float> edge_values(3);
-    abm::graph::vertex_t nvertices = 0;
     float length, lanes, speed_mph;
     abm::graph::vertex_t edge_lc_id = 0;
     in.read_header(csvio::ignore_no_column, "uniqueid", "u", "v", "length", "lanes", "speed_mph");
@@ -166,14 +118,12 @@ bool abm::Graph::read_graph_osm(const std::string& filename) {
       if (edges_.find(std::make_pair(source_osm_id, target_osm_id)) == edges_.end()) {
         this->add_edge(source_osm_id, target_osm_id, edge_values, edge_osm_id);
       }
-      ++nvertices;
 
       //map edge vertex ids to smaller values
       edge_vertex_map_[source_osm_id] = edge_lc_id;
       ++edge_lc_id;
     }
     
-    this->assign_nvertices(nvertices);
     std::cout << "# of edges: " << this->edges_.size() << "\n";
 
   } catch (std::exception& exception) {
@@ -184,14 +134,18 @@ bool abm::Graph::read_graph_osm(const std::string& filename) {
   return status;
 }
 
-bool abm::Graph::read_vertices(const std::string& filename) {
+void abm::Graph::read_vertices(const std::string& filename) {
+  vertex_osm_ids_to_lc_ids_.clear();
+  vertex_lc_ids_to_osm_ids_.clear();
+  vertices_data_.clear();
+  amount_of_vertices_ = 0;
+
   QVector2D minBox(FLT_MAX, FLT_MAX);
   QVector2D maxBox(-FLT_MAX, -FLT_MAX);
   float scale = 1.0f;
   float sqSideSz = std::max<float>(maxBox.x() - minBox.x(), maxBox.y() - minBox.y()) * scale * 0.5f; // half side
   QVector3D centerV(-minBox.x(), -minBox.y(), 0);
   QVector3D centerAfterSc(-sqSideSz, -sqSideSz, 0);
-  bool status = true;
   try {
     abm::graph::vertex_t osm_id;
     float lat, lon;
@@ -214,34 +168,16 @@ bool abm::Graph::read_vertices(const std::string& filename) {
 
       vertex_OSM_type_[osm_id] = mapStringToOSMConstant(osm_string_id);
     }
-    std::cout << "# of vertices: " << vertices_data_.size() << "\n";
-
+    amount_of_vertices_ = living_city_id;
   } catch (std::exception& exception) {
-    std::cout << "Read OSM file: " << exception.what() << "\n";
-    status = false;
+    std::cout
+      << "abm::Graph::read_vertices -> Nodes loading failed with: "
+      << exception.what()
+      << std::endl;
+    throw;
   }
-
-
-  return status;
 }
 
-/*
-void abm::Graph::generate_simple_graph() {
-  this->assign_nvertices(7);
-  // set up a simple graph
-  this->add_edge(1, 2, 1.5);
-  this->add_edge(1, 3, 9.1);
-  this->add_edge(1, 6, 14.3);
-  this->add_edge(2, 3, 15.9);
-  this->add_edge(2, 4, 5.5);
-  this->add_edge(3, 1, 5.6);
-  this->add_edge(3, 4, 11.6);
-  this->add_edge(3, 6, 2.4);
-  this->add_edge(4, 3, 0.2);
-  this->add_edge(4, 5, 6.2);
-  this->add_edge(5, 6, 9.7);
-}
-*/
 // Dijktra shortest paths from src to a vertex
 std::vector<abm::graph::vertex_t> abm::Graph::dijkstra(
     abm::graph::vertex_t source, abm::graph::vertex_t destination) {

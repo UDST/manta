@@ -40,9 +40,6 @@ class Graph {
   //! \param[in] directed Defines if the graph is directed or not
   explicit Graph(bool directed) : directed_{directed} {};
 
-  //! Return number of vertices
-  unsigned nvertices() const { return nvertices_; }
-
   //! Number of edges
   graph::vertex_t nedges() const { return edges_.size(); }
 
@@ -81,8 +78,7 @@ class Graph {
 
   //! Read OSM graph file format
   //! \param[in] filename Name of input MatrixMarket file
-  //! \retval status File read status
-  bool read_vertices(const std::string& filename);
+  void read_vertices(const std::string& filename);
 
   //! Compute the shortest path using priority queue
   //! \param[in] source ID of source vertex1
@@ -123,15 +119,10 @@ class Graph {
   //! \retval cost Cost of traversed path
   abm::graph::weight_t path_cost(const std::vector<graph::vertex_t>& path);
 
-// private:
-  //! Assign number of vertices
-  //! \param[in] nvertices Number of vertices in graph
-  void assign_nvertices(unsigned nvertices) { this->nvertices_ = nvertices; }
-
   // Directed / undirected
   bool directed_{false};
   // Number of graph vertices
-  unsigned nvertices_{std::numeric_limits<unsigned>::max()};
+  abm::graph::vertex_t  amount_of_vertices_{0};
   // Edge id
   graph::vertex_t edgeid_{0};
   // Max id of vertex
