@@ -128,14 +128,6 @@ B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulato
       updatedIntersections,
       trafficLightSchedules,
       inLanesIndexes);
-
-  assert(!laneMap.empty());
-  assert(!edgesData.empty());
-  assert(!connections.empty());
-  assert(!connectionsBlocking.empty());
-  assert(!updatedIntersections.empty());
-  assert(!trafficLightSchedules.empty());
-  assert(!inLanesIndexes.empty());
 }
 
 #ifdef B18_RUN_WITH_GUI
