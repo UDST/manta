@@ -21,21 +21,21 @@ void LaneCoordinatesComputer::computeEdgeInterface(
     return;
 
   const B18EdgeData edge = edgesData_.at(edgeIdx);
-  const uint intersectionVertexIdx = direction == In
+  const uint intersectionVertexLcId = direction == In
     ? edge.targetVertexLcId
     : edge.sourceVertexLcId;
-  const uint otherVertexIdx = direction == In
+  const uint otherVertexLcId = direction == In
     ? edge.sourceVertexLcId
     : edge.targetVertexLcId;
 
   // Otherwise compute it and store it
-  const auto intersectionCoordinates = coordinatesRetriever_(intersectionVertexIdx);
+  const auto intersectionCoordinates = coordinatesRetriever_(intersectionVertexLcId);
   const BoostPoint intersectionCoordinate(
     intersectionCoordinates.first,
     intersectionCoordinates.second
   );
 
-  const auto otherIntersectionCoordinates = coordinatesRetriever_(otherVertexIdx);
+  const auto otherIntersectionCoordinates = coordinatesRetriever_(otherVertexLcId);
   const BoostPoint otherExtremeCoordinate(
     otherIntersectionCoordinates.first,
     otherIntersectionCoordinates.second

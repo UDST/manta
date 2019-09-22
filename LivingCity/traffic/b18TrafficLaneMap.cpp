@@ -291,14 +291,22 @@ void SimulatorDataInitializer::initializeDataStructures(
     }
   };
 
-  const CoordinatesRetriever coordinatesRetriever = [&] (const uint & vertexIdx) {
-    // TODO: Implement this 
-    if (!use_boost_graph_) throw std::runtime_error("Not yet implemented. #2");
-    const std::pair<double, double> coordinates = use_boost_graph_
-      ? std::make_pair(boost_input_graph[vertexIdx].x, boost_input_graph[vertexIdx].y)
-      : std::make_pair(0.0, 0.0);
-    return coordinates;
+  const CoordinatesRetriever coordinatesRetriever = [&] (const uint & vertexLcId) {
+    const auto vertexGraphId = use_boost_graph_
+      ? vertexLcId
+      : abm_street_graph_shared_ptr_->vertex_lc_ids_to_osm_ids_.at(vertexLcId);
+
+    const double x = use_boost_graph_
+      ? boost_input_graph[vertexGraphId].x
+      : abm_street_graph_shared_ptr_->vertices_data_.at(vertexGraphId).x();
+
+    const double y = use_boost_graph_
+      ? boost_input_graph[vertexGraphId].y
+      : abm_street_graph_shared_ptr_->vertices_data_.at(vertexGraphId).y();
+
+    return std::make_pair(x, y);
   };
+
   LaneCoordinatesComputer laneCoordinatesComputer{
     coordinatesRetriever,
     edgesData,
@@ -311,8 +319,6 @@ void SimulatorDataInitializer::initializeDataStructures(
       : abm_street_graph_shared_ptr_->vertex_lc_ids_to_osm_ids_.at(vertexLcId);
 
     Intersection & intersection = updatedIntersections.at(vertexLcId);
-
-    std::cout << "$1" << std::endl;
 
     // Check whether this intersection is a stop junction
     const auto intersectionOsmType = use_boost_graph_
@@ -367,14 +373,12 @@ void SimulatorDataInitializer::initializeDataStructures(
     }
     intersection.connectionGraphEnd = connectionsCount;
 
-    std::cout << "$2" << std::endl;
     addTrafficLightScheduleToIntersection(
       intersection,
       vertexLcId,
       trafficLightSchedules,
       connections,
       edgesData);
-    std::cout << "$3" << std::endl;
     addBlockingToIntersection(
       vertexLcId,
       updatedIntersections,
@@ -383,7 +387,6 @@ void SimulatorDataInitializer::initializeDataStructures(
       laneCoordinatesComputer);
 
     intersection.trafficControl = mapOSMConstantToTrafficControl(intersectionOsmType);
-    std::cout << "$4" << std::endl;
 
     intersection.inLanesIndexesStart = inLanesIndexes.size();
     std::unordered_set<uint> intersectionInLanesIndexes;
@@ -398,7 +401,6 @@ void SimulatorDataInitializer::initializeDataStructures(
       inLanesIndexes.push_back(index);
     }
     intersection.inLanesIndexesEnd = inLanesIndexes.size();
-    std::cout << "$5" << std::endl;
   };
 
   std::cerr << "[Log] Initializing intersections data." << std::endl;
@@ -414,7 +416,6 @@ void SimulatorDataInitializer::initializeDataStructures(
   } else {
     for (const auto & vertex_mapping : abm_street_graph_shared_ptr_->vertex_osm_ids_to_lc_ids_) {
       const uint vertexLcId = vertex_mapping.second;
-      std::cout << "\n" << "Initi: " << vertexLcId << std::endl;
       initialize_updated_intersection(connectionsCount, vertexLcId);
     }
   }
