@@ -116,11 +116,9 @@ B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulato
     b18TrafficOD_.loadB18TrafficPeople(trafficPersonVec);
   }
 
-  simulatorDataInitializer_.resetIntersections(trafficLights);
   simulatorDataInitializer_.initializeDataStructures(
       laneMap,
       edgesData,
-      trafficLights,
       edgeDescToLaneMapNum,
       laneMapNumToEdgeDesc,
       edgeDescToLaneMapNumSP,
@@ -133,7 +131,6 @@ B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulato
 
   assert(!laneMap.empty());
   assert(!edgesData.empty());
-  assert(!trafficLights.empty());
   assert(!connections.empty());
   assert(!connectionsBlocking.empty());
   assert(!updatedIntersections.empty());
@@ -151,12 +148,6 @@ void B18TrafficSimulator::createRandomPeople(float startTime, float endTime,
                                   peopleJobInfoLayers, simRoadGraph_shared_ptr_->myRoadGraph_BI);
 }//
 #endif
-
-void B18TrafficSimulator::resetPeopleJobANDintersections() {
-  b18TrafficOD_.resetTrafficPersonJob(trafficPersonVec);
-  simulatorDataInitializer_.resetIntersections(trafficLights);
-}//
-
 
 //////////////////////////////////////////////////
 // GPU
@@ -201,7 +192,6 @@ void B18TrafficSimulator::simulateInGPU(void) {
         indexPathVec,
         edgesData,
         laneMap,
-        trafficLights,
         startTimeH,
         endTimeH,
         accSpeedPerLinePerTimeInterval,
@@ -1602,7 +1592,6 @@ void B18TrafficSimulator::simulateInCPU_MultiPass(void) {
 
   for (int nP = 0; nP < configuration_.AmountOfPasses(); nP++) {
     printf("\nNumber of pass %d of %d\n", nP, configuration_.AmountOfPasses());
-    resetPeopleJobANDintersections();//reset people
     weigthMode = 1; //first time run normal weights
 
     if (nP == 0) {

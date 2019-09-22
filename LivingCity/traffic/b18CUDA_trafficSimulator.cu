@@ -81,7 +81,6 @@ LC::B18TrafficPerson *trafficPersonVec_d;
 uint *indexPathVec_d;
 LC::B18EdgeData *edgesData_d;
 uchar *laneMap_d;
-uchar *trafficLights_d;
 float* accSpeedPerLinePerTimeInterval_d;
 float* numVehPerLinePerTimeInterval_d;
 
@@ -101,7 +100,6 @@ void b18InitCUDA(
     std::vector<uint> &indexPathVec,
     std::vector<LC::B18EdgeData>& edgesData,
     std::vector<uchar>& laneMap,
-    std::vector<uchar>& trafficLights,
     float startTimeH,
     float endTimeH,
     std::vector<float>& accSpeedPerLinePerTimeInterval,
@@ -167,17 +165,13 @@ void b18InitCUDA(
     halfLaneMap = laneMap.size() / 2;
   }
   {
-    size_t sizeT = trafficLights.size() * sizeof(uchar);//total number of lanes
-    if (fistInitialization) gpuErrchk(cudaMalloc((void **) &trafficLights_d, sizeT));   // Allocate array on device
-    gpuErrchk(cudaMemcpy(trafficLights_d, trafficLights.data(), sizeT, cudaMemcpyHostToDevice));
-  }
-  {
+    const uint amountOfIntersections = hostIntersections.size();
     startTime = startTimeH * 3600.0f;
     uint numSamples = ceil(((endTimeH*3600.0f - startTimeH*3600.0f) / (DELTA_TIME_HOST * numStepsPerSample * numStepsTogether))) + 1; //!!!
     accSpeedPerLinePerTimeInterval.clear();
     numVehPerLinePerTimeInterval.clear();
-    accSpeedPerLinePerTimeInterval.resize(numSamples * trafficLights.size());
-    numVehPerLinePerTimeInterval.resize(numSamples * trafficLights.size());
+    accSpeedPerLinePerTimeInterval.resize(numSamples * amountOfIntersections);
+    numVehPerLinePerTimeInterval.resize(numSamples * amountOfIntersections);
     size_t sizeAcc = accSpeedPerLinePerTimeInterval.size() * sizeof(float);
     if (fistInitialization)gpuErrchk(cudaMalloc((void **) &accSpeedPerLinePerTimeInterval_d, sizeAcc));   // Allocate array on device
     if (fistInitialization)gpuErrchk(cudaMalloc((void **) &numVehPerLinePerTimeInterval_d, sizeAcc));   // Allocate array on device
@@ -196,7 +190,6 @@ void b18FinishCUDA(void){
   cudaFree(indexPathVec_d);
   cudaFree(edgesData_d);
   cudaFree(laneMap_d);
-  cudaFree(trafficLights_d);
   cudaFree(accSpeedPerLinePerTimeInterval_d);
   cudaFree(numVehPerLinePerTimeInterval_d);
 }//

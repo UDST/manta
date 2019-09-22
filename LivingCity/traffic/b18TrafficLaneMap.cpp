@@ -167,7 +167,6 @@ SimulatorDataInitializer::SimulatorDataInitializer(
 void SimulatorDataInitializer::initializeDataStructures(
     std::vector<uchar> &laneMap,
     std::vector<B18EdgeData> &edgesData,
-    std::vector<uchar> &trafficLights,
     std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> & edgeDescToLaneMapNum,
     std::map<uint, RoadGraph::roadGraphEdgeDesc_BI> & laneMapNumToEdgeDesc,
     std::map<std::shared_ptr<abm::Graph::Edge>, uint> & edgeDescToLaneMapNumSP,
@@ -445,16 +444,6 @@ void SimulatorDataInitializer::initializeDataStructures(
   // Instantiate lane map
   laneMap.resize(kMaxMapWidthM * totalLaneMapChunks * 2); // 2: to have two maps.
   memset(laneMap.data(), -1, laneMap.size()*sizeof(unsigned char)); //
-
-  trafficLights.assign(totalLaneMapChunks, 0);
 }
-
-void SimulatorDataInitializer::resetIntersections(
-    std::vector<uchar> & trafficLights) const {
-  if (trafficLights.size() > 0) {
-    memset(trafficLights.data(), 0, trafficLights.size()*sizeof(
-             uchar));  //to make the system to repeat same execution
-  }
-}//
 
 }//
