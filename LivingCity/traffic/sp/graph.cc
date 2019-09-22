@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "graph.h"
 
 // Add edge
@@ -137,15 +139,9 @@ bool abm::Graph::read_graph_osm(const std::string& filename) {
 void abm::Graph::read_vertices(const std::string& filename) {
   vertex_osm_ids_to_lc_ids_.clear();
   vertex_lc_ids_to_osm_ids_.clear();
-  vertices_data_.clear();
+  vertices_positions_.clear();
   amount_of_vertices_ = 0;
 
-  QVector2D minBox(FLT_MAX, FLT_MAX);
-  QVector2D maxBox(-FLT_MAX, -FLT_MAX);
-  float scale = 1.0f;
-  float sqSideSz = std::max<float>(maxBox.x() - minBox.x(), maxBox.y() - minBox.y()) * scale * 0.5f; // half side
-  QVector3D centerV(-minBox.x(), -minBox.y(), 0);
-  QVector3D centerAfterSc(-sqSideSz, -sqSideSz, 0);
   try {
     abm::graph::vertex_t osm_id;
     float lat, lon;
@@ -159,12 +155,12 @@ void abm::Graph::read_vertices(const std::string& filename) {
       vertex_lc_ids_to_osm_ids_[living_city_id] = osm_id;
       ++living_city_id;
 
+      // TODO(ffigari): The original boost graph implementation projects the coordinates from
+      // lat / long to mercator coordinates.
       QVector3D position(lat, lon, 0);
-      position += centerV;
-      position *= scale;
-      position += centerAfterSc;
       position.setX(position.x() * -1.0f);
-      vertices_data_[osm_id] = position;
+      assert(std::isfinite(position.x()) && std::isfinite(position.y()));
+      vertices_positions_[osm_id] = position;
 
       vertex_OSM_type_[osm_id] = mapStringToOSMConstant(osm_string_id);
     }

@@ -298,11 +298,11 @@ void SimulatorDataInitializer::initializeDataStructures(
 
     const double x = use_boost_graph_
       ? boost_input_graph[vertexGraphId].x
-      : abm_street_graph_shared_ptr_->vertices_data_.at(vertexGraphId).x();
+      : abm_street_graph_shared_ptr_->vertices_positions_.at(vertexGraphId).x();
 
     const double y = use_boost_graph_
       ? boost_input_graph[vertexGraphId].y
-      : abm_street_graph_shared_ptr_->vertices_data_.at(vertexGraphId).y();
+      : abm_street_graph_shared_ptr_->vertices_positions_.at(vertexGraphId).y();
 
     return std::make_pair(x, y);
   };
@@ -420,33 +420,26 @@ void SimulatorDataInitializer::initializeDataStructures(
     }
   }
 
-  assert(!connections.empty());
-
   for (uint idx = 0; idx < connections.size(); ++idx) {
     const Connection & connection = connections.at(idx);
-    std::cout << "#1" << std::endl;
     for (
         uint i = connection.connectionsBlockingStart;
         i < connection.connectionsBlockingEnd;
         ++i) {
       const uint blockedConnectionIdx = connectionsBlocking.at(i);
       const Connection & blockedConnection = connections.at(blockedConnectionIdx);
-      std::cout << "#2" << std::endl;
       if (blockedConnection.connectionsBlockingStart == blockedConnection.connectionsBlockingEnd)
         continue;
 
       bool found = false;
-      std::cout << "#3" << std::endl;
       for (
           uint j = blockedConnection.connectionsBlockingStart;
           !found && j < blockedConnection.connectionsBlockingEnd;
           ++j) {
-        std::cout << "#4" << std::endl;
         const uint secondBlockedConnectionIdx = connectionsBlocking.at(j);
         found = secondBlockedConnectionIdx == idx;
       }
       assert(found && "Blocked connections should be symmetric.");
-      std::cout << "#5" << std::endl;
     }
   }
 
