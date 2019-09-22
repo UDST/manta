@@ -111,6 +111,7 @@ void B18TrafficSP::convertVector(
     std::vector<uint>& indexPathVec,
     std::map<std::shared_ptr<abm::Graph::Edge>, uint> &edgeDescToLaneMapNumSP,
     const std::shared_ptr<abm::Graph>& graph_) {
+  indexPathVec.clear();
   for (auto& x: paths_SP) {
     if (x != -1) {
       indexPathVec.emplace_back(edgeDescToLaneMapNumSP[graph_->edges_[graph_->edge_ids_to_vertices[x]]]);
@@ -180,7 +181,6 @@ std::vector<abm::graph::vertex_t> B18TrafficSP::compute_routes(int mpi_rank,
     }
   }
   // Get all paths and indices
-  std::cout << "paths size " << paths.size() << "\n";
   all_paths_ = abm::gather_vectors_ids(paths);
   // for (int i = 0; i < all_paths_.size(); i++) {
   //   printf("all_paths = %d\n", all_paths_[i]);

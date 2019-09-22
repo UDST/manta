@@ -125,9 +125,6 @@ bool abm::Graph::read_graph_osm(const std::string& filename) {
       edge_vertex_map_[source_osm_id] = edge_lc_id;
       ++edge_lc_id;
     }
-    
-    std::cout << "# of edges: " << this->edges_.size() << "\n";
-
   } catch (std::exception& exception) {
     std::cout << "Read OSM file: " << exception.what() << "\n";
     status = false;
@@ -300,7 +297,6 @@ std::vector<abm::graph::vertex_t> abm::Graph::dijkstra_edges(
     abm::graph::vertex_t source, abm::graph::vertex_t destination) {
 
   const auto path = this->dijkstra(source, destination);
-  //printf("path size = %d\n", path.size());
 
   std::vector<abm::graph::vertex_t> route_edges;
   if (path.size() > 0) {

@@ -85,6 +85,8 @@ B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulato
       std::copy(all_paths_.begin(), all_paths_.end(), output_iterator);
     }
 
+    assert(!all_paths_.empty());
+
     //map person to their initial edge
     int count = 0;
     for (int i = 0; i < all_paths_.size(); i++) {
@@ -101,7 +103,6 @@ B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulato
         break;
       }
     }
-    std::cout << "person_to_init_edge size " << street_graph_shared_ptr_->person_to_init_edge_.size() << "\n";
   } else {
     std::cerr << "[Log] Using regular routing." << std::endl;
     simRoadGraph_shared_ptr_ = std::make_shared<RoadGraph>();
@@ -113,9 +114,10 @@ B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulato
 
     std::cerr << "[Log] Initializing persons vector." << std::endl;
     b18TrafficOD_.resetTrafficPersonJob(trafficPersonVec);
-    b18TrafficOD_.loadB18TrafficPeople(trafficPersonVec);
   }
 
+  b18TrafficOD_.loadDemand(trafficPersonVec);
+  assert(!trafficPersonVec.empty());
   simulatorDataInitializer_.initializeDataStructures(
       laneMap,
       edgesData,
@@ -166,7 +168,6 @@ void B18TrafficSimulator::simulateInGPU(void) {
       //set the indexPathInit of each person in trafficPersonVec to the correct one
       for (int p = 0; p < trafficPersonVec.size(); p++) {
         trafficPersonVec[p].indexPathInit = street_graph_shared_ptr_->person_to_init_edge_[p];
-        //std::cout << p << " indexPathInit " << trafficPersonVec[p].indexPathInit << "\n";
       }
     } else {
       B18TrafficDijstra::generateRoutesMulti(simRoadGraph_shared_ptr_->myRoadGraph_BI,
