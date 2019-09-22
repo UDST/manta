@@ -44,8 +44,8 @@ void addBlockingToIntersection(
     Connection & mainConnection = connections.at(mainConnectionIdx);
     mainConnection.connectionsBlockingStart = connectionsBlocking.size();
     const BoostSegment mainSegment{
-      lanesCoordinates.at(mainConnection.inLaneNumber),
-      lanesCoordinates.at(mainConnection.outLaneNumber)
+      lanesCoordinates.at(mainConnection.inLaneLcId),
+      lanesCoordinates.at(mainConnection.outLaneLcId)
     };
 
     for (
@@ -57,15 +57,15 @@ void addBlockingToIntersection(
 
       const Connection & secondConnection = connections.at(secondConnectionIdx);
 
-      if (mainConnection.inLaneNumber == secondConnection.inLaneNumber
-          || mainConnection.inLaneNumber == secondConnection.outLaneNumber
-          || mainConnection.outLaneNumber == secondConnection.inLaneNumber
-          || mainConnection.outLaneNumber == secondConnection.outLaneNumber)
+      if (mainConnection.inLaneLcId == secondConnection.inLaneLcId
+          || mainConnection.inLaneLcId == secondConnection.outLaneLcId
+          || mainConnection.outLaneLcId == secondConnection.inLaneLcId
+          || mainConnection.outLaneLcId == secondConnection.outLaneLcId)
         continue;
 
       const BoostSegment secondSegment{
-        lanesCoordinates.at(secondConnection.inLaneNumber),
-        lanesCoordinates.at(secondConnection.outLaneNumber)
+        lanesCoordinates.at(secondConnection.inLaneLcId),
+        lanesCoordinates.at(secondConnection.outLaneLcId)
       };
 
       std::vector<BoostPoint> intersectionPoints;
@@ -100,11 +100,11 @@ void addTrafficLightScheduleToIntersection(
   }
 
   const auto sourceVertex = [&connections, &edges] (const uint connectionIdx) {
-    return edges.at(connections.at(connectionIdx).inEdgeNumber).sourceVertexIndex;
+    return edges.at(connections.at(connectionIdx).inEdgeLcId).sourceVertexIndex;
   };
 
   const auto targetVertex = [&connections, &edges] (const uint connectionIdx) {
-    return edges.at(connections.at(connectionIdx).outEdgeNumber).targetVertexIndex;
+    return edges.at(connections.at(connectionIdx).outEdgeLcId).targetVertexIndex;
   };
 
   const uint scheduledTime = 10;
@@ -253,8 +253,8 @@ void SimulatorDataInitializer::initializeDataStructures(
       initialize_edge_data(
         std::get<1>(x)->second[1],
         std::get<1>(x)->second[0],
-        abm_street_graph_shared_ptr_->osm_ids_to_lc_ids_.at(std::get<0>(std::get<0>(x))),
-        abm_street_graph_shared_ptr_->osm_ids_to_lc_ids_.at(std::get<1>(std::get<0>(x))),
+        abm_street_graph_shared_ptr_->vertex_osm_ids_to_lc_ids_.at(std::get<0>(std::get<0>(x))),
+        abm_street_graph_shared_ptr_->vertex_osm_ids_to_lc_ids_.at(std::get<1>(std::get<0>(x))),
         std::get<1>(x)->second[2],
         abm_street_graph_shared_ptr_->vertex_OSM_type_.at(std::get<0>(std::get<0>(x))) == OSMConstant::MotorwayJunction);
     }
@@ -265,25 +265,25 @@ void SimulatorDataInitializer::initializeDataStructures(
     &connections
   ] (
       uint & connectionsCount,
-      const uint & vertexIdx,
-      const uint & inEdgeNumber,
-      const B18EdgeData & inEdgeData,
-      const uint & outEdgeNumber,
-      const B18EdgeData & outEdgeData) {
-    if (inEdgeData.sourceVertexIndex == outEdgeData.targetVertexIndex) {
+      const uint & vertexLcId,
+      const uint & inEdgeLcId,
+      const B18EdgeData & inEdgeLcData,
+      const uint & outEdgeLcId,
+      const B18EdgeData & outEdgeLcData) {
+    if (inEdgeLcData.sourceVertexIndex == outEdgeLcData.targetVertexIndex) {
       // Avoid U-turns
       return;
     }
 
-    assert(inEdgeData.targetVertexIndex == outEdgeData.sourceVertexIndex);
-    for (uint inIdx = 0; inIdx < inEdgeData.numLines; inIdx++) {
-      for (uint outIdx = 0; outIdx < outEdgeData.numLines; outIdx++) {
+    assert(inEdgeLcData.targetVertexIndex == outEdgeLcData.sourceVertexIndex);
+    for (uint inIdx = 0; inIdx < inEdgeLcData.numLines; inIdx++) {
+      for (uint outIdx = 0; outIdx < outEdgeLcData.numLines; outIdx++) {
         Connection connection;
-        connection.vertexNumber = vertexIdx;
-        connection.inEdgeNumber = inEdgeNumber;
-        connection.outEdgeNumber = outEdgeNumber;
-        connection.inLaneNumber = inEdgeNumber + inIdx;
-        connection.outLaneNumber = outEdgeNumber + outIdx;
+        connection.vertexLcId = vertexLcId;
+        connection.inEdgeLcId = inEdgeLcId;
+        connection.outEdgeLcId = outEdgeLcId;
+        connection.inLaneLcId = inEdgeLcId + inIdx;
+        connection.outLaneLcId = outEdgeLcId + outIdx;
         connection.enabled = false;
         connections.push_back(connection);
         ++connectionsCount;
@@ -305,62 +305,85 @@ void SimulatorDataInitializer::initializeDataStructures(
     connections,
     updatedIntersections};
 
-  const auto initialize_updated_intersection = [&] (uint & connectionsCount, const uint vertexIdx) {
+  const auto initialize_updated_intersection = [&] (uint & connectionsCount, const uint vertexLcId) {
+    const uint vertexGraphId = use_boost_graph_
+      ? vertexLcId
+      : abm_street_graph_shared_ptr_->vertex_lc_ids_to_osm_ids_.at(vertexLcId);
 
-    Intersection & intersection = updatedIntersections.at(vertexIdx);
+    Intersection & intersection = updatedIntersections.at(vertexLcId);
+
+    std::cout << "$1" << std::endl;
 
     // Check whether this intersection is a stop junction
-    // TODO: SP
-    if (!use_boost_graph_) throw std::runtime_error("Not yet implemented. #3");
-    intersection.isStopIntersection = use_boost_graph_
-      ? boost_input_graph[vertexIdx].intersectionType == OSMConstant::StopJunction
-      : boost_input_graph[vertexIdx].intersectionType == OSMConstant::StopJunction;
+    const auto intersectionOsmType = use_boost_graph_
+      ? boost_input_graph[vertexGraphId].intersectionType
+      : abm_street_graph_shared_ptr_->vertex_OSM_type_.at(vertexGraphId);
+    intersection.isStopIntersection = intersectionOsmType == OSMConstant::StopJunction;
 
     // Create connections information
     intersection.connectionGraphStart = connectionsCount;
 
     if (use_boost_graph_) {
-      const auto in_edges_pair = boost::in_edges(vertexIdx, boost_input_graph);
+      const auto in_edges_pair = boost::in_edges(vertexGraphId, boost_input_graph);
       const auto in_edges_begin = in_edges_pair.first;
       const auto in_edges_end = in_edges_pair.second;
       for (auto in_edges_it = in_edges_begin; in_edges_it != in_edges_end; ++in_edges_it) {
-        const auto & inEdgeNumber = edgeDescToLaneMapNum.at(*in_edges_it);
-        const auto & inEdgeData = edgesData.at(inEdgeNumber);
+        const auto & inEdgeLcId = edgeDescToLaneMapNum.at(*in_edges_it);
+        const auto & inEdgeLcData = edgesData.at(inEdgeLcId);
 
-        const auto p2 = boost::out_edges(vertexIdx, boost_input_graph);
+        const auto p2 = boost::out_edges(vertexGraphId, boost_input_graph);
         const auto outEdgesBegin = p2.first;
         const auto outEdgesEnd = p2.second;
         for (auto outEdgesIt = outEdgesBegin; outEdgesIt != outEdgesEnd; ++outEdgesIt) {
-          const auto & outEdgeNumber = edgeDescToLaneMapNum.at(*outEdgesIt);
-          const auto & outEdgeData = edgesData.at(outEdgeNumber);
+          const auto & outEdgeLcId = edgeDescToLaneMapNum.at(*outEdgesIt);
+          const auto & outEdgeLcData = edgesData.at(outEdgeLcId);
           initialize_connections_between(
-              connectionsCount, vertexIdx, inEdgeNumber, inEdgeData, outEdgeNumber, outEdgeData);
+              connectionsCount, vertexLcId, inEdgeLcId, inEdgeLcData, outEdgeLcId, outEdgeLcData);
         }
       }
     } else {
-      // TODO: Initialize connections for SP routing
-      if (!use_boost_graph_) throw std::runtime_error("Not yet implemented. #4");
+      // TODO(ffigari): This could be optimized by using the adjacency lists
+      for (const auto & inEdgeIt : abm_street_graph_shared_ptr_->edges_) {
+        const auto & inEdgeGraphData = inEdgeIt.second;
+        const auto inEdgeTargetGraphId = inEdgeGraphData->first.second;
+        if (inEdgeTargetGraphId != vertexGraphId)
+          continue;
+
+        const auto & inEdgeLcId = edgeDescToLaneMapNumSP.at(inEdgeGraphData);
+        const auto & inEdgeLcData = edgesData.at(inEdgeLcId);
+        for (const auto & outEdgeIt : abm_street_graph_shared_ptr_->edges_) {
+          const auto & outEdgeGraphData = outEdgeIt.second;
+          const auto outEdgeSourceGraphId = outEdgeGraphData->first.first;
+          if (outEdgeSourceGraphId != vertexGraphId)
+            continue;
+
+          const auto & outEdgeLcId = edgeDescToLaneMapNumSP.at(outEdgeGraphData);
+          const auto & outEdgeLcData = edgesData.at(outEdgeLcId);
+
+          initialize_connections_between(
+              connectionsCount, vertexLcId, inEdgeLcId, inEdgeLcData, outEdgeLcId, outEdgeLcData);
+        }
+      }
     }
     intersection.connectionGraphEnd = connectionsCount;
 
+    std::cout << "$2" << std::endl;
     addTrafficLightScheduleToIntersection(
       intersection,
-      vertexIdx,
+      vertexLcId,
       trafficLightSchedules,
       connections,
       edgesData);
+    std::cout << "$3" << std::endl;
     addBlockingToIntersection(
-      vertexIdx,
+      vertexLcId,
       updatedIntersections,
       connections,
       connectionsBlocking,
       laneCoordinatesComputer);
 
-    // TODO: SP
-    if (!use_boost_graph_) throw std::runtime_error("Not yet implemented. #5");
-    intersection.trafficControl = mapOSMConstantToTrafficControl(use_boost_graph_
-      ? boost_input_graph[vertexIdx].intersectionType
-      : boost_input_graph[vertexIdx].intersectionType);
+    intersection.trafficControl = mapOSMConstantToTrafficControl(intersectionOsmType);
+    std::cout << "$4" << std::endl;
 
     intersection.inLanesIndexesStart = inLanesIndexes.size();
     std::unordered_set<uint> intersectionInLanesIndexes;
@@ -369,12 +392,13 @@ void SimulatorDataInitializer::initializeDataStructures(
         connectionIdx < intersection.connectionGraphEnd;
         connectionIdx++) {
       const Connection & connection = connections.at(connectionIdx);
-      intersectionInLanesIndexes.insert(connection.inLaneNumber);
+      intersectionInLanesIndexes.insert(connection.inLaneLcId);
     }
     for (const uint & index : intersectionInLanesIndexes) {
       inLanesIndexes.push_back(index);
     }
     intersection.inLanesIndexesEnd = inLanesIndexes.size();
+    std::cout << "$5" << std::endl;
   };
 
   std::cerr << "[Log] Initializing intersections data." << std::endl;
@@ -384,37 +408,44 @@ void SimulatorDataInitializer::initializeDataStructures(
     const auto verticesBegin = p.first;
     const auto verticesEnd = p.second;
     for (auto vertices_it = verticesBegin; vertices_it != verticesEnd; ++vertices_it) {
-      const uint vertexIdx = *vertices_it;
-      initialize_updated_intersection(connectionsCount, vertexIdx);
+      const uint vertexLcId = *vertices_it;
+      initialize_updated_intersection(connectionsCount, vertexLcId);
     }
   } else {
-    for (const auto & vertex_mapping : abm_street_graph_shared_ptr_->osm_ids_to_lc_ids_) {
-      const uint vertexIdx = vertex_mapping.second;
-      std::cout << "init: " << vertexIdx << std::endl;
-      initialize_updated_intersection(connectionsCount, vertexIdx);
+    for (const auto & vertex_mapping : abm_street_graph_shared_ptr_->vertex_osm_ids_to_lc_ids_) {
+      const uint vertexLcId = vertex_mapping.second;
+      std::cout << "\n" << "Initi: " << vertexLcId << std::endl;
+      initialize_updated_intersection(connectionsCount, vertexLcId);
     }
   }
 
+  assert(!connections.empty());
+
   for (uint idx = 0; idx < connections.size(); ++idx) {
     const Connection & connection = connections.at(idx);
+    std::cout << "#1" << std::endl;
     for (
         uint i = connection.connectionsBlockingStart;
         i < connection.connectionsBlockingEnd;
         ++i) {
       const uint blockedConnectionIdx = connectionsBlocking.at(i);
       const Connection & blockedConnection = connections.at(blockedConnectionIdx);
+      std::cout << "#2" << std::endl;
       if (blockedConnection.connectionsBlockingStart == blockedConnection.connectionsBlockingEnd)
         continue;
 
       bool found = false;
+      std::cout << "#3" << std::endl;
       for (
           uint j = blockedConnection.connectionsBlockingStart;
           !found && j < blockedConnection.connectionsBlockingEnd;
           ++j) {
+        std::cout << "#4" << std::endl;
         const uint secondBlockedConnectionIdx = connectionsBlocking.at(j);
         found = secondBlockedConnectionIdx == idx;
       }
       assert(found && "Blocked connections should be symmetric.");
+      std::cout << "#5" << std::endl;
     }
   }
 

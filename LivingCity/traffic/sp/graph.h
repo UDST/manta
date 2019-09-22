@@ -138,8 +138,13 @@ class Graph {
   graph::vertex_t max_vertex_id_{std::numeric_limits<graph::vertex_t>::min()};
 
 
-  // Maps OSM intersection indexes to graph's internal vertex indexes
-  std::map<graph::vertex_t, graph::vertex_t> osm_ids_to_lc_ids_;
+  // Vertices' data structures --
+
+  // OSM intersection indexes -> Living City internal ids
+  std::map<graph::vertex_t, graph::vertex_t> vertex_osm_ids_to_lc_ids_;
+
+  // Living city internal ids -> OSM intersection indexes
+  std::map<graph::vertex_t, graph::vertex_t> vertex_lc_ids_to_osm_ids_;
 
   // Maps OSM intersection indexes to their corresponding real life position
   std::map<graph::vertex_t, QVector3D> vertices_data_;
@@ -148,13 +153,15 @@ class Graph {
   std::map<graph::vertex_t, OSMConstant> vertex_OSM_type_;
 
 
+  // Edges' data structures --
 
-  // Edges
-  std::map<std::tuple<graph::vertex_t, graph::vertex_t>, std::shared_ptr<Edge>>
-      edges_;
-  //Edges to an index
+  // <OSM source id, OSM target id> -> pointer to Edge data
+  std::map<std::tuple<graph::vertex_t, graph::vertex_t>, std::shared_ptr<Edge>> edges_;
+
+  // OSM edge ids -> Liviny City edge ids
   std::map <graph::vertex_t, graph::vertex_t> edge_vertex_map_;
-  // adjacency list with iteration over each edge
+
+  // Adjacency list with iteration over each edge
   tsl::robin_map<graph::vertex_t, std::vector<std::shared_ptr<Edge>>>
       vertex_edges_;
 

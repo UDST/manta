@@ -55,8 +55,8 @@ struct Connection {
   // Note also that
   //    laneNumber == edgeNumber is for the left-most lane
   //    laneNumber == edgeNumber + amountOfLanesInEdge - 1 is for the right-most lane
-  uint inLaneNumber;
-  uint outLaneNumber;
+  uint inLaneLcId;
+  uint outLaneLcId;
 
   // Flag indicating if the connection can be used
   bool enabled;
@@ -65,9 +65,9 @@ struct Connection {
   uint connectionsBlockingStart;
   uint connectionsBlockingEnd;
 
-  uint vertexNumber;
-  uint inEdgeNumber;
-  uint outEdgeNumber;
+  uint vertexLcId;
+  uint inEdgeLcId;
+  uint outEdgeLcId;
 };
 
 // Object to abstract traffic lights schedules

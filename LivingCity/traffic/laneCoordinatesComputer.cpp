@@ -114,8 +114,8 @@ std::unordered_map<uint, BoostPoint> LaneCoordinatesComputer::computeLanesCoordi
       connectionIdx < intersection.connectionGraphEnd;
       connectionIdx++) {
     const Connection & connection = connections_.at(connectionIdx);
-    computeMaxAmountOfLanes(connection.outEdgeNumber);
-    computeMaxAmountOfLanes(connection.inEdgeNumber);
+    computeMaxAmountOfLanes(connection.outEdgeLcId);
+    computeMaxAmountOfLanes(connection.inEdgeLcId);
   }
 
   // Compute edges interface
@@ -124,12 +124,8 @@ std::unordered_map<uint, BoostPoint> LaneCoordinatesComputer::computeLanesCoordi
       connectionIdx < intersection.connectionGraphEnd;
       connectionIdx++) {
     const Connection & connection = connections_.at(connectionIdx);
-    computeEdgeInterface(
-      connection.inEdgeNumber,
-      In);
-    computeEdgeInterface(
-      connection.outEdgeNumber,
-      Out);
+    computeEdgeInterface(connection.inEdgeLcId, In);
+    computeEdgeInterface(connection.outEdgeLcId, Out);
   }
 
   // Compute lanes coordinates
@@ -138,12 +134,8 @@ std::unordered_map<uint, BoostPoint> LaneCoordinatesComputer::computeLanesCoordi
       connectionIdx < intersection.connectionGraphEnd;
       connectionIdx++) {
     const Connection & connection = connections_.at(connectionIdx);
-    computeLaneCoordinates(
-      connection.inLaneNumber,
-      connection.inEdgeNumber);
-    computeLaneCoordinates(
-      connection.outLaneNumber,
-      connection.outEdgeNumber);
+    computeLaneCoordinates(connection.inLaneLcId, connection.inEdgeLcId);
+    computeLaneCoordinates(connection.outLaneLcId, connection.outEdgeLcId);
   }
 
   return lanesCoordinates_;

@@ -2,75 +2,69 @@
 
 // Add edge
 inline void abm::Graph::add_edge(
-    abm::graph::vertex_t vertex1, abm::graph::vertex_t vertex2,
-    std::vector<float> edge_vals, abm::graph::vertex_t edgeid = std::numeric_limits<abm::graph::vertex_t>::max()) {
-	abm::graph::weight_t weight = edge_vals[0];
-	/*
-    abm::graph::weight_t weight = 1,
-    abm::graph::vertex_t edgeid =
-        std::numeric_limits<abm::graph::vertex_t>::max(), int lanes = 2, int speed_mph = 30) {
-	*/
+    abm::graph::vertex_t source_osm_id,
+    abm::graph::vertex_t target_osm_id,
+    std::vector<float> edge_values,
+    abm::graph::vertex_t edgeid = std::numeric_limits<abm::graph::vertex_t>::max()) {
+	abm::graph::weight_t weight = edge_values[0];
   // Create a map of vertices
-  if (vertices_.find(vertex1) == vertices_.end())
-    vertices_[vertex1] = vertices_.size();
-  if (vertices_.find(vertex2) == vertices_.end())
-    vertices_[vertex2] = vertices_.size();
+  if (vertices_.find(source_osm_id) == vertices_.end())
+    vertices_[source_osm_id] = vertices_.size();
+  if (vertices_.find(target_osm_id) == vertices_.end())
+    vertices_[target_osm_id] = vertices_.size();
 
   if (!this->directed_)
-    if (vertex1 > vertex2) std::swap(vertex1, vertex2);
+    if (source_osm_id > target_osm_id) std::swap(source_osm_id, target_osm_id);
 
   // Create an edge
   auto edge = std::make_shared<Graph::Edge>(
-      //std::make_pair(std::make_pair(std::make_pair(std::make_pair(vertex1, vertex2), weight), lanes), speed_mph));
-      std::make_pair(std::make_pair(vertex1, vertex2), edge_vals));
-  //printf("edge vertex 1 = %lld, vertex 2 = %lld, weight = %f\n", edge->first.first, edge->first.second, edge->second);
-	//std::cout << "weight = " << edge->second[0] << "lane_num = " << edge->second[1] << "speed = " << edge->second[2] << "\n";
-  edges_[std::make_tuple(vertex1, vertex2)] = edge;
+      std::make_pair(std::make_pair(source_osm_id, target_osm_id), edge_values));
+  edges_[std::make_tuple(source_osm_id, target_osm_id)] = edge;
 
   // Add edge id
   if (edgeid == std::numeric_limits<abm::graph::vertex_t>::max()) {
-    edge_ids_[std::make_tuple(vertex1, vertex2)] = this->edgeid_;
+    edge_ids_[std::make_tuple(source_osm_id, target_osm_id)] = this->edgeid_;
     // Add edge cost
     edge_costs_[this->edgeid_] = weight;
     this->edgeid_ += 1;
   } else {
-    edge_ids_[std::make_tuple(vertex1, vertex2)] = edgeid;
-    edge_ids_to_vertices[edgeid] = std::make_tuple(vertex1, vertex2);
+    edge_ids_[std::make_tuple(source_osm_id, target_osm_id)] = edgeid;
+    edge_ids_to_vertices[edgeid] = std::make_tuple(source_osm_id, target_osm_id);
     // Add edge cost
     edge_costs_[edgeid] = weight;
   }
 
   // Vertex 1
-  auto vertex1_edges = vertex_edges_[vertex1];
+  auto vertex1_edges = vertex_edges_[source_osm_id];
   vertex1_edges.emplace_back(edge);
-  vertex_edges_[vertex1] =
+  vertex_edges_[source_osm_id] =
       std::vector<std::shared_ptr<Graph::Edge>>(vertex1_edges);
   //out edges vertex 1
-  auto vertex1_out_edges = vertex_out_edges_[vertex1];
+  auto vertex1_out_edges = vertex_out_edges_[source_osm_id];
   vertex1_out_edges.emplace_back(edge);
-  vertex_out_edges_[vertex1] =
+  vertex_out_edges_[source_osm_id] =
       std::vector<std::shared_ptr<Graph::Edge>>(vertex1_out_edges);
   //in edges vertex 2
-  auto vertex2_in_edges = vertex_in_edges_[vertex2];
+  auto vertex2_in_edges = vertex_in_edges_[target_osm_id];
   vertex2_in_edges.emplace_back(edge);
-  vertex_in_edges_[vertex2] =
+  vertex_in_edges_[target_osm_id] =
       std::vector<std::shared_ptr<Graph::Edge>>(vertex2_in_edges);
   if (!this->directed_) {
     // Vertex 2
-    auto vertex2_edges = vertex_edges_[vertex2];
+    auto vertex2_edges = vertex_edges_[target_osm_id];
     vertex2_edges.emplace_back(edge);
-    vertex_edges_[vertex2] =
+    vertex_edges_[target_osm_id] =
         std::vector<std::shared_ptr<Graph::Edge>>(vertex2_edges);
 
   //out edges vertex 2
-  auto vertex2_out_edges = vertex_out_edges_[vertex2];
+  auto vertex2_out_edges = vertex_out_edges_[target_osm_id];
   vertex2_out_edges.emplace_back(edge);
-  vertex_out_edges_[vertex2] =
+  vertex_out_edges_[target_osm_id] =
       std::vector<std::shared_ptr<Graph::Edge>>(vertex2_out_edges);
   //in edges vertex 1
-  auto vertex1_in_edges = vertex_in_edges_[vertex1];
+  auto vertex1_in_edges = vertex_in_edges_[source_osm_id];
   vertex1_in_edges.emplace_back(edge);
-  vertex_in_edges_[vertex1] =
+  vertex_in_edges_[source_osm_id] =
       std::vector<std::shared_ptr<Graph::Edge>>(vertex1_in_edges);
   }
 }
@@ -157,26 +151,26 @@ bool abm::Graph::read_graph_osm(const std::string& filename) {
   bool status = true;
   try {
     csvio::CSVReader<6> in(filename);
-    abm::graph::vertex_t edgeid, v1, v2;
-    std::vector<float> edge_vals(3);
+    abm::graph::vertex_t edge_osm_id, source_osm_id, target_osm_id;
+    std::vector<float> edge_values(3);
     abm::graph::vertex_t nvertices = 0;
     float length, lanes, speed_mph;
-    abm::graph::vertex_t index = 0;
+    abm::graph::vertex_t edge_lc_id = 0;
     in.read_header(csvio::ignore_no_column, "uniqueid", "u", "v", "length", "lanes", "speed_mph");
-    while (in.read_row(edgeid, v1, v2, length, lanes, speed_mph)) {
-      edge_vals[0] = length;
-      edge_vals[1] = lanes;
-      edge_vals[2] = speed_mph;
+    while (in.read_row(edge_osm_id, source_osm_id, target_osm_id, length, lanes, speed_mph)) {
+      edge_values[0] = length;
+      edge_values[1] = lanes;
+      edge_values[2] = speed_mph;
 
       //Don't add if there is already an edge with the same vertices
-      if (edges_.find(std::make_pair(v1, v2)) == edges_.end()) {
-        this->add_edge(v1, v2, edge_vals, edgeid);
+      if (edges_.find(std::make_pair(source_osm_id, target_osm_id)) == edges_.end()) {
+        this->add_edge(source_osm_id, target_osm_id, edge_values, edge_osm_id);
       }
       ++nvertices;
 
       //map edge vertex ids to smaller values
-      edge_vertex_map_[v1] = index;
-      ++index;
+      edge_vertex_map_[source_osm_id] = edge_lc_id;
+      ++edge_lc_id;
     }
     
     this->assign_nvertices(nvertices);
@@ -199,25 +193,26 @@ bool abm::Graph::read_vertices(const std::string& filename) {
   QVector3D centerAfterSc(-sqSideSz, -sqSideSz, 0);
   bool status = true;
   try {
-    abm::graph::vertex_t vertex;
+    abm::graph::vertex_t osm_id;
     float lat, lon;
     std::string osm_string_id;
 
     csvio::CSVReader<4> in(filename);
-    abm::graph::vertex_t index = 0;
+    abm::graph::vertex_t living_city_id = 0;
     in.read_header(csvio::ignore_extra_column, "osmid", "x", "y", "highway");
-    while (in.read_row(vertex, lat, lon, osm_string_id)) {
-      osm_ids_to_lc_ids_[vertex] = index;
-      ++index;
+    while (in.read_row(osm_id, lat, lon, osm_string_id)) {
+      vertex_osm_ids_to_lc_ids_[osm_id] = living_city_id;
+      vertex_lc_ids_to_osm_ids_[living_city_id] = osm_id;
+      ++living_city_id;
 
-      QVector3D pos(lat, lon, 0);
-      pos += centerV;
-      pos *= scale;
-      pos += centerAfterSc;
-      pos.setX(pos.x() * -1.0f);
-      vertices_data_[vertex] = pos;
+      QVector3D position(lat, lon, 0);
+      position += centerV;
+      position *= scale;
+      position += centerAfterSc;
+      position.setX(position.x() * -1.0f);
+      vertices_data_[osm_id] = position;
 
-      vertex_OSM_type_[vertex] = mapStringToOSMConstant(osm_string_id);
+      vertex_OSM_type_[osm_id] = mapStringToOSMConstant(osm_string_id);
     }
     std::cout << "# of vertices: " << vertices_data_.size() << "\n";
 

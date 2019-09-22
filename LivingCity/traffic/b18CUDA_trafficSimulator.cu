@@ -677,13 +677,13 @@ __global__ void kernel_updatePersonsCars(
             ++connectionIdx) {
           const LC::Connection & connection = connections[connectionIdx];
           const bool isRelevant =
-            connection.inLaneNumber == currentLaneNumber
-            && connection.outEdgeNumber == nextEdge;
+            connection.inLaneLcId == currentLaneNumber
+            && connection.outEdgeLcId == nextEdge;
           if (!isRelevant) continue;
 
           if (connection.enabled) {
             atLeastOneEnabledConnection = true;
-            nextEdgeChosenLane = connection.outLaneNumber - connection.outEdgeNumber;
+            nextEdgeChosenLane = connection.outLaneLcId - connection.outEdgeLcId;
             break;
           }
         }
@@ -1135,8 +1135,8 @@ __device__ float inLaneScore(
       uint connectionIdx = intersection.connectionGraphStart;
       connectionIdx < intersection.connectionGraphEnd;
       ++connectionIdx) {
-    if (connections[connectionIdx].inLaneNumber == laneIdx) {
-      correspondingEdgeIdx = connections[connectionIdx].inEdgeNumber;
+    if (connections[connectionIdx].inLaneLcId == laneIdx) {
+      correspondingEdgeIdx = connections[connectionIdx].inEdgeLcId;
       break;
     }
   }
@@ -1243,7 +1243,7 @@ __device__ void updateUnsupervised(
         ++connectionIdx) {
       // ..for each connection starting from that lane...
       const LC::Connection & connection = connections[connectionIdx];
-      if (connection.inLaneNumber != targetLane)
+      if (connection.inLaneLcId != targetLane)
         continue;
 
       if (!connection.enabled)
