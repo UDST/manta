@@ -276,51 +276,38 @@ __device__ void calculateGapsLC(
 }
 
 __device__ void calculateLaneCarShouldBe(
-    uint curEdgeLane,
-    uint nextEdge,
+    const uint currentEdgeLcId,
+    const uint nextEdgeLcId,
     const LC::B18IntersectionData* b18Intersections,
-    uint edgeNextInters,
-    ushort edgeNumLanes,
-    ushort &initOKLanes,
-    ushort &endOKLanes) {
+    const LC::Intersection *intersections,
+    const LC::Connection *connections,
+    const uint nextIntersectionLcId,
+    const ushort edgeNumLanes,
+    ushort & initOKLanes,
+    ushort & endOKLanes) {
+  assert(edgeNumLanes > 0);
+
+  ushort amountOfRelevantExits = 0;
+  ushort totalAmountOfExits = 0;
+
+  for (
+      uint connectionId = intersections[nextIntersectionLcId].connectionGraphStart;
+      connectionId < intersections[nextIntersectionLcId].connectionGraphEnd;
+      connectionId++) {
+    const auto connection = connections[connectionId];
+    if (connection.inEdgeLcId != currentEdgeLcId)
+      continue;
+
+    totalAmountOfExits++;
+
+    if (connection.outEdgeLcId != nextEdgeLcId)
+      continue;
+
+    amountOfRelevantExits++;
+  }
+
   initOKLanes = 0;
   endOKLanes = edgeNumLanes;
-  bool currentEdgeFound = false;
-  bool exitFound = false;
-  ushort numExitToTake = 0;
-  ushort numExists = 0;
-
-  for (int eN = b18Intersections[edgeNextInters].totalInOutEdges - 1; eN >= 0; eN--) {  // clockwise
-    // retrieve
-    uint procEdge = b18Intersections[edgeNextInters].edge[eN];
-
-    if ((procEdge & kMaskLaneMap) == curEdgeLane) { //current edge 0xFFFFF
-      currentEdgeFound = true;
-      if (exitFound == false) {
-        numExitToTake = 0;
-      }
-      continue;
-    }
-
-    if ((procEdge & kMaskInEdge) == 0x0) { //out edge 0x800000
-      numExists++;
-      if (currentEdgeFound == true) {
-        numExitToTake++;
-      }
-      if (currentEdgeFound == false && exitFound == false) {
-        numExitToTake++;
-      }
-    }
-    if ((procEdge & kMaskInEdge) == nextEdge) {
-      exitFound = true;
-      currentEdgeFound = false;
-    }
-  }
-
-  if (edgeNumLanes == 0) {
-    printf("ERRRROR\n");
-  }
-
   switch (edgeNumLanes) {
     /// ONE LANE
   case 1:
@@ -330,7 +317,7 @@ __device__ void calculateLaneCarShouldBe(
 
     /// TWO LANE
   case 2:
-    switch (numExists) {
+    switch (totalAmountOfExits) {
     case 1:
     case 2://all okay
       initOKLanes = 0;
@@ -338,7 +325,7 @@ __device__ void calculateLaneCarShouldBe(
       break;
 
     case 3:
-      if (numExitToTake > 2) { //left
+      if (amountOfRelevantExits > 2) { //left
         initOKLanes = 0;
         endOKLanes = 1;
         break;
@@ -350,7 +337,7 @@ __device__ void calculateLaneCarShouldBe(
 
     default:
 
-      if (numExitToTake >= numExists - 1) {
+      if (amountOfRelevantExits >= totalAmountOfExits - 1) {
         initOKLanes = 0;
         endOKLanes = 1;
         break;
@@ -365,7 +352,7 @@ __device__ void calculateLaneCarShouldBe(
 
     /// THREE LANE
   case 3:
-    switch (numExists) {
+    switch (totalAmountOfExits) {
     case 1:
     case 2://all okay
       initOKLanes = 0;
@@ -373,7 +360,7 @@ __device__ void calculateLaneCarShouldBe(
       break;
 
     case 3:
-      if (numExitToTake > 2) { //left
+      if (amountOfRelevantExits > 2) { //left
         initOKLanes = 0;
         endOKLanes = 1;
         break;
@@ -384,7 +371,7 @@ __device__ void calculateLaneCarShouldBe(
       break;
 
     default:
-      if (numExitToTake >= numExists - 1) {
+      if (amountOfRelevantExits >= totalAmountOfExits - 1) {
         initOKLanes = 0;
         endOKLanes = 1;
         break;
@@ -398,7 +385,7 @@ __device__ void calculateLaneCarShouldBe(
     break;
 
   case 4:
-    switch (numExists) {
+    switch (totalAmountOfExits) {
     case 1:
     case 2://all okay
       initOKLanes = 0;
@@ -406,12 +393,12 @@ __device__ void calculateLaneCarShouldBe(
       break;
 
     case 3:
-      if (numExitToTake == 1) { //right
+      if (amountOfRelevantExits == 1) { //right
         initOKLanes = 3;
         endOKLanes = 4;
       }
 
-      if (numExitToTake > 3) { //left
+      if (amountOfRelevantExits > 3) { //left
         initOKLanes = 0;
         endOKLanes = 1;
         break;
@@ -422,12 +409,12 @@ __device__ void calculateLaneCarShouldBe(
       break;
 
     default:
-      if (numExitToTake == 1) { //right
+      if (amountOfRelevantExits == 1) { //right
         initOKLanes = edgeNumLanes - 1;
         endOKLanes = edgeNumLanes;
       }
 
-      if (numExitToTake >= numExists - 2) {
+      if (amountOfRelevantExits >= totalAmountOfExits - 2) {
         initOKLanes = 0;
         endOKLanes = 2;
         break;
@@ -440,7 +427,7 @@ __device__ void calculateLaneCarShouldBe(
     break;
 
   default:
-    switch (numExists) {
+    switch (totalAmountOfExits) {
     case 1:
     case 2://all okay
       initOKLanes = 0;
@@ -448,12 +435,12 @@ __device__ void calculateLaneCarShouldBe(
       break;
 
     case 3:
-      if (numExitToTake == 1) { //right
+      if (amountOfRelevantExits == 1) { //right
         initOKLanes = edgeNumLanes - 1;
         endOKLanes = edgeNumLanes;
       }
 
-      if (numExitToTake > edgeNumLanes - 2) { //left
+      if (amountOfRelevantExits > edgeNumLanes - 2) { //left
         initOKLanes = 0;
         endOKLanes = 2;
         break;
@@ -464,12 +451,12 @@ __device__ void calculateLaneCarShouldBe(
       break;
 
     default:
-      if (numExitToTake < 2) { //right
+      if (amountOfRelevantExits < 2) { //right
         initOKLanes = edgeNumLanes - 2;
         endOKLanes = edgeNumLanes;
       }
 
-      if (numExitToTake >= numExists - 2) {
+      if (amountOfRelevantExits >= totalAmountOfExits - 2) {
         initOKLanes = 0;
         endOKLanes = 2;
         break;
@@ -882,9 +869,16 @@ __global__ void kernel_updatePersonsCars(
           if (trafficPersonVec[p].LC_stateofLaneChanging == 1) {
             // LC 3.1 Calculate the correct lanes
             if (trafficPersonVec[p].LC_endOKLanes == 0xFF) {
-              calculateLaneCarShouldBe(currentEdge, nextEdge, b18Intersections,
-                trafficPersonVec[p].edgeNextInters, trafficPersonVec[p].edgeNumLanes,
-                trafficPersonVec[p].LC_initOKLanes, trafficPersonVec[p].LC_endOKLanes);
+              calculateLaneCarShouldBe(
+                currentEdge,
+                nextEdge,
+                b18Intersections,
+                intersections,
+                connections,
+                trafficPersonVec[p].edgeNextInters,
+                trafficPersonVec[p].edgeNumLanes,
+                trafficPersonVec[p].LC_initOKLanes,
+                trafficPersonVec[p].LC_endOKLanes);
 
               if (trafficPersonVec[p].LC_initOKLanes == 0 &&
                 trafficPersonVec[p].LC_endOKLanes == 0) {

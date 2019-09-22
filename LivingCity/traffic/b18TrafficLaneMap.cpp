@@ -455,6 +455,7 @@ void SimulatorDataInitializer::initializeDataStructures(
   RoadGraph::in_roadGraphEdgeIter_BI Iei, Iei_end;
   RoadGraph::out_roadGraphEdgeIter_BI Oei, Oei_end;
   // TODO: Implement this so that it works with SP routing too
+  return;
   if (!use_boost_graph_) throw std::runtime_error("Not yet implemented. #7");
   for (boost::tie(vi, viEnd) = boost::vertices(boost_input_graph); vi != viEnd; ++vi) {
     intersections.at(*vi).totalInOutEdges = boost::degree(*vi, boost_input_graph);

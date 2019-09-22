@@ -58,6 +58,7 @@ B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulato
     street_graph_shared_ptr_ = std::make_shared<abm::Graph>(directed);
     const std::string networkPathSP = configuration_.NetworkPath().toStdString();
     const std::string odFileName = RoadGraphB2018::loadABMGraph(networkPathSP, street_graph_shared_ptr_);
+    // TODO: Should this be used somewhere to load the demand?
     const auto all_od_pairs_ = B18TrafficSP::read_od_pairs(odFileName, std::numeric_limits<int>::max());
     //compute the routes for every OD pair
     bool paths_were_cached = false;

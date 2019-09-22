@@ -58,8 +58,8 @@ class B18TrafficSimulator {
   int threadNumber;
   float avgTravelTime;
 
-  B18TrafficOD b18TrafficOD_;
   SimulatorDataInitializer simulatorDataInitializer_;
+  B18TrafficOD b18TrafficOD_;
 
   void simulateInCPU_MultiPass(void);
   void simulateInCPU(void);

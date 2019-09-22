@@ -114,9 +114,7 @@ void B18TrafficJohnson::generateRoutes(
 
   // Run Johnson since we could not find it or it is not the first iteration
   if (johnsonReadCorrectly == false) {
-    std::cerr << ">> Johnson" << std::endl;
     boost::johnson_all_pairs_shortest_paths(roadGraph, dm, weight_map(weight_pmap));
-    std::cerr << "<< Johnson" << std::endl;
     if (tryReadWriteFirstJohnsonArray) {
       // write to file
       printf("Johnson start writing...\n");
@@ -131,16 +129,6 @@ void B18TrafficJohnson::generateRoutes(
       }
     }
   }
-
-  #ifdef DEBUG_JOHNSON
-  std::cerr << std::fixed << std::setprecision(2);
-  for (int i = 0; i < numVertex; i++) {
-    for (int j = 0; j < numVertex; j++) {
-      std::cerr << " " << std::setw(10) << dm[i][j];
-    }
-    std::cerr << std::endl;
-  }
-  #endif
   
   ////////////////////////
   // Create routes
@@ -259,19 +247,6 @@ void B18TrafficJohnson::generateRoutes(
   for (int p = 0; p < trafficPersonVec.size(); p++) {
     trafficPersonVec[p].indexPathCurr = trafficPersonVec[p].indexPathInit;
   }
-
-  #ifdef DEBUG_JOHNSON
-  std::cerr << "indexPathVec: " << std::endl;
-  int i = 0;
-  for (const auto x : indexPathVec) {
-    std::cerr << i++ << " " << x << " " << std::endl;
-  }
-  std::cerr << "trafficPersonVec: " << std::endl;
-  for (const auto p : trafficPersonVec) {
-    std::cerr << p.indexPathInit << " " << p.indexPathCurr << std::endl;
-  }
-  #endif
-
 }
 
 

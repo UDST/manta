@@ -40,7 +40,6 @@ struct Intersection {
   // Indicates schedule group on which we are now set
   uint currentScheduleGroup;
 
-  // Time of this intersection's last update
   float timeOfNextUpdate;
 
   TrafficControl trafficControl;
