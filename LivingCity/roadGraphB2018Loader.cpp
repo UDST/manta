@@ -195,7 +195,7 @@ void RoadGraphB2018::loadB2018RoadGraph(
     inRoadGraph->myRoadGraph_BI[bi_vertex_descriptor].x = osmidToOriginalLoc[ind].x();
     inRoadGraph->myRoadGraph_BI[bi_vertex_descriptor].y = osmidToOriginalLoc[ind].y();
     inRoadGraph->myRoadGraph_BI[bi_vertex_descriptor].pt = pos;
-    inRoadGraph->myRoadGraph[bi_vertex_descriptor].intersectionType = OSMIdToOSMType[ind];
+    inRoadGraph->myRoadGraph_BI[bi_vertex_descriptor].intersectionType = OSMIdToOSMType[ind];
 
     const auto vertex_descriptor = vertex_SIM[index];
     inRoadGraph->myRoadGraph[vertex_descriptor].pt = pos;
