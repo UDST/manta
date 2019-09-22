@@ -116,11 +116,10 @@ B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulato
     b18TrafficOD_.loadB18TrafficPeople(trafficPersonVec);
   }
 
-  simulatorDataInitializer_.resetIntersections(intersections, trafficLights);
+  simulatorDataInitializer_.resetIntersections(trafficLights);
   simulatorDataInitializer_.initializeDataStructures(
       laneMap,
       edgesData,
-      intersections,
       trafficLights,
       edgeDescToLaneMapNum,
       laneMapNumToEdgeDesc,
@@ -134,7 +133,6 @@ B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulato
 
   assert(!laneMap.empty());
   assert(!edgesData.empty());
-  assert(!intersections.empty());
   assert(!trafficLights.empty());
   assert(!connections.empty());
   assert(!connectionsBlocking.empty());
@@ -156,7 +154,7 @@ void B18TrafficSimulator::createRandomPeople(float startTime, float endTime,
 
 void B18TrafficSimulator::resetPeopleJobANDintersections() {
   b18TrafficOD_.resetTrafficPersonJob(trafficPersonVec);
-  simulatorDataInitializer_.resetIntersections(intersections, trafficLights);
+  simulatorDataInitializer_.resetIntersections(trafficLights);
 }//
 
 
@@ -204,7 +202,6 @@ void B18TrafficSimulator::simulateInGPU(void) {
         edgesData,
         laneMap,
         trafficLights,
-        intersections,
         startTimeH,
         endTimeH,
         accSpeedPerLinePerTimeInterval,
@@ -260,7 +257,7 @@ void B18TrafficSimulator::simulateInGPU(void) {
           << iterationsPerLog << ")" << std::endl;
       }
 
-      b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(), intersections.size());
+      b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(), updatedIntersections.size());
 
 #ifdef B18_RUN_WITH_GUI
 

@@ -167,7 +167,6 @@ SimulatorDataInitializer::SimulatorDataInitializer(
 void SimulatorDataInitializer::initializeDataStructures(
     std::vector<uchar> &laneMap,
     std::vector<B18EdgeData> &edgesData,
-    std::vector<B18IntersectionData> &intersections,
     std::vector<uchar> &trafficLights,
     std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> & edgeDescToLaneMapNum,
     std::map<uint, RoadGraph::roadGraphEdgeDesc_BI> & laneMapNumToEdgeDesc,
@@ -447,78 +446,10 @@ void SimulatorDataInitializer::initializeDataStructures(
   laneMap.resize(kMaxMapWidthM * totalLaneMapChunks * 2); // 2: to have two maps.
   memset(laneMap.data(), -1, laneMap.size()*sizeof(unsigned char)); //
 
-  intersections.resize(amount_of_vertices);
   trafficLights.assign(totalLaneMapChunks, 0);
-
-  std::cerr << "[Log] Initializing old intersections data." << std::endl;
-  RoadGraph::roadGraphVertexIter_BI vi, viEnd;
-  RoadGraph::in_roadGraphEdgeIter_BI Iei, Iei_end;
-  RoadGraph::out_roadGraphEdgeIter_BI Oei, Oei_end;
-  // TODO: Implement this so that it works with SP routing too
-  return;
-  if (!use_boost_graph_) throw std::runtime_error("Not yet implemented. #7");
-  for (boost::tie(vi, viEnd) = boost::vertices(boost_input_graph); vi != viEnd; ++vi) {
-    intersections.at(*vi).totalInOutEdges = boost::degree(*vi, boost_input_graph);
-
-    if (intersections.at(*vi).totalInOutEdges <= 0) {
-      printf("Vertex without in/out edges\n");
-      continue;
-    }
-
-    if (intersections.at(*vi).totalInOutEdges >= 20) {
-      printf("Vertex with more than 20 in/out edges\n");
-      continue;
-    }
-
-    int numOutEdges = 0;
-    std::vector<LC::RoadGraph::roadGraphEdgeDesc_BI> edgeAngleOut;
-    for (boost::tie(Oei, Oei_end) = boost::out_edges(*vi, boost_input_graph); Oei != Oei_end; ++Oei) {
-      if (boost_input_graph[*Oei].numberOfLanes == 0) {
-        continue;
-      }
-      edgeAngleOut.push_back(*Oei);
-      numOutEdges++;
-    }
-
-    int numInEdges = 0;
-    std::vector<LC::RoadGraph::roadGraphEdgeDesc_BI> edgeAngleIn;
-    for (boost::tie(Iei, Iei_end) = boost::in_edges(*vi, boost_input_graph); Iei != Iei_end; ++Iei) {
-      if (boost_input_graph[*Iei].numberOfLanes == 0) {
-        continue;
-      }
-      edgeAngleIn.push_back(*Iei);
-      numInEdges++;
-    }
-
-    intersections.at(*vi).totalInOutEdges = numOutEdges + numInEdges;
-
-    // Intersection data:
-    //  Store the edges that go in or out of this intersection
-    //  Said edges will be sorted by angle
-    //
-    //      0xFF00 0000 Num lines
-    //      0x0080 0000 in out (one bit)
-    //      0x007F FFFF Edge number
-    size_t totalCount = 0;
-    for (const auto & outEdgeIdx : edgeAngleOut) {
-        assert(edgeDescToLaneMapNum[outEdgeIdx] < 0x007fffff && "Edge number is too high");
-        intersections.at(*vi).edge[totalCount] = edgeDescToLaneMapNum[outEdgeIdx];
-        intersections.at(*vi).edge[totalCount] |= (edgesData[intersections.at(*vi).edge[totalCount]].numLines << 24); //put the number of lines in each edge
-        intersections.at(*vi).edge[totalCount] |= kMaskOutEdge; // 0x000000 mask to define out edge
-        totalCount++;
-    }
-    for (const auto & inEdgeIdx : edgeAngleIn) {
-        assert(edgeDescToLaneMapNum[inEdgeIdx] < 0x007fffff && "Edge number is too high");
-        intersections.at(*vi).edge[totalCount] = edgeDescToLaneMapNum[inEdgeIdx];
-        intersections.at(*vi).edge[totalCount] |= (edgesData[intersections.at(*vi).edge[totalCount]].numLines << 24); //put the number of lines in each edge
-        intersections.at(*vi).edge[totalCount] |= kMaskInEdge; // 0x800000 mask to define in edge
-        totalCount++;
-    }
-  }
 }
 
 void SimulatorDataInitializer::resetIntersections(
-    std::vector<B18IntersectionData> & intersections,
     std::vector<uchar> & trafficLights) const {
   if (trafficLights.size() > 0) {
     memset(trafficLights.data(), 0, trafficLights.size()*sizeof(

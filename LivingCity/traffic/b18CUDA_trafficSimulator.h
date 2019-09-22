@@ -21,7 +21,6 @@ extern void b18InitCUDA(
     std::vector<LC::B18EdgeData> &edgesData,
     std::vector<uchar> &laneMap,
     std::vector<uchar> &trafficLights,
-    std::vector<LC::B18IntersectionData> &intersections,
     float startTimeH,
     float endTimeH,
     std::vector<float>& accSpeedPerLinePerTimeInterval,

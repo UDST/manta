@@ -81,7 +81,6 @@ LC::B18TrafficPerson *trafficPersonVec_d;
 uint *indexPathVec_d;
 LC::B18EdgeData *edgesData_d;
 uchar *laneMap_d;
-LC::B18IntersectionData *intersections_d;
 uchar *trafficLights_d;
 float* accSpeedPerLinePerTimeInterval_d;
 float* numVehPerLinePerTimeInterval_d;
@@ -103,7 +102,6 @@ void b18InitCUDA(
     std::vector<LC::B18EdgeData>& edgesData,
     std::vector<uchar>& laneMap,
     std::vector<uchar>& trafficLights,
-    std::vector<LC::B18IntersectionData>& b18Intersections,
     float startTimeH,
     float endTimeH,
     std::vector<float>& accSpeedPerLinePerTimeInterval,
@@ -168,10 +166,7 @@ void b18InitCUDA(
     gpuErrchk(cudaMemcpy(laneMap_d, laneMap.data(), sizeL, cudaMemcpyHostToDevice));
     halfLaneMap = laneMap.size() / 2;
   }
-  {// b18Intersections
-    size_t sizeI = b18Intersections.size() * sizeof(LC::B18IntersectionData);
-    if (fistInitialization) gpuErrchk(cudaMalloc((void **) &intersections_d, sizeI));   // Allocate array on device
-    gpuErrchk(cudaMemcpy(intersections_d, b18Intersections.data(), sizeI, cudaMemcpyHostToDevice));
+  {
     size_t sizeT = trafficLights.size() * sizeof(uchar);//total number of lanes
     if (fistInitialization) gpuErrchk(cudaMalloc((void **) &trafficLights_d, sizeT));   // Allocate array on device
     gpuErrchk(cudaMemcpy(trafficLights_d, trafficLights.data(), sizeT, cudaMemcpyHostToDevice));
@@ -201,7 +196,6 @@ void b18FinishCUDA(void){
   cudaFree(indexPathVec_d);
   cudaFree(edgesData_d);
   cudaFree(laneMap_d);
-  cudaFree(intersections_d);
   cudaFree(trafficLights_d);
   cudaFree(accSpeedPerLinePerTimeInterval_d);
   cudaFree(numVehPerLinePerTimeInterval_d);
@@ -278,7 +272,6 @@ __device__ void calculateGapsLC(
 __device__ void calculateLaneCarShouldBe(
     const uint currentEdgeLcId,
     const uint nextEdgeLcId,
-    const LC::B18IntersectionData* b18Intersections,
     const LC::Intersection *intersections,
     const LC::Connection *connections,
     const uint nextIntersectionLcId,
@@ -480,7 +473,6 @@ __global__ void kernel_updatePersonsCars(
     uint *indexPathVec,
     LC::B18EdgeData* edgesData,
     uchar *laneMap,
-    LC::B18IntersectionData *b18Intersections,
     LC::Connection *connections,
     size_t amountOfConnections,
     uint *connectionsBlocking,
@@ -872,7 +864,6 @@ __global__ void kernel_updatePersonsCars(
               calculateLaneCarShouldBe(
                 currentEdge,
                 nextEdge,
-                b18Intersections,
                 intersections,
                 connections,
                 trafficPersonVec[p].edgeNextInters,
@@ -1385,7 +1376,6 @@ void b18SimulateTrafficCUDA(const float currentTime, uint numPeople, uint numInt
     indexPathVec_d,
     edgesData_d,
     laneMap_d,
-    intersections_d,
     deviceConnections,
     amountOfConnections,
     deviceConnectionsBlocking,

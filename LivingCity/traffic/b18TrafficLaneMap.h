@@ -32,7 +32,6 @@ public:
     void initializeDataStructures(
         std::vector<uchar> &laneMap,
         std::vector<B18EdgeData> &edgesData,
-        std::vector<B18IntersectionData> &intersections,
         std::vector<uchar> &trafficLights,
         std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> & edgeDescToLaneMapNum,
         std::map<uint, RoadGraph::roadGraphEdgeDesc_BI> & laneMapNumToEdgeDesc,
@@ -44,7 +43,6 @@ public:
         std::vector<TrafficLightScheduleEntry> &trafficLightSchedules,
         std::vector<uint> &inLanesIndexes) const;
     void resetIntersections(
-        std::vector<B18IntersectionData> &intersections,
         std::vector<uchar> &trafficLights) const;
 
 private:
