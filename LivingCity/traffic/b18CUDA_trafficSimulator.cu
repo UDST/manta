@@ -580,14 +580,17 @@ __global__ void kernel_updatePersonsCars(
     const ushort currentPositionInLane = static_cast<ushort>(floor(trafficPersonVec[p].posInLaneM));
     const ushort currentLaneMaximumPosition = ceil(trafficPersonVec[p].length - intersectionClearance);
 
-    printf(
-      "{currentTime: %.2f, id: %d, speed: %5.2f, edgeId: %d, currentPositionInLane: %02d, maximumPositionInLane: %02d}\n",
-      currentTime,
-      p,
-      trafficPersonVec[p].v,
-      currentEdge,
-      currentPositionInLane,
-      currentLaneMaximumPosition);
+    const bool logCarData = false;
+    if (logCarData) {
+      printf(
+          "{currentTime: %.2f, id: %d, speed: %5.2f, edgeId: %d, currentPositionInLane: %02d, maximumPositionInLane: %02d}\n",
+          currentTime,
+          p,
+          trafficPersonVec[p].v,
+          currentEdge,
+          currentPositionInLane,
+          currentLaneMaximumPosition);
+    }
 
 
     bool nextVehicleIsATrafficLight = false;
