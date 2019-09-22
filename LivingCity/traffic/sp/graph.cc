@@ -207,7 +207,7 @@ bool abm::Graph::read_vertices(const std::string& filename) {
     abm::graph::vertex_t index = 0;
     in.read_header(csvio::ignore_extra_column, "osmid", "x", "y", "highway");
     while (in.read_row(vertex, lat, lon, osm_string_id)) {
-      vertex_map_[vertex] = index;
+      osm_ids_to_lc_ids_[vertex] = index;
       ++index;
 
       QVector3D pos(lat, lon, 0);

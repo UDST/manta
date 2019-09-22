@@ -253,8 +253,8 @@ void SimulatorDataInitializer::initializeDataStructures(
       initialize_edge_data(
         std::get<1>(x)->second[1],
         std::get<1>(x)->second[0],
-        abm_street_graph_shared_ptr_->vertex_map_.at(std::get<0>(std::get<0>(x))),
-        abm_street_graph_shared_ptr_->vertex_map_.at(std::get<1>(std::get<0>(x))),
+        abm_street_graph_shared_ptr_->osm_ids_to_lc_ids_.at(std::get<0>(std::get<0>(x))),
+        abm_street_graph_shared_ptr_->osm_ids_to_lc_ids_.at(std::get<1>(std::get<0>(x))),
         std::get<1>(x)->second[2],
         abm_street_graph_shared_ptr_->vertex_OSM_type_.at(std::get<0>(std::get<0>(x))) == OSMConstant::MotorwayJunction);
     }
@@ -388,7 +388,7 @@ void SimulatorDataInitializer::initializeDataStructures(
       initialize_updated_intersection(connectionsCount, vertexIdx);
     }
   } else {
-    for (const auto & vertex_mapping : abm_street_graph_shared_ptr_->vertex_map_) {
+    for (const auto & vertex_mapping : abm_street_graph_shared_ptr_->osm_ids_to_lc_ids_) {
       const uint vertexIdx = vertex_mapping.second;
       std::cout << "init: " << vertexIdx << std::endl;
       initialize_updated_intersection(connectionsCount, vertexIdx);

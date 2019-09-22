@@ -139,7 +139,7 @@ class Graph {
 
 
   // Maps OSM intersection indexes to graph's internal vertex indexes
-  std::map<graph::vertex_t, graph::vertex_t> vertex_map_;
+  std::map<graph::vertex_t, graph::vertex_t> osm_ids_to_lc_ids_;
 
   // Maps OSM intersection indexes to their corresponding real life position
   std::map<graph::vertex_t, QVector3D> vertices_data_;
