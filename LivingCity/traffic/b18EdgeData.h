@@ -105,8 +105,8 @@ struct TrafficLightScheduleEntry {
 };
 
 struct B18EdgeData {
-  uint sourceVertexIndex;
-  uint targetVertexIndex;
+  uint sourceVertexLcId;
+  uint targetVertexLcId;
   ushort numLines;
   uint nextInters;
   float length;

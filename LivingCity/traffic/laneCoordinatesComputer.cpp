@@ -22,11 +22,11 @@ void LaneCoordinatesComputer::computeEdgeInterface(
 
   const B18EdgeData edge = edgesData_.at(edgeIdx);
   const uint intersectionVertexIdx = direction == In
-    ? edge.targetVertexIndex
-    : edge.sourceVertexIndex;
+    ? edge.targetVertexLcId
+    : edge.sourceVertexLcId;
   const uint otherVertexIdx = direction == In
-    ? edge.sourceVertexIndex
-    : edge.targetVertexIndex;
+    ? edge.sourceVertexLcId
+    : edge.targetVertexLcId;
 
   // Otherwise compute it and store it
   const auto intersectionCoordinates = coordinatesRetriever_(intersectionVertexIdx);

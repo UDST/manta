@@ -656,11 +656,11 @@ __global__ void kernel_updatePersonsCars(
         && !obstacleFound
         && remainingCellsToCheck > 0
         && nextEdge != -1) {
-      const int dstVertexNumber = edgesData[currentEdge].targetVertexIndex;
+      const int dstVertexLcId = edgesData[currentEdge].targetVertexLcId;
       const ushort currentLaneNumber = currentEdge + trafficPersonVec[p].numOfLaneInEdge;
 
       const int distanceUntilIntersection = currentLaneMaximumPosition - currentPositionInLane;
-      trafficPersonVec[p].isApproachingStopJunction = intersections[dstVertexNumber].isStopIntersection;
+      trafficPersonVec[p].isApproachingStopJunction = intersections[dstVertexLcId].isStopIntersection;
       trafficPersonVec[p].distanceUntilIntersection = distanceUntilIntersection;
 
       // If the car is approaching a stop intersection and it has not yet stopped then the
@@ -672,8 +672,8 @@ __global__ void kernel_updatePersonsCars(
       if (!mustTreatIntersectionAsObstacle) {
         // Check if a least one connection is enabled between the current edge and the following one
         for (
-            int connectionIdx = intersections[dstVertexNumber].connectionGraphStart;
-            connectionIdx < intersections[dstVertexNumber].connectionGraphEnd;
+            int connectionIdx = intersections[dstVertexLcId].connectionGraphStart;
+            connectionIdx < intersections[dstVertexLcId].connectionGraphEnd;
             ++connectionIdx) {
           const LC::Connection & connection = connections[connectionIdx];
           const bool isRelevant =

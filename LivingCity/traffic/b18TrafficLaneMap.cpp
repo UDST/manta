@@ -100,11 +100,11 @@ void addTrafficLightScheduleToIntersection(
   }
 
   const auto sourceVertex = [&connections, &edges] (const uint connectionIdx) {
-    return edges.at(connections.at(connectionIdx).inEdgeLcId).sourceVertexIndex;
+    return edges.at(connections.at(connectionIdx).inEdgeLcId).sourceVertexLcId;
   };
 
   const auto targetVertex = [&connections, &edges] (const uint connectionIdx) {
-    return edges.at(connections.at(connectionIdx).outEdgeLcId).targetVertexIndex;
+    return edges.at(connections.at(connectionIdx).outEdgeLcId).targetVertexLcId;
   };
 
   const uint scheduledTime = 10;
@@ -207,8 +207,8 @@ void SimulatorDataInitializer::initializeDataStructures(
   const auto initialize_edge_data = [&] (
       const uint roadAmountOfLanes,
       const float edgeLength,
-      const uint sourceVertexIndex,
-      const uint targetVertexIndex,
+      const uint sourceVertexLcId,
+      const uint targetVertexLcId,
       const float maxSpeedMperSec,
       const bool startsAtHighway
     ) {
@@ -220,10 +220,10 @@ void SimulatorDataInitializer::initializeDataStructures(
     const int numWidthNeeded = static_cast<int>(std::ceil(edgeLength / kMaxMapWidthM));
 
     edgesData[totalLaneMapChunks].length = edgeLength;
-    edgesData[totalLaneMapChunks].sourceVertexIndex = sourceVertexIndex;
-    edgesData[totalLaneMapChunks].targetVertexIndex = targetVertexIndex;
+    edgesData[totalLaneMapChunks].sourceVertexLcId = sourceVertexLcId;
+    edgesData[totalLaneMapChunks].targetVertexLcId = targetVertexLcId;
     edgesData[totalLaneMapChunks].maxSpeedMperSec = maxSpeedMperSec;
-    edgesData[totalLaneMapChunks].nextInters = targetVertexIndex;
+    edgesData[totalLaneMapChunks].nextInters = targetVertexLcId;
     edgesData[totalLaneMapChunks].numLines = roadAmountOfLanes;
     edgesData[totalLaneMapChunks].valid = true;
     edgesData[totalLaneMapChunks].startsAtHighway = startsAtHighway;
@@ -270,12 +270,12 @@ void SimulatorDataInitializer::initializeDataStructures(
       const B18EdgeData & inEdgeLcData,
       const uint & outEdgeLcId,
       const B18EdgeData & outEdgeLcData) {
-    if (inEdgeLcData.sourceVertexIndex == outEdgeLcData.targetVertexIndex) {
+    if (inEdgeLcData.sourceVertexLcId == outEdgeLcData.targetVertexLcId) {
       // Avoid U-turns
       return;
     }
 
-    assert(inEdgeLcData.targetVertexIndex == outEdgeLcData.sourceVertexIndex);
+    assert(inEdgeLcData.targetVertexLcId == outEdgeLcData.sourceVertexLcId);
     for (uint inIdx = 0; inIdx < inEdgeLcData.numLines; inIdx++) {
       for (uint outIdx = 0; outIdx < outEdgeLcData.numLines; outIdx++) {
         Connection connection;
