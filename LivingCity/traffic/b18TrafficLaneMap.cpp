@@ -388,8 +388,11 @@ void SimulatorDataInitializer::initializeDataStructures(
       initialize_updated_intersection(connectionsCount, vertexIdx);
     }
   } else {
-    // TODO: Implement this
-    if (!use_boost_graph_) throw std::runtime_error("Not yet implemented. #6");
+    for (const auto & vertex_mapping : abm_street_graph_shared_ptr_->vertex_map_) {
+      const uint vertexIdx = vertex_mapping.second;
+      std::cout << "init: " << vertexIdx << std::endl;
+      initialize_updated_intersection(connectionsCount, vertexIdx);
+    }
   }
 
   for (uint idx = 0; idx < connections.size(); ++idx) {
