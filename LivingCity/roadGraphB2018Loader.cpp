@@ -12,6 +12,7 @@
 #include "global.h"
 #include "roadGraphB2018Loader.h"
 #include "OSMConstants.h"
+#include "./traffic/types_definitions.h"
 
 namespace LC {
 
@@ -378,7 +379,13 @@ std::string RoadGraphB2018::loadABMGraph(const std::string& networkPath, const s
   //NODES
   graph_->read_vertices(nodeFileName);
 
+  // Some data sanity checks
   assert(graph_->amount_of_vertices_ == graph_->vertex_osm_ids_to_lc_ids_.size());
+  for (const auto & vertexPair : graph_->vertex_osm_ids_to_lc_ids_) {
+    const osm_id_type vertexGraphId = vertexPair.first;
+    assert(graph_->vertices_positions_.count(vertexGraphId) > 0);
+    assert(graph_->vertex_OSM_type_.count(vertexGraphId) > 0);
+  }
 
   auto stop = high_resolution_clock::now();
   auto duration = duration_cast<milliseconds>(stop - start);
