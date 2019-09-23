@@ -57,7 +57,7 @@ class B18TrafficOD {
                           LC::RoadGraph::roadBGLGraph_BI &roadGraph);
 #endif
 
-  void loadB18TrafficPeople(std::vector<B18TrafficPerson> &trafficPersonVec);
+  void loadDemand(std::vector<B18TrafficPerson> &trafficPersonVec);
 
   void resetTrafficPersonJob(std::vector<B18TrafficPerson> &trafficPersonVec);
 

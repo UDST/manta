@@ -28,15 +28,12 @@ class RoadGraphB2018 {
 
  public:
 
-  static void loadB2018RoadGraph(
-      std::shared_ptr<RoadGraph> inRoadGraph,
-      const QString & networkPath,
-      std::map<RoadGraph::roadGraphVertexDesc, uchar> & intersection_types);
+  static void loadB2018RoadGraph(std::shared_ptr<RoadGraph> inRoadGraph, const QString & networkPath);
 
   static std::string loadABMGraph(const std::string& networkPath, const std::shared_ptr<abm::Graph>& graph_);
   static std::vector<DemandB2018> demandB2018;
   static int totalNumPeople;
-  static QHash<int, uint64_t> indToOsmid;
+  static QHash<int, osm_id_type> indToOsmid;
 
 };
 

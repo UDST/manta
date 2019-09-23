@@ -58,8 +58,8 @@ class B18TrafficSimulator {
   int threadNumber;
   float avgTravelTime;
 
-  B18TrafficOD b18TrafficOD_;
   SimulatorDataInitializer simulatorDataInitializer_;
+  B18TrafficOD b18TrafficOD_;
 
   void simulateInCPU_MultiPass(void);
   void simulateInCPU(void);
@@ -75,7 +75,6 @@ class B18TrafficSimulator {
   std::vector<uint> inLanesIndexes;
   std::vector<B18TrafficPerson> trafficPersonVec;
   std::vector<uint> indexPathVec;
-  std::map<RoadGraph::roadGraphVertexDesc, uchar> intersectionTypes_;
 
   // Mappings between edges of the graphs and positions in laneMap
   std::map<std::shared_ptr<abm::Graph::Edge>, uint> edgeDescToLaneMapNumSP;
@@ -93,7 +92,6 @@ class B18TrafficSimulator {
   void createRandomPeople(float startTime, float endTime, int numberPeople,
                           PeopleJobInfoLayers &peopleJobInfoLayers);
 #endif
-  void resetPeopleJobANDintersections();
   void saveODToFile() {}; // Todo
   void loadODFromFile() {};
 

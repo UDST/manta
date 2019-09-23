@@ -95,6 +95,8 @@ void B18TrafficJohnson::generateRoutes(
 
   ////////////////////////
   // CALL JOHNSON
+  // The Johnson cached file doesn't seem to be working. This could be both because it's stored
+  // incorrectly or because it's read incorrectly.
   const bool tryReadWriteFirstJohnsonArray = false;
   //const bool tryReadWriteFirstJohnsonArray = weigthMode == 0;
   std::string fileName = "johnson_numVertex_" + std::to_string(numVertex) + "_maxTravelTime_" + std::to_string(maxTravelTime) + ".bin"; // encode num vertext and travel time to "check" is the same input
@@ -127,16 +129,6 @@ void B18TrafficJohnson::generateRoutes(
       }
     }
   }
-
-  #ifdef DEBUG_JOHNSON
-  std::cerr << std::fixed << std::setprecision(2);
-  for (int i = 0; i < numVertex; i++) {
-    for (int j = 0; j < numVertex; j++) {
-      std::cerr << " " << std::setw(10) << dm[i][j];
-    }
-    std::cerr << std::endl;
-  }
-  #endif
   
   ////////////////////////
   // Create routes
@@ -147,12 +139,6 @@ void B18TrafficJohnson::generateRoutes(
   const int kMaxNumPath = 250;
 
   for (int p = 0; p < trafficPersonVec.size(); p++) {
-    if (trafficPersonVec.size() > 200) {
-      if ((p % (trafficPersonVec.size() / 20)) == 0) {
-        printf("Route %d of %d (%2.0f%%)\n", p, trafficPersonVec.size(), (100.0f * p) / trafficPersonVec.size());
-      }
-    }
-
     ////////////////////////////////////////////////////////////////////////////////////////////
     // Some people do not change route.
     if (sample != 1.0f) {
@@ -261,19 +247,6 @@ void B18TrafficJohnson::generateRoutes(
   for (int p = 0; p < trafficPersonVec.size(); p++) {
     trafficPersonVec[p].indexPathCurr = trafficPersonVec[p].indexPathInit;
   }
-
-  #ifdef DEBUG_JOHNSON
-  std::cerr << "indexPathVec: " << std::endl;
-  int i = 0;
-  for (const auto x : indexPathVec) {
-    std::cerr << i++ << " " << x << " " << std::endl;
-  }
-  std::cerr << "trafficPersonVec: " << std::endl;
-  for (const auto p : trafficPersonVec) {
-    std::cerr << p.indexPathInit << " " << p.indexPathCurr << std::endl;
-  }
-  #endif
-
 }
 
 

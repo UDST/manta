@@ -12,6 +12,7 @@
 #include "global.h"
 #include "roadGraphB2018Loader.h"
 #include "OSMConstants.h"
+#include "./traffic/types_definitions.h"
 
 namespace LC {
 
@@ -19,7 +20,7 @@ using namespace std::chrono;
 
 std::vector<DemandB2018> RoadGraphB2018::demandB2018;
 int RoadGraphB2018::totalNumPeople;
-QHash<int, uint64_t> RoadGraphB2018::indToOsmid;
+QHash<int, osm_id_type> RoadGraphB2018::indToOsmid;
 
 void updateMinMax2(const QVector2D &newPoint, QVector2D &minBox, QVector2D &maxBox) {
   if (newPoint.x() < minBox.x()) {
@@ -83,9 +84,7 @@ void saveSetToFile(QSet<uint64_t> &set, QString &filename) {
 
 void RoadGraphB2018::loadB2018RoadGraph(
     std::shared_ptr<RoadGraph> inRoadGraph,
-    const QString & networkPath,
-    std::map<RoadGraph::roadGraphVertexDesc, uchar> & intersection_types) {
-  intersection_types.clear();
+    const QString & networkPath) {
   inRoadGraph->myRoadGraph.clear();
   inRoadGraph->myRoadGraph_BI.clear();
 
@@ -105,16 +104,9 @@ void RoadGraphB2018::loadB2018RoadGraph(
   timer.start();
   QVector2D minBox(FLT_MAX, FLT_MAX);
   QVector2D maxBox(-FLT_MAX, -FLT_MAX);
-  QHash<uint64_t, QVector2D> osmidToVertexLoc;
-  QHash<uint64_t, QVector2D> osmidToOriginalLoc;
-  QHash<uint64_t, uchar> osmidToBType; // node type
-
-  QHash<QString, uchar> bTypeStringTobType;
-  bTypeStringTobType[""] = OSM_EMPTY;
-  bTypeStringTobType["motorway_junction"] = OSM_MOTORWAY_JUNCTION;
-  bTypeStringTobType["traffic_signals"] = OSM_TRAFFIC_SIGNALS;
-  bTypeStringTobType["stop"] = OSM_STOP_JUNCTION;
-  bTypeStringTobType["turning_circle"] = OSM_TURNING_CIRCLE;
+  QHash<osm_id_type, QVector2D> osmidToVertexLoc;
+  QHash<osm_id_type, QVector2D> osmidToOriginalLoc;
+  QHash<osm_id_type, OSMConstant> OSMIdToOSMType; // node type
 
   QStringList headers = stream.readLine().split(",");
   const int indexOsmid = headers.indexOf("osmid");
@@ -133,13 +125,12 @@ void RoadGraphB2018::loadB2018RoadGraph(
 
     float x = fields[indexX].toFloat();
     float y = fields[indexY].toFloat();
-    uint64_t osmid = fields[indexOsmid].toLongLong();
+    osm_id_type osmid = fields[indexOsmid].toLongLong();
     osmidToVertexLoc[osmid] = QVector2D(x, y);
     osmidToOriginalLoc[osmid] = QVector2D(x, y);
     updateMinMax2(QVector2D(x, y), minBox, maxBox);
 
-    QString bType = fields[indexHigh];
-    osmidToBType[osmid] = !bTypeStringTobType.contains(bType) ? 0 : bTypeStringTobType[bType];
+    OSMIdToOSMType[osmid] = mapStringToOSMConstant(fields[indexHigh].toStdString());
   }
 
   // Update coordenades to East-North-Up coordinates;
@@ -147,7 +138,7 @@ void RoadGraphB2018::loadB2018RoadGraph(
   const float lon0 = (maxBox.y() + minBox.y()) * 0.5f;
   minBox = QVector2D(FLT_MAX, FLT_MAX);
   maxBox = QVector2D(-FLT_MAX, -FLT_MAX);
-  QHash<uint64_t, QVector2D>::iterator i;
+  QHash<osm_id_type, QVector2D>::iterator i;
 
   for (i = osmidToVertexLoc.begin(); i != osmidToVertexLoc.end(); ++i) {
     osmidToVertexLoc[i.key()] = projLatLonToWorldMercator(i.value().x(),
@@ -188,13 +179,11 @@ void RoadGraphB2018::loadB2018RoadGraph(
 
   // Load data into vertices
   for (i = osmidToVertexLoc.begin(); i != osmidToVertexLoc.end(); ++i) {
-    const uint64_t ind = i.key();
+    const osm_id_type ind = i.key();
     const auto index = dynIndToInd[ind];
 
     const float x = osmidToVertexLoc[ind].x();
     const float y = osmidToVertexLoc[ind].y();
-
-    uchar bType = osmidToBType[ind];
 
     QVector3D pos(x, y, 0);
     pos += centerV;//center
@@ -203,14 +192,14 @@ void RoadGraphB2018::loadB2018RoadGraph(
     pos.setX(pos.x() * -1.0f); // seems vertically rotated
 
     const auto bi_vertex_descriptor = vertex[index];
-    intersection_types.emplace(bi_vertex_descriptor, bType);
     inRoadGraph->myRoadGraph_BI[bi_vertex_descriptor].x = osmidToOriginalLoc[ind].x();
     inRoadGraph->myRoadGraph_BI[bi_vertex_descriptor].y = osmidToOriginalLoc[ind].y();
     inRoadGraph->myRoadGraph_BI[bi_vertex_descriptor].pt = pos;
+    inRoadGraph->myRoadGraph_BI[bi_vertex_descriptor].intersectionType = OSMIdToOSMType[ind];
 
     const auto vertex_descriptor = vertex_SIM[index];
     inRoadGraph->myRoadGraph[vertex_descriptor].pt = pos;
-    inRoadGraph->myRoadGraph[vertex_descriptor].bType = bType;
+    inRoadGraph->myRoadGraph[vertex_descriptor].intersectionType = OSMIdToOSMType[ind];
   }
 
   QString edgeFileName = networkPath + "edges.csv";
@@ -377,26 +366,26 @@ void RoadGraphB2018::loadB2018RoadGraph(
 }
 
 std::string RoadGraphB2018::loadABMGraph(const std::string& networkPath, const std::shared_ptr<abm::Graph>& graph_) {
-
-        const std::string& edgeFileName = networkPath + "edges.csv";
-        std::cout << edgeFileName << " as edges file\n";
-
-        const std::string& nodeFileName = networkPath + "nodes.csv";
-        std::cout << nodeFileName << " as nodes file\n";
-
-        const std::string& odFileName = networkPath + "od_demand.csv";
-        std::cout << odFileName << " as OD file\n";
-  //const bool directed = true;
-  //const auto graph = std::make_shared<abm::Graph>(directed);
+  const std::string& edgeFileName = networkPath + "edges.csv";
+  const std::string& nodeFileName = networkPath + "nodes.csv";
+  const std::string& odFileName = networkPath + "od_demand.csv";
   auto start = high_resolution_clock::now();
+
   //EDGES
   //Create the graph directly from the file (don't deal with the creation of the boost graph first or any associated weights calculations)
   graph_->read_graph_osm(edgeFileName);
-  //printf("# of edges: %d\n", graph_->nedges());
-  
+
   //NODES
   graph_->read_vertices(nodeFileName);
-  
+
+  // Some data sanity checks
+  assert(graph_->amount_of_vertices_ == graph_->vertex_osm_ids_to_lc_ids_.size());
+  for (const auto & vertexPair : graph_->vertex_osm_ids_to_lc_ids_) {
+    const osm_id_type vertexGraphId = vertexPair.first;
+    assert(graph_->vertices_positions_.count(vertexGraphId) > 0);
+    assert(graph_->vertex_OSM_type_.count(vertexGraphId) > 0);
+  }
+
   auto stop = high_resolution_clock::now();
   auto duration = duration_cast<milliseconds>(stop - start);
   ///////////////////////////////

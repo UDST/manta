@@ -7,6 +7,7 @@
 ************************************************************************************************/
 
 #include "./types_definitions.h"
+#include "../trafficControl.h"
 
 #ifndef LIVINGCITY_TRAFFIC_B18EDGEDATA_H_
 #define LIVINGCITY_TRAFFIC_B18EDGEDATA_H_
@@ -19,8 +20,6 @@ const uint kMaskLaneMap = 0x007FFFFF;
 
 namespace LC {
 
-
-enum IntersectionType {TrafficLight, Unsupervised};
 
 // Object to store intersections (ie vertices) information
 struct Intersection {
@@ -41,10 +40,9 @@ struct Intersection {
   // Indicates schedule group on which we are now set
   uint currentScheduleGroup;
 
-  // Time of this intersection's last update
   float timeOfNextUpdate;
 
-  IntersectionType intersectionType;
+  TrafficControl trafficControl;
 
   bool isStopIntersection = false;
 };
@@ -56,8 +54,8 @@ struct Connection {
   // Note also that
   //    laneNumber == edgeNumber is for the left-most lane
   //    laneNumber == edgeNumber + amountOfLanesInEdge - 1 is for the right-most lane
-  uint inLaneNumber;
-  uint outLaneNumber;
+  uint inLaneLcId;
+  uint outLaneLcId;
 
   // Flag indicating if the connection can be used
   bool enabled;
@@ -66,9 +64,9 @@ struct Connection {
   uint connectionsBlockingStart;
   uint connectionsBlockingEnd;
 
-  uint vertexNumber;
-  uint inEdgeNumber;
-  uint outEdgeNumber;
+  uint vertexLcId;
+  uint inEdgeLcId;
+  uint outEdgeLcId;
 };
 
 // Object to abstract traffic lights schedules
@@ -106,8 +104,8 @@ struct TrafficLightScheduleEntry {
 };
 
 struct B18EdgeData {
-  uint sourceVertexIndex;
-  uint targetVertexIndex;
+  uint sourceVertexLcId;
+  uint targetVertexLcId;
   ushort numLines;
   uint nextInters;
   float length;

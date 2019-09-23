@@ -56,13 +56,11 @@ B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulato
     std::cerr << "[Log] Using SP routing." << std::endl;
     const bool directed = true;
     street_graph_shared_ptr_ = std::make_shared<abm::Graph>(directed);
-    std::string networkPathSP = configuration_.NetworkPath().toStdString();
-    // TODO: Initialize intersectionTypes_. Should be done by extending the loadABMGraph function
-    std::string odFileName = RoadGraphB2018::loadABMGraph(networkPathSP, street_graph_shared_ptr_);
+    const std::string networkPathSP = configuration_.NetworkPath().toStdString();
+    const std::string odFileName = RoadGraphB2018::loadABMGraph(networkPathSP, street_graph_shared_ptr_);
     const auto all_od_pairs_ = B18TrafficSP::read_od_pairs(odFileName, std::numeric_limits<int>::max());
     //compute the routes for every OD pair
-    int mpi_rank = 0;
-    int mpi_size = 1;
+    bool paths_were_cached = false;
     if (configuration_.TryToReadPreviousPaths()) {
       // open file
       std::ifstream inputFile("./all_paths_incl_zeros.txt");
@@ -73,10 +71,12 @@ B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulato
         while (inputFile >> value) {
           all_paths_.push_back(value);
         }
-      } else {
-        throw std::runtime_error("Could not read input file for SP routing.");
+        paths_were_cached = true;
       }
-    } else {
+    }
+    if (!paths_were_cached) {
+      int mpi_rank = 0;
+      int mpi_size = 1;
       all_paths_ = B18TrafficSP::compute_routes(mpi_rank, mpi_size, street_graph_shared_ptr_, all_od_pairs_);
       //write paths to file so that we can just load them instead
       std::ofstream output_file("./all_paths_.txt");
@@ -84,23 +84,24 @@ B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulato
       std::copy(all_paths_.begin(), all_paths_.end(), output_iterator);
     }
 
+    assert(!all_paths_.empty());
+
     //map person to their initial edge
     int count = 0;
     for (int i = 0; i < all_paths_.size(); i++) {
       if ((all_paths_[i] == -1) && (i == 0)) {
-          street_graph_shared_ptr_->person_to_init_edge_[count] = i;
-          count++;
-              } else if ((all_paths_[i] == -1) && (all_paths_[i+1] == -1)) {
-          street_graph_shared_ptr_->person_to_init_edge_[count] = i;
-          count++;
+        street_graph_shared_ptr_->person_to_init_edge_[count] = i;
+        count++;
+      } else if ((all_paths_[i] == -1) && (all_paths_[i+1] == -1)) {
+        street_graph_shared_ptr_->person_to_init_edge_[count] = i;
+        count++;
       } else if ((all_paths_[i] != -1) && (all_paths_[i-1] == -1)) {
-          street_graph_shared_ptr_->person_to_init_edge_[count] = i;
-          count++;
+        street_graph_shared_ptr_->person_to_init_edge_[count] = i;
+        count++;
       } else if ((all_paths_[i] == -1) && (i == (all_paths_.size() - 1))) {
-          break;
+        break;
       }
     }
-    std::cout << "person_to_init_edge size " << street_graph_shared_ptr_->person_to_init_edge_.size() << "\n";
   } else {
     std::cerr << "[Log] Using regular routing." << std::endl;
     simRoadGraph_shared_ptr_ = std::make_shared<RoadGraph>();
@@ -108,20 +109,17 @@ B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulato
     std::cerr << "[Log] Loading road graph." << std::endl;
     RoadGraphB2018::loadB2018RoadGraph(
         simRoadGraph_shared_ptr_,
-        configuration_.NetworkPath(),
-        intersectionTypes_);
+        configuration_.NetworkPath());
 
     std::cerr << "[Log] Initializing persons vector." << std::endl;
     b18TrafficOD_.resetTrafficPersonJob(trafficPersonVec);
-    b18TrafficOD_.loadB18TrafficPeople(trafficPersonVec);
   }
 
-  simulatorDataInitializer_.resetIntersections(intersections, trafficLights);
+  b18TrafficOD_.loadDemand(trafficPersonVec);
+  assert(!trafficPersonVec.empty());
   simulatorDataInitializer_.initializeDataStructures(
       laneMap,
       edgesData,
-      intersections,
-      trafficLights,
       edgeDescToLaneMapNum,
       laneMapNumToEdgeDesc,
       edgeDescToLaneMapNumSP,
@@ -130,8 +128,7 @@ B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulato
       connectionsBlocking,
       updatedIntersections,
       trafficLightSchedules,
-      inLanesIndexes,
-      intersectionTypes_);
+      inLanesIndexes);
 }
 
 #ifdef B18_RUN_WITH_GUI
@@ -144,12 +141,6 @@ void B18TrafficSimulator::createRandomPeople(float startTime, float endTime,
                                   peopleJobInfoLayers, simRoadGraph_shared_ptr_->myRoadGraph_BI);
 }//
 #endif
-
-void B18TrafficSimulator::resetPeopleJobANDintersections() {
-  b18TrafficOD_.resetTrafficPersonJob(trafficPersonVec);
-  simulatorDataInitializer_.resetIntersections(intersections, trafficLights);
-}//
-
 
 //////////////////////////////////////////////////
 // GPU
@@ -170,12 +161,12 @@ void B18TrafficSimulator::simulateInGPU(void) {
       B18TrafficJohnson::generateRoutes(simRoadGraph_shared_ptr_->myRoadGraph_BI, trafficPersonVec,
           indexPathVec, edgeDescToLaneMapNum, weigthMode, peoplePathSampling[nP]);
     } else if (configuration_.SimulationRouting() == Routing::SP) {
-      B18TrafficSP::convertVector(all_paths_, indexPathVec);
+      B18TrafficSP::convertVector(
+          all_paths_, indexPathVec, edgeDescToLaneMapNumSP, street_graph_shared_ptr_);
 
       //set the indexPathInit of each person in trafficPersonVec to the correct one
       for (int p = 0; p < trafficPersonVec.size(); p++) {
         trafficPersonVec[p].indexPathInit = street_graph_shared_ptr_->person_to_init_edge_[p];
-        //std::cout << p << " indexPathInit " << trafficPersonVec[p].indexPathInit << "\n";
       }
     } else {
       B18TrafficDijstra::generateRoutesMulti(simRoadGraph_shared_ptr_->myRoadGraph_BI,
@@ -186,15 +177,13 @@ void B18TrafficSimulator::simulateInGPU(void) {
     const float startTimeH = configuration_.SimulationStartingHour();
     const float endTimeH = configuration_.SimulationEndingHour();
 
-    std::cout << "[Log] Starting CUDA" << std::endl;
+    std::cerr << "[Log] Starting CUDA" << std::endl;
     b18InitCUDA(
         firstInitialization,
         trafficPersonVec,
         indexPathVec,
         edgesData,
         laneMap,
-        trafficLights,
-        intersections,
         startTimeH,
         endTimeH,
         accSpeedPerLinePerTimeInterval,
@@ -234,7 +223,7 @@ void B18TrafficSimulator::simulateInGPU(void) {
 
     QTime timerLoop;
     int amountOfIterations = 1;
-    const int iterationsPerLog = 180;
+    const int iterationsPerLog = 2;
     std::cerr
       << "[Log] Starting main loop for " << trafficPersonVec.size()
       << " persons from " << (startTime / 3600.0f) << " to " << (endTime / 3600.0f) << std::endl;
@@ -247,10 +236,10 @@ void B18TrafficSimulator::simulateInGPU(void) {
         std::cerr << std::fixed << std::setprecision(2) 
           << "[Log] Reached current time equal to " << (currentTime / 3600.0f)
           << " with " << averageTimePerIteration << "ms per simulation step (average over "
-          << iterationsPerLog << ")" << std::endl;
+          << iterationsPerLog << " iterations)" << std::endl;
       }
 
-      b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(), intersections.size());
+      b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(), updatedIntersections.size());
 
 #ifdef B18_RUN_WITH_GUI
 
@@ -279,37 +268,25 @@ void B18TrafficSimulator::simulateInGPU(void) {
       currentTime += configuration_.DeltaTime();
     }
 
-    std::cout
+    std::cerr
       << "[Log] Finished main loop with a total of " << amountOfIterations
       << " iterations." << std::endl;
 
     // 3. Finish
     b18GetDataCUDA(trafficPersonVec);
-    b18GetSampleTrafficCUDA(accSpeedPerLinePerTimeInterval,
-                            numVehPerLinePerTimeInterval);
+    b18GetSampleTrafficCUDA(accSpeedPerLinePerTimeInterval, numVehPerLinePerTimeInterval);
     {
       // debug
       uint totalNumSteps = 0;
       float totalCO = 0;
 
       for (int p = 0; p < trafficPersonVec.size(); p++) {
-        //std::cout << "num_steps " << trafficPersonVec[p].num_steps << "for person " << p << "\n";
         totalNumSteps += trafficPersonVec[p].num_steps;
         totalCO += trafficPersonVec[p].co;
       }
 
       avgTravelTime = (totalNumSteps) / (trafficPersonVec.size() * 60.0f); //in min
-
-        //write paths to file so that we can just load them instead
-        std::ofstream output_file("./num_steps.txt");
-	output_file << totalNumSteps;
     }
-    //
-    calculateAndDisplayTrafficDensity(nP);
-    if (configuration_.SimulationRouting() == Routing::SP)
-      savePeopleAndRoutesSP(nP, street_graph_shared_ptr_);
-    else
-      savePeopleAndRoutes(nP);
   }
 
   b18FinishCUDA();
@@ -1595,7 +1572,6 @@ void B18TrafficSimulator::simulateInCPU_MultiPass(void) {
 
   for (int nP = 0; nP < configuration_.AmountOfPasses(); nP++) {
     printf("\nNumber of pass %d of %d\n", nP, configuration_.AmountOfPasses());
-    resetPeopleJobANDintersections();//reset people
     weigthMode = 1; //first time run normal weights
 
     if (nP == 0) {

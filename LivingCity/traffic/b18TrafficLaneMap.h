@@ -32,8 +32,6 @@ public:
     void initializeDataStructures(
         std::vector<uchar> &laneMap,
         std::vector<B18EdgeData> &edgesData,
-        std::vector<B18IntersectionData> &intersections,
-        std::vector<uchar> &trafficLights,
         std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> & edgeDescToLaneMapNum,
         std::map<uint, RoadGraph::roadGraphEdgeDesc_BI> & laneMapNumToEdgeDesc,
         std::map<std::shared_ptr<abm::Graph::Edge>, uint> & edgeDescToLaneMapNumSP,
@@ -42,11 +40,7 @@ public:
         std::vector<uint> &connectionsBlocking,
         std::vector<LC::Intersection> &updatedIntersections,
         std::vector<TrafficLightScheduleEntry> &trafficLightSchedules,
-        std::vector<uint> &inLanesIndexes,
-        const std::map<RoadGraph::roadGraphVertexDesc, uchar> & intersection_types) const;
-    void resetIntersections(
-        std::vector<B18IntersectionData> &intersections,
-        std::vector<uchar> &trafficLights) const;
+        std::vector<uint> &inLanesIndexes) const;
 
 private:
     const std::shared_ptr<RoadGraph> & boost_street_graph_shared_ptr_;

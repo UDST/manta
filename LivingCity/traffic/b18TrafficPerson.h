@@ -60,6 +60,7 @@ struct B18TrafficPerson {
   float a;//acceleration
   float b;//break
   float T;// Time heading
+  float cumulative_velocity = 0; //Cumulative velocity of each person across all iterations
 
   // lane changing
   unsigned short LC_initOKLanes;

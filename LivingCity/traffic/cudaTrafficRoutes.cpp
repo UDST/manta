@@ -183,7 +183,6 @@ void CUDATrafficRoutes::calculateOneRoute(LC::RoadGraph &roadGraph,
         printf("%d<- ",path[p]);
       }
       printf("%d\n",srcvertex);
-      printf("PATH size: %d\n",path.size());*/
     }
 
     uint firstEdge = edgeDescToLaneMapNum[edge_pair.first];

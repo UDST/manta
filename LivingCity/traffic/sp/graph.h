@@ -22,6 +22,7 @@
 #include "tsl/robin_map.h"
 
 #include "config.h"
+#include "../../OSMConstants.h"
 
 namespace abm {
 
@@ -38,9 +39,6 @@ class Graph {
   //! Construct directed / undirected graph
   //! \param[in] directed Defines if the graph is directed or not
   explicit Graph(bool directed) : directed_{directed} {};
-
-  //! Return number of vertices
-  unsigned nvertices() const { return nvertices_; }
 
   //! Number of edges
   graph::vertex_t nedges() const { return edges_.size(); }
@@ -80,8 +78,7 @@ class Graph {
 
   //! Read OSM graph file format
   //! \param[in] filename Name of input MatrixMarket file
-  //! \retval status File read status
-  bool read_vertices(const std::string& filename);
+  void read_vertices(const std::string& filename);
 
   //! Compute the shortest path using priority queue
   //! \param[in] source ID of source vertex1
@@ -122,29 +119,40 @@ class Graph {
   //! \retval cost Cost of traversed path
   abm::graph::weight_t path_cost(const std::vector<graph::vertex_t>& path);
 
-// private:
-  //! Assign number of vertices
-  //! \param[in] nvertices Number of vertices in graph
-  void assign_nvertices(unsigned nvertices) { this->nvertices_ = nvertices; }
-
   // Directed / undirected
   bool directed_{false};
   // Number of graph vertices
-  unsigned nvertices_{std::numeric_limits<unsigned>::max()};
+  abm::graph::vertex_t  amount_of_vertices_{0};
   // Edge id
   graph::vertex_t edgeid_{0};
   // Max id of vertex
   graph::vertex_t max_vertex_id_{std::numeric_limits<graph::vertex_t>::min()};
-  //Vertex data
-  std::map<graph::vertex_t, QVector3D> vertices_data_;
-  //Vertex to an index
-  std::map<graph::vertex_t, graph::vertex_t> vertex_map_;
-  // Edges
-  std::map<std::tuple<graph::vertex_t, graph::vertex_t>, std::shared_ptr<Edge>>
-      edges_;
-  //Edges to an index
+
+
+  // Vertices' data structures --
+
+  // OSM intersection indexes -> Living City internal ids
+  std::map<graph::vertex_t, graph::vertex_t> vertex_osm_ids_to_lc_ids_;
+
+  // Living city internal ids -> OSM intersection indexes
+  std::map<graph::vertex_t, graph::vertex_t> vertex_lc_ids_to_osm_ids_;
+
+  // Maps OSM intersection indexes to their corresponding real life position
+  std::map<graph::vertex_t, QVector3D> vertices_positions_;
+
+  // Maps OSM intersection indexes to their corresponding OSM type
+  std::map<graph::vertex_t, OSMConstant> vertex_OSM_type_;
+
+
+  // Edges' data structures --
+
+  // <OSM source id, OSM target id> -> pointer to Edge data
+  std::map<std::tuple<graph::vertex_t, graph::vertex_t>, std::shared_ptr<Edge>> edges_;
+
+  // OSM edge ids -> Liviny City edge ids
   std::map <graph::vertex_t, graph::vertex_t> edge_vertex_map_;
-  // adjacency list with iteration over each edge
+
+  // Adjacency list with iteration over each edge
   tsl::robin_map<graph::vertex_t, std::vector<std::shared_ptr<Edge>>>
       vertex_edges_;
 

@@ -330,13 +330,13 @@ float sampleFileDistribution() {
   return randTimeWithinBucket + bucketStartTime;
 }
 
-void B18TrafficOD::loadB18TrafficPeople(std::vector<B18TrafficPerson> &trafficPersonVec)
+void B18TrafficOD::loadDemand(std::vector<B18TrafficPerson> &trafficPersonVec)
 {
   trafficPersonVec.clear();
 
   if (RoadGraphB2018::demandB2018.size() == 0) {
     throw std::runtime_error(
-      "B18TrafficOD::loadB18TrafficPeople -> Imposible to generate b2018 without loading b2018 demmand first.");
+      "B18TrafficOD::loadDemand -> Imposible to generate b2018 without loading b2018 demmand first.");
   }
 
   float startTimeH = configuration_.SimulationStartingHour();

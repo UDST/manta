@@ -81,8 +81,6 @@ LC::B18TrafficPerson *trafficPersonVec_d;
 uint *indexPathVec_d;
 LC::B18EdgeData *edgesData_d;
 uchar *laneMap_d;
-LC::B18IntersectionData *intersections_d;
-uchar *trafficLights_d;
 float* accSpeedPerLinePerTimeInterval_d;
 float* numVehPerLinePerTimeInterval_d;
 
@@ -102,8 +100,6 @@ void b18InitCUDA(
     std::vector<uint> &indexPathVec,
     std::vector<LC::B18EdgeData>& edgesData,
     std::vector<uchar>& laneMap,
-    std::vector<uchar>& trafficLights,
-    std::vector<LC::B18IntersectionData>& b18Intersections,
     float startTimeH,
     float endTimeH,
     std::vector<float>& accSpeedPerLinePerTimeInterval,
@@ -168,21 +164,14 @@ void b18InitCUDA(
     gpuErrchk(cudaMemcpy(laneMap_d, laneMap.data(), sizeL, cudaMemcpyHostToDevice));
     halfLaneMap = laneMap.size() / 2;
   }
-  {// b18Intersections
-    size_t sizeI = b18Intersections.size() * sizeof(LC::B18IntersectionData);
-    if (fistInitialization) gpuErrchk(cudaMalloc((void **) &intersections_d, sizeI));   // Allocate array on device
-    gpuErrchk(cudaMemcpy(intersections_d, b18Intersections.data(), sizeI, cudaMemcpyHostToDevice));
-    size_t sizeT = trafficLights.size() * sizeof(uchar);//total number of lanes
-    if (fistInitialization) gpuErrchk(cudaMalloc((void **) &trafficLights_d, sizeT));   // Allocate array on device
-    gpuErrchk(cudaMemcpy(trafficLights_d, trafficLights.data(), sizeT, cudaMemcpyHostToDevice));
-  }
   {
+    const uint amountOfIntersections = hostIntersections.size();
     startTime = startTimeH * 3600.0f;
     uint numSamples = ceil(((endTimeH*3600.0f - startTimeH*3600.0f) / (DELTA_TIME_HOST * numStepsPerSample * numStepsTogether))) + 1; //!!!
     accSpeedPerLinePerTimeInterval.clear();
     numVehPerLinePerTimeInterval.clear();
-    accSpeedPerLinePerTimeInterval.resize(numSamples * trafficLights.size());
-    numVehPerLinePerTimeInterval.resize(numSamples * trafficLights.size());
+    accSpeedPerLinePerTimeInterval.resize(numSamples * amountOfIntersections);
+    numVehPerLinePerTimeInterval.resize(numSamples * amountOfIntersections);
     size_t sizeAcc = accSpeedPerLinePerTimeInterval.size() * sizeof(float);
     if (fistInitialization)gpuErrchk(cudaMalloc((void **) &accSpeedPerLinePerTimeInterval_d, sizeAcc));   // Allocate array on device
     if (fistInitialization)gpuErrchk(cudaMalloc((void **) &numVehPerLinePerTimeInterval_d, sizeAcc));   // Allocate array on device
@@ -201,8 +190,6 @@ void b18FinishCUDA(void){
   cudaFree(indexPathVec_d);
   cudaFree(edgesData_d);
   cudaFree(laneMap_d);
-  cudaFree(intersections_d);
-  cudaFree(trafficLights_d);
   cudaFree(accSpeedPerLinePerTimeInterval_d);
   cudaFree(numVehPerLinePerTimeInterval_d);
 }//
@@ -276,51 +263,37 @@ __device__ void calculateGapsLC(
 }
 
 __device__ void calculateLaneCarShouldBe(
-    uint curEdgeLane,
-    uint nextEdge,
-    const LC::B18IntersectionData* b18Intersections,
-    uint edgeNextInters,
-    ushort edgeNumLanes,
-    ushort &initOKLanes,
-    ushort &endOKLanes) {
+    const uint currentEdgeLcId,
+    const uint nextEdgeLcId,
+    const LC::Intersection *intersections,
+    const LC::Connection *connections,
+    const uint nextIntersectionLcId,
+    const ushort edgeNumLanes,
+    ushort & initOKLanes,
+    ushort & endOKLanes) {
+  assert(edgeNumLanes > 0);
+
+  ushort amountOfRelevantExits = 0;
+  ushort totalAmountOfExits = 0;
+
+  for (
+      uint connectionId = intersections[nextIntersectionLcId].connectionGraphStart;
+      connectionId < intersections[nextIntersectionLcId].connectionGraphEnd;
+      connectionId++) {
+    const auto connection = connections[connectionId];
+    if (connection.inEdgeLcId != currentEdgeLcId)
+      continue;
+
+    totalAmountOfExits++;
+
+    if (connection.outEdgeLcId != nextEdgeLcId)
+      continue;
+
+    amountOfRelevantExits++;
+  }
+
   initOKLanes = 0;
   endOKLanes = edgeNumLanes;
-  bool currentEdgeFound = false;
-  bool exitFound = false;
-  ushort numExitToTake = 0;
-  ushort numExists = 0;
-
-  for (int eN = b18Intersections[edgeNextInters].totalInOutEdges - 1; eN >= 0; eN--) {  // clockwise
-    // retrieve
-    uint procEdge = b18Intersections[edgeNextInters].edge[eN];
-
-    if ((procEdge & kMaskLaneMap) == curEdgeLane) { //current edge 0xFFFFF
-      currentEdgeFound = true;
-      if (exitFound == false) {
-        numExitToTake = 0;
-      }
-      continue;
-    }
-
-    if ((procEdge & kMaskInEdge) == 0x0) { //out edge 0x800000
-      numExists++;
-      if (currentEdgeFound == true) {
-        numExitToTake++;
-      }
-      if (currentEdgeFound == false && exitFound == false) {
-        numExitToTake++;
-      }
-    }
-    if ((procEdge & kMaskInEdge) == nextEdge) {
-      exitFound = true;
-      currentEdgeFound = false;
-    }
-  }
-
-  if (edgeNumLanes == 0) {
-    printf("ERRRROR\n");
-  }
-
   switch (edgeNumLanes) {
     /// ONE LANE
   case 1:
@@ -330,7 +303,7 @@ __device__ void calculateLaneCarShouldBe(
 
     /// TWO LANE
   case 2:
-    switch (numExists) {
+    switch (totalAmountOfExits) {
     case 1:
     case 2://all okay
       initOKLanes = 0;
@@ -338,7 +311,7 @@ __device__ void calculateLaneCarShouldBe(
       break;
 
     case 3:
-      if (numExitToTake > 2) { //left
+      if (amountOfRelevantExits > 2) { //left
         initOKLanes = 0;
         endOKLanes = 1;
         break;
@@ -350,7 +323,7 @@ __device__ void calculateLaneCarShouldBe(
 
     default:
 
-      if (numExitToTake >= numExists - 1) {
+      if (amountOfRelevantExits >= totalAmountOfExits - 1) {
         initOKLanes = 0;
         endOKLanes = 1;
         break;
@@ -365,7 +338,7 @@ __device__ void calculateLaneCarShouldBe(
 
     /// THREE LANE
   case 3:
-    switch (numExists) {
+    switch (totalAmountOfExits) {
     case 1:
     case 2://all okay
       initOKLanes = 0;
@@ -373,7 +346,7 @@ __device__ void calculateLaneCarShouldBe(
       break;
 
     case 3:
-      if (numExitToTake > 2) { //left
+      if (amountOfRelevantExits > 2) { //left
         initOKLanes = 0;
         endOKLanes = 1;
         break;
@@ -384,7 +357,7 @@ __device__ void calculateLaneCarShouldBe(
       break;
 
     default:
-      if (numExitToTake >= numExists - 1) {
+      if (amountOfRelevantExits >= totalAmountOfExits - 1) {
         initOKLanes = 0;
         endOKLanes = 1;
         break;
@@ -398,7 +371,7 @@ __device__ void calculateLaneCarShouldBe(
     break;
 
   case 4:
-    switch (numExists) {
+    switch (totalAmountOfExits) {
     case 1:
     case 2://all okay
       initOKLanes = 0;
@@ -406,12 +379,12 @@ __device__ void calculateLaneCarShouldBe(
       break;
 
     case 3:
-      if (numExitToTake == 1) { //right
+      if (amountOfRelevantExits == 1) { //right
         initOKLanes = 3;
         endOKLanes = 4;
       }
 
-      if (numExitToTake > 3) { //left
+      if (amountOfRelevantExits > 3) { //left
         initOKLanes = 0;
         endOKLanes = 1;
         break;
@@ -422,12 +395,12 @@ __device__ void calculateLaneCarShouldBe(
       break;
 
     default:
-      if (numExitToTake == 1) { //right
+      if (amountOfRelevantExits == 1) { //right
         initOKLanes = edgeNumLanes - 1;
         endOKLanes = edgeNumLanes;
       }
 
-      if (numExitToTake >= numExists - 2) {
+      if (amountOfRelevantExits >= totalAmountOfExits - 2) {
         initOKLanes = 0;
         endOKLanes = 2;
         break;
@@ -440,7 +413,7 @@ __device__ void calculateLaneCarShouldBe(
     break;
 
   default:
-    switch (numExists) {
+    switch (totalAmountOfExits) {
     case 1:
     case 2://all okay
       initOKLanes = 0;
@@ -448,12 +421,12 @@ __device__ void calculateLaneCarShouldBe(
       break;
 
     case 3:
-      if (numExitToTake == 1) { //right
+      if (amountOfRelevantExits == 1) { //right
         initOKLanes = edgeNumLanes - 1;
         endOKLanes = edgeNumLanes;
       }
 
-      if (numExitToTake > edgeNumLanes - 2) { //left
+      if (amountOfRelevantExits > edgeNumLanes - 2) { //left
         initOKLanes = 0;
         endOKLanes = 2;
         break;
@@ -464,12 +437,12 @@ __device__ void calculateLaneCarShouldBe(
       break;
 
     default:
-      if (numExitToTake < 2) { //right
+      if (amountOfRelevantExits < 2) { //right
         initOKLanes = edgeNumLanes - 2;
         endOKLanes = edgeNumLanes;
       }
 
-      if (numExitToTake >= numExists - 2) {
+      if (amountOfRelevantExits >= totalAmountOfExits - 2) {
         initOKLanes = 0;
         endOKLanes = 2;
         break;
@@ -493,7 +466,6 @@ __global__ void kernel_updatePersonsCars(
     uint *indexPathVec,
     LC::B18EdgeData* edgesData,
     uchar *laneMap,
-    LC::B18IntersectionData *b18Intersections,
     LC::Connection *connections,
     size_t amountOfConnections,
     uint *connectionsBlocking,
@@ -593,6 +565,7 @@ __global__ void kernel_updatePersonsCars(
       }
       return;
     }
+
     // At this point we can assume the current person is already active
     if (float(currentTime) == int(currentTime)) { // assuming deltatime = 0.5f --> each second
       trafficPersonVec[p].num_steps++;
@@ -606,6 +579,19 @@ __global__ void kernel_updatePersonsCars(
     const uint nextEdge = indexPathVec[trafficPersonVec[p].indexPathCurr + 1];
     const ushort currentPositionInLane = static_cast<ushort>(floor(trafficPersonVec[p].posInLaneM));
     const ushort currentLaneMaximumPosition = ceil(trafficPersonVec[p].length - intersectionClearance);
+
+    const bool logCarData = false;
+    if (logCarData) {
+      printf(
+          "{currentTime: %.2f, id: %d, speed: %5.2f, edgeId: %d, currentPositionInLane: %02d, maximumPositionInLane: %02d}\n",
+          currentTime,
+          p,
+          trafficPersonVec[p].v,
+          currentEdge,
+          currentPositionInLane,
+          currentLaneMaximumPosition);
+    }
+
 
     bool nextVehicleIsATrafficLight = false;
     int remainingCellsToCheck = max(30.0f, trafficPersonVec[p].v * DELTA_TIME * 2);
@@ -645,11 +631,11 @@ __global__ void kernel_updatePersonsCars(
         && !obstacleFound
         && remainingCellsToCheck > 0
         && nextEdge != -1) {
-      const int dstVertexNumber = edgesData[currentEdge].targetVertexIndex;
+      const int dstVertexLcId = edgesData[currentEdge].targetVertexLcId;
       const ushort currentLaneNumber = currentEdge + trafficPersonVec[p].numOfLaneInEdge;
 
       const int distanceUntilIntersection = currentLaneMaximumPosition - currentPositionInLane;
-      trafficPersonVec[p].isApproachingStopJunction = intersections[dstVertexNumber].isStopIntersection;
+      trafficPersonVec[p].isApproachingStopJunction = intersections[dstVertexLcId].isStopIntersection;
       trafficPersonVec[p].distanceUntilIntersection = distanceUntilIntersection;
 
       // If the car is approaching a stop intersection and it has not yet stopped then the
@@ -661,18 +647,18 @@ __global__ void kernel_updatePersonsCars(
       if (!mustTreatIntersectionAsObstacle) {
         // Check if a least one connection is enabled between the current edge and the following one
         for (
-            int connectionIdx = intersections[dstVertexNumber].connectionGraphStart;
-            connectionIdx < intersections[dstVertexNumber].connectionGraphEnd;
+            int connectionIdx = intersections[dstVertexLcId].connectionGraphStart;
+            connectionIdx < intersections[dstVertexLcId].connectionGraphEnd;
             ++connectionIdx) {
           const LC::Connection & connection = connections[connectionIdx];
           const bool isRelevant =
-            connection.inLaneNumber == currentLaneNumber
-            && connection.outEdgeNumber == nextEdge;
+            connection.inLaneLcId == currentLaneNumber
+            && connection.outEdgeLcId == nextEdge;
           if (!isRelevant) continue;
 
           if (connection.enabled) {
             atLeastOneEnabledConnection = true;
-            nextEdgeChosenLane = connection.outLaneNumber - connection.outEdgeNumber;
+            nextEdgeChosenLane = connection.outLaneLcId - connection.outEdgeLcId;
             break;
           }
         }
@@ -742,6 +728,8 @@ __global__ void kernel_updatePersonsCars(
     trafficPersonVec[p].stoppedBeforeNextIntersection |=
       trafficPersonVec[p].distanceUntilIntersection < relevantStopDistance
       && trafficPersonVec[p].v < 0.0001;
+
+    trafficPersonVec[p].cumulative_velocity += trafficPersonVec[p].v;
 
     // Note: compute CO and Gas values each second
     if (calculatePollution && ((float(currentTime) == int(currentTime)))) { // enabled and each second (assuming DELTA_TIME 0.5f)
@@ -869,9 +857,15 @@ __global__ void kernel_updatePersonsCars(
           if (trafficPersonVec[p].LC_stateofLaneChanging == 1) {
             // LC 3.1 Calculate the correct lanes
             if (trafficPersonVec[p].LC_endOKLanes == 0xFF) {
-              calculateLaneCarShouldBe(currentEdge, nextEdge, b18Intersections,
-                trafficPersonVec[p].edgeNextInters, trafficPersonVec[p].edgeNumLanes,
-                trafficPersonVec[p].LC_initOKLanes, trafficPersonVec[p].LC_endOKLanes);
+              calculateLaneCarShouldBe(
+                currentEdge,
+                nextEdge,
+                intersections,
+                connections,
+                trafficPersonVec[p].edgeNextInters,
+                trafficPersonVec[p].edgeNumLanes,
+                trafficPersonVec[p].LC_initOKLanes,
+                trafficPersonVec[p].LC_endOKLanes);
 
               if (trafficPersonVec[p].LC_initOKLanes == 0 &&
                 trafficPersonVec[p].LC_endOKLanes == 0) {
@@ -991,8 +985,9 @@ __global__ void kernel_updatePersonsCars(
 
       // Update person' speed
       const uchar vInMpS = (uchar) (trafficPersonVec[p].v * 3); //speed in m/s to fit in uchar
-      const ushort posInLineCells = (ushort) (trafficPersonVec[p].posInLaneM);
-      assert(posInLineCells < currentLaneMaximumPosition);
+      ushort posInLineCells = (ushort) (trafficPersonVec[p].posInLaneM);
+      if (posInLineCells >= currentLaneMaximumPosition)
+        posInLineCells = currentLaneMaximumPosition - 1;
       const uint posToSample =
         mapToWriteShift
         + kMaxMapWidthM * (
@@ -1010,8 +1005,10 @@ __global__ void kernel_updatePersonsCars(
     }
 
     assert(reachedIntersection);
-    assert(0 <= nextEdgeChosenLane);
-    assert(nextEdgeChosenLane < trafficPersonVec[p].nextEdgeNumLanes);
+    // TODO(ffigari): Remove this correction.
+    // `nextEdgeChosenLane` should be in a valid range when this point is reached.
+    if (nextEdgeChosenLane < 0 || nextEdgeChosenLane >= trafficPersonVec[p].nextEdgeNumLanes)
+      nextEdgeChosenLane = 0;
 
     // Update current edge information
     trafficPersonVec[p].indexPathCurr++;
@@ -1121,12 +1118,17 @@ __device__ float inLaneScore(
       uint connectionIdx = intersection.connectionGraphStart;
       connectionIdx < intersection.connectionGraphEnd;
       ++connectionIdx) {
-    if (connections[connectionIdx].inLaneNumber == laneIdx) {
-      correspondingEdgeIdx = connections[connectionIdx].inEdgeNumber;
+    if (connections[connectionIdx].inLaneLcId == laneIdx) {
+      correspondingEdgeIdx = connections[connectionIdx].inEdgeLcId;
       break;
     }
   }
-  assert(correspondingEdgeIdx != -1);
+
+  // TODO(ffigari): Remove this correction.
+  // inLaneScore should be called with a correct value for `correspondingEdgeIdx`
+  if (correspondingEdgeIdx == -1)
+    return maxDistanceToCheck;
+
   const ushort laneMaximumPosition =
     ceil(edgesData[correspondingEdgeIdx].length - intersectionClearance);
 
@@ -1226,7 +1228,7 @@ __device__ void updateUnsupervised(
         ++connectionIdx) {
       // ..for each connection starting from that lane...
       const LC::Connection & connection = connections[connectionIdx];
-      if (connection.inLaneNumber != targetLane)
+      if (connection.inLaneLcId != targetLane)
         continue;
 
       if (!connection.enabled)
@@ -1271,15 +1273,14 @@ __global__ void kernel_updateIntersectionConnections(
     if (!needsUpdate || !hasConnections)
       return;
 
-    const auto type = intersection.intersectionType;
-    if (type == LC::IntersectionType::TrafficLight) {
+    if (intersection.trafficControl == TrafficControl::TrafficLight) {
       updateTrafficLight(
           intersectionIdx,
           currentTime,
           intersections,
           connections,
           trafficLightSchedules);
-    } else if (type == LC::IntersectionType::Unsupervised) {
+    } else if (intersection.trafficControl == TrafficControl::Unsupervised) {
       updateUnsupervised(
           intersectionIdx,
           currentTime,
@@ -1375,7 +1376,6 @@ void b18SimulateTrafficCUDA(const float currentTime, uint numPeople, uint numInt
     indexPathVec_d,
     edgesData_d,
     laneMap_d,
-    intersections_d,
     deviceConnections,
     amountOfConnections,
     deviceConnectionsBlocking,
