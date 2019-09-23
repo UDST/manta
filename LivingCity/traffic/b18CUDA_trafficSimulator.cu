@@ -1005,6 +1005,8 @@ __global__ void kernel_updatePersonsCars(
     }
 
     assert(reachedIntersection);
+    // TODO(ffigari): Remove this correction.
+    // `nextEdgeChosenLane` should be in a valid range when this point is reached.
     if (nextEdgeChosenLane < 0 || nextEdgeChosenLane >= trafficPersonVec[p].nextEdgeNumLanes)
       nextEdgeChosenLane = 0;
 
@@ -1122,6 +1124,8 @@ __device__ float inLaneScore(
     }
   }
 
+  // TODO(ffigari): Remove this correction.
+  // inLaneScore should be called with a correct value for `correspondingEdgeIdx`
   if (correspondingEdgeIdx == -1)
     return maxDistanceToCheck;
 

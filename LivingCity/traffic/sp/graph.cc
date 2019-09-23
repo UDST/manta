@@ -152,8 +152,6 @@ void abm::Graph::read_vertices(const std::string& filename) {
       vertex_lc_ids_to_osm_ids_[living_city_id] = osm_id;
       ++living_city_id;
 
-      // TODO(ffigari): The original boost graph implementation projects the coordinates from
-      // lat / long to mercator coordinates.
       QVector3D position(lat, lon, 0);
       position.setX(position.x() * -1.0f);
       assert(std::isfinite(position.x()) && std::isfinite(position.y()));
