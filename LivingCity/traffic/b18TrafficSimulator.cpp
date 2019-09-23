@@ -224,7 +224,7 @@ void B18TrafficSimulator::simulateInGPU(void) {
 
     QTime timerLoop;
     int amountOfIterations = 1;
-    const int iterationsPerLog = 10;
+    const int iterationsPerLog = 50;
     std::cerr
       << "[Log] Starting main loop for " << trafficPersonVec.size()
       << " persons from " << (startTime / 3600.0f) << " to " << (endTime / 3600.0f) << std::endl;
@@ -237,7 +237,7 @@ void B18TrafficSimulator::simulateInGPU(void) {
         std::cerr << std::fixed << std::setprecision(2) 
           << "[Log] Reached current time equal to " << (currentTime / 3600.0f)
           << " with " << averageTimePerIteration << "ms per simulation step (average over "
-          << iterationsPerLog << ")" << std::endl;
+          << iterationsPerLog << " iterations)" << std::endl;
       }
 
       b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(), updatedIntersections.size());
@@ -275,31 +275,19 @@ void B18TrafficSimulator::simulateInGPU(void) {
 
     // 3. Finish
     b18GetDataCUDA(trafficPersonVec);
-    b18GetSampleTrafficCUDA(accSpeedPerLinePerTimeInterval,
-                            numVehPerLinePerTimeInterval);
+    b18GetSampleTrafficCUDA(accSpeedPerLinePerTimeInterval, numVehPerLinePerTimeInterval);
     {
       // debug
       uint totalNumSteps = 0;
       float totalCO = 0;
 
       for (int p = 0; p < trafficPersonVec.size(); p++) {
-        //std::cout << "num_steps " << trafficPersonVec[p].num_steps << "for person " << p << "\n";
         totalNumSteps += trafficPersonVec[p].num_steps;
         totalCO += trafficPersonVec[p].co;
       }
 
       avgTravelTime = (totalNumSteps) / (trafficPersonVec.size() * 60.0f); //in min
-
-        //write paths to file so that we can just load them instead
-        std::ofstream output_file("./num_steps.txt");
-	output_file << totalNumSteps;
     }
-    //
-    calculateAndDisplayTrafficDensity(nP);
-    if (configuration_.SimulationRouting() == Routing::SP)
-      savePeopleAndRoutesSP(nP, street_graph_shared_ptr_);
-    else
-      savePeopleAndRoutes(nP);
   }
 
   b18FinishCUDA();
