@@ -33,7 +33,7 @@ class RoadGraphB2018 {
   static std::string loadABMGraph(const std::string& networkPath, const std::shared_ptr<abm::Graph>& graph_);
   static std::vector<DemandB2018> demandB2018;
   static int totalNumPeople;
-  static QHash<int, uint64_t> indToOsmid;
+  static QHash<int, osm_id_type> indToOsmid;
 
 };
 
