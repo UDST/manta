@@ -290,7 +290,7 @@ void SimulatorDataInitializer::initializeDataStructures(
   };
 
   const CoordinatesRetriever coordinatesRetriever = [&] (const uint & vertexLcId) {
-    const auto vertexGraphId = use_boost_graph_
+    const osm_id_type vertexGraphId = use_boost_graph_
       ? vertexLcId
       : abm_street_graph_shared_ptr_->vertex_lc_ids_to_osm_ids_.at(vertexLcId);
 
@@ -312,7 +312,7 @@ void SimulatorDataInitializer::initializeDataStructures(
     updatedIntersections};
 
   const auto initialize_updated_intersection = [&] (uint & connectionsCount, const uint vertexLcId) {
-    const uint vertexGraphId = use_boost_graph_
+    const osm_id_type vertexGraphId = use_boost_graph_
       ? vertexLcId
       : abm_street_graph_shared_ptr_->vertex_lc_ids_to_osm_ids_.at(vertexLcId);
 

@@ -20,7 +20,7 @@ using namespace std::chrono;
 
 std::vector<DemandB2018> RoadGraphB2018::demandB2018;
 int RoadGraphB2018::totalNumPeople;
-QHash<int, uint64_t> RoadGraphB2018::indToOsmid;
+QHash<int, osm_id_type> RoadGraphB2018::indToOsmid;
 
 void updateMinMax2(const QVector2D &newPoint, QVector2D &minBox, QVector2D &maxBox) {
   if (newPoint.x() < minBox.x()) {
@@ -104,9 +104,9 @@ void RoadGraphB2018::loadB2018RoadGraph(
   timer.start();
   QVector2D minBox(FLT_MAX, FLT_MAX);
   QVector2D maxBox(-FLT_MAX, -FLT_MAX);
-  QHash<uint64_t, QVector2D> osmidToVertexLoc;
-  QHash<uint64_t, QVector2D> osmidToOriginalLoc;
-  QHash<uint64_t, OSMConstant> OSMIdToOSMType; // node type
+  QHash<osm_id_type, QVector2D> osmidToVertexLoc;
+  QHash<osm_id_type, QVector2D> osmidToOriginalLoc;
+  QHash<osm_id_type, OSMConstant> OSMIdToOSMType; // node type
 
   QStringList headers = stream.readLine().split(",");
   const int indexOsmid = headers.indexOf("osmid");
@@ -125,7 +125,7 @@ void RoadGraphB2018::loadB2018RoadGraph(
 
     float x = fields[indexX].toFloat();
     float y = fields[indexY].toFloat();
-    uint64_t osmid = fields[indexOsmid].toLongLong();
+    osm_id_type osmid = fields[indexOsmid].toLongLong();
     osmidToVertexLoc[osmid] = QVector2D(x, y);
     osmidToOriginalLoc[osmid] = QVector2D(x, y);
     updateMinMax2(QVector2D(x, y), minBox, maxBox);
@@ -138,7 +138,7 @@ void RoadGraphB2018::loadB2018RoadGraph(
   const float lon0 = (maxBox.y() + minBox.y()) * 0.5f;
   minBox = QVector2D(FLT_MAX, FLT_MAX);
   maxBox = QVector2D(-FLT_MAX, -FLT_MAX);
-  QHash<uint64_t, QVector2D>::iterator i;
+  QHash<osm_id_type, QVector2D>::iterator i;
 
   for (i = osmidToVertexLoc.begin(); i != osmidToVertexLoc.end(); ++i) {
     osmidToVertexLoc[i.key()] = projLatLonToWorldMercator(i.value().x(),
@@ -179,7 +179,7 @@ void RoadGraphB2018::loadB2018RoadGraph(
 
   // Load data into vertices
   for (i = osmidToVertexLoc.begin(); i != osmidToVertexLoc.end(); ++i) {
-    const uint64_t ind = i.key();
+    const osm_id_type ind = i.key();
     const auto index = dynIndToInd[ind];
 
     const float x = osmidToVertexLoc[ind].x();
@@ -192,7 +192,6 @@ void RoadGraphB2018::loadB2018RoadGraph(
     pos.setX(pos.x() * -1.0f); // seems vertically rotated
 
     const auto bi_vertex_descriptor = vertex[index];
-    inRoadGraph->myRoadGraph_BI[bi_vertex_descriptor].x = osmidToOriginalLoc[ind].x();
     inRoadGraph->myRoadGraph_BI[bi_vertex_descriptor].x = osmidToOriginalLoc[ind].x();
     inRoadGraph->myRoadGraph_BI[bi_vertex_descriptor].y = osmidToOriginalLoc[ind].y();
     inRoadGraph->myRoadGraph_BI[bi_vertex_descriptor].pt = pos;
