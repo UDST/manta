@@ -19,7 +19,9 @@ bool SimulatorConfiguration::TryToReadPreviousPaths(void) const
 
 float SimulatorConfiguration::DeltaTime(void) const
 {
-    return settings_.value("TIME_STEP", .5).toFloat();
+    // TODO(ffigari): This should be read from the `TIME_STEP` setting, but the CUDA code is not
+    // yet reading this value and is harcoded as 0.5.
+    return 0.5;
 }
 
 
