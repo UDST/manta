@@ -346,26 +346,22 @@ void SimulatorDataInitializer::initializeDataStructures(
         }
       }
     } else {
-      // TODO(ffigari): This could be optimized by using the adjacency lists
-      for (const auto & inEdgeIt : abm_street_graph_shared_ptr_->edges_) {
-        const auto & inEdgeGraphData = inEdgeIt.second;
-        const auto inEdgeTargetGraphId = inEdgeGraphData->first.second;
-        if (inEdgeTargetGraphId != vertexGraphId)
-          continue;
-
-        const auto & inEdgeLcId = edgeDescToLaneMapNumSP.at(inEdgeGraphData);
-        const auto & inEdgeLcData = edgesData.at(inEdgeLcId);
-        for (const auto & outEdgeIt : abm_street_graph_shared_ptr_->edges_) {
-          const auto & outEdgeGraphData = outEdgeIt.second;
-          const auto outEdgeSourceGraphId = outEdgeGraphData->first.first;
-          if (outEdgeSourceGraphId != vertexGraphId)
-            continue;
-
-          const auto & outEdgeLcId = edgeDescToLaneMapNumSP.at(outEdgeGraphData);
-          const auto & outEdgeLcData = edgesData.at(outEdgeLcId);
-
-          initialize_connections_between(
-              connectionsCount, vertexLcId, inEdgeLcId, inEdgeLcData, outEdgeLcId, outEdgeLcData);
+      const bool hasIncomingEdges =
+        abm_street_graph_shared_ptr_->vertex_in_edges_.count(vertexGraphId);
+      const bool hasOutgoingEdges =
+        abm_street_graph_shared_ptr_->vertex_out_edges_.count(vertexGraphId);
+      if (hasIncomingEdges && hasOutgoingEdges) {
+        const auto & inEdges = abm_street_graph_shared_ptr_->vertex_in_edges_.at(vertexGraphId);
+        const auto & outEdges = abm_street_graph_shared_ptr_->vertex_out_edges_.at(vertexGraphId);
+        for (const auto & inEdgeGraphData : inEdges) {
+          const auto & inEdgeLcId = edgeDescToLaneMapNumSP.at(inEdgeGraphData);
+          const auto & inEdgeLcData = edgesData.at(inEdgeLcId);
+          for (const auto & outEdgeGraphData : outEdges) {
+            const auto & outEdgeLcId = edgeDescToLaneMapNumSP.at(outEdgeGraphData);
+            const auto & outEdgeLcData = edgesData.at(outEdgeLcId);
+            initialize_connections_between(
+                connectionsCount, vertexLcId, inEdgeLcId, inEdgeLcData, outEdgeLcId, outEdgeLcData);
+          }
         }
       }
     }
@@ -415,29 +411,6 @@ void SimulatorDataInitializer::initializeDataStructures(
     for (const auto & vertex_mapping : abm_street_graph_shared_ptr_->vertex_osm_ids_to_lc_ids_) {
       const uint vertexLcId = vertex_mapping.second;
       initialize_updated_intersection(connectionsCount, vertexLcId);
-    }
-  }
-
-  for (uint idx = 0; idx < connections.size(); ++idx) {
-    const Connection & connection = connections.at(idx);
-    for (
-        uint i = connection.connectionsBlockingStart;
-        i < connection.connectionsBlockingEnd;
-        ++i) {
-      const uint blockedConnectionIdx = connectionsBlocking.at(i);
-      const Connection & blockedConnection = connections.at(blockedConnectionIdx);
-      if (blockedConnection.connectionsBlockingStart == blockedConnection.connectionsBlockingEnd)
-        continue;
-
-      bool found = false;
-      for (
-          uint j = blockedConnection.connectionsBlockingStart;
-          !found && j < blockedConnection.connectionsBlockingEnd;
-          ++j) {
-        const uint secondBlockedConnectionIdx = connectionsBlocking.at(j);
-        found = secondBlockedConnectionIdx == idx;
-      }
-      assert(found && "Blocked connections should be symmetric.");
     }
   }
 
