@@ -224,7 +224,7 @@ void B18TrafficSimulator::simulateInGPU(void) {
 
     QTime timerLoop;
     int amountOfIterations = 1;
-    const int iterationsPerLog = 50;
+    const int iterationsPerLog = 2;
     std::cerr
       << "[Log] Starting main loop for " << trafficPersonVec.size()
       << " persons from " << (startTime / 3600.0f) << " to " << (endTime / 3600.0f) << std::endl;
