@@ -42,13 +42,16 @@ const float s_0 = 1.5f * 4.12f; // ALWAYS USED
 const float intersectionClearance = 7.8f;
 const bool calculatePollution = true;
 
-B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulatorConfiguration) :
+B18TrafficSimulator::B18TrafficSimulator(
+    const SimulatorConfiguration & simulatorConfiguration,
+    const DataExporter & dataExporter) :
   configuration_(simulatorConfiguration),
   simulatorDataInitializer_(
       simRoadGraph_shared_ptr_,
       street_graph_shared_ptr_,
       configuration_),
-  b18TrafficOD_(configuration_) {
+  b18TrafficOD_(configuration_),
+  dataExporter_(dataExporter) {
   all_paths_.clear();
 
   // Initialize road graph
@@ -77,7 +80,10 @@ B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulato
     if (!paths_were_cached) {
       int mpi_rank = 0;
       int mpi_size = 1;
+
+      dataExporter_.SwitchMeasuringFromTo(Phase::Initialization, Phase::Routing);
       all_paths_ = B18TrafficSP::compute_routes(mpi_rank, mpi_size, street_graph_shared_ptr_, all_od_pairs_);
+
       //write paths to file so that we can just load them instead
       std::ofstream output_file("./all_paths_.txt");
       std::ostream_iterator<abm::graph::vertex_t> output_iterator(output_file, "\n");
@@ -102,6 +108,7 @@ B18TrafficSimulator::B18TrafficSimulator(const SimulatorConfiguration & simulato
         break;
       }
     }
+    dataExporter_.SwitchMeasuringFromTo(Phase::Routing, Phase::Initialization);
   } else {
     std::cerr << "[Log] Using regular routing." << std::endl;
     simRoadGraph_shared_ptr_ = std::make_shared<RoadGraph>();
@@ -158,8 +165,10 @@ void B18TrafficSimulator::simulateInGPU(void) {
 
     std::cerr << "[Log] Defining cars paths." << std::endl;
     if (configuration_.SimulationRouting() == Routing::Johnson) {
+      dataExporter_.SwitchMeasuringFromTo(Phase::Initialization, Phase::Routing);
       B18TrafficJohnson::generateRoutes(simRoadGraph_shared_ptr_->myRoadGraph_BI, trafficPersonVec,
           indexPathVec, edgeDescToLaneMapNum, weigthMode, peoplePathSampling[nP]);
+      dataExporter_.SwitchMeasuringFromTo(Phase::Routing, Phase::Initialization);
     } else if (configuration_.SimulationRouting() == Routing::SP) {
       B18TrafficSP::convertVector(
           all_paths_, indexPathVec, edgeDescToLaneMapNumSP, street_graph_shared_ptr_);

@@ -47,7 +47,9 @@ class B18TrafficLightRender {
 class B18TrafficSimulator {
 
  public:
-  B18TrafficSimulator(const SimulatorConfiguration & simulatorConfiguration);
+  B18TrafficSimulator(
+      const SimulatorConfiguration & simulatorConfiguration,
+      const DataExporter & dataExporter);
 
   // init data
   std::shared_ptr<RoadGraph> simRoadGraph_shared_ptr_;
@@ -60,6 +62,7 @@ class B18TrafficSimulator {
 
   SimulatorDataInitializer simulatorDataInitializer_;
   B18TrafficOD b18TrafficOD_;
+  const DataExporter & dataExporter_;
 
   void simulateInCPU_MultiPass(void);
   void simulateInCPU(void);
