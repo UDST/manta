@@ -11,6 +11,8 @@
 #include "sp/graph.h"
 #include "traffic/b18TrafficSP.h"
 
+#include "../dataExporter.h"
+
 #ifdef B18_RUN_WITH_GUI
 #include "./LivingCity/b18TestSimpleRoadAndOD.h"
 #endif
