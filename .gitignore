@@ -10,7 +10,6 @@
 *.opensdf
 *.exe
 *.ilk
-/LivingCity/berkeley_2018
 /LivingCity/LivingCity
 
 *.swp  # Vim swap files
