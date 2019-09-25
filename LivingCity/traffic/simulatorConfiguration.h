@@ -26,6 +26,8 @@ public:
     QString NetworkPath(void) const;
     bool UseCPU(void) const;
     bool AddRandomPeople(void) const;
+
+    bool ShouldExportTimes(void) const;
     
 private:
     QSettings settings_;

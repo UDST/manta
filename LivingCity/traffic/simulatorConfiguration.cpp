@@ -73,5 +73,10 @@ bool SimulatorConfiguration::AddRandomPeople(void) const
     return settings_.value("ADD_RANDOM_PEOPLE").toBool();
 }
 
+bool SimulatorConfiguration::ShouldExportTimes(void) const
+{
+    return settings_.value("EXPORT_TIMES", false).toBool();
+}
+
 
 }

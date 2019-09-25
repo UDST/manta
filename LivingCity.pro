@@ -40,6 +40,7 @@ win32{
 }
 
 HEADERS += \
+    ./LivingCity/dataExporter.h \
     ./LivingCity/Geometry/block.h \
     ./LivingCity/Geometry/building.h \
     ./LivingCity/Geometry/client_geometry.h \
@@ -83,6 +84,7 @@ HEADERS += \
     ./LivingCity/trafficControl.h \
 
 SOURCES += \
+    ./LivingCity/dataExporter.cpp \
     ./LivingCity/Geometry/block.cpp \
     ./LivingCity/Geometry/building.cpp \
     ./LivingCity/Geometry/client_geometry.cpp \
