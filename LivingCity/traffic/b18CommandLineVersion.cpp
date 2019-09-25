@@ -34,7 +34,8 @@ void B18CommandLineVersion::runB18Simulation() {
   std::cerr << "[Log] Starting simulation." << std::endl;
   b18TrafficSimulator.simulateInGPU();
 
-  dataExporter.ExportTimes();
+  if (simulatorConfiguration.ShouldExportTimes())
+    dataExporter.ExportTimes();
 }
 
 
