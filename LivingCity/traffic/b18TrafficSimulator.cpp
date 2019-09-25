@@ -299,9 +299,10 @@ void B18TrafficSimulator::simulateInGPU(void) {
 
       avgTravelTime = (totalNumSteps) / (trafficPersonVec.size() * 60.0f); //in min
     }
+    dataExporter_.SwitchMeasuringFromTo(Phase::Simulation, Phase::Initialization);
   }
 
-  dataExporter_.SwitchMeasuringFromTo(Phase::Simulation, Phase::Export);
+  dataExporter_.SwitchMeasuringFromTo(Phase::Initialization, Phase::Export);
   b18FinishCUDA();
   G::global()["cuda_render_displaylist_staticRoadsBuildings"] = 3;//kill display list
 
