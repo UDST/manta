@@ -82,7 +82,7 @@ class B18TrafficSimulator {
 
   // Mappings between edges of the graphs and positions in laneMap
   std::map<std::shared_ptr<abm::Graph::Edge>, uint> edgeDescToLaneMapNumSP;
-  std::map<uint, std::shared_ptr<abm::Graph::Edge>> laneMapNumToEdgeDescSP;
+  std::map<uint, std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>> laneMapNumToEdgeDescSP;
   std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> edgeDescToLaneMapNum;
   std::map<uint, RoadGraph::roadGraphEdgeDesc_BI> laneMapNumToEdgeDesc;
 
@@ -108,8 +108,6 @@ class B18TrafficSimulator {
   std::vector<float> numVehPerLinePerTimeInterval;
 
   void calculateAndDisplayTrafficDensity(int numOfPass);
-  void savePeopleAndRoutes(int numOfPass);
-  void savePeopleAndRoutesSP(int numOfPass, const std::shared_ptr<abm::Graph>& street_graph_shared_ptr_);
 #ifdef B18_RUN_WITH_GUI
   void render(VBORenderManager &rendManager);
 #endif
