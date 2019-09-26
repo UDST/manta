@@ -159,7 +159,7 @@ void B18TrafficSimulator::simulateInGPU(void) {
 
   for (int nP = 0; nP < configuration_.AmountOfPasses(); nP++) {
     std::cerr
-      << "[Log] Starting pass " << nP
+      << "[Log] Starting pass " << (nP + 1)
       << " out of " << configuration_.AmountOfPasses() << "." << std::endl;
 
     const bool firstInitialization = nP == 0;
@@ -304,8 +304,8 @@ void B18TrafficSimulator::simulateInGPU(void) {
     dataExporter_.SwitchMeasuringFromTo(Phase::Simulation, Phase::Export);
 
     // Compute each person total travelled distance
-    std::vector<float> persons_travelled_distances{trafficPersonVec.size(), 0.0f};
-    std::vector<std::vector<uint>> persons_routes{trafficPersonVec.size(), std::vector<uint>{0}};
+    std::vector<float> persons_travelled_distances(trafficPersonVec.size(), 0.0f);
+    std::vector<std::vector<uint>> persons_routes(trafficPersonVec.size(), std::vector<uint>(0));
 
     for (size_t p = 0; p < trafficPersonVec.size(); ++p) {
       int path_index = trafficPersonVec.at(p).indexPathInit;
