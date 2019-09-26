@@ -121,7 +121,6 @@ B18TrafficSimulator::B18TrafficSimulator(
     b18TrafficOD_.resetTrafficPersonJob(trafficPersonVec);
   }
 
-  std::cerr << "[Log] Loading demand." << std::endl;
   b18TrafficOD_.loadDemand(trafficPersonVec);
   assert(!trafficPersonVec.empty());
 
@@ -1647,7 +1646,6 @@ void B18TrafficSimulator::simulateInCPU_MultiPass(void) {
     printf("***End simulateInCPU \n");
     //estimate traffic density
     calculateAndDisplayTrafficDensity(nP);
-    savePeopleAndRoutes(nP);
   }
 
   if (DEBUG_SIMULATOR) {
@@ -2310,175 +2308,6 @@ void B18TrafficSimulator::render(VBORenderManager &rendManager) {
   }
 }//
 #endif
-
-void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared_ptr<abm::Graph>& street_graph_shared_ptr_) {
-  const bool saveToFile = true;
-
-  if (saveToFile) {
-    /////////////////////////////////
-    // SAVE TO FILE
-    QFile peopleFile(QString::number(numOfPass) + "_people.csv");
-    QFile routeFile(QString::number(numOfPass) + "_route.csv");
-    QFile routeCount(QString::number(numOfPass) + "_edge_route_count.csv");
-
-    if (peopleFile.open(QIODevice::ReadWrite) &&
-        routeFile.open(QIODevice::ReadWrite) && routeCount.open(QIODevice::ReadWrite)) {
-
-      /////////////
-      // People Route
-      QHash<uint, uint> laneMapNumCount;
-      QTextStream streamR(&routeFile);
-      std::vector<float> personDistance(trafficPersonVec.size(), 0.0f);
-      streamR << "p:route\n";
-
-      //for (int x = 0; x < indexPathVec.size(); x++) {
-      //      std::cout << "index = " << x << "indexPathVec = " << indexPathVec[x] << "\n";
-      //}
-
-	//write paths to file so that we can just load them instead
-    std::ofstream output_file("./indexPathVec.txt");
-    std::ostream_iterator<abm::graph::vertex_t> output_iterator(output_file, "\n");
-    std::copy(indexPathVec.begin(), indexPathVec.end(), output_iterator);
-
-    int p = 0;
-    streamR << p << ":[";
-	for (int i = 0; i < indexPathVec.size(); i++) {
-		if (indexPathVec[i] != -1) {
-		    abm::graph::vertex_t edge_id_val = indexPathVec[i];
-		    //streamR << "," << edge_id_val;
-		    streamR << edge_id_val << ",";
-		    //streamR << "," << indexPathVec[index];
-		    personDistance[p] += street_graph_shared_ptr_->edges_[street_graph_shared_ptr_->edge_ids_to_vertices[edge_id_val]]->second[0];
-		    //std::cout << "edge length = " << street_graph_shared_ptr_->edges_[street_graph_shared_ptr_->edge_ids_to_vertices[edge_id_val]]->second[0] << "\n";
-		} else {
-                    streamR << "]\n";
-                    p++;
-		    if (i != indexPathVec.size() - 1) {
-                    	streamR << p << ":[";
-		    }
-        }
-	}
-    routeFile.close();
-
-      ///////////////
-      // People
-      QTextStream streamP(&peopleFile);
-      streamP <<
-              "p,init_intersection,end_intersection,time_departure,num_steps,co,gas,distance,a,b,T\n";
-
-      for (int p = 0; p < trafficPersonVec.size(); p++) {
-        streamP << p;
-        streamP << "," << trafficPersonVec[p].init_intersection;
-        streamP << "," << trafficPersonVec[p].end_intersection;
-        streamP << "," << trafficPersonVec[p].time_departure;
-        streamP << "," << trafficPersonVec[p].num_steps;
-        streamP << "," << trafficPersonVec[p].co;
-        streamP << "," << trafficPersonVec[p].gas;
-        streamP << "," << personDistance[p];
-
-        streamP << "," << trafficPersonVec[p].a;
-        streamP << "," << trafficPersonVec[p].b;
-        streamP << "," << trafficPersonVec[p].T;
-        streamP << "\n";
-      } // people
-
-      peopleFile.close();
-
-    }
-  }
-
-  printf("\n<<calculateAndDisplayTrafficDensity\n");
-}//
-
-void B18TrafficSimulator::savePeopleAndRoutes(int numOfPass) {
-  const bool saveToFile = true;
-
-  if (saveToFile) {
-    /////////////////////////////////
-    // SAVE TO FILE
-    QFile peopleFile(QString::number(numOfPass) + "_people.csv");
-    QFile routeFile(QString::number(numOfPass) + "_route.csv");
-    QFile routeCount(QString::number(numOfPass) + "_edge_route_count.csv");
-
-    if (peopleFile.open(QIODevice::ReadWrite) &&
-        routeFile.open(QIODevice::ReadWrite) && routeCount.open(QIODevice::ReadWrite)) {
-
-      /////////////
-      // People Route
-      QHash<uint, uint> laneMapNumCount;
-      QTextStream streamR(&routeFile);
-      std::vector<float> personDistance(trafficPersonVec.size(), 0.0f);
-      streamR << "p,route\n";
-
-      for (int p = 0; p < trafficPersonVec.size(); p++) {
-        streamR << p;
-        uint index = 0;
-
-        while (indexPathVec[trafficPersonVec[p].indexPathInit + index] != -1) {
-          uint laneMapNum = indexPathVec[trafficPersonVec[p].indexPathInit + index];
-
-          if (laneMapNumToEdgeDesc.count(laneMapNum) > 0) { // laneMapNum in map
-            streamR << "," <<
-                    simRoadGraph_shared_ptr_->myRoadGraph_BI[laneMapNumToEdgeDesc[laneMapNum]].faci; // get id of the edge from the roadgraph
-            laneMapNumCount.insert(laneMapNum, laneMapNumCount.value(laneMapNum,
-                                   0) + 1);//is it initialized?
-            personDistance[p] +=
-              simRoadGraph_shared_ptr_->myRoadGraph_BI[laneMapNumToEdgeDesc[laneMapNum]].edgeLength;
-            index++;
-          } else {
-            break;
-          }
-
-        }
-
-        streamR << "\n";
-      } // people
-
-      routeFile.close();
-
-      ///////////////
-      // People
-      QTextStream streamP(&peopleFile);
-      streamP <<
-              "p,init_intersection,end_intersection,time_departure,num_steps,co,gas,distance,a,b,T\n";
-
-      for (int p = 0; p < trafficPersonVec.size(); p++) {
-        streamP << p;
-        streamP << "," << trafficPersonVec[p].init_intersection;
-        streamP << "," << trafficPersonVec[p].end_intersection;
-        streamP << "," << trafficPersonVec[p].time_departure;
-        streamP << "," << trafficPersonVec[p].num_steps;
-        streamP << "," << trafficPersonVec[p].co;
-        streamP << "," << trafficPersonVec[p].gas;
-        streamP << "," << personDistance[p];
-
-        streamP << "," << trafficPersonVec[p].a;
-        streamP << "," << trafficPersonVec[p].b;
-        streamP << "," << trafficPersonVec[p].T;
-        streamP << "\n";
-      } // people
-
-      peopleFile.close();
-
-      ////////////
-      // Per edge route count
-      QTextStream streamC(&routeCount);
-      QHash<uint, uint>::iterator i;
-
-      for (i = laneMapNumCount.begin(); i != laneMapNumCount.end(); ++i) {
-        uint laneMapNum = i.key();
-        streamC <<
-                simRoadGraph_shared_ptr_->myRoadGraph_BI[laneMapNumToEdgeDesc[laneMapNum]].faci; // get id of the edge from the roadgraph
-        streamC << "," << i.value();
-        streamC << "\n";
-      }
-
-      streamC << "\n";
-      routeCount.close();
-    }
-  }
-
-}//
 
 void B18TrafficSimulator::calculateAndDisplayTrafficDensity(int numOfPass) {
   int tNumLanes = trafficLights.size();

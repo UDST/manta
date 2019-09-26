@@ -108,8 +108,6 @@ class B18TrafficSimulator {
   std::vector<float> numVehPerLinePerTimeInterval;
 
   void calculateAndDisplayTrafficDensity(int numOfPass);
-  void savePeopleAndRoutes(int numOfPass);
-  void savePeopleAndRoutesSP(int numOfPass, const std::shared_ptr<abm::Graph>& street_graph_shared_ptr_);
 #ifdef B18_RUN_WITH_GUI
   void render(VBORenderManager &rendManager);
 #endif
