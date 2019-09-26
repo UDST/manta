@@ -78,5 +78,9 @@ bool SimulatorConfiguration::ShouldExportTimes(void) const
     return settings_.value("EXPORT_TIMES", false).toBool();
 }
 
+bool SimulatorConfiguration::ShouldExportPeopleSummary(void) const
+{
+    return settings_.value("EXPORT_PEOPLE_SUMMARY", false).toBool();
+}
 
 }

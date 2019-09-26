@@ -28,6 +28,7 @@ public:
     bool AddRandomPeople(void) const;
 
     bool ShouldExportTimes(void) const;
+    bool ShouldExportPeopleSummary(void) const;
     
 private:
     QSettings settings_;

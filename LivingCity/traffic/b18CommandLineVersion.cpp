@@ -35,7 +35,9 @@ void B18CommandLineVersion::runB18Simulation() {
   b18TrafficSimulator.simulateInGPU();
 
   if (simulatorConfiguration.ShouldExportTimes())
+    dataExporter.SwitchMeasuringFromTo(Phase::Simulation, Phase::Export);
     dataExporter.ExportTimes();
+    dataExporter.SwitchMeasuringFromTo(Phase::Export, Phase::Simulation);
 }
 
 

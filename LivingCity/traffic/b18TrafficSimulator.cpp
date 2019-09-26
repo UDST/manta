@@ -155,6 +155,7 @@ void B18TrafficSimulator::createRandomPeople(float startTime, float endTime,
 // GPU
 //////////////////////////////////////////////////
 void B18TrafficSimulator::simulateInGPU(void) {
+  dataExporter_.SwitchMeasuringFromTo(Phase::Initialization, Phase::Simulation);
   float peoplePathSampling[] = {1.0f, 1.0f, 0.5f, 0.25f, 0.12f, 0.67f};
 
   for (int nP = 0; nP < configuration_.AmountOfPasses(); nP++) {
@@ -166,7 +167,7 @@ void B18TrafficSimulator::simulateInGPU(void) {
     const int weigthMode = firstInitialization ? 0 : 1;
 
     std::cerr << "[Log] Defining cars paths." << std::endl;
-    dataExporter_.SwitchMeasuringFromTo(Phase::Initialization, Phase::Routing);
+    dataExporter_.SwitchMeasuringFromTo(Phase::Simulation, Phase::Routing);
     if (configuration_.SimulationRouting() == Routing::Johnson) {
       B18TrafficJohnson::generateRoutes(simRoadGraph_shared_ptr_->myRoadGraph_BI, trafficPersonVec,
           indexPathVec, edgeDescToLaneMapNum, weigthMode, peoplePathSampling[nP]);
@@ -183,7 +184,7 @@ void B18TrafficSimulator::simulateInGPU(void) {
                                              trafficPersonVec, indexPathVec, edgeDescToLaneMapNum, weigthMode,
                                              peoplePathSampling[nP]);
     }
-    dataExporter_.SwitchMeasuringFromTo(Phase::Routing, Phase::Initialization);
+    dataExporter_.SwitchMeasuringFromTo(Phase::Routing, Phase::Simulation);
 
     const float startTimeH = configuration_.SimulationStartingHour();
     const float endTimeH = configuration_.SimulationEndingHour();
@@ -232,7 +233,6 @@ void B18TrafficSimulator::simulateInGPU(void) {
     // Reset people from previous runs
     b18ResetPeopleLanesCUDA(trafficPersonVec.size());
 
-    dataExporter_.SwitchMeasuringFromTo(Phase::Initialization, Phase::Simulation);
     QTime timerLoop;
     int amountOfIterations = 1;
     const int iterationsPerLog = 10;
@@ -299,10 +299,32 @@ void B18TrafficSimulator::simulateInGPU(void) {
 
       avgTravelTime = (totalNumSteps) / (trafficPersonVec.size() * 60.0f); //in min
     }
-    dataExporter_.SwitchMeasuringFromTo(Phase::Simulation, Phase::Initialization);
   }
 
-  dataExporter_.SwitchMeasuringFromTo(Phase::Initialization, Phase::Export);
+  std::cerr << "==" << std::endl;
+  if (configuration_.ShouldExportPeopleSummary()) {
+    dataExporter_.SwitchMeasuringFromTo(Phase::Simulation, Phase::Export);
+
+    // Compute each person total travelled distance
+    std::vector<float> persons_travelled_distances{trafficPersonVec.size(), 0.0f};
+    for (size_t p = 0; p < trafficPersonVec.size(); ++p) {
+      int path_index = trafficPersonVec.at(p).indexPathInit;
+      while (indexPathVec.at(path_index) != -1) {
+        const abm::graph::vertex_t lc_edge_id = indexPathVec.at(path_index);
+        const float edge_length = configuration_.SimulationRouting() == Routing::SP
+          ? street_graph_shared_ptr_->edges_[laneMapNumToEdgeDescSP.at(lc_edge_id)]->second[0]
+          : simRoadGraph_shared_ptr_->myRoadGraph_BI[laneMapNumToEdgeDesc.at(lc_edge_id)].edgeLength;
+        persons_travelled_distances.at(p) += edge_length;
+        path_index++;
+      }
+    }
+
+    dataExporter_.ExportPersonsSummary(trafficPersonVec, persons_travelled_distances);
+
+    // TODO: Export routes
+    dataExporter_.SwitchMeasuringFromTo(Phase::Export, Phase::Simulation);
+  }
+
   b18FinishCUDA();
   G::global()["cuda_render_displaylist_staticRoadsBuildings"] = 3;//kill display list
 

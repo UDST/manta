@@ -170,7 +170,7 @@ void SimulatorDataInitializer::initializeDataStructures(
     std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> & edgeDescToLaneMapNum,
     std::map<uint, RoadGraph::roadGraphEdgeDesc_BI> & laneMapNumToEdgeDesc,
     std::map<std::shared_ptr<abm::Graph::Edge>, uint> & edgeDescToLaneMapNumSP,
-    std::map<uint, std::shared_ptr<abm::Graph::Edge>> & laneMapNumToEdgeDescSP,
+    std::map<uint, std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>> & laneMapNumToEdgeDescSP,
     std::vector<LC::Connection> &connections,
     std::vector<uint> &connectionsBlocking,
     std::vector<LC::Intersection> &updatedIntersections,
@@ -246,7 +246,7 @@ void SimulatorDataInitializer::initializeDataStructures(
   } else {
     for (auto const& x : abm_street_graph_shared_ptr_->edges_) {
       edgeDescToLaneMapNumSP.insert(std::make_pair(x.second, totalLaneMapChunks));
-      laneMapNumToEdgeDescSP.insert(std::make_pair(totalLaneMapChunks, x.second));
+      laneMapNumToEdgeDescSP.insert(std::make_pair(totalLaneMapChunks, x.first));
 
       initialize_edge_data(
         std::get<1>(x)->second[1],
