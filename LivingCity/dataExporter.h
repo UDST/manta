@@ -23,8 +23,9 @@ public:
 
     void ExportTimes(void);
 
-    // TODO:
-    void ExportPersons(const std::vector<LC::B18TrafficPerson> & traffic_persons) const;
+    void ExportPersonsSummary(
+        const std::vector<LC::B18TrafficPerson> & traffic_persons,
+        const std::vector<float> & persons_travelled_distances) const;
 
 private:
     Phase current_phase_;
