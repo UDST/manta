@@ -36,12 +36,17 @@ sudo qmake LivingCity.pro && sudo make
 
 ## Running
 
-If you wish to edit configuration, modify `command_line_options.ini`.
-
 Run with:
 ```bash
 ./LivingCity.bin
 ```
+If you wish to edit configuration, modify `command_line_options.ini`.
+
+### Options explanation
+
+- `NETWORK_PATH`: path to a directory containing the network files. Should contain the `nodes.csv`, `edges.csv` and `od_demand.csv` files. See `LivingCity/berkeley_2018/basic_network/` for an example of the expected format.
+- `USE_JOHNSON_ROUTING`, `USE_SP_ROUTING`: booleans indicating whether to use the old routing algorithm (Johnson) or the new one (SP).
+- `EXPORT_TIMES`, `EXPORT_PEOPLE_SUMMARY`: booleans indicating whether to export times or people summary
 
 ## Functions called when running
 1) Once ./LivingCity is invoked without the GUI, LC_main() is called. 
