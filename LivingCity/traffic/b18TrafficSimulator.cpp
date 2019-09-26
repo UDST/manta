@@ -67,7 +67,7 @@ B18TrafficSimulator::B18TrafficSimulator(
     bool paths_were_cached = false;
     if (configuration_.TryToReadPreviousPaths()) {
       // open file
-      std::ifstream inputFile("./all_paths_incl_zeros.txt");
+      std::ifstream inputFile("./all_paths_.txt");
       // test file open
       if (inputFile) {
         abm::graph::vertex_t value;
@@ -233,14 +233,14 @@ void B18TrafficSimulator::simulateInGPU(void) {
     b18ResetPeopleLanesCUDA(trafficPersonVec.size());
 
     QTime timerLoop;
-    int amountOfIterations = 1;
-    const int iterationsPerLog = 10;
+    int numberOfIterations = 0;
+    const int iterationsPerLog = 1800;
     std::cerr
       << "[Log] Starting main loop for " << trafficPersonVec.size()
       << " persons from " << (startTime / 3600.0f) << " to " << (endTime / 3600.0f) << std::endl;
     while (currentTime < endTime) {
-      amountOfIterations++;
-      if (amountOfIterations % iterationsPerLog == 0) {
+      numberOfIterations++;
+      if (numberOfIterations % iterationsPerLog == 0) {
         const float averageTimePerIteration = timerLoop.elapsed() / static_cast<float>(iterationsPerLog);
         timerLoop.restart();
 
@@ -280,7 +280,7 @@ void B18TrafficSimulator::simulateInGPU(void) {
     }
 
     std::cerr
-      << "[Log] Finished main loop with a total of " << amountOfIterations
+      << "[Log] Finished main loop with a total of " << numberOfIterations
       << " iterations." << std::endl;
 
     // 3. Finish
