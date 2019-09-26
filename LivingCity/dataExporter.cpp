@@ -46,9 +46,9 @@ void DataExporter::ExportPersonsSummary(
     assert(current_phase_ == Phase::Export);
     assert(traffic_persons.size() == persons_travelled_distances.size());
 
-    std::ofstream peoplesFile("people.csv");
+    std::ofstream peoples_file("people.csv");
 
-    peoplesFile
+    peoples_file
         << "p"
         << ",init_intersection"
         << ",end_intersection"
@@ -63,7 +63,7 @@ void DataExporter::ExportPersonsSummary(
         << std::endl;
 
     for (size_t p = 0; p < traffic_persons.size(); ++p) {
-        peoplesFile
+        peoples_file
             << p
             << "," << traffic_persons.at(p).init_intersection
             << "," << traffic_persons.at(p).end_intersection
@@ -78,7 +78,33 @@ void DataExporter::ExportPersonsSummary(
             << std::endl;
     }
 
-    peoplesFile.close();
+    peoples_file.close();
+}
+
+void DataExporter::ExportRoutes(const std::vector<std::vector<uint>> & persons_routes) const
+{
+    std::ofstream persons_routes_file("routes.csv");
+
+    persons_routes_file << "p:route" << std::endl;
+
+    for (size_t p = 0; p < persons_routes.size(); ++p) {
+        persons_routes_file << p << ":[";
+
+        const auto & route = persons_routes.at(p);
+        if (!route.empty()) {
+            size_t route_index = 0;
+            persons_routes_file << route.at(route_index);
+            route_index++;
+            while (route_index < route.size()) {
+                persons_routes_file << "," << route.at(route_index);
+                route_index++;
+            }
+        }
+
+        persons_routes_file << "]" << std::endl;
+    }
+
+    persons_routes_file.close();
 }
 
 std::string DataExporter::TagForPhase(const Phase & phase) const

@@ -29,7 +29,8 @@ public:
 
     bool ShouldExportTimes(void) const;
     bool ShouldExportPeopleSummary(void) const;
-    
+    bool ShouldExportRoutes(void) const;
+
 private:
     QSettings settings_;
 };

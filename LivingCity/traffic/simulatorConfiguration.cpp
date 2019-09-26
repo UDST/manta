@@ -83,4 +83,9 @@ bool SimulatorConfiguration::ShouldExportPeopleSummary(void) const
     return settings_.value("EXPORT_PEOPLE_SUMMARY", false).toBool();
 }
 
+bool SimulatorConfiguration::ShouldExportRoutes(void) const
+{
+    return settings_.value("EXPORT_ROUTES", false).toBool();
+}
+
 }

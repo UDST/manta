@@ -301,16 +301,20 @@ void B18TrafficSimulator::simulateInGPU(void) {
     }
   }
 
-  std::cerr << "==" << std::endl;
-  if (configuration_.ShouldExportPeopleSummary()) {
+  if (configuration_.ShouldExportPeopleSummary() || configuration_.ShouldExportRoutes()) {
     dataExporter_.SwitchMeasuringFromTo(Phase::Simulation, Phase::Export);
 
     // Compute each person total travelled distance
     std::vector<float> persons_travelled_distances{trafficPersonVec.size(), 0.0f};
+    std::vector<std::vector<uint>> persons_routes{trafficPersonVec.size(), std::vector<uint>{0}};
+
     for (size_t p = 0; p < trafficPersonVec.size(); ++p) {
       int path_index = trafficPersonVec.at(p).indexPathInit;
       while (indexPathVec.at(path_index) != -1) {
-        const abm::graph::vertex_t lc_edge_id = indexPathVec.at(path_index);
+        const uint lc_edge_id = indexPathVec.at(path_index);
+
+        persons_routes.at(p).push_back(lc_edge_id);
+
         const float edge_length = configuration_.SimulationRouting() == Routing::SP
           ? street_graph_shared_ptr_->edges_[laneMapNumToEdgeDescSP.at(lc_edge_id)]->second[0]
           : simRoadGraph_shared_ptr_->myRoadGraph_BI[laneMapNumToEdgeDesc.at(lc_edge_id)].edgeLength;
@@ -319,9 +323,12 @@ void B18TrafficSimulator::simulateInGPU(void) {
       }
     }
 
-    dataExporter_.ExportPersonsSummary(trafficPersonVec, persons_travelled_distances);
+    if (configuration_.ShouldExportPeopleSummary())
+      dataExporter_.ExportPersonsSummary(trafficPersonVec, persons_travelled_distances);
 
-    // TODO: Export routes
+    if (configuration_.ShouldExportRoutes())
+      dataExporter_.ExportRoutes(persons_routes);
+
     dataExporter_.SwitchMeasuringFromTo(Phase::Export, Phase::Simulation);
   }
 
