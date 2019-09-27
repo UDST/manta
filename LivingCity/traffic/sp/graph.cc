@@ -114,7 +114,7 @@ bool abm::Graph::read_graph_osm(const std::string& filename) {
     while (in.read_row(edge_osm_id, source_osm_id, target_osm_id, length, lanes, speed_mph)) {
       edge_values[0] = length;
       edge_values[1] = lanes;
-      edge_values[2] = speed_mph;
+      edge_values[2] = (speed_mph / 3600) * 1609.34;  //convert from mph to meters/second
 
       //Don't add if there is already an edge with the same vertices
       if (edges_.find(std::make_pair(source_osm_id, target_osm_id)) == edges_.end()) {
