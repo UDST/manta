@@ -60,6 +60,7 @@ void DataExporter::ExportPersonsSummary(
         << ",a"
         << ",b"
         << ",T"
+        << ",avg_v(mph)"
         << std::endl;
 
     for (size_t p = 0; p < traffic_persons.size(); ++p) {
@@ -75,6 +76,7 @@ void DataExporter::ExportPersonsSummary(
             << "," << traffic_persons.at(p).a
             << "," << traffic_persons.at(p).b
             << "," << traffic_persons.at(p).T
+            << "," << (traffic_persons[p].cumulative_velocity / traffic_persons[p].num_steps) * 3600 / 1609.34
             << std::endl;
     }
 
