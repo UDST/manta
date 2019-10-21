@@ -217,6 +217,9 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     printf("First time_departure %f\n", currentTime);
     QTime timerLoop;
 
+    int iter_printout = 7200;
+    int iter_printout_index = 0;
+    std::vector<float> avg_edge_vel(edgesData.size());
     std::cerr
       << "Running main loop from " << (startTime / 3600.0f)
       << " to " << (endTime / 3600.0f)
@@ -226,18 +229,39 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       //std::cout << "Current Time " << currentTime << "\n";
       //std::cout << "count " << count << "\n";
       count++;
-      if (count % 1800 == 0) {
+      if (count % iter_printout == 0) {
         std::cerr << std::fixed << std::setprecision(2) 
           << "Current time: " << (currentTime / 3600.0f)
           << " (" << (100.0f - (100.0f * (endTime - currentTime) / (endTime - startTime))) << "%)"
-          << " with " << (timerLoop.elapsed() / 1800.0f) << " ms per simulation step (average over 1800)"
+          << " with " << (timerLoop.elapsed() / (float) iter_printout) << " ms per simulation step (average over 1800)"
           << "\r";
-        timerLoop.restart();
+
       }
 
       b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
                              intersections.size(), deltaTime);
 
+      b18GetDataCUDA(trafficPersonVec, edgesData);
+      if (count % iter_printout == 0) {
+	//get the average values from edgesData structure
+	for (int x = 0; x < edgesData.size(); x++) {
+		//printf("index %d curr cum vel %f\n", x, edgesData[x].curr_cum_vel);
+		avg_edge_vel[x] = (float) edgesData[x].curr_cum_vel / (float) iter_printout;
+		//std::cout << "cum_vel = " << edgesData[x].curr_cum_vel << "\n" << "avg_edge_vel = " << avg_edge_vel[x] << "\n" << "iter printout = " << iter_printout << "\n";
+	}
+
+	//save avg_edge_vel vector to file
+	std::string name = "./all_edges_vel_" + std::to_string(iter_printout_index) + ".txt";
+	std::ofstream output_file(name);
+        std::ostream_iterator<float> output_iterator(output_file, "\n");
+        std::copy(avg_edge_vel.begin(), avg_edge_vel.end(), output_iterator);
+
+	//fill avg_edge_vel vector back to 0 for next iter_printout iterations
+	std::fill(std::begin(avg_edge_vel), std::end(avg_edge_vel), 0);
+	iter_printout_index++;
+
+	timerLoop.restart();
+      }
 #ifdef B18_RUN_WITH_GUI
 
       if (clientMain != nullptr &&
@@ -271,7 +295,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     getDataBench.startMeasuring();
 
     // 3. Finish
-    b18GetDataCUDA(trafficPersonVec);
+    b18GetDataCUDA(trafficPersonVec, edgesData);
     b18GetSampleTrafficCUDA(accSpeedPerLinePerTimeInterval,
                             numVehPerLinePerTimeInterval);
     {
