@@ -69,8 +69,8 @@ void B18CommandLineVersion::runB18Simulation() {
 	  auto start = high_resolution_clock::now();
       if (usePrevPaths) {
             // open file    
-            std::ifstream inputFile("./all_paths_incl_zeros.txt");
-            //std::ifstream inputFile("./all_paths.txt");
+            //std::ifstream inputFile("./all_paths_incl_zeros.txt");
+            std::ifstream inputFile("./all_paths.txt");
             // test file open   
             if (inputFile) {        
                 abm::graph::vertex_t value;

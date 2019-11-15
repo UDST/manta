@@ -345,7 +345,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     //
     calculateAndDisplayTrafficDensity(nP);
     //savePeopleAndRoutes(nP);
-    savePeopleAndRoutesSP(nP, graph_);
+    savePeopleAndRoutesSP(nP, graph_, paths_SP);
     printf("  <<End One Step %d TIME: %d ms.\n", nP, timer.elapsed());
     getDataBench.stopAndEndBenchmark();
   }
@@ -2353,7 +2353,7 @@ void B18TrafficSimulator::render(VBORenderManager &rendManager) {
 }//
 #endif
 
-void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared_ptr<abm::Graph>& graph_) {
+void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared_ptr<abm::Graph>& graph_, std::vector<abm::graph::vertex_t> paths_SP) {
   const bool saveToFile = true;
 
   if (saveToFile) {
@@ -2384,23 +2384,26 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared
     std::copy(indexPathVec.begin(), indexPathVec.end(), output_iterator);
 
     int p = 0;
+    int i = 0;
 	// Save route for each person
     streamR << p << ":[";
-	for (int i = 0; i < indexPathVec.size(); i++) {
-		if (indexPathVec[i] != -1) {
-		    abm::graph::vertex_t edge_id_val = indexPathVec[i];
+	for (auto& x: paths_SP) {
+		if (x != -1) {
+		    //abm::graph::vertex_t edge_id_val = indexPathVec[i];
+		    abm::graph::vertex_t edge_id_val = x;
 		    //streamR << "," << edge_id_val;
 		    streamR << edge_id_val << ",";
 		    //streamR << "," << indexPathVec[index];
             //std::cout << "edge_id val = " << edge_id_val << "\n";
-		    personDistance[p] += graph_->edges_[graph_->edge_pointer_to_vertices_[laneMapNumToEdgeDescSP[edge_id_val]]]->second[0];
+		    personDistance[p] += graph_->edges_[graph_->edge_pointer_to_vertices_[laneMapNumToEdgeDescSP[indexPathVec[i]]]]->second[0];
 		} else {
                     streamR << "]\n";
                     p++;
-		    if (i != indexPathVec.size() - 1) {
+		    if (i != paths_SP.size() - 1) {
                     	streamR << p << ":[";
 		    }
         }
+        i++;
 	}
     routeFile.close();
 
