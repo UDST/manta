@@ -155,6 +155,11 @@ bool abm::Graph::read_graph_matrix_market(const std::string& filename) {
 // Read MatrixMarket graph file format
 bool abm::Graph::read_graph_osm(const std::string& filename) {
   bool status = true;
+
+    //write the indices of the edges that don't work to file
+    ofstream edgeErrorsFile;
+    edgeErrorsFile.open("./edges_error.txt");
+
   try {
     csvio::CSVReader<6> in(filename);
     //in.read_header(csvio::ignore_extra_column, "uniqueid", "u", "v", "length");
@@ -178,6 +183,9 @@ bool abm::Graph::read_graph_osm(const std::string& filename) {
         //Don't add if there is already an edge with the same vertices
         if (edges_.find(std::make_pair(v1, v2)) == edges_.end()) {
 	        this->add_edge(v1, v2, edge_vals, edgeid);
+        } else {
+            edgeErrorsFile << index;
+            edgeErrorsFile << "\n";
         }
         ++nvertices;
 
@@ -195,6 +203,7 @@ bool abm::Graph::read_graph_osm(const std::string& filename) {
     status = false;
   }
 
+    edgeErrorsFile.close();
   return status;
 }
 
