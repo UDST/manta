@@ -157,10 +157,12 @@ void b18FinishCUDA(void){
   cudaFree(numVehPerLinePerTimeInterval_d);
 }//
 
- void b18GetDataCUDA(std::vector<LC::B18TrafficPerson>& trafficPersonVec){
+ void b18GetDataCUDA(std::vector<LC::B18TrafficPerson>& trafficPersonVec, std::vector<LC::B18EdgeData> &edgesData){
    // copy back people
    size_t size = trafficPersonVec.size() * sizeof(LC::B18TrafficPerson);
+   size_t size_edges = edgesData.size() * sizeof(LC::B18EdgeData);
    cudaMemcpy(trafficPersonVec.data(),trafficPersonVec_d,size,cudaMemcpyDeviceToHost);//cudaMemcpyHostToDevice
+   cudaMemcpy(edgesData.data(),edgesData_d,size_edges,cudaMemcpyDeviceToHost);//cudaMemcpyHostToDevice
  }
 
 
@@ -724,6 +726,13 @@ __global__ void kernel_trafficSimulation(
      */
      trafficPersonVec[p].cum_v += trafficPersonVec[p].v;
      //printf("vel person %d = %f\n", p, trafficPersonVec[p].cum_v);
+
+     //calculate per edge metrics (velocity, cumulative velocity)
+     edgesData[currentEdge].curr_iter_num_cars += 1;
+     edgesData[currentEdge].curr_iter_cum_vel += trafficPersonVec[p].v;
+     edgesData[currentEdge].curr_cum_vel += edgesData[currentEdge].curr_iter_cum_vel / edgesData[currentEdge].curr_iter_num_cars;
+     //printf("num_cars = %d\n, curr_iter_cum_vel = %f\n, curr_cum_vel = %f\n", edgesData[currentEdge].curr_iter_num_cars, edgesData[currentEdge].curr_iter_cum_vel, edgesData[currentEdge].curr_cum_vel);
+
 
      if (calculatePollution && ((float(currentTime) == int(currentTime)))) { // enabled and each second (assuming deltaTime 0.5f)
        // CO Calculation
