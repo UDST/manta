@@ -219,7 +219,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 
     int iter_printout = 7200;
     int iter_printout_index = 0;
-    std::vector<float> avg_edge_vel(edgesData.size());
+    int ind = 0;
+    std::vector<float> avg_edge_vel(graph_->edges_.size());
     std::cerr
       << "Running main loop from " << (startTime / 3600.0f)
       << " to " << (endTime / 3600.0f)
@@ -244,20 +245,43 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       b18GetDataCUDA(trafficPersonVec, edgesData);
       if (count % iter_printout == 0) {
 	//get the average values from edgesData structure
+	/*
 	for (int x = 0; x < edgesData.size(); x++) {
-		//printf("index %d curr cum vel %f\n", x, edgesData[x].curr_cum_vel);
 		avg_edge_vel[x] = (float) edgesData[x].curr_cum_vel / (float) iter_printout;
+		//std::cout << "cum_vel = " << edgesData[x].curr_cum_vel << "\n" << "avg_edge_vel = " << avg_edge_vel[x] << "\n" << "iter printout = " << iter_printout << "\n";
+	}
+	*/
+    int counter = 0;
+    int index = 0;
+    int delta_val = 0;
+	for (auto const& x : graph_->edges_) {
+		//printf("ind = %d\n", ind);
+		ind = edgeDescToLaneMapNumSP[x.second] - delta_val;
+        //printf("counter = %d\n", counter);
+        //printf("index = %d\n", index);
+        //printf("ind = %d\n", ind);
+		//avg_edge_vel[ind] = ( (float) edgesData[ind].curr_cum_vel / (float) count ) * 3600 / 1609.34 ;
+        for (int j = counter; j < (counter + ind); j++) {
+            avg_edge_vel[index] += edgesData[j].curr_cum_vel; //add up all the lanes' velocities in that edge
+        }
+        //avg_edge_vel[index] /= std::get<1>(x)->second[1]; //divide by the number of lanes
+        avg_edge_vel[index] /= ind; //divide by the number of split up parts of the edge (lanes, etc.)
+		avg_edge_vel[index] /= (float) (count * 2); //divide by the number of iterations and by 2 because iters are in .5 seconds
+		avg_edge_vel[index] *= 3600 / 1609.34 ; //convert from meters per second to mph
+        counter += ind;
+        index++;
+        delta_val = edgeDescToLaneMapNumSP[x.second];
 		//std::cout << "cum_vel = " << edgesData[x].curr_cum_vel << "\n" << "avg_edge_vel = " << avg_edge_vel[x] << "\n" << "iter printout = " << iter_printout << "\n";
 	}
 
 	//save avg_edge_vel vector to file
 	std::string name = "./all_edges_vel_" + std::to_string(iter_printout_index) + ".txt";
 	std::ofstream output_file(name);
-        std::ostream_iterator<float> output_iterator(output_file, "\n");
-        std::copy(avg_edge_vel.begin(), avg_edge_vel.end(), output_iterator);
+    std::ostream_iterator<float> output_iterator(output_file, "\n");
+    std::copy(avg_edge_vel.begin(), avg_edge_vel.end(), output_iterator);
 
 	//fill avg_edge_vel vector back to 0 for next iter_printout iterations
-	std::fill(std::begin(avg_edge_vel), std::end(avg_edge_vel), 0);
+	//std::fill(std::begin(avg_edge_vel), std::end(avg_edge_vel), 0);
 	iter_printout_index++;
 
 	timerLoop.restart();
@@ -2400,7 +2424,7 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared
         streamP << "," << trafficPersonVec[p].a;
         streamP << "," << trafficPersonVec[p].b;
         streamP << "," << trafficPersonVec[p].T;
-        streamP << "," << (trafficPersonVec[p].cum_v / trafficPersonVec[p].num_steps) * 3600 / 1609.34;
+        streamP << "," << (trafficPersonVec[p].cum_v / trafficPersonVec[p].num_steps / 2) * 3600 / 1609.34;
         streamP << "\n";
       } // people
 
