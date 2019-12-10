@@ -92,6 +92,7 @@ void b18InitCUDA(
   printf(">>b18InitCUDA fistInitialization %s\n", (fistInitialization?"INIT":"ALREADY INIT"));
   printMemoryUsage();
 
+  //printf("deltaTime InitCUDA %f\n", deltaTime);
   const uint numStepsPerSample = 30.0f / deltaTime; //each min
   const uint numStepsTogether = 12; //change also in density (10 per hour)
   { // people
@@ -570,9 +571,9 @@ __global__ void kernel_trafficSimulation(
 
      ///////////////////////////////
      //2. it is moving
-     if (float(currentTime) == int(currentTime)) { // assuming deltatime = 0.5f --> each second
+     //if (float(currentTime) == int(currentTime)) { // assuming deltatime = 0.5f --> each second
      trafficPersonVec[p].num_steps++;
-     }
+     //}
      //2.1 try to move
      float numMToMove;
      bool getToNextEdge = false;
@@ -706,6 +707,7 @@ __global__ void kernel_trafficSimulation(
      // 2.1.3 update values
      numMToMove = max(0.0f,
        trafficPersonVec[p].v * deltaTime + 0.5f * (dv_dt) * deltaTime * deltaTime);
+    //printf("numMToMove = %f\n", numMToMove);
 
      //printf("v %.10f v d %.10f\n",trafficPersonVec[p].v,trafficPersonVec[p].v+((dv_dt/(deltaTime)/deltaTime)));
      trafficPersonVec[p].v += dv_dt * deltaTime;
@@ -734,7 +736,7 @@ __global__ void kernel_trafficSimulation(
      //printf("num_cars = %d\n, curr_iter_cum_vel = %f\n, curr_cum_vel = %f\n", edgesData[currentEdge].curr_iter_num_cars, edgesData[currentEdge].curr_iter_cum_vel, edgesData[currentEdge].curr_cum_vel);
 
 
-     if (calculatePollution && ((float(currentTime) == int(currentTime)))) { // enabled and each second (assuming deltaTime 0.5f)
+     if (calculatePollution) { // && ((float(currentTime) == int(currentTime)))) { // enabled and each second (assuming deltaTime 0.5f)
        // CO Calculation
        const float speedMph = trafficPersonVec[p].v * 2.2369362920544; //mps to mph
        const float coStep = -0.064 + 0.0056 * speedMph + 0.00026 * (speedMph - 50.0f) * (speedMph - 50.0f);
@@ -1305,10 +1307,12 @@ void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersect
   
   peopleBench.startMeasuring();
   // Simulate people.
+  //printf("deltaTime SimulateTrafficCUDA %f\n", deltaTime);
   kernel_trafficSimulation <<< ceil(numPeople / 384.0f), 384>> > (numPeople, currentTime, mapToReadShift, mapToWriteShift, trafficPersonVec_d, indexPathVec_d, edgesData_d, laneMap_d, intersections_d, trafficLights_d, deltaTime);
   gpuErrchk(cudaPeekAtLastError());
   peopleBench.stopMeasuring();
 
+  /*
   // Sample if necessary.
   if ((((float) ((int) currentTime)) == (currentTime)) &&
     ((int) currentTime % ((int) 30)) == 0) { //3min //(sample double each 3min)
@@ -1318,4 +1322,5 @@ void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersect
     kernel_sampleTraffic << < ceil(numPeople / 1024.0f), 1024 >> > (numPeople, trafficPersonVec_d, indexPathVec_d, accSpeedPerLinePerTimeInterval_d, numVehPerLinePerTimeInterval_d, offset);
     gpuErrchk(cudaPeekAtLastError());
   }
+  */
 }//

@@ -172,6 +172,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     initCudaBench.startMeasuring();
     bool fistInitialization = (nP == 0);
     uint count = 0;
+    //std::cout << "deltaTime TrafficSimulator " << deltaTime << "\n";
     b18InitCUDA(fistInitialization, trafficPersonVec, indexPathVec, edgesData,
         laneMap, trafficLights, intersections, startTimeH, endTimeH,
         accSpeedPerLinePerTimeInterval, numVehPerLinePerTimeInterval, deltaTime);
@@ -290,17 +291,17 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     }
 	std::cout << "Total # iterations = " << count << "\n";
     std::cerr << std::setw(90) << " " << "\rDone" << std::endl;
-    simulateBench.stopAndEndBenchmark();
+    //simulateBench.stopAndEndBenchmark();
 
-    getDataBench.startMeasuring();
+    //getDataBench.startMeasuring();
 
     // 3. Finish
     b18GetDataCUDA(trafficPersonVec, edgesData);
-    b18GetSampleTrafficCUDA(accSpeedPerLinePerTimeInterval,
-                            numVehPerLinePerTimeInterval);
+    //b18GetSampleTrafficCUDA(accSpeedPerLinePerTimeInterval,
+    //                        numVehPerLinePerTimeInterval);
     {
       // debug
-      uint totalNumSteps = 0;
+      float totalNumSteps = 0;
       float totalCO = 0;
 
       for (int p = 0; p < trafficPersonVec.size(); p++) {
@@ -309,18 +310,18 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         totalCO += trafficPersonVec[p].co;
       }
 
-      avgTravelTime = (totalNumSteps) / (trafficPersonVec.size() * 60.0f); //in min
-      printf("Total num steps %u Avg %.2f min Avg CO %.2f. Calculated in %d ms\n",
-             totalNumSteps, avgTravelTime, totalCO / trafficPersonVec.size(),
+      avgTravelTime = totalNumSteps * deltaTime / (trafficPersonVec.size() * 60.0f); //in min
+      printf("trafficPersonVec size = %d\n", trafficPersonVec.size());
+      printf("Total num steps (with deltaTime %.1f) %.1f Avg %.2f min Avg CO %.2f. Calculated in %d ms\n",
+             deltaTime, totalNumSteps, avgTravelTime, totalCO / trafficPersonVec.size(),
              timer.elapsed());
 
-        //write paths to file so that we can just load them instead
-        std::ofstream output_file("./num_steps.txt");
+    //write num_steps to file for analysis over multiple runs
+    std::ofstream output_file("./num_steps.txt");
 	output_file << totalNumSteps;
     }
     //
-    calculateAndDisplayTrafficDensity(nP);
-    //savePeopleAndRoutes(nP);
+    //calculateAndDisplayTrafficDensity(nP);
     savePeopleAndRoutesSP(nP, graph_, paths_SP);
     printf("  <<End One Step %d TIME: %d ms.\n", nP, timer.elapsed());
     getDataBench.stopAndEndBenchmark();
@@ -1888,6 +1889,7 @@ void B18TrafficSimulator::simulateInCPU(float startTimeH, float endTimeH) {
       totalCO += trafficPersonVec[p].co;
     }
 
+    printf("num people = %d\n", numPeople);
     avgTravelTime = (totalNumSteps) / (trafficPersonVec.size() * 60.0f); //in min
     printf("(Count %d) Total num steps %u Avg %f min Avg CO %f. Calculated in %d ms\n",
            count, totalNumSteps, avgTravelTime, totalCO / trafficPersonVec.size(),
@@ -2390,12 +2392,14 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared
       streamP <<
               "p,init_intersection,end_intersection,time_departure,num_steps,co,gas,distance,a,b,T,avg_v(mph)\n";
 
+      float sum = 0;
       for (int p = 0; p < trafficPersonVec.size(); p++) {
         streamP << p;
         streamP << "," << trafficPersonVec[p].init_intersection;
         streamP << "," << trafficPersonVec[p].end_intersection;
         streamP << "," << trafficPersonVec[p].time_departure;
-        streamP << "," << trafficPersonVec[p].num_steps;
+        //streamP << "," << trafficPersonVec[p].num_steps;
+        streamP << "," << trafficPersonVec[p].num_steps * deltaTime;
         streamP << "," << trafficPersonVec[p].co;
         streamP << "," << trafficPersonVec[p].gas;
         streamP << "," << personDistance[p];
@@ -2403,11 +2407,13 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared
         streamP << "," << trafficPersonVec[p].a;
         streamP << "," << trafficPersonVec[p].b;
         streamP << "," << trafficPersonVec[p].T;
-        streamP << "," << (trafficPersonVec[p].cum_v / trafficPersonVec[p].num_steps) * 3600 / 1609.34;
+        streamP << "," << (trafficPersonVec[p].cum_v / (trafficPersonVec[p].num_steps)) * (3600 / 1609.34);
+        //streamP << "," << (trafficPersonVec[p].cum_v / (trafficPersonVec[p].num_steps)) * (3600 / 1609.34);
         streamP << "\n";
+        sum += trafficPersonVec[p].num_steps;
       } // people
-
       peopleFile.close();
+      std::cout << "Sum num_steps = " << sum << "\n";
 
     }
   }

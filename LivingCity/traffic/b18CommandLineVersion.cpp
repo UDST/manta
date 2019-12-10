@@ -53,6 +53,7 @@ void B18CommandLineVersion::runB18Simulation() {
 
   ClientGeometry cg;
   B18TrafficSimulator b18TrafficSimulator(deltaTime, &cg.roadGraph);
+  std::cout << "deltaTime commandLineVersion " << deltaTime << "\n";
   //auto all_paths = std::vector<abm::graph::vertex_t>;
   std::vector<abm::graph::vertex_t> all_paths;
   const bool directed = true;
@@ -81,6 +82,12 @@ void B18CommandLineVersion::runB18Simulation() {
             }
       } else {
 	    all_paths = B18TrafficSP::compute_routes(mpi_rank, mpi_size, street_graph, all_od_pairs_);
+	    auto stop = high_resolution_clock::now();
+	    auto duration = duration_cast<milliseconds>(stop - start);
+	    std::cout << "# of paths = " << all_paths.size() << "\n";
+	  
+        std::cout << "total time to compute shortest paths = " << duration.count() << "ms \n";
+        
         //write paths to file so that we can just load them instead
         std::ofstream output_file("./all_paths.txt");
         std::ostream_iterator<abm::graph::vertex_t> output_iterator(output_file, "\n");
@@ -90,22 +97,7 @@ void B18CommandLineVersion::runB18Simulation() {
 
     //map person to their initial edge
     int count = 0;
-    /*
-	for (int i = 0; i < all_paths.size(); i++) {
-        if ((all_paths[i] == -1) && (i == 0)) {
-            street_graph->person_to_init_edge_[count] = -1;
-            count++;
-		} else if ((all_paths[i] == -1) && (all_paths[i+1] == -1)) {
-            street_graph->person_to_init_edge_[count] = -1;
-            count++;
-        } else if ((all_paths[i] != -1) && (all_paths[i-1] == -1)) {
-            street_graph->person_to_init_edge_[count] = all_paths[i];
-            count++;
-        } else if ((all_paths[i] == -1) && (i == (all_paths.size() - 1))) {
-            break;
-        }
-	}
-    */
+
 	for (int i = 0; i < all_paths.size(); i++) {
         if ((all_paths[i] == -1) && (i == 0)) {
             street_graph->person_to_init_edge_[count] = i;
@@ -124,11 +116,6 @@ void B18CommandLineVersion::runB18Simulation() {
 
       
 
-	  auto stop = high_resolution_clock::now();
-	  auto duration = duration_cast<milliseconds>(stop - start);
-	  std::cout << "# of paths = " << all_paths.size() << "\n";
-	  
-      std::cout << "total time to compute shortest paths = " << duration.count() << "ms \n";
 
 	  //create a set of people for simulation (trafficPersonVec)
 	  b18TrafficSimulator.createB2018PeopleSP(startDemandH, endDemandH, limitNumPeople, addRandomPeople, street_graph);
