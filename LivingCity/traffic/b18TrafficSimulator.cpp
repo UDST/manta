@@ -276,7 +276,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
                             numVehPerLinePerTimeInterval);
     {
       // debug
-      uint totalNumSteps = 0;
+      float totalNumSteps = 0;
       float totalCO = 0;
 
       for (int p = 0; p < trafficPersonVec.size(); p++) {
@@ -285,8 +285,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         totalCO += trafficPersonVec[p].co;
       }
 
-      avgTravelTime = (totalNumSteps) / (trafficPersonVec.size() * 60.0f); //in min
-      printf("Total num steps %u Avg %.2f min Avg CO %.2f. Calculated in %d ms\n",
+      avgTravelTime = (totalNumSteps * deltaTime) / (trafficPersonVec.size() * 60.0f); //in min
+      printf("Total num steps %.1f Avg %.2f min Avg CO %.2f. Calculated in %d ms\n",
              totalNumSteps, avgTravelTime, totalCO / trafficPersonVec.size(),
              timer.elapsed());
 
@@ -295,7 +295,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 	output_file << totalNumSteps;
     }
     //
-    calculateAndDisplayTrafficDensity(nP);
+    //calculateAndDisplayTrafficDensity(nP);
     //savePeopleAndRoutes(nP);
     savePeopleAndRoutesSP(nP, graph_, paths_SP);
     printf("  <<End One Step %d TIME: %d ms.\n", nP, timer.elapsed());
@@ -2371,7 +2371,7 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared
         streamP << "," << trafficPersonVec[p].init_intersection;
         streamP << "," << trafficPersonVec[p].end_intersection;
         streamP << "," << trafficPersonVec[p].time_departure;
-        streamP << "," << trafficPersonVec[p].num_steps;
+        streamP << "," << trafficPersonVec[p].num_steps * deltaTime;
         streamP << "," << trafficPersonVec[p].co;
         streamP << "," << trafficPersonVec[p].gas;
         streamP << "," << personDistance[p];
@@ -2388,7 +2388,7 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared
     }
   }
 
-  printf("\n<<calculateAndDisplayTrafficDensity\n");
+  //printf("\n<<calculateAndDisplayTrafficDensity\n");
 }//
 
 void B18TrafficSimulator::savePeopleAndRoutes(int numOfPass) {

@@ -70,7 +70,10 @@ void B18CommandLineVersion::runB18Simulation() {
       if (usePrevPaths) {
             // open file    
             //std::ifstream inputFile("./all_paths_incl_zeros.txt");
-            std::ifstream inputFile("./all_paths.txt");
+            const std::string& pathsFileName = networkPathSP + "all_paths.txt";
+            std::cout << pathsFileName << " as paths file\n";
+            //std::ifstream inputFile("./all_paths.txt");
+            std::ifstream inputFile(pathsFileName);
             // test file open   
             if (inputFile) {        
                 abm::graph::vertex_t value;
@@ -82,7 +85,9 @@ void B18CommandLineVersion::runB18Simulation() {
       } else {
 	    all_paths = B18TrafficSP::compute_routes(mpi_rank, mpi_size, street_graph, all_od_pairs_);
         //write paths to file so that we can just load them instead
-        std::ofstream output_file("./all_paths.txt");
+        const std::string& pathsFileName = networkPathSP + "all_paths.txt";
+        std::cout << "Save " << pathsFileName << " as paths file\n";
+        std::ofstream output_file(pathsFileName);
         std::ostream_iterator<abm::graph::vertex_t> output_iterator(output_file, "\n");
         std::copy(all_paths.begin(), all_paths.end(), output_iterator);
       }

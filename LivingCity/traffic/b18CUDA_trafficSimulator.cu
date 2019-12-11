@@ -568,9 +568,9 @@ __global__ void kernel_trafficSimulation(
 
      ///////////////////////////////
      //2. it is moving
-     if (float(currentTime) == int(currentTime)) { // assuming deltatime = 0.5f --> each second
+     //if (float(currentTime) == int(currentTime)) { // assuming deltatime = 0.5f --> each second
      trafficPersonVec[p].num_steps++;
-     }
+     //}
      //2.1 try to move
      float numMToMove;
      bool getToNextEdge = false;
