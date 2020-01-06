@@ -266,8 +266,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         }
         //avg_edge_vel[index] /= std::get<1>(x)->second[1]; //divide by the number of lanes
         avg_edge_vel[index] /= ind; //divide by the number of split up parts of the edge (lanes, etc.)
-		avg_edge_vel[index] /= (float) (count * 2); //divide by the number of iterations and by 2 because iters are in .5 seconds
-		avg_edge_vel[index] *= 3600 / 1609.34 ; //convert from meters per second to mph
+		avg_edge_vel[index] /= (float) (count); //divide by the number of iterations
+		avg_edge_vel[index] *= 2.23694 ; //convert from meters per second to mph
         counter += ind;
         index++;
         delta_val = edgeDescToLaneMapNumSP[x.second];
@@ -2427,7 +2427,7 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared
         streamP << "," << trafficPersonVec[p].a;
         streamP << "," << trafficPersonVec[p].b;
         streamP << "," << trafficPersonVec[p].T;
-        streamP << "," << (trafficPersonVec[p].cum_v / trafficPersonVec[p].num_steps / 2) * 3600 / 1609.34;
+        streamP << "," << (trafficPersonVec[p].cum_v / trafficPersonVec[p].num_steps) * 3600 / 1609.34;
         streamP << "\n";
       } // people
 
