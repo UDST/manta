@@ -532,11 +532,10 @@ __global__ void kernel_trafficSimulation(
            trafficPersonVec[p].posInLaneM = b; //m
            uchar vInMpS = (uchar) (trafficPersonVec[p].v *
              3); //speed in m/s *3 (to keep more precision
-           laneMap[mapToWriteShift + kMaxMapWidthM * (firstEdge + lN) + b] = vInMpS;
+           laneMap[mapToWriteShift + kMaxMapWidthM * (firstEdge + lN) + b] = vInMpS; //TODO(pavan): WHAT IS THIS?
            placed = true;
            //printf("Placed\n");
            break;
-           //}
          }
 
          if (placed == false) { //not posible to start now
@@ -592,7 +591,7 @@ __global__ void kernel_trafficSimulation(
      
      // a) SAME LINE (BEFORE SIGNALING)
      bool found = false;
-     bool noFirstInLaneBeforeSign = false; //use for stop control (just let 1st to pass)
+     bool noFirstInLaneBeforeSign = false; //use for stop control (just let 1st to pass) TODO(pavan): I DON'T GET THIS
      bool noFirstInLaneAfterSign = false; //use for stop control (just let 1st to pass)
      float s;
      float delta_v;
@@ -602,21 +601,22 @@ __global__ void kernel_trafficSimulation(
 
      for (ushort b = byteInLine + 2; (b < numOfCells) && (found == false) && (numCellsCheck > 0); b++, numCellsCheck--) {
        // laneChar = laneMap[mapToReadShift + maxWidth * (indexPathVec[trafficPersonVec[p].indexPathCurr] + trafficPersonVec[p].numOfLaneInEdge) + b];
-       // ShiftRead + WIDTH * (width number * # edges + # laneInEdge) + b 
+       // ShiftRead + WIDTH * (width number * # lanes + # laneInEdge) + b  TODO(pavan): WHAT IS THIS?
        const uint posToSample = mapToReadShift + kMaxMapWidthM * (indexPathVec[trafficPersonVec[p].indexPathCurr] + (((int) (byteInLine / kMaxMapWidthM)) * trafficPersonVec[p].edgeNumLanes) + trafficPersonVec[p].numOfLaneInEdge) + b % kMaxMapWidthM;
        laneChar = laneMap[posToSample];
 
+        //TODO(pavan): Is this clause for when it is not at the intersection yet but it has found a car in front of it?
        if (laneChar != 0xFF) {
          s = ((float) (b - byteInLine)); //m
          delta_v = trafficPersonVec[p].v - (laneChar / 3.0f); //laneChar is in 3*ms (to save space in array)
          found = true;
-         noFirstInLaneBeforeSign = true;
+         noFirstInLaneBeforeSign = true; 
          break;
        }
-     }
+     } 
 
      // b) TRAFFIC LIGHT
-     if (byteInLine < numOfCells && found == false && numCellsCheck > 0) { //before traffic signaling (and not cell limited)
+     if (byteInLine < numOfCells && found == false && numCellsCheck > 0) { //before traffic signaling (and not cell limited) TODO(pavan): Is this clause for when it is now at the intersection?
        if (trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge] == 0x00) { //red
          s = ((float) (numOfCells - byteInLine)); //m
          delta_v = trafficPersonVec[p].v - 0; //it should be treated as an obstacle
@@ -642,6 +642,8 @@ __global__ void kernel_trafficSimulation(
        }
      }
 
+    // d) IF IT REACHES A STOP SIGN
+    //TODO(pavan): This never happens because all the traffic lights are set as 0x00 (red light) (b18TrafficLaneMap.cpp)
      if (trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge] == 0x0F && numCellsCheck > 0) { //stop 
        //check
        if (noFirstInLaneBeforeSign == false && byteInLine < numOfCells && //first before traffic
@@ -662,6 +664,7 @@ __global__ void kernel_trafficSimulation(
      }
 
      // NEXT LINE
+    // e) MOVING ALONG IN THE NEXT EDGE
      if (found == false && numCellsCheck > 0) { //check if in next line
        if ((nextEdge != -1) &&
          (trafficPersonVec[p].edgeNextInters != trafficPersonVec[p].end_intersection)) { // we haven't arrived to destination (check next line)
@@ -693,8 +696,12 @@ __global__ void kernel_trafficSimulation(
 
 
      float s_star;
+     if (p == 13) {
+             printf("delta_v[%d] = %f\n", p, delta_v);
+     }
 
-     if (found == true) { //car in front and slower than us
+     if (found == true && delta_v > 0) { //car in front and slower than us
+     //if (found == true) { //car in front and slower than us
        // 2.1.2 calculate dv_dt
        s_star = s_0 + max(0.0f,
          (trafficPersonVec[p].v * trafficPersonVec[p].T + (trafficPersonVec[p].v *
@@ -719,15 +726,16 @@ __global__ void kernel_trafficSimulation(
        trafficPersonVec[p].v = 0;
        dv_dt = 0.0f;
      }
-     /*
      if (p == 13) {
-             printf("thirdTerm[%d] = %f\n", p, thirdTerm);
-             printf("a [%d] = %f\n", p, trafficPersonVec[p].a);
-             printf("speed [%d] = %f\n", p, trafficPersonVec[p].maxSpeedMperSec);
-             printf("v [%d] = %f\n", p, trafficPersonVec[p].v);
-             printf("dv_dt[%d] = %f\n", p, dv_dt);
+             //printf("thirdTerm[%d] = %f\n", p, thirdTerm);
+             //printf("a [%d] = %f\n", p, trafficPersonVec[p].a);
+             printf("edge index = %d\n", trafficPersonVec[p].indexPathCurr);
+             printf("speed limit [%d] = %f\n", p, trafficPersonVec[p].maxSpeedMperSec);
+             //printf("v [%d] = %f\n", p, trafficPersonVec[p].v);
+             printf("velocity = %f\n", trafficPersonVec[p].v);
+             //printf("dv_dt[%d] = %f\n", p, dv_dt);
+
      }
-     */
      trafficPersonVec[p].cum_v += trafficPersonVec[p].v;
      //printf("vel person %d = %f\n", p, trafficPersonVec[p].cum_v);
 

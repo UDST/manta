@@ -139,11 +139,15 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
   trafficLights.assign(tNumMapWidth, 0);
   //trafficLights.resize(tNumMapWidth); // we could use tNumLanes but then the edge number would not match and we would need to add logic.
   //memset(trafficLights.data(), 0, trafficLights.size()*sizeof(uchar));
-
+    /*
+  for (int x = 0; x < trafficLights.size(); x++) {
+        std::cout << "TL " << x << "val " << (int) trafficLights[x] << "\n";
+    }
+    */
   int index = 0;
   for (const auto& vertex : graph_->vertex_edges_) {
     //std::cout << "GET<0> VERTEX = " << std::get<0>(vertex) << "\n";
-    //intersections[graph_->vertex_map_[std::get<0>(vertex)]].state = 0;
+    intersections[graph_->vertex_map_[std::get<0>(vertex)]].state = 0;
     //intersections[std::get<0>(vertex)].nextEvent = 0.0f;
     //intersections[std::get<0>(vertex)].totalInOutEdges = vertex.second.size();
     intersections[graph_->vertex_map_[std::get<0>(vertex)]].nextEvent = 0.0f;
