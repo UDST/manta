@@ -115,7 +115,7 @@ void B18TrafficSP::convertVector(std::vector<abm::graph::vertex_t> paths_SP, std
             indexPathVec.emplace_back(-1);
         }
     }
-	std::cout << "indexPathVec size = " << indexPathVec.size() << "\n";
+	//std::cout << "indexPathVec size = " << indexPathVec.size() << "\n";
 }
 
 

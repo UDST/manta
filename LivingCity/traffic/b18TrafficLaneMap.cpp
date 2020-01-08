@@ -75,9 +75,9 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
 	  assert(0 <= binN && binN < numBins && "Edge over max length");
 	  bins[binN]++;
   }
-  for (int binN = 0; binN < bins.size(); binN++) {
-    printf("%.0fkm, %d\n", (binN * binLength+1.0f), bins[binN]);
-  }
+  //for (int binN = 0; binN < bins.size(); binN++) {
+  //  printf("%.0fkm, %d\n", (binN * binLength+1.0f), bins[binN]);
+  //}
 
   /////////////////////////////////
   // Create EdgeData
@@ -119,7 +119,7 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
     printf("Num edges %d Num Lanes %d Num Lanes Width %d Max Leng %f Max num lanes %d\n",
         edge_count, tNumLanes, tNumMapWidth, maxLength, maxNumLanes);
   }
-    printf("edgesData size = %d\n", edgesData.size());
+    //printf("edgesData size = %d\n", edgesData.size());
 
   // 2. RESIZE LANE MAP
 
@@ -135,7 +135,7 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
   RoadGraph::out_roadGraphEdgeIter_BI Oei, Oei_end;
   //intersections.resize(boost::num_vertices(inRoadGraph.myRoadGraph_BI));//as many as vertices
   intersections.resize(graph_->vertex_edges_.size());//as many as vertices
-  std::cout << "intersections size = " << intersections.size() << "\n";
+  //std::cout << "intersections size = " << intersections.size() << "\n";
   trafficLights.assign(tNumMapWidth, 0);
   //trafficLights.resize(tNumMapWidth); // we could use tNumLanes but then the edge number would not match and we would need to add logic.
   //memset(trafficLights.data(), 0, trafficLights.size()*sizeof(uchar));

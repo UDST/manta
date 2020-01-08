@@ -89,24 +89,27 @@ void b18InitCUDA(
   std::vector<float>& accSpeedPerLinePerTimeInterval,
   std::vector<float>& numVehPerLinePerTimeInterval,
   float deltaTime) {
-  printf(">>b18InitCUDA fistInitialization %s\n", (fistInitialization?"INIT":"ALREADY INIT"));
-  printMemoryUsage();
+  //printf(">>b18InitCUDA firstInitialization %s\n", (fistInitialization?"INIT":"ALREADY INIT"));
+  //printMemoryUsage();
 
   const uint numStepsPerSample = 30.0f / deltaTime; //each min
   const uint numStepsTogether = 12; //change also in density (10 per hour)
   { // people
     size_t size = trafficPersonVec.size() * sizeof(LC::B18TrafficPerson);
+    printf("trafficPersonVec size = %d\n", trafficPersonVec.size());
     if (fistInitialization) gpuErrchk(cudaMalloc((void **) &trafficPersonVec_d, size));   // Allocate array on device
     gpuErrchk(cudaMemcpy(trafficPersonVec_d, trafficPersonVec.data(), size, cudaMemcpyHostToDevice));
   }
   
   { // indexPathVec
     size_t sizeIn = indexPathVec.size() * sizeof(uint);
+    printf("indexPathVec size = %d\n", indexPathVec.size());
     if (fistInitialization) gpuErrchk(cudaMalloc((void **) &indexPathVec_d, sizeIn));   // Allocate array on device
     gpuErrchk(cudaMemcpy(indexPathVec_d, indexPathVec.data(), sizeIn, cudaMemcpyHostToDevice));
   }
   {//edgeData
     size_t sizeD = edgesData.size() * sizeof(LC::B18EdgeData);
+    printf("edgesData size = %d\n", edgesData.size());
     if (fistInitialization) gpuErrchk(cudaMalloc((void **) &edgesData_d, sizeD));   // Allocate array on device
     gpuErrchk(cudaMemcpy(edgesData_d, edgesData.data(), sizeD, cudaMemcpyHostToDevice));
   }
@@ -614,6 +617,8 @@ __global__ void kernel_trafficSimulation(
        if (trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge] == 0x00) { //red
          s = ((float) (numOfCells - byteInLine)); //m
          delta_v = trafficPersonVec[p].v - 0; //it should be treated as an obstacle
+
+         //uncomment the following 2 lines if we want only red lights; comment them out if we want only green lights
          nextVehicleIsATrafficLight = true;
          //printf("\nFOUND TL\n",s,delta_v);
          found = true;
@@ -688,7 +693,7 @@ __global__ void kernel_trafficSimulation(
 
      float s_star;
 
-     if (found == true) { //car in front and slower than us
+     if (found == true && delta_v > 0) { //car in front and slower than us
        // 2.1.2 calculate dv_dt
        s_star = s_0 + max(0.0f,
          (trafficPersonVec[p].v * trafficPersonVec[p].T + (trafficPersonVec[p].v *

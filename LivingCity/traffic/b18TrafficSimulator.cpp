@@ -149,7 +149,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       shortestPathBench.stopAndEndBenchmark();
     } else if (useSP) {
 	  B18TrafficSP::convertVector(paths_SP, indexPathVec, edgeDescToLaneMapNumSP, graph_);
-	  printf("trafficPersonVec size = %d\n", trafficPersonVec.size());
+	  //printf("trafficPersonVec size = %d\n", trafficPersonVec.size());
 
       //set the indexPathInit of each person in trafficPersonVec to the correct one
       for (int p = 0; p < trafficPersonVec.size(); p++) {
@@ -209,7 +209,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     }
 
     QTime timer;
-    G::global()["cuda_render_displaylist_staticRoadsBuildings"] = 1;//display list
+    //G::global()["cuda_render_displaylist_staticRoadsBuildings"] = 1;//display list
     timer.start();
     // Reset people to inactive.
     b18ResetPeopleLanesCUDA(trafficPersonVec.size());
@@ -265,7 +265,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       currentTime += deltaTime;
     }
 	std::cout << "Total # iterations = " << count << "\n";
-    std::cerr << std::setw(90) << " " << "\rDone" << std::endl;
+    //std::cerr << std::setw(90) << " " << "\rDone" << std::endl;
     simulateBench.stopAndEndBenchmark();
 
     getDataBench.startMeasuring();
@@ -286,19 +286,22 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       }
 
       avgTravelTime = (totalNumSteps * deltaTime) / (trafficPersonVec.size() * 60.0f); //in min
-      printf("Total num steps %.1f Avg %.2f min Avg CO %.2f. Calculated in %d ms\n",
+      printf("Total num steps %.1f Avg %.2f min Avg CO %.2f\nSimulation time = %d ms\n",
              totalNumSteps, avgTravelTime, totalCO / trafficPersonVec.size(),
              timer.elapsed());
 
         //write paths to file so that we can just load them instead
-        std::ofstream output_file("./num_steps.txt");
-	output_file << totalNumSteps;
+        //std::ofstream output_file("./num_steps.txt");
+	    //output_file << totalNumSteps;
     }
     //
     //calculateAndDisplayTrafficDensity(nP);
     //savePeopleAndRoutes(nP);
-    savePeopleAndRoutesSP(nP, graph_, paths_SP);
-    printf("  <<End One Step %d TIME: %d ms.\n", nP, timer.elapsed());
+    QTime timer_file_save;
+    //G::global()["cuda_render_displaylist_staticRoadsBuildings"] = 1;//display list
+    timer_file_save.start();
+    savePeopleAndRoutesSP(nP, graph_, paths_SP, (int) startTimeH, (int) endTimeH);
+    printf("File saving time = %d ms\n", timer_file_save.elapsed());
     getDataBench.stopAndEndBenchmark();
   }
 
@@ -2305,18 +2308,17 @@ void B18TrafficSimulator::render(VBORenderManager &rendManager) {
 }//
 #endif
 
-void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared_ptr<abm::Graph>& graph_, std::vector<abm::graph::vertex_t> paths_SP) {
+void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared_ptr<abm::Graph>& graph_, std::vector<abm::graph::vertex_t> paths_SP, int start_time, int end_time) {
   const bool saveToFile = true;
 
   if (saveToFile) {
     /////////////////////////////////
     // SAVE TO FILE
-    QFile peopleFile(QString::number(numOfPass) + "_people.csv");
-    QFile routeFile(QString::number(numOfPass) + "_route.csv");
-    QFile routeCount(QString::number(numOfPass) + "_edge_route_count.csv");
+    QFile peopleFile(QString::number(numOfPass) + "_people" + QString::number(start_time) + "to" + QString::number(end_time) + ".csv");
+    QFile routeFile(QString::number(numOfPass) + "_route" + QString::number(start_time) + "to" + QString::number(end_time) + ".csv");
 
-    if (peopleFile.open(QIODevice::ReadWrite) &&
-        routeFile.open(QIODevice::ReadWrite) && routeCount.open(QIODevice::ReadWrite)) {
+    if (peopleFile.open(QIODevice::ReadWrite | QIODevice::Truncate) &&
+        routeFile.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
 
       /////////////
       // People Route
@@ -2331,9 +2333,9 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared
       //}
 
 	//write paths to file so that we can just load them instead
-    std::ofstream output_file("./indexPathVec.txt");
-    std::ostream_iterator<abm::graph::vertex_t> output_iterator(output_file, "\n");
-    std::copy(indexPathVec.begin(), indexPathVec.end(), output_iterator);
+    //std::ofstream output_file("./indexPathVec.txt");
+    //std::ostream_iterator<abm::graph::vertex_t> output_iterator(output_file, "\n");
+    //std::copy(indexPathVec.begin(), indexPathVec.end(), output_iterator);
 
     int p = 0;
     int i = 0;
