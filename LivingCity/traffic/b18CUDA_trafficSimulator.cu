@@ -620,6 +620,8 @@ __global__ void kernel_trafficSimulation(
        if (trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge] == 0x00) { //red
          s = ((float) (numOfCells - byteInLine)); //m
          delta_v = trafficPersonVec[p].v - 0; //it should be treated as an obstacle
+
+         //uncomment the following 2 lines if we want only red lights; comment them out if we want only green lights
          nextVehicleIsATrafficLight = true;
          //printf("\nFOUND TL\n",s,delta_v);
          found = true;
@@ -701,7 +703,10 @@ __global__ void kernel_trafficSimulation(
      }
 
      if (found == true && delta_v > 0) { //car in front and slower than us
+<<<<<<< HEAD
      //if (found == true) { //car in front and slower than us
+=======
+>>>>>>> 75379be... Major change: (1) Added the delta_v > 0 clause. What seemed to be happening is that if there were no cars in front of our vehicle (or if a car in front of our vehicle was going faster than we were), then it was previously  moving our car only slightly as a function of the hardcoded value, which was very little movement, if any. our correction allows our car to move more quickly (up to the car in front's speed or the speed limit) if there is no car in front or if the car in front is going faster than we are. (2) Changes to the demand file names and file saving/parsing so that the naming has the start and end simulation hours. (3) Commented and changed a lot of prints (as well as benchmark prints) so that the output is clearer.
        // 2.1.2 calculate dv_dt
        s_star = s_0 + max(0.0f,
          (trafficPersonVec[p].v * trafficPersonVec[p].T + (trafficPersonVec[p].v *
@@ -726,6 +731,7 @@ __global__ void kernel_trafficSimulation(
        trafficPersonVec[p].v = 0;
        dv_dt = 0.0f;
      }
+     /*
      if (p == 13) {
              //printf("thirdTerm[%d] = %f\n", p, thirdTerm);
              //printf("a [%d] = %f\n", p, trafficPersonVec[p].a);
@@ -736,6 +742,7 @@ __global__ void kernel_trafficSimulation(
              //printf("dv_dt[%d] = %f\n", p, dv_dt);
 
      }
+     */
      trafficPersonVec[p].cum_v += trafficPersonVec[p].v;
      //printf("vel person %d = %f\n", p, trafficPersonVec[p].cum_v);
 

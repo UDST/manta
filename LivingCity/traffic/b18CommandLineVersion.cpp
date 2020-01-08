@@ -73,8 +73,7 @@ void B18CommandLineVersion::runB18Simulation() {
       if (usePrevPaths) {
             // open file    
             //std::ifstream inputFile("./all_paths_incl_zeros.txt");
-            const std::string& pathsFileName = networkPathSP + "all_paths_ch.txt";
-            //const std::string& pathsFileName = networkPathSP + "all_paths_new_mtc.txt";
+            const std::string& pathsFileName = networkPathSP + "all_paths.txt";
             std::cout << "Loading " << pathsFileName << " as paths file\n";
             //std::ifstream inputFile("./all_paths.txt");
             std::ifstream inputFile(pathsFileName);
