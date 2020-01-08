@@ -59,7 +59,7 @@ void B18CommandLineVersion::runB18Simulation() {
   auto street_graph = std::make_shared<abm::Graph>(directed);
   if (useSP) {
 	  //make the graph from edges file and load the OD demand from od file
-	  std::string odFileName = RoadGraphB2018::loadABMGraph(networkPathSP, street_graph);
+	  std::string odFileName = RoadGraphB2018::loadABMGraph(networkPathSP, street_graph, (int) startDemandH, (int) endDemandH);
 	  const auto all_od_pairs_ = B18TrafficSP::read_od_pairs(odFileName, std::numeric_limits<int>::max());
 	  printf("# of OD pairs = %d\n", all_od_pairs_.size());
 
@@ -71,7 +71,7 @@ void B18CommandLineVersion::runB18Simulation() {
             // open file    
             //std::ifstream inputFile("./all_paths_incl_zeros.txt");
             const std::string& pathsFileName = networkPathSP + "all_paths.txt";
-            std::cout << pathsFileName << " as paths file\n";
+            std::cout << "Loading " << pathsFileName << " as paths file\n";
             //std::ifstream inputFile("./all_paths.txt");
             std::ifstream inputFile(pathsFileName);
             // test file open   
@@ -125,7 +125,7 @@ void B18CommandLineVersion::runB18Simulation() {
             break;
         }
 	}
-    std::cout << "person_to_init_edge size " << street_graph->person_to_init_edge_.size() << "\n";
+    //std::cout << "person_to_init_edge size " << street_graph->person_to_init_edge_.size() << "\n";
 
       
 
@@ -133,7 +133,7 @@ void B18CommandLineVersion::runB18Simulation() {
 	  auto duration = duration_cast<milliseconds>(stop - start);
 	  std::cout << "# of paths = " << all_paths.size() << "\n";
 	  
-      std::cout << "total time to compute shortest paths = " << duration.count() << "ms \n";
+      std::cout << "Shortest path time = " << duration.count() << " ms \n";
 
 	  //create a set of people for simulation (trafficPersonVec)
 	  b18TrafficSimulator.createB2018PeopleSP(startDemandH, endDemandH, limitNumPeople, addRandomPeople, street_graph);

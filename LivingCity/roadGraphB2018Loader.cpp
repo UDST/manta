@@ -6,6 +6,9 @@
 #include <QHash>
 #include <QVector2D>
 #include <stdexcept>
+#include <iostream>
+#include <string>
+using namespace std;
 
 #include "Geometry/client_geometry.h"
 #include "bTraffic/bTrafficIntersection.h"
@@ -362,7 +365,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
 
 }
 
-std::string RoadGraphB2018::loadABMGraph(const std::string& networkPath, const std::shared_ptr<abm::Graph>& graph_) {
+std::string RoadGraphB2018::loadABMGraph(const std::string& networkPath, const std::shared_ptr<abm::Graph>& graph_, int start_time, int end_time) {
 
         const std::string& edgeFileName = networkPath + "edges.csv";
         std::cout << edgeFileName << " as edges file\n";
@@ -370,7 +373,7 @@ std::string RoadGraphB2018::loadABMGraph(const std::string& networkPath, const s
         const std::string& nodeFileName = networkPath + "nodes.csv";
         std::cout << nodeFileName << " as nodes file\n";
 
-        const std::string& odFileName = networkPath + "od_demand.csv";
+        const std::string& odFileName = networkPath + "od_demand_" + to_string(start_time) + "to" + to_string(end_time) + ".csv";
         std::cout << odFileName << " as OD file\n";
   //const bool directed = true;
   //const auto graph = std::make_shared<abm::Graph>(directed);

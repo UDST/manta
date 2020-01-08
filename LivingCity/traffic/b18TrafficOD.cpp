@@ -309,7 +309,7 @@ float sampleFileDistribution() {
     // Print and normalize.
     for (int b = 0; b < hToWDistribution.size(); b++) {
       float bucketStartTime = startSamples + b * (1.0f / numBucketsPerHour);
-      printf("htoW,%.2f,%.0f\n", bucketStartTime, hToWDistribution[b]);
+      //printf("htoW,%.2f,%.0f\n", bucketStartTime, hToWDistribution[b]);
       hToWDistribution[b] /= float(accPeople + 1); // distribution
     }
 
@@ -317,7 +317,7 @@ float sampleFileDistribution() {
     for (int b = 1; b < hToWDistribution.size(); b++) { // note starts with 1.
       hToWDistribution[b] += hToWDistribution[b - 1];
       float bucketStartTime = startSamples + b * (1.0f / numBucketsPerHour);
-      printf("Acc,%.2f,%f\n", bucketStartTime, hToWDistribution[b]); // acumulate
+      //printf("Acc,%.2f,%f\n", bucketStartTime, hToWDistribution[b]); // acumulate
     }
 
     fileDistributionInitialized = true;
@@ -476,7 +476,7 @@ void B18TrafficOD::loadB18TrafficPeople(
 
     for (int b = 0; b < bins.size(); b++) {
       float bucketStartTime = startSamples + b * (1.0f / numBucketsPerHour);
-      printf("PeopleDist,%.2f,%d\n", bucketStartTime, bins[b]); // acumulate
+      //printf("PeopleDist,%.2f,%d\n", bucketStartTime, bins[b]); // acumulate
     }
   }
 
@@ -617,7 +617,7 @@ void B18TrafficOD::loadB18TrafficPeopleSP(
 
     for (int b = 0; b < bins.size(); b++) {
       float bucketStartTime = startSamples + b * (1.0f / numBucketsPerHour);
-      printf("PeopleDist,%.2f,%d\n", bucketStartTime, bins[b]); // acumulate
+      //printf("PeopleDist,%.2f,%d\n", bucketStartTime, bins[b]); // acumulate
     }
   }
 
