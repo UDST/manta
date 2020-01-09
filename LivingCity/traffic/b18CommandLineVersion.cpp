@@ -66,7 +66,7 @@ void B18CommandLineVersion::runB18Simulation() {
 	  //compute the routes for every OD pair
 	  int mpi_rank = 0;
 	  int mpi_size = 1;
-	  auto start = high_resolution_clock::now();
+	  //auto start = high_resolution_clock::now();
       if (usePrevPaths) {
             // open file    
             //std::ifstream inputFile("./all_paths_incl_zeros.txt");
@@ -83,7 +83,12 @@ void B18CommandLineVersion::runB18Simulation() {
                     }
             }
       } else {
+	    auto start = high_resolution_clock::now();
 	    all_paths = B18TrafficSP::compute_routes(mpi_rank, mpi_size, street_graph, all_od_pairs_);
+	    auto stop = high_resolution_clock::now();
+	    auto duration = duration_cast<milliseconds>(stop - start);
+        std::cout << "Shortest path time = " << duration.count() << " ms \n";
+	    std::cout << "# of paths = " << all_paths.size() << "\n";
         //write paths to file so that we can just load them instead
         const std::string& pathsFileName = networkPathSP + "all_paths.txt";
         std::cout << "Save " << pathsFileName << " as paths file\n";
@@ -129,11 +134,11 @@ void B18CommandLineVersion::runB18Simulation() {
 
       
 
-	  auto stop = high_resolution_clock::now();
-	  auto duration = duration_cast<milliseconds>(stop - start);
-	  std::cout << "# of paths = " << all_paths.size() << "\n";
+	  //auto stop = high_resolution_clock::now();
+	  //auto duration = duration_cast<milliseconds>(stop - start);
+	  //std::cout << "# of paths = " << all_paths.size() << "\n";
 	  
-      std::cout << "Shortest path time = " << duration.count() << " ms \n";
+      //std::cout << "Shortest path time = " << duration.count() << " ms \n";
 
 	  //create a set of people for simulation (trafficPersonVec)
 	  b18TrafficSimulator.createB2018PeopleSP(startDemandH, endDemandH, limitNumPeople, addRandomPeople, street_graph);
