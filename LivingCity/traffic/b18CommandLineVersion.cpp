@@ -37,6 +37,7 @@ void B18CommandLineVersion::runB18Simulation() {
   const float deltaTime = settings.value("TIME_STEP", .5).toFloat();
   const float startDemandH = settings.value("START_HR", 5).toFloat();
   const float endDemandH = settings.value("END_HR", 12).toFloat();
+  bool saveFiles = settings.value("SAVE_FILES", true).toBool();
 
   //const float deltaTime = 0.5f; //Time step of .5 seconds
   //const float startDemandH = 5.00f; //Start time for the simulation (hour)
@@ -156,7 +157,7 @@ void B18CommandLineVersion::runB18Simulation() {
   } else {
 	  //if useSP, convert all_paths to indexPathVec format and run simulation
     b18TrafficSimulator.simulateInGPU(numOfPasses, startSimulationH, endSimulationH,
-        useJohnsonRouting, useSP, street_graph, all_paths);
+        useJohnsonRouting, useSP, street_graph, all_paths, saveFiles);
   }
   simulationBench.stopAndEndBenchmark();
 }

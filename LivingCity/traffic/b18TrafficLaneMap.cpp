@@ -90,7 +90,21 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
     if (numLanes == 0) { continue; }
 
     edgesData[tNumMapWidth].length = std::get<1>(x)->second[0];
-    edgesData[tNumMapWidth].maxSpeedMperSec = std::get<1>(x)->second[2];
+    float max_speed;
+    //max_speed = std::get<1>(x)->second[2] + (rand() % 30);//(qrand() % 39 + (-20));
+    max_speed = std::get<1>(x)->second[2];//(qrand() % 39 + (-20));
+   // if (std::get<1>(x)->second[2] >= 55.0) {
+        //max_speed = std::get<1>(x)->second[2] + (qrand() % 19 + (-10)); 
+        //max_speed = std::get<1>(x)->second[2] + (qrand() % 30); 
+    /*
+    if (std::get<1>(x)->second[2] == 25.0) {
+        max_speed = std::get<1>(x)->second[2] + (rand() % 20);
+    } else {
+        max_speed = std::get<1>(x)->second[2];//(qrand() % 39 + (-20));
+    }
+    */
+    //edgesData[tNumMapWidth].maxSpeedMperSec = std::get<1>(x)->second[2];//(qrand() % 39 + (-20));
+    edgesData[tNumMapWidth].maxSpeedMperSec = max_speed;//(qrand() % 39 + (-20));
 
     if (maxLength < edgesData[tNumMapWidth].length) { maxLength = edgesData[tNumMapWidth].length; }
     if (maxNumLanes < numLanes) { maxNumLanes = numLanes; }
