@@ -39,6 +39,9 @@ void B18CommandLineVersion::runB18Simulation() {
   const float startDemandH = settings.value("START_HR", 5).toFloat();
   const float endDemandH = settings.value("END_HR", 12).toFloat();
   bool saveFiles = settings.value("SAVE_FILES", true).toBool();
+  const float a = settings.value("A", .8).toFloat();
+  const float b = settings.value("B", .8).toFloat();
+  const float T = settings.value("T", 1.6).toFloat();
 
   //const float deltaTime = 0.5f; //Time step of .5 seconds
   //const float startDemandH = 5.00f; //Start time for the simulation (hour)
@@ -214,9 +217,10 @@ void B18CommandLineVersion::runB18Simulation() {
       //std::cout << "Shortest path time = " << duration.count() << " ms \n";
 
 	  //create a set of people for simulation (trafficPersonVec)
+	  b18TrafficSimulator.createB2018PeopleSP(startDemandH, endDemandH, limitNumPeople, addRandomPeople, street_graph, a, b, T);
 
 //}
-	  b18TrafficSimulator.createB2018PeopleSP(startDemandH, endDemandH, limitNumPeople, addRandomPeople, street_graph, dep_times);
+	  //b18TrafficSimulator.createB2018PeopleSP(startDemandH, endDemandH, limitNumPeople, addRandomPeople, street_graph, dep_times);
 
  } else {
 	  graphLoadBench.startMeasuring();

@@ -582,6 +582,7 @@ __global__ void kernel_trafficSimulation(
      bool nextVehicleIsATrafficLight = false;
      uint currentEdge = indexPathVec[trafficPersonVec[p].indexPathCurr];
      uint nextEdge = indexPathVec[trafficPersonVec[p].indexPathCurr + 1];
+
      // www.vwi.tu-dresden.de/~treiber/MicroApplet/IDM.html
      // IDM
      float thirdTerm = 0;
@@ -732,12 +733,13 @@ __global__ void kernel_trafficSimulation(
      }
 
      //if (p == 87) {
-             printf("%d,%f,%f\n", trafficPersonVec[p].indexPathCurr, trafficPersonVec[p].maxSpeedMperSec, trafficPersonVec[p].v);
+             //printf("%d,%f,%f\n", trafficPersonVec[p].indexPathCurr, trafficPersonVec[p].maxSpeedMperSec, trafficPersonVec[p].v);
              //printf("thirdTerm[%d] = %f\n", p, thirdTerm);
              //printf("a [%d] = %f\n", p, trafficPersonVec[p].a);
-             //printf("edge index = %d\n", trafficPersonVec[p].indexPathCurr);
-             //printf("speed limit [%d] = %f\n", p, trafficPersonVec[p].maxSpeedMperSec);
-             //printf("v [%d] = %f\n", p, trafficPersonVec[p].v);
+             printf("p = %d\n", p);
+             printf("edge index = %d\n", trafficPersonVec[p].indexPathCurr);
+             printf("speed limit [%d] = %f\n", p, trafficPersonVec[p].maxSpeedMperSec);
+             printf("v [%d] = %f\n", p, trafficPersonVec[p].v);
              //printf("velocity = %f\n", trafficPersonVec[p].v);
              //printf("dv_dt[%d] = %f\n", p, dv_dt);
 
@@ -750,6 +752,9 @@ __global__ void kernel_trafficSimulation(
      edgesData[currentEdge].curr_iter_num_cars += 1;
      edgesData[currentEdge].curr_iter_cum_vel += trafficPersonVec[p].v;
      edgesData[currentEdge].curr_cum_vel = edgesData[currentEdge].curr_iter_cum_vel / edgesData[currentEdge].curr_iter_num_cars;
+     
+     //edgesData[currentEdge].curr_cum_vel += trafficPersonVec[p].v;
+     //edgesData[currentEdge].curr_cum_vel = edgesData[currentEdge].curr_iter_cum_vel;
      //printf("currentEdge = %u\n, num_cars = %d\n, curr_iter_cum_vel = %f\n, curr_cum_vel = %f\n", currentEdge, edgesData[currentEdge].curr_iter_num_cars, edgesData[currentEdge].curr_iter_cum_vel, edgesData[currentEdge].curr_cum_vel);
 
 
