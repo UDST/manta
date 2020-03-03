@@ -133,9 +133,9 @@ void B18TrafficOD::sampleDistribution(int numberToSample,
   }
 }
 #endif
-void B18TrafficOD::randomPerson(int p, B18TrafficPerson &person,
+void B18TrafficOD::randomPersonSP(int p, B18TrafficPerson &person,
                                 uint srcvertex,
-                                uint tgtvertex, float startTimeH) {
+                                uint tgtvertex, float startTimeH, float a, float b, float T) {
 
   // Data
   person.init_intersection = srcvertex;
@@ -144,13 +144,17 @@ void B18TrafficOD::randomPerson(int p, B18TrafficPerson &person,
   //printf("Person %d: init %u end %u Time %f\n",p,srcvertex,tgtvertex,goToWork);
   // Status
   qsrand(p);
-    //person.a = 1.0f + ((float) qrand()) / RAND_MAX; //acceleration 1-2m/s2
-    //person.a = 2.0f; //acceleration 1-2m/s2
-    //person.b = 1.0f + ((float) qrand()) / RAND_MAX; //break 1-2m/s2
-    //person.T = 0.8f + 1.2f * (((float) qrand()) / RAND_MAX); //time heading 0.8-2s
-  person.a = 6.0f + ((float) qrand()) / RAND_MAX; //acceleration 1-2m/s2
-  person.b = 7.0f + ((float) qrand()) / RAND_MAX; //break 1-2m/s2
-  person.T = 2.0f * (((float) qrand()) / RAND_MAX); //time heading 0.8-2s
+  person.a = 1.0f + ((float) qrand()) / RAND_MAX; //acceleration 1-2m/s2
+  person.a = 2.0f; //acceleration 1-2m/s2
+  person.b = 1.0f + ((float) qrand()) / RAND_MAX; //break 1-2m/s2
+  //person.T = 0.8f + 1.2f * (((float) qrand()) / RAND_MAX); //time heading 0.8-2s
+  //person.a = 6.0f + ((float) qrand()) / RAND_MAX; //acceleration 1-2m/s2
+  //person.b = 7.0f + ((float) qrand()) / RAND_MAX; //break 1-2m/s2
+  //person.T = 2.0f * (((float) qrand()) / RAND_MAX); //time heading 0.8-2s
+  //person.a = a;
+  //person.b = b;
+  //person.T = T;
+  //printf("a = %f, b = %f, T = %f\n", person.a, person.b, person.T);
   person.v = 0;
   person.num_steps = 0;
   person.co = 0;
@@ -193,7 +197,7 @@ void B18TrafficOD::randomPerson(int p, B18TrafficPerson &person,
     }
   }
 
-  randomPerson(p, person, srcvertex, tgtvertex, startTimeH);
+  randomPersonSP(p, person, srcvertex, tgtvertex, startTimeH, 1, 1, 1);
 }
 
 void B18TrafficOD::resetTrafficPersonJob(std::vector<B18TrafficPerson>
@@ -392,8 +396,8 @@ void B18TrafficOD::loadB18TrafficPeople(
         goToWorkH = sampleFileDistribution();
       }
 
-      randomPerson(numPeople, trafficPersonVec[numPeople], src_vertex, tgt_vertex,
-                   goToWorkH);
+      randomPersonSP(numPeople, trafficPersonVec[numPeople], src_vertex, tgt_vertex,
+                   goToWorkH, 1, 1, 1);
       // printf("go to work %.2f --> %.2f\n", goToWork, (trafficPersonVec[p].time_departure / 3600.0f));
       numPeople++;
     }
@@ -420,8 +424,8 @@ void B18TrafficOD::loadB18TrafficPeople(
         goToWorkH = sampleFileDistribution();
       }
 
-      randomPerson(numPeople, trafficPersonVec[numPeople], src_vertex, tgt_vertex,
-                   goToWorkH);
+      randomPersonSP(numPeople, trafficPersonVec[numPeople], src_vertex, tgt_vertex,
+                   goToWorkH, 1, 1, 1);
     }
   }
 
@@ -487,7 +491,7 @@ void B18TrafficOD::loadB18TrafficPeople(
 void B18TrafficOD::loadB18TrafficPeopleSP(
     float startTimeH, float endTimeH,
     std::vector<B18TrafficPerson> &trafficPersonVec, // out
-    const std::shared_ptr<abm::Graph>& graph_, const int limitNumPeople, const bool addRandomPeople) {
+    const std::shared_ptr<abm::Graph>& graph_, const int limitNumPeople, const bool addRandomPeople, float a, float b, float T) {
 
   trafficPersonVec.clear();
   QTime timer;
@@ -533,8 +537,8 @@ void B18TrafficOD::loadB18TrafficPeopleSP(
         goToWorkH = sampleFileDistribution();
       }
 
-      randomPerson(numPeople, trafficPersonVec[numPeople], src_vertex, tgt_vertex,
-                   goToWorkH);
+      randomPersonSP(numPeople, trafficPersonVec[numPeople], src_vertex, tgt_vertex,
+                   goToWorkH, a, b, T);
       // printf("go to work %.2f --> %.2f\n", goToWork, (trafficPersonVec[p].time_departure / 3600.0f));
       numPeople++;
     }

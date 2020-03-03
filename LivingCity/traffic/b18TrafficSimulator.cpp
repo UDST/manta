@@ -69,10 +69,10 @@ void B18TrafficSimulator::createB2018People(float startTime, float endTime, int 
 }
 
 void B18TrafficSimulator::createB2018PeopleSP(float startTime, float endTime, int limitNumPeople,
-    bool addRandomPeople, const std::shared_ptr<abm::Graph>& graph_) {
+    bool addRandomPeople, const std::shared_ptr<abm::Graph>& graph_, float a, float b, float T) {
   b18TrafficOD.resetTrafficPersonJob(trafficPersonVec);
   b18TrafficOD.loadB18TrafficPeopleSP(startTime, endTime, trafficPersonVec,
-      graph_, limitNumPeople, addRandomPeople);
+      graph_, limitNumPeople, addRandomPeople, a, b, T);
 }
 
 void B18TrafficSimulator::resetPeopleJobANDintersections() {
@@ -166,6 +166,29 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 
     roadGenerationBench.stopAndEndBenchmark();
 
+    int index = 0;
+    std::vector<uint> u(graph_->edges_.size());
+    std::vector<uint> v(graph_->edges_.size());
+    for (auto const& x : graph_->edges_) {
+	    u[index] = std::get<0>(std::get<0>(x));
+	    v[index] = std::get<1>(std::get<0>(x));
+        index++;
+    }
+
+    //save avg_edge_vel vector to file
+    std::string name_u = "./edges_u.txt";
+    std::ofstream output_file_u(name_u);
+    std::ostream_iterator<uint> output_iterator_u(output_file_u, "\n");
+    std::copy(u.begin(), u.end(), output_iterator_u);
+
+
+    //save avg_edge_vel vector to file
+    std::string name_v = "./edges_v.txt";
+    std::ofstream output_file_v(name_v);
+    std::ostream_iterator<uint> output_iterator_v(output_file_v, "\n");
+    std::copy(v.begin(), v.end(), output_iterator_v);
+    printf("Wrote edge vertices files!\n");
+
 
     /////////////////////////////////////
     // 1. Init Cuda
@@ -250,6 +273,21 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
                 //std::cout << "cum_vel = " << edgesData[x].curr_cum_vel << "\n" << "avg_edge_vel = " << avg_edge_vel[x] << "\n" << "iter printout = " << iter_printout << "\n";
             }
             */
+
+            //int tNumMapWidth = 0;
+            int index = 0;
+            std::vector<float> avg_edge_vel(graph_->edges_.size());
+            for (auto const& x : graph_->edges_) {
+	            //const int numLanes = std::get<1>(x)->second[1];
+                //const int numWidthNeeded = ceil(edgesData[tNumMapWidth].length / kMaxMapWidthM);
+                //tNumMapWidth += numLanes * numWidthNeeded;
+                ind = edgeDescToLaneMapNumSP[x.second];
+                avg_edge_vel[index] = edgesData[ind].curr_cum_vel;// * 2.23694;
+                //avg_edge_vel[index] = ((edgesData[ind].curr_iter_cum_vel / edgesData[ind].curr_iter_num_cars) / count) * 2.23694;
+                index++;
+            }
+                
+            /*
             int counter = 0;
             int index = 0;
             int delta_val = 0;
@@ -273,7 +311,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
                 delta_val = edgeDescToLaneMapNumSP[x.second];
                 //std::cout << "cum_vel = " << edgesData[x].curr_cum_vel << "\n" << "avg_edge_vel = " << avg_edge_vel[x] << "\n" << "iter printout = " << iter_printout << "\n";
             }
-
+            */
             //save avg_edge_vel vector to file
             std::string name = "./all_edges_vel_" + std::to_string(iter_printout_index) + ".txt";
             std::ofstream output_file(name);
