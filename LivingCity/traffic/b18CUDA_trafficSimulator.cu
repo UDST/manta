@@ -580,14 +580,8 @@ __global__ void kernel_trafficSimulation(
      bool getToNextEdge = false;
      bool nextVehicleIsATrafficLight = false;
      uint currentEdge = indexPathVec[trafficPersonVec[p].indexPathCurr];
-     trafficPersonVec[p].currentEdge = currentEdge;
-
-     if (trafficPersonVec[p].currentEdge == trafficPersonVec[p].nextEdge) {
-        trafficPersonVec[p].end_time_on_edge = currentTime;
-     }
      
      uint nextEdge = indexPathVec[trafficPersonVec[p].indexPathCurr + 1];
-     trafficPersonVec[p].nextEdge = currentEdge;
 
      // www.vwi.tu-dresden.de/~treiber/MicroApplet/IDM.html
      // IDM
