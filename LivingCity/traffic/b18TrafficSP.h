@@ -43,6 +43,8 @@ class B18TrafficSP {
                                                                         int nagents);
 
   static std::vector<std::array<abm::graph::vertex_t, 2>> read_od_pairs(const std::string& filename, int nagents);
+  
+  static std::vector<float> read_dep_times(const std::string& filename);
 
   static void convertVector(std::vector<abm::graph::vertex_t> paths_SP, std::vector<uint>& indexPathVec, std::map<std::shared_ptr<abm::Graph::Edge>, uint> &edgeDescToLaneMapNumSP, const std::shared_ptr<abm::Graph>& graph_);
 

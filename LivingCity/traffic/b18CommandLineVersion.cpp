@@ -61,6 +61,7 @@ void B18CommandLineVersion::runB18Simulation() {
 	  //make the graph from edges file and load the OD demand from od file
 	  std::string odFileName = RoadGraphB2018::loadABMGraph(networkPathSP, street_graph, (int) startDemandH, (int) endDemandH);
 	  const auto all_od_pairs_ = B18TrafficSP::read_od_pairs(odFileName, std::numeric_limits<int>::max());
+	  const auto dep_times = B18TrafficSP::read_dep_times(odFileName);
 	  printf("# of OD pairs = %d\n", all_od_pairs_.size());
 
 	  //compute the routes for every OD pair
@@ -141,7 +142,7 @@ void B18CommandLineVersion::runB18Simulation() {
       //std::cout << "Shortest path time = " << duration.count() << " ms \n";
 
 	  //create a set of people for simulation (trafficPersonVec)
-	  b18TrafficSimulator.createB2018PeopleSP(startDemandH, endDemandH, limitNumPeople, addRandomPeople, street_graph);
+	  b18TrafficSimulator.createB2018PeopleSP(startDemandH, endDemandH, limitNumPeople, addRandomPeople, street_graph, dep_times);
 
   } else {
 	  graphLoadBench.startMeasuring();

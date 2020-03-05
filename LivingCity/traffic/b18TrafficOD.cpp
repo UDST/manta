@@ -483,7 +483,7 @@ void B18TrafficOD::loadB18TrafficPeople(
 void B18TrafficOD::loadB18TrafficPeopleSP(
     float startTimeH, float endTimeH,
     std::vector<B18TrafficPerson> &trafficPersonVec, // out
-    const std::shared_ptr<abm::Graph>& graph_, const int limitNumPeople, const bool addRandomPeople) {
+    const std::shared_ptr<abm::Graph>& graph_, const int limitNumPeople, const bool addRandomPeople, std::vector<float> dep_times) {
 
   trafficPersonVec.clear();
   QTime timer;
@@ -503,6 +503,7 @@ void B18TrafficOD::loadB18TrafficPeopleSP(
   }();
   trafficPersonVec.resize(totalNumPeople);
 
+  /*
   boost::mt19937 rng;
   srand(45321654);
   //boost::math::non_central_t_distribution<> td(v=2.09,delta=7.51);
@@ -510,7 +511,7 @@ void B18TrafficOD::loadB18TrafficPeopleSP(
   boost::normal_distribution<> nd(7.5, 0.75);
   boost::variate_generator<boost::mt19937 &, boost::normal_distribution<> > var(
     rng, nd);
-
+  */
   int numPeople = 0;
   for (int d = 0; (d < RoadGraphB2018::demandB2018.size()) &&
        (numPeople < totalNumPeople); d++) {
@@ -519,15 +520,18 @@ void B18TrafficOD::loadB18TrafficPeopleSP(
     //printf("odNumPeople = %d\n", odNumPeople);
     uint src_vertex = RoadGraphB2018::demandB2018[d].src_vertex;
     uint tgt_vertex = RoadGraphB2018::demandB2018[d].tgt_vertex;
+    float goToWorkH = dep_times[d];
+    //printf("dep time %f\n", goToWorkH);
 
     for (int p = 0; p < odNumPeople; p++) {
-      float goToWorkH;
 
+      /*
       if (gaussianDistribution) {
         goToWorkH  = var();
       } else {
         goToWorkH = sampleFileDistribution();
       }
+      */
 
       randomPerson(numPeople, trafficPersonVec[numPeople], src_vertex, tgt_vertex,
                    goToWorkH);
@@ -567,6 +571,7 @@ void B18TrafficOD::loadB18TrafficPeopleSP(
     exit(-1);
   }
 
+  /*
   if (gaussianDistribution) {
     //print histogram
     float binLength = 0.166f;//10min
@@ -617,7 +622,7 @@ void B18TrafficOD::loadB18TrafficPeopleSP(
       //printf("PeopleDist,%.2f,%d\n", bucketStartTime, bins[b]); // acumulate
     }
   }
-
+  */
   printf("loadB18TrafficPeople: People %d\n", numPeople);
 }
 }

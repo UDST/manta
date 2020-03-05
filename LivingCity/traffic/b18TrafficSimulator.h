@@ -96,7 +96,7 @@ class B18TrafficSimulator {
 #endif
   void createB2018People(float startTime, float endTime, int limitNumPeople, bool addRandomPeople, bool useSP);
   
-  void createB2018PeopleSP(float startTime, float endTime, int limitNumPeople, bool addRandomPeople, const std::shared_ptr<abm::Graph>& graph_);
+  void createB2018PeopleSP(float startTime, float endTime, int limitNumPeople, bool addRandomPeople, const std::shared_ptr<abm::Graph>& graph_, std::vector<float> dep_times);
 
   void resetPeopleJobANDintersections();
   void saveODToFile() {}; // TODO

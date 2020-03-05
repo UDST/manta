@@ -92,6 +92,7 @@ std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::read_od_pairs(con
     abm::graph::vertex_t v1, v2;
     abm::graph::weight_t weight;
     while (in.read_row(v1, v2)) {
+      //std::array<abm::graph::vertex_t, 2> od = {v1, v2};
       std::array<abm::graph::vertex_t, 2> od = {v1, v2};
       od_pairs.emplace_back(od);
       RoadGraphB2018::demandB2018.push_back(DemandB2018(1, v1, v2)); //there is only one person for each OD pair
@@ -104,6 +105,25 @@ std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::read_od_pairs(con
     status = false;
   }
   return od_pairs;
+}
+
+// Read OD pairs file format
+std::vector<float> B18TrafficSP::read_dep_times(const std::string& filename) {
+  bool status = true;
+  std::vector<float> dep_time_vec;
+  try {
+    csvio::CSVReader<1> in(filename);
+    in.read_header(csvio::ignore_extra_column, "dep_time");
+    float dep_time;
+    while (in.read_row(dep_time)) {
+      //printf("dep time %f\n", dep_time);
+      dep_time_vec.emplace_back(dep_time);
+    }
+  } catch (std::exception& exception) {
+    std::cout << "Read OD file: " << exception.what() << "\n";
+    status = false;
+  }
+  return dep_time_vec;
 }
 
 

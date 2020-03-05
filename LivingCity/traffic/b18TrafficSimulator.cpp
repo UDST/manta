@@ -69,10 +69,10 @@ void B18TrafficSimulator::createB2018People(float startTime, float endTime, int 
 }
 
 void B18TrafficSimulator::createB2018PeopleSP(float startTime, float endTime, int limitNumPeople,
-    bool addRandomPeople, const std::shared_ptr<abm::Graph>& graph_) {
+    bool addRandomPeople, const std::shared_ptr<abm::Graph>& graph_, std::vector<float> dep_times) {
   b18TrafficOD.resetTrafficPersonJob(trafficPersonVec);
   b18TrafficOD.loadB18TrafficPeopleSP(startTime, endTime, trafficPersonVec,
-      graph_, limitNumPeople, addRandomPeople);
+      graph_, limitNumPeople, addRandomPeople, dep_times);
 }
 
 void B18TrafficSimulator::resetPeopleJobANDintersections() {
