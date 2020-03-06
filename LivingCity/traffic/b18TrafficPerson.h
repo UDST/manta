@@ -39,6 +39,14 @@ struct B18TrafficPerson {
   unsigned int indexPathInit;
   unsigned int indexPathCurr;
 
+  //for edge speed calculations
+  unsigned int currentEdge;
+  unsigned int nextEdge;
+  unsigned int prevEdge;
+  float start_time_on_prev_edge;
+  float end_time_on_prev_edge;
+  float manual_v;
+
   // data
   unsigned short num_steps;
   unsigned int color;
