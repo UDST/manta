@@ -292,7 +292,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
                 //const int numWidthNeeded = ceil(edgesData[tNumMapWidth].length / kMaxMapWidthM);
                 //tNumMapWidth += numLanes * numWidthNeeded;
                 ind = edgeDescToLaneMapNumSP[x.second];
-                avg_edge_vel[index] = edgesData[ind].curr_cum_vel;// * 2.23694;
+                //avg_edge_vel[index] = edgesData[ind].curr_cum_vel / count;// * 2.23694;
+                avg_edge_vel[index] = edgesData[ind].curr_cum_vel / edgesData[ind].curr_iter_num_cars;// * 2.23694;
                 //avg_edge_vel[index] = ((edgesData[ind].curr_iter_cum_vel / edgesData[ind].curr_iter_num_cars) / count) * 2.23694;
                 index++;
             }
