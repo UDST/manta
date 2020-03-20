@@ -50,6 +50,7 @@ struct B18TrafficPerson {
   // data
   unsigned short num_steps;
   unsigned int color;
+  unsigned int increment = 0;
   float co;
   float gas;
   // IDM

@@ -13,6 +13,9 @@
 #include <cmath>
 #include "b18TrafficLaneMap.h"
 #include "sp/graph.h"
+#include <boost/random.hpp>
+#include <boost/random/normal_distribution.hpp>
+#include <boost/math/distributions/non_central_t.hpp>
 
 #define LANE_DEBUG 1
 
@@ -91,8 +94,49 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
 
     edgesData[tNumMapWidth].length = std::get<1>(x)->second[0];
     float max_speed;
+    float uber_std; //Uber std dev in mps (8.9 mph)
     //max_speed = std::get<1>(x)->second[2] + (rand() % 30);//(qrand() % 39 + (-20));
-    max_speed = std::get<1>(x)->second[2];//(qrand() % 39 + (-20));
+    max_speed = std::get<1>(x)->second[2];
+
+    //printf("max speed = %f\n", max_speed);
+
+    /*
+    if ((max_speed > 8) & (max_speed < 9)) {
+        max_speed = 9.37;
+        uber_std = 2.98;
+    } else if ((max_speed > 11) & (max_speed < 12)) {
+        max_speed = 11.06;
+        uber_std = 3.63;
+    } else if ((max_speed > 13) & (max_speed < 14)) {
+        max_speed = 12.19;
+        uber_std = 3.72;
+    } else if ((max_speed > 15) & (max_speed < 16)) {
+        max_speed = 13.21;
+        uber_std = 3.10;
+    } else if ((max_speed > 17) & (max_speed < 18)) {
+        max_speed = 13.96;
+        uber_std = 3.50;
+    } else if ((max_speed > 20) & (max_speed < 21)) {
+        max_speed = 13.92;
+        uber_std = 4.42;
+    } else if ((max_speed > 22) & (max_speed < 23)) {
+        max_speed = 15.09;
+        uber_std = 5.82;
+    } else if ((max_speed > 29) & (max_speed < 30)) {
+        max_speed = 26.94;
+        uber_std = 4.65;
+    }
+
+    boost::mt19937 rng;
+    srand(45321654);
+    boost::normal_distribution<> nd(max_speed, 3.0*uber_std);
+    boost::variate_generator<boost::mt19937 &, boost::normal_distribution<> > var(rng, nd);
+    float smoothed_max_speed  = var();
+    edgesData[tNumMapWidth].maxSpeedMperSec = smoothed_max_speed;//(qrand() % 39 + (-20));
+    */
+
+        //printf("changed 20 mph speed limit to 50 mph!\n");
+    //(qrand() % 39 + (-20));
    // if (std::get<1>(x)->second[2] >= 55.0) {
         //max_speed = std::get<1>(x)->second[2] + (qrand() % 19 + (-10)); 
         //max_speed = std::get<1>(x)->second[2] + (qrand() % 30); 

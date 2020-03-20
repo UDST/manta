@@ -108,7 +108,7 @@ void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
 // GPU
 //////////////////////////////////////////////////
 void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
-    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_, std::vector<abm::graph::vertex_t> paths_SP, bool saveFiles) {
+    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_, std::vector<abm::graph::vertex_t> paths_SP, bool saveFiles, float s_0) {
   Benchmarker laneMapBench("Lane map", 2);
   Benchmarker passesBench("Simulation passes", 2);
   Benchmarker finishCudaBench("Cuda finish", 2);
@@ -262,7 +262,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       }
 
       b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
-                             intersections.size(), deltaTime);
+                             intersections.size(), deltaTime, s_0);
 
       b18GetDataCUDA(trafficPersonVec, edgesData);
       if (count % iter_printout == 0) {
