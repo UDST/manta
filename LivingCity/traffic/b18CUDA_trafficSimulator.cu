@@ -8,6 +8,9 @@
 #include "b18EdgeData.h"
 #include <vector>
 #include <iostream>
+#include <boost/random.hpp>
+#include <boost/random/normal_distribution.hpp>
+#include <boost/math/distributions/non_central_t.hpp>
 
 #include "../../src/benchmarker.h"
 
@@ -25,7 +28,7 @@
 // CONSTANTS
 
 __constant__ float intersectionClearance = 7.8f; //TODO(pavan): WHAT IS THIS?
-__constant__ float s_0 = 7.0f;
+//__constant__ float s_0 = 7.0f;
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort = true) {
@@ -47,6 +50,15 @@ inline void printMemoryUsage() {
   double total_db = (double) total_byte;
   double used_db = total_db - free_db;
   printf("GPU memory usage: used = %.0f, free = %.0f MB, total = %.0f MB\n", used_db / 1024.0 / 1024.0, free_db / 1024.0 / 1024.0, total_db / 1024.0 / 1024.0);
+}
+
+ __device__ uint32_t WangHash(uint32_t a) {
+    a = (a ^ 61) ^ (a >> 16);
+    a = a + (a << 3);
+    a = a ^ (a >> 4);
+    a = a * 0x27d4eb2d;
+    a = a ^ (a >> 15);
+    return a;
 }
 ////////////////////////////////
 // VARIABLES
@@ -445,6 +457,13 @@ __device__ void calculateLaneCarShouldBe(
   }
 }//
 
+
+
+uint32_t FloatToUint(float n)
+{
+   return (uint32_t)(*(uint32_t*)&n);
+}
+
  // Kernel that executes on the CUDA device
 __global__ void kernel_trafficSimulation(
    int numPeople,
@@ -457,7 +476,8 @@ __global__ void kernel_trafficSimulation(
    uchar *laneMap,
    LC::B18IntersectionData *intersections,
    uchar *trafficLights,
-   float deltaTime
+   float deltaTime,
+   float s_0
    )
  {
    int p = blockIdx.x * blockDim.x + threadIdx.x;
@@ -501,7 +521,14 @@ __global__ void kernel_trafficSimulation(
                 
          //printf("edgesData length %f\n",edgesData[firstEdge].length);
          trafficPersonVec[p].maxSpeedMperSec = edgesData[firstEdge].maxSpeedMperSec;
-         //printf("edgesData %.10f\n",edgesData[firstEdge].maxSpeedMperSec);
+
+
+         /*
+         if (p == 17) {
+            printf("edge speed = %.10f\n",edgesData[firstEdge].maxSpeedMperSec);
+            printf("person on edge speed %d =  %.10f\n", p, trafficPersonVec[p].maxSpeedMperSec);
+         }
+         */
          //1.4 try to place it in middle of edge
          ushort numOfCells = ceil(trafficPersonVec[p].length);
          ushort initShift = (ushort) (0.5f * numOfCells); //number of cells it should be placed (half of road)
@@ -593,6 +620,11 @@ __global__ void kernel_trafficSimulation(
         }
         edgesData[trafficPersonVec[p].prevEdge].curr_iter_num_cars += 1;
         edgesData[trafficPersonVec[p].prevEdge].curr_cum_vel += trafficPersonVec[p].manual_v;
+
+
+
+
+
         trafficPersonVec[p].start_time_on_prev_edge = currentTime;
         trafficPersonVec[p].prevEdge = currentEdge;
         //printf("start time on edge %u = %f\n", currentEdge, trafficPersonVec[p].start_time_on_prev_edge);
@@ -689,8 +721,9 @@ __global__ void kernel_trafficSimulation(
          }
        }
      }
-    */
-     // NEXT LINE
+     */
+     
+    // NEXT LINE
     // e) MOVING ALONG IN THE NEXT EDGE
      if (found == false && numCellsCheck > 0) { //check if in next line
        if ((nextEdge != -1) &&
@@ -720,6 +753,17 @@ __global__ void kernel_trafficSimulation(
          }
        }
      }
+
+
+        //randomize a vehicle's personal speed limit based on the posted speed limit (adjusting for different drivers' behaviors) of its current edge (do it only once as the vehicle enters the edge)
+        if (trafficPersonVec[p].maxSpeedMperSec == edgesData[indexPathVec[trafficPersonVec[p].indexPathCurr]].maxSpeedMperSec) {
+                curandState state;
+                //curand_init(1234, p, 0, &state) ;
+                curand_init(WangHash(trafficPersonVec[p].increment++) + p, 0, 0, &state) ;
+                float new_speed = curand_normal(&state);
+                trafficPersonVec[p].maxSpeedMperSec = 10.0*new_speed + edgesData[indexPathVec[trafficPersonVec[p].indexPathCurr]].maxSpeedMperSec;
+                //printf("new immediate speed limit [%d] = %f\n", p, trafficPersonVec[p].maxSpeedMperSec);
+        }
 
 
      float s_star;
@@ -754,18 +798,19 @@ __global__ void kernel_trafficSimulation(
        dv_dt = 0.0f;
      }
 
-     //if (p == 87) {
+     if (p == 17) {
              //printf("%d,%f,%f\n", trafficPersonVec[p].indexPathCurr, trafficPersonVec[p].maxSpeedMperSec, trafficPersonVec[p].v);
              //printf("thirdTerm[%d] = %f\n", p, thirdTerm);
              //printf("a [%d] = %f\n", p, trafficPersonVec[p].a);
              //printf("p = %d\n", p);
              //printf("edge index = %d\n", trafficPersonVec[p].indexPathCurr);
-             //printf("speed limit [%d] = %f\n", p, trafficPersonVec[p].maxSpeedMperSec);
+             //printf("original speed limit %d = %f\n", p, edgesData[indexPathVec[trafficPersonVec[p].indexPathCurr]].maxSpeedMperSec);
+             //printf("new speed limit [%d] = %f\n", p, trafficPersonVec[p].maxSpeedMperSec);
              //printf("v [%d] = %f\n", p, trafficPersonVec[p].v);
              //printf("velocity = %f\n", trafficPersonVec[p].v);
              //printf("dv_dt[%d] = %f\n", p, dv_dt);
 
-     //}
+     }
 
      trafficPersonVec[p].cum_v += trafficPersonVec[p].v;
      //printf("vel person %d = %f\n", p, trafficPersonVec[p].cum_v);
@@ -1811,7 +1856,9 @@ void b18ResetPeopleLanesCUDA(uint numPeople) {
   cudaMemset(&laneMap_d[halfLaneMap], -1, halfLaneMap*sizeof(unsigned char));
 }
 
-void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersections, float deltaTime) {
+void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersections, float deltaTime, float s_0) {
+
+
   intersectionBench.startMeasuring();
   const uint numStepsTogether = 12; //change also in density (10 per hour)
   ////////////////////////////////////////////////////////////
@@ -1835,7 +1882,7 @@ void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersect
   
   peopleBench.startMeasuring();
   // Simulate people.
-  kernel_trafficSimulation <<< ceil(numPeople / 384.0f), 384>> > (numPeople, currentTime, mapToReadShift, mapToWriteShift, trafficPersonVec_d, indexPathVec_d, edgesData_d, laneMap_d, intersections_d, trafficLights_d, deltaTime);
+  kernel_trafficSimulation <<< ceil(numPeople / 384.0f), 384>> > (numPeople, currentTime, mapToReadShift, mapToWriteShift, trafficPersonVec_d, indexPathVec_d, edgesData_d, laneMap_d, intersections_d, trafficLights_d, deltaTime, s_0);
   gpuErrchk(cudaPeekAtLastError());
   peopleBench.stopMeasuring();
 
