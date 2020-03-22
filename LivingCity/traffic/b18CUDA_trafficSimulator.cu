@@ -671,7 +671,8 @@ __global__ void kernel_trafficSimulation(
        }
      } 
 
-    /*
+
+     /*
      // b) TRAFFIC LIGHT
      if (byteInLine < numOfCells && found == false && numCellsCheck > 0) { //before traffic signaling (and not cell limited) TODO(pavan): Is this clause for when it is now at the intersection?
        if (trafficLights[currentEdge + trafficPersonVec[p].numOfLaneInEdge] == 0x00) { //red
@@ -761,7 +762,7 @@ __global__ void kernel_trafficSimulation(
                 //curand_init(1234, p, 0, &state) ;
                 curand_init(WangHash(trafficPersonVec[p].increment++) + p, 0, 0, &state) ;
                 float new_speed = curand_normal(&state);
-                trafficPersonVec[p].maxSpeedMperSec = 10.0*new_speed + edgesData[indexPathVec[trafficPersonVec[p].indexPathCurr]].maxSpeedMperSec;
+                trafficPersonVec[p].maxSpeedMperSec = 2.0*new_speed + edgesData[indexPathVec[trafficPersonVec[p].indexPathCurr]].maxSpeedMperSec;
                 //printf("new immediate speed limit [%d] = %f\n", p, trafficPersonVec[p].maxSpeedMperSec);
         }
 
