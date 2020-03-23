@@ -1,0 +1,996 @@
+ox 0.11.4
+nx 2.4
+ITERATION #0
+
+a_b_T_s_0_vec = [(6.145196111603552, 4.775138127904393, 1.2281288980851888, 4.186390822657572), (2.1198386872523773, 6.645899096098995, 1.4888517769047391, 3.473484837705688), (7.484039152772397, 1.808337714763395, 1.620688522790524, 4.706431879897465), (8.179878443697305, 2.499501411112973, 1.8824355758513984, 2.0657639075694916), (5.451096442753345, 3.0647777814250268, 0.45833321190593745, 3.586687306589634)]
+6.145196111603552 4.775138127904393 1.2281288980851888 4.186390822657572
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 19135 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3272, free = 4844 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 42.29 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 43.19 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 42.80 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 41.40 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 40.62 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 40.22 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5720712704.0 Avg 14.58 min Avg CO 242.35
+Simulation time = 2105518 ms
+>>Simulation Ended
+540827
+./calibration.py:153: FutureWarning: The pandas.np module is deprecated and will be removed from pandas in a future version. Import numpy directly instead
+  new_df = new_df.replace(0, pd.np.nan)
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70750
+merged with uber edges length = 70750
+uber avg = 24.113933869039638
+microsim avg = 23.84590552256691
+average uber / microsim ratio = 1.0995231584234852
+diff mean = 0.26802834647272805
+RMSE = 10.758312080841106
+diff vector = [0.26802834647272805]
+2.1198386872523773 6.645899096098995 1.4888517769047391 3.473484837705688
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 18231 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3272, free = 4845 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 43.10 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 44.01 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 43.61 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 42.21 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 41.40 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 41.01 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5758889472.0 Avg 14.68 min Avg CO 243.48
+Simulation time = 2145745 ms
+>>Simulation Ended
+540827
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70726
+merged with uber edges length = 70726
+uber avg = 24.11310332101594
+microsim avg = 23.768474782068324
+average uber / microsim ratio = 1.088059699812897
+diff mean = 0.34462853894761686
+RMSE = 10.521588348849694
+diff vector = [0.26802834647272805, 0.34462853894761686]
+7.484039152772397 1.808337714763395 1.620688522790524 4.706431879897465
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 18403 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3272, free = 4844 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 43.42 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 44.25 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 43.95 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 42.55 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 41.49 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 41.05 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5970464768.0 Avg 15.22 min Avg CO 262.68
+Simulation time = 2157542 ms
+>>Simulation Ended
+540827
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70739
+merged with uber edges length = 70739
+uber avg = 24.11373678961739
+microsim avg = 23.669276510370207
+average uber / microsim ratio = 1.0987458723649481
+diff mean = 0.44446027924718595
+RMSE = 10.80091725842186
+diff vector = [0.26802834647272805, 0.34462853894761686, 0.44446027924718595]
+8.179878443697305 2.499501411112973 1.8824355758513984 2.0657639075694916
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 18503 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3272, free = 4845 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 43.36 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 44.24 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 43.83 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 42.45 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 41.70 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 41.31 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5576337920.0 Avg 14.21 min Avg CO 232.96
+Simulation time = 2159678 ms
+>>Simulation Ended
+540827
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70760
+merged with uber edges length = 70760
+uber avg = 24.114860583983173
+microsim avg = 23.938518318957822
+average uber / microsim ratio = 1.0928855562751942
+diff mean = 0.17634226502535197
+RMSE = 10.87128323353985
+diff vector = [0.26802834647272805, 0.34462853894761686, 0.44446027924718595, 0.17634226502535197]
+5.451096442753345 3.0647777814250268 0.45833321190593745 3.586687306589634
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 18366 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3272, free = 4844 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 43.34 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 44.23 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 43.85 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 42.45 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 41.69 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 41.29 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5641442816.0 Avg 14.38 min Avg CO 235.71
+Simulation time = 2160571 ms
+>>Simulation Ended
+540827
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70761
+merged with uber edges length = 70761
+uber avg = 24.112201164567814
+microsim avg = 23.925008383432257
+average uber / microsim ratio = 1.0867525865313825
+diff mean = 0.18719278113555388
+RMSE = 10.721765278445663
+diff vector = [0.26802834647272805, 0.34462853894761686, 0.44446027924718595, 0.17634226502535197, 0.18719278113555388]
+ITERATION #1
+
+a_b_T_s_0_vec = [(7.6247620309893005, 2.291666167507934, 1.2478925125860114, 3.003826271662767), (8.308373138654696, 3.147138900810158, 2.242945526786948, 1.4803212888090973), (7.5315647144215685, 2.684946936964419, 1.5442130783277381, 2.5617202680281155), (7.6171647310215365, 3.0481199452756904, 1.5431600469928655, 1.9568273673422814), (8.166428971062192, 2.411644382264835, 2.420045342540813, 2.0493888472750728)]
+7.6247620309893005 2.291666167507934 1.2478925125860114 3.003826271662767
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 18282 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3272, free = 4844 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 43.25 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 44.01 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 43.50 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 42.12 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 41.35 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 40.94 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5633586176.0 Avg 14.36 min Avg CO 236.59
+Simulation time = 2146042 ms
+>>Simulation Ended
+540827
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70763
+merged with uber edges length = 70763
+uber avg = 24.11367992690937
+microsim avg = 23.88793056006698
+average uber / microsim ratio = 1.093861652496163
+diff mean = 0.22574936684238994
+RMSE = 10.821090112525315
+diff vector = [0.22574936684238994]
+8.308373138654696 3.147138900810158 2.242945526786948 1.4803212888090973
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 18897 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3272, free = 4845 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 41.64 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 42.43 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 42.10 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 40.65 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 39.94 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 39.53 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5537445888.0 Avg 14.11 min Avg CO 231.74
+Simulation time = 2070458 ms
+>>Simulation Ended
+540827
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70762
+merged with uber edges length = 70762
+uber avg = 24.113847275020923
+microsim avg = 23.99580693248468
+average uber / microsim ratio = 1.0891021078664784
+diff mean = 0.11804034253624786
+RMSE = 10.918190373017385
+diff vector = [0.22574936684238994, 0.11804034253624786]
+7.5315647144215685 2.684946936964419 1.5442130783277381 2.5617202680281155
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 18362 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3272, free = 4845 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 43.75 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 44.62 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 43.52 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 41.30 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 40.56 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 40.17 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5587796992.0 Avg 14.24 min Avg CO 233.00
+Simulation time = 2140722 ms
+>>Simulation Ended
+540827
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70764
+merged with uber edges length = 70764
+uber avg = 24.116122193101713
+microsim avg = 23.962705943790812
+average uber / microsim ratio = 1.087651723052839
+diff mean = 0.153416249310905
+RMSE = 10.822284210430666
+diff vector = [0.22574936684238994, 0.11804034253624786, 0.153416249310905]
+7.6171647310215365 3.0481199452756904 1.5431600469928655 1.9568273673422814
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 19226 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3272, free = 4845 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 42.79 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 43.75 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 43.26 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 41.70 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 41.11 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 40.72 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5532631552.0 Avg 14.10 min Avg CO 229.65
+Simulation time = 2130095 ms
+>>Simulation Ended
+540827
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70766
+merged with uber edges length = 70766
+uber avg = 24.11415265050316
+microsim avg = 24.032629534975758
+average uber / microsim ratio = 1.0854160661739363
+diff mean = 0.0815231155274068
+RMSE = 10.8405744678688
+diff vector = [0.22574936684238994, 0.11804034253624786, 0.153416249310905, 0.0815231155274068]
+8.166428971062192 2.411644382264835 2.420045342540813 2.0493888472750728
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 18459 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3272, free = 4844 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 42.65 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 43.49 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 43.11 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 41.70 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 40.96 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 40.59 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5574074880.0 Avg 14.21 min Avg CO 232.83
+Simulation time = 2122432 ms
+>>Simulation Ended
+540827
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70756
+merged with uber edges length = 70756
+uber avg = 24.11451626264617
+microsim avg = 23.940654217230286
+average uber / microsim ratio = 1.0858980699927223
+diff mean = 0.17386204541588576
+RMSE = 10.865769318803366
+diff vector = [0.22574936684238994, 0.11804034253624786, 0.153416249310905, 0.0815231155274068, 0.17386204541588576]
+ITERATION #2
+
+a_b_T_s_0_vec = [(8.422364573934193, 2.731200452068668, 1.6751733778866942, 1.9288507597615432), (8.615513434595517, 2.655115595165011, 1.4863230458166123, 1.2921600724909006), (6.7788407462130005, 2.9702714143407043, 1.5182907402579642, 2.4790222232901526), (7.515333792947078, 3.0795873448710736, 2.5000298049246865, 2.884113884921232), (6.9970700667950645, 3.1805290697872177, 1.2470284839935495, 2.64214426542938)]
+8.422364573934193 2.731200452068668 1.6751733778866942 1.9288507597615432
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 18575 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3272, free = 4845 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 42.85 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 43.72 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 43.32 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 41.96 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 41.18 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 40.77 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5587033088.0 Avg 14.24 min Avg CO 234.27
+Simulation time = 2133559 ms
+>>Simulation Ended
+540827
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70769
+merged with uber edges length = 70769
+uber avg = 24.113512747864206
+microsim avg = 23.905160156976187
+average uber / microsim ratio = 1.0905673106919471
+diff mean = 0.20835259088801697
+RMSE = 10.902774806190656
+diff vector = [0.20835259088801697]
+8.615513434595517 2.655115595165011 1.4863230458166123 1.2921600724909006
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 18652 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3272, free = 4844 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 43.58 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 44.44 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 44.01 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 42.63 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 41.86 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 41.49 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5557220352.0 Avg 14.16 min Avg CO 233.72
+Simulation time = 2168675 ms
+>>Simulation Ended
+540827
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70759
+merged with uber edges length = 70759
+uber avg = 24.113185975316377
+microsim avg = 23.94589987034171
+average uber / microsim ratio = 1.096005435667412
+diff mean = 0.16728610497467047
+RMSE = 10.942081386255898
+diff vector = [0.20835259088801697, 0.16728610497467047]
+6.7788407462130005 2.9702714143407043 1.5182907402579642 2.4790222232901526
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 18297 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3272, free = 4845 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 43.26 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 44.10 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 43.73 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 42.31 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 41.55 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 41.20 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5544586752.0 Avg 14.13 min Avg CO 229.22
+Simulation time = 2152877 ms
+>>Simulation Ended
+540827
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70771
+merged with uber edges length = 70771
+uber avg = 24.114346064789547
+microsim avg = 24.041510716746522
+average uber / microsim ratio = 1.0814716721187185
+diff mean = 0.07283534804302245
+RMSE = 10.790708695577404
+diff vector = [0.20835259088801697, 0.16728610497467047, 0.07283534804302245]
+7.515333792947078 3.0795873448710736 2.5000298049246865 2.884113884921232
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 18335 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3272, free = 4844 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 43.53 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 44.38 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 44.04 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 42.59 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 41.81 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 41.42 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5614416384.0 Avg 14.31 min Avg CO 235.05
+Simulation time = 2166518 ms
+>>Simulation Ended
+540827
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70767
+merged with uber edges length = 70767
+uber avg = 24.115462085654425
+microsim avg = 23.9270852727223
+average uber / microsim ratio = 1.089118888783081
+diff mean = 0.18837681293212083
+RMSE = 10.82429074042883
+diff vector = [0.20835259088801697, 0.16728610497467047, 0.07283534804302245, 0.18837681293212083]
+6.9970700667950645 3.1805290697872177 1.2470284839935495 2.64214426542938
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 18639 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3272, free = 4844 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 43.92 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 44.79 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 44.38 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 42.97 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 42.22 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 41.82 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5568512512.0 Avg 14.19 min Avg CO 231.24
+Simulation time = 2181058 ms
+>>Simulation Ended
+540827
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70762
+merged with uber edges length = 70762
+uber avg = 24.114294772601678
+microsim avg = 24.004285036041345
+average uber / microsim ratio = 1.0824936267628826
+diff mean = 0.11000973656033401
+RMSE = 10.801659767978537
+diff vector = [0.20835259088801697, 0.16728610497467047, 0.07283534804302245, 0.18837681293212083, 0.11000973656033401]
+ITERATION #3
+
+a_b_T_s_0_vec = [(7.252738375556528, 3.856982155720129, 1.0272615221465473, 2.428974321593328), (6.377269699846975, 3.590473364266212, 0.8881429791688249, 1.9108366323843835), (5.933796341073293, 3.227074432935926, 1.4676474142404934, 2.531598486800477), (5.891589008134073, 2.355195076701979, 2.219506578356693, 1.6187167677129115), (6.755694957479926, 3.307037130425951, 2.435438645291964, 2.6088947099498228)]
+7.252738375556528 3.856982155720129 1.0272615221465473 2.428974321593328
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 18523 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3272, free = 4845 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 43.02 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 43.85 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 43.48 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 42.06 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 41.34 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 40.95 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5554079744.0 Avg 14.15 min Avg CO 230.26
+Simulation time = 2140992 ms
+>>Simulation Ended
+540827
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70763
+merged with uber edges length = 70763
+uber avg = 24.114340050541376
+microsim avg = 24.019902698230066
+average uber / microsim ratio = 1.082174863286766
+diff mean = 0.0944373523113027
+RMSE = 10.822966464521157
+diff vector = [0.0944373523113027]
+6.377269699846975 3.590473364266212 0.8881429791688249 1.9108366323843835
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 18413 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3272, free = 4844 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 42.59 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 43.52 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 43.03 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 41.72 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 40.91 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 40.64 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5464256000.0 Avg 13.93 min Avg CO 224.11
+Simulation time = 2121546 ms
+>>Simulation Ended
+540827
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70765
+merged with uber edges length = 70765
+uber avg = 24.113367065219652
+microsim avg = 24.143429734530322
+average uber / microsim ratio = 1.07673116561612
+diff mean = 0.030062669310670156
+RMSE = 10.792681100301555
+diff vector = [0.0944373523113027, 0.030062669310670156]
+5.933796341073293 3.227074432935926 1.4676474142404934 2.531598486800477
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 18279 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3272, free = 4845 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 42.08 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 42.94 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 43.54 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 42.17 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 41.39 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 41.01 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5526007808.0 Avg 14.08 min Avg CO 227.33
+Simulation time = 2122972 ms
+>>Simulation Ended
+540827
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70772
+merged with uber edges length = 70772
+uber avg = 24.112723823267235
+microsim avg = 24.068152646256117
+average uber / microsim ratio = 1.0904774056558535
+diff mean = 0.044571177011117034
+RMSE = 10.756777207075816
+diff vector = [0.0944373523113027, 0.030062669310670156, 0.044571177011117034]
+5.891589008134073 2.355195076701979 2.219506578356693 1.6187167677129115
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 18897 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3304, free = 4812 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 42.74 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 43.51 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 43.24 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 41.82 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 41.03 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 40.82 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5427544064.0 Avg 13.83 min Avg CO 221.94
+Simulation time = 2128095 ms
+>>Simulation Ended
+540827
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70760
+merged with uber edges length = 70760
+uber avg = 24.11366312641366
+microsim avg = 24.190702777803445
+average uber / microsim ratio = 1.0757108259213752
+diff mean = 0.07703965138978607
+RMSE = 10.772085096780167
+diff vector = [0.0944373523113027, 0.030062669310670156, 0.044571177011117034, 0.07703965138978607]
+6.755694957479926 3.307037130425951 2.435438645291964 2.6088947099498228
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 18392 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3272, free = 4845 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 42.77 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 43.60 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 43.22 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 41.78 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 41.03 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 40.62 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5558006784.0 Avg 14.16 min Avg CO 230.23
+Simulation time = 2126749 ms
+>>Simulation Ended
+540827
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70772
+merged with uber edges length = 70772
+uber avg = 24.113885756894472
+microsim avg = 24.025580049736256
+average uber / microsim ratio = 1.08264230070987
+diff mean = 0.08830570715821644
+RMSE = 10.790502437572293
+diff vector = [0.0944373523113027, 0.030062669310670156, 0.044571177011117034, 0.07703965138978607, 0.08830570715821644]
+ITERATION #4
+
+a_b_T_s_0_vec = [(6.766614529365146, 4.494375859699471, 0.5301542535968946, 1.0549445325455717), (6.644203719938202, 3.5133405050831135, 1.504816062295282, 2.353455927105493), (5.738397256924749, 4.512004933388367, -0.026516525204557828, 2.272488792825456), (6.320836533649379, 4.110531241850105, 0.11459218558374396, 2.8469723413858805), (7.250875650413988, 4.500558015120484, -0.03940657605174547, 1.0234463385520571)]
+6.766614529365146 4.494375859699471 0.5301542535968946 1.0549445325455717
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 19545 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3272, free = 4844 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 42.78 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 43.58 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 43.17 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 41.72 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 41.16 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 40.76 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5425040384.0 Avg 13.83 min Avg CO 223.04
+Simulation time = 2128704 ms
+>>Simulation Ended
+540827
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70777
+merged with uber edges length = 70777
+uber avg = 24.11504683908321
+microsim avg = 24.228807944717808
+average uber / microsim ratio = 1.0725416522270006
+diff mean = 0.11376110563459699
+RMSE = 10.858213598825987
+diff vector = [0.11376110563459699]
+6.644203719938202 3.5133405050831135 1.504816062295282 2.353455927105493
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 18508 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3272, free = 4845 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 42.48 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 43.34 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 44.08 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 42.64 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 41.92 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 41.52 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5522502144.0 Avg 14.07 min Avg CO 227.55
+Simulation time = 2146694 ms
+>>Simulation Ended
+540827
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70775
+merged with uber edges length = 70775
+uber avg = 24.115099149972675
+microsim avg = 24.06964723570574
+average uber / microsim ratio = 1.0811076025979907
+diff mean = 0.045451914266939036
+RMSE = 10.794720301830564
+diff vector = [0.11376110563459699, 0.045451914266939036]
+5.738397256924749 4.512004933388367 -0.026516525204557828 2.272488792825456
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 18251 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3272, free = 4844 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 42.48 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 43.34 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 42.95 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 41.54 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 40.83 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 40.42 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5488772608.0 Avg 13.99 min Avg CO 224.75
+Simulation time = 2114759 ms
+>>Simulation Ended
+540827
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70773
+merged with uber edges length = 70773
+uber avg = 24.11348229488622
+microsim avg = 24.11058863199247
+average uber / microsim ratio = 1.087833942379362
+diff mean = 0.002893662893754008
+RMSE = 10.756200986255312
+diff vector = [0.11376110563459699, 0.045451914266939036, 0.002893662893754008]
+6.320836533649379 4.110531241850105 0.11459218558374396 2.8469723413858805
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 18416 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3272, free = 4845 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 43.99 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 44.86 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 44.46 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 43.03 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 42.27 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 41.85 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5562237952.0 Avg 14.18 min Avg CO 230.31
+Simulation time = 2189319 ms
+>>Simulation Ended
+540827
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70770
+merged with uber edges length = 70770
+uber avg = 24.11458093880622
+microsim avg = 24.017974864751018
+average uber / microsim ratio = 1.0829644896700388
+diff mean = 0.09660607405520319
+RMSE = 10.773973270156404
+diff vector = [0.11376110563459699, 0.045451914266939036, 0.002893662893754008, 0.09660607405520319]
+7.250875650413988 4.500558015120484 -0.03940657605174547 1.0234463385520571
+berkeley_2018/new_full_network/edges.csv as edges file
+berkeley_2018/new_full_network/nodes.csv as nodes file
+berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
+# of edges: 540827
+# of vertices: 223328
+# of OD pairs = 3269834
+Loading berkeley_2018/new_full_network/all_paths.txt as paths file
+# of paths = 208610870
+Shortest path time = 18387 ms 
+loadB18TrafficPeople: People 3269834
+  >> createLaneMap
+Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
+Total Memory 1284503552
+Start intersection info
+Wrote edge vertices files!
+trafficPersonVec size = 3269834
+indexPathVec size = 208610870
+edgesData size = 627199
+laneMap size = 1284503552
+intersections size = 223328
+<<b18InitCUDA
+GPU memory usage: used = 3272, free = 4845 MB, total = 8116 MB
+First time_departure 18000.000000
+Running main loop from 5 to 12 with 3269834 person...
+Current time: 6.00 (14.28%) with 0.00 ms per simulation step (average over 1800)Current time: 7.00 (28.57%) with 43.52 ms per simulation step (average over 1800)Current time: 8.00 (42.86%) with 44.38 ms per simulation step (average over 1800)Current time: 9.00 (57.14%) with 43.93 ms per simulation step (average over 1800)Current time: 10.00 (71.43%) with 42.56 ms per simulation step (average over 1800)Current time: 11.00 (85.71%) with 41.83 ms per simulation step (average over 1800)Current time: 12.00 (100.00%) with 41.49 ms per simulation step (average over 1800)Total # iterations = 50400
+Total num steps 5443435008.0 Avg 13.87 min Avg CO 224.68
+Simulation time = 2166260 ms
+>>Simulation Ended
+540827
+number of trips from 5 to 12 = 1622954 in actual Uber data
+number of trips from 5 to 12 = 70780
+merged with uber edges length = 70780
+uber avg = 24.114106923986895
+microsim avg = 24.191653209736046
+average uber / microsim ratio = 1.0752301360804204
+diff mean = 0.07754628574914943
+RMSE = 10.879437943882616
+diff vector = [0.11376110563459699, 0.045451914266939036, 0.002893662893754008, 0.09660607405520319, 0.07754628574914943]
+Found the best model parameters a, b, and T!
+a = 5.738397256924749, b = 4.512004933388367, T = -0.026516525204557828, s_0 = 2.272488792825456
