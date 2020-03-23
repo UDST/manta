@@ -436,7 +436,7 @@ def gradient_descent(epsilon=0.02):
 
         if abs(min_diff) < epsilon:
             flag = False
-            print("Found the best model parameters a, b, and T!")
+            print("Found the best model parameters a, b, T, and s_0!")
             print("a = {}, b = {}, T = {}, s_0 = {}".format(a_b_T_s_0_vec[min_index][0], a_b_T_s_0_vec[min_index][1], a_b_T_s_0_vec[min_index][2], a_b_T_s_0_vec[min_index][3]))
             return a_b_T_s_0_vec[min_index][0], a_b_T_s_0_vec[min_index][1], a_b_T_s_0_vec[min_index][2], a_b_T_s_0_vec[min_index][3]
         iteration += 1
