@@ -75,6 +75,8 @@ void B18CommandLineVersion::runB18Simulation() {
 	  int mpi_rank = 0;
 	  int mpi_size = 1;
 	  //auto start = high_resolution_clock::now();
+      QTime timer_shortest_path;
+      timer_shortest_path.start();
       if (usePrevPaths) {
             // open file    
             //std::ifstream inputFile("./all_paths_incl_zeros.txt");
@@ -213,9 +215,10 @@ void B18CommandLineVersion::runB18Simulation() {
 
 	  //auto stop = high_resolution_clock::now();
 	  //auto duration = duration_cast<milliseconds>(stop - start);
-	  //std::cout << "# of paths = " << all_paths.size() << "\n";
+	  std::cout << "# of paths = " << all_paths.size() << "\n";
 	  
       //std::cout << "Shortest path time = " << duration.count() << " ms \n";
+      printf("[TIME] Shortest path = %d ms\n", timer_shortest_path.elapsed());
 
 	  //create a set of people for simulation (trafficPersonVec)
 	  b18TrafficSimulator.createB2018PeopleSP(startDemandH, endDemandH, limitNumPeople, addRandomPeople, street_graph, a, b, T);
