@@ -42,7 +42,7 @@ class B18TrafficLaneMap {
       std::vector<B18EdgeData> &edgesData, std::vector<B18IntersectionData> &intersections,
       std::vector<uchar> &trafficLights, 
       std::map<uint, std::shared_ptr<abm::Graph::Edge>> &laneMapNumToEdgeDesc,
-      std::map<std::shared_ptr<abm::Graph::Edge>, uint> &edgeDescToLaneMapNum);
+      tsl::robin_map<std::shared_ptr<abm::Graph::Edge>, uint> &edgeDescToLaneMapNum);
 
   void resetIntersections(std::vector<B18IntersectionData> &intersections,
                           std::vector<uchar> &trafficLights);
