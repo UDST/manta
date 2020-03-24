@@ -44,7 +44,7 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
       std::vector<B18EdgeData> &edgesData, std::vector<B18IntersectionData> &intersections,
       std::vector<uchar> &trafficLights, 
       std::map<uint, std::shared_ptr<abm::Graph::Edge>> &laneMapNumToEdgeDescSP,
-      std::map<std::shared_ptr<abm::Graph::Edge>, uint> &edgeDescToLaneMapNumSP) {
+      tsl::robin_map<std::shared_ptr<abm::Graph::Edge>, uint> &edgeDescToLaneMapNumSP) {
 	/* FOR DATA ACCESS SANITY
 	for (auto const& x : graph_->edges_) {
 		//std::cout << "vertex = " << std::get<1>(std::get<0>(x)) << "\n"; //gets the second vertex value of edge

@@ -145,6 +145,9 @@ class Graph {
   // Edges - vertices to edge pointer
   std::map<std::tuple<graph::vertex_t, graph::vertex_t>, std::shared_ptr<Edge>>
       edges_;
+  //tsl::robin_map<std::tuple<graph::vertex_t, graph::vertex_t>, std::shared_ptr<Edge>>
+ //     edges_;
+
   // Edges - edge pointer to vertices
   std::map<std::shared_ptr<Edge>, std::tuple<graph::vertex_t, graph::vertex_t>>
       edge_pointer_to_vertices_;
@@ -168,7 +171,10 @@ class Graph {
   //person to their initial edge
   std::map<graph::vertex_t, graph::vertex_t> person_to_init_edge_;
 
-  std::map<graph::vertex_t, std::tuple<graph::vertex_t, graph::vertex_t>>
+  //std::map<graph::vertex_t, std::tuple<graph::vertex_t, graph::vertex_t>>
+  //    edge_ids_to_vertices;
+
+  tsl::robin_map<graph::vertex_t, std::tuple<graph::vertex_t, graph::vertex_t>>
       edge_ids_to_vertices;
   // Vertices and counts
   tsl::robin_map<graph::vertex_t, graph::weight_t> edge_costs_;
