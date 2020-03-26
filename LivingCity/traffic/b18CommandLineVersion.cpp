@@ -42,7 +42,8 @@ void B18CommandLineVersion::runB18Simulation() {
   const float a = settings.value("A", .8).toFloat();
   const float b = settings.value("B", .8).toFloat();
   const float T = settings.value("T", 1.5).toFloat();
-  const float s_0 = settings.value("s_0", 7.0).toFloat();
+  //const float s_0 = settings.value("s_0", 7.0).toFloat();
+  const float s_0 = 1.9108366323843835;
 
   //const float deltaTime = 0.5f; //Time step of .5 seconds
   //const float startDemandH = 5.00f; //Start time for the simulation (hour)

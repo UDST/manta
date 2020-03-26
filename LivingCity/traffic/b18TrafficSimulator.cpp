@@ -300,7 +300,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       if (count % iter_printout != 0) {
         b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
                              intersections.size(), deltaTime, s_0);
-        b18GetDataCUDA(trafficPersonVec, edgesData);
+        //b18GetDataCUDA(trafficPersonVec, edgesData);
       } else {
         QTime timer_simulate_in_gpu;
         timer_simulate_in_gpu.start();
@@ -314,6 +314,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       }
         
       if (count % iter_printout == 0) {
+            QTime timer_process_and_save_edge_speeds;
+            timer_process_and_save_edge_speeds.start();
             //get the average values from edgesData structure
             /*
             for (int x = 0; x < edgesData.size(); x++) {
@@ -323,6 +325,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
             */
 
             //int tNumMapWidth = 0;
+            QTime timer_process_edge_speeds;
+            timer_process_edge_speeds.start();
             int index = 0;
             std::vector<float> avg_edge_vel(graph_->edges_.size());
             for (auto const& x : graph_->edges_) {
@@ -335,6 +339,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
                 //avg_edge_vel[index] = ((edgesData[ind].curr_iter_cum_vel / edgesData[ind].curr_iter_num_cars) / count) * 2.23694;
                 index++;
             }
+            printf("[TIME] Process edge speeds for loop = %d ms\n", timer_process_edge_speeds.elapsed());
                 
             /*
             int counter = 0;
@@ -372,6 +377,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
             iter_printout_index++;
 
             timerLoop.restart();
+            printf("[TIME] Process and save edge speeds total = %d ms\n", timer_process_and_save_edge_speeds.elapsed());
       }
 #ifdef B18_RUN_WITH_GUI
 

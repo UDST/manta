@@ -8,9 +8,6 @@
 #include "b18EdgeData.h"
 #include <vector>
 #include <iostream>
-#include <boost/random.hpp>
-#include <boost/random/normal_distribution.hpp>
-#include <boost/math/distributions/non_central_t.hpp>
 
 #include "../../src/benchmarker.h"
 
@@ -459,11 +456,6 @@ __device__ void calculateLaneCarShouldBe(
 
 
 
-uint32_t FloatToUint(float n)
-{
-   return (uint32_t)(*(uint32_t*)&n);
-}
-
  // Kernel that executes on the CUDA device
 __global__ void kernel_trafficSimulation(
    int numPeople,
@@ -722,8 +714,7 @@ __global__ void kernel_trafficSimulation(
          }
        }
      }
-     */
-     
+    */ 
     // NEXT LINE
     // e) MOVING ALONG IN THE NEXT EDGE
      if (found == false && numCellsCheck > 0) { //check if in next line
@@ -758,12 +749,49 @@ __global__ void kernel_trafficSimulation(
 
         //randomize a vehicle's personal speed limit based on the posted speed limit (adjusting for different drivers' behaviors) of its current edge (do it only once as the vehicle enters the edge)
         if (trafficPersonVec[p].maxSpeedMperSec == edgesData[indexPathVec[trafficPersonVec[p].indexPathCurr]].maxSpeedMperSec) {
+                if (p == 13) {
+                    printf("old speed limit [%d] = %f\n", p, edgesData[indexPathVec[trafficPersonVec[p].indexPathCurr]].maxSpeedMperSec);
+                }
                 curandState state;
                 //curand_init(1234, p, 0, &state) ;
                 curand_init(WangHash(trafficPersonVec[p].increment++) + p, 0, 0, &state) ;
                 float new_speed = curand_normal(&state);
-                trafficPersonVec[p].maxSpeedMperSec = 2.0*new_speed + edgesData[indexPathVec[trafficPersonVec[p].indexPathCurr]].maxSpeedMperSec;
-                //printf("new immediate speed limit [%d] = %f\n", p, trafficPersonVec[p].maxSpeedMperSec);
+                
+                float max_speed = edgesData[indexPathVec[trafficPersonVec[p].indexPathCurr]].maxSpeedMperSec;
+                //float new_max_speed;
+                float new_max_speed = max_speed;
+                float uber_std;
+
+                    if ((max_speed > 8) & (max_speed < 9)) {
+                        //new_max_speed = 9.37;
+                        uber_std = 2.98;
+                    } else if ((max_speed > 11) & (max_speed < 12)) {
+                        //new_max_speed = 11.06;
+                        uber_std = 3.63;
+                    } else if ((max_speed > 13) & (max_speed < 14)) {
+                        //new_max_speed = 12.19;
+                        uber_std = 3.72;
+                    } else if ((max_speed > 15) & (max_speed < 16)) {
+                        //new_max_speed = 13.21;
+                        uber_std = 3.10;
+                    } else if ((max_speed > 17) & (max_speed < 18)) {
+                        //new_max_speed = 13.96;
+                        uber_std = 3.50;
+                    } else if ((max_speed > 20) & (max_speed < 21)) {
+                        //new_max_speed = 13.92;
+                        uber_std = 4.42;
+                    } else if ((max_speed > 22) & (max_speed < 23)) {
+                        //new_max_speed = 15.09;
+                        uber_std = 5.82;
+                    } else if ((max_speed > 29) & (max_speed < 30)) {
+                        //new_max_speed = 26.94;
+                        uber_std = 4.65;
+                    }
+                //trafficPersonVec[p].maxSpeedMperSec = 2.0*new_speed + edgesData[indexPathVec[trafficPersonVec[p].indexPathCurr]].maxSpeedMperSec;
+                trafficPersonVec[p].maxSpeedMperSec = 2.0*uber_std*new_speed + new_max_speed;
+                if (p == 13) {
+                    printf("new immediate speed limit [%d] = %f\n", p, trafficPersonVec[p].maxSpeedMperSec);
+                }
         }
 
 
