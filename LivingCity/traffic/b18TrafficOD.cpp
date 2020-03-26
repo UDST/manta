@@ -151,9 +151,12 @@ void B18TrafficOD::randomPersonSP(int p, B18TrafficPerson &person,
   //person.a = 6.0f + ((float) qrand()) / RAND_MAX; //acceleration 1-2m/s2
   //person.b = 7.0f + ((float) qrand()) / RAND_MAX; //break 1-2m/s2
   //person.T = 2.0f * (((float) qrand()) / RAND_MAX); //time heading 0.8-2s
-  person.a = a;
-  person.b = b;
-  person.T = T;
+  //person.a = a;
+  //person.b = b;
+  //person.T = T;
+  person.a = 6.377269699846975;
+  person.b = 3.590473364266212;
+  person.T = 0.8881429791688249;
   //printf("a = %f, b = %f, T = %f\n", person.a, person.b, person.T);
   person.v = 0;
   person.num_steps = 0;
