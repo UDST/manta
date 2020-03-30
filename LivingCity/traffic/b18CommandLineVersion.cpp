@@ -59,13 +59,9 @@ void B18CommandLineVersion::runB18Simulation() {
 
   ClientGeometry cg;
   B18TrafficSimulator b18TrafficSimulator(deltaTime, &cg.roadGraph);
-  //auto all_paths = std::vector<abm::graph::vertex_t>;
   std::vector<abm::graph::vertex_t> all_paths;
   std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_;
   std::vector<float> dep_times_;
-
-  //std::vector<std::array<abm::graph::vertex_t, 2>> filtered_od_pairs_;
-  //std::vector<float> filtered_dep_times_;
 
   const bool directed = true;
   auto street_graph = std::make_shared<abm::Graph>(directed);
@@ -75,9 +71,9 @@ void B18CommandLineVersion::runB18Simulation() {
 	  all_od_pairs_ = B18TrafficSP::read_od_pairs(odFileName, std::numeric_limits<int>::max());
 	  dep_times_ = B18TrafficSP::read_dep_times(odFileName);
 
-      std::cout << "first pair second vertex = " << all_od_pairs_[0][2] << "\n";
-      std::cout << "first dep time = " << dep_times_[0] << "\n";
-	  printf("# of OD pairs = %d\n", all_od_pairs_.size());
+      //std::cout << "first pair second vertex = " << all_od_pairs_[0][2] << "\n";
+      //std::cout << "first dep time = " << dep_times_[0] << "\n";
+	  //printf("# of OD pairs = %d\n", all_od_pairs_.size());
 
 	  //compute the routes for every OD pair
 	  int mpi_rank = 0;
@@ -85,78 +81,6 @@ void B18CommandLineVersion::runB18Simulation() {
 	  //auto start = high_resolution_clock::now();
       QTime timer_shortest_path;
       timer_shortest_path.start();
-      /*
-      if (usePrevPaths) {
-            // open file    
-            //std::ifstream inputFile("./all_paths_incl_zeros.txt");
-            const std::string& pathsFileName = networkPathSP + "all_paths.txt";
-            std::cout << "Loading " << pathsFileName << " as paths file\n";
-            //std::ifstream inputFile("./all_paths.txt");
-            std::ifstream inputFile(pathsFileName);
-            // test file open   
-            if (inputFile) {        
-                abm::graph::vertex_t value;
-                // read the elements in the file into a vector  
-                while (inputFile >> value) {
-                    all_paths.push_back(value);
-                    }
-            }
-      } else {
-	    all_paths = B18TrafficSP::compute_routes(mpi_rank, mpi_size, street_graph, all_od_pairs_);
-        //write paths to file so that we can just load them instead
-        const std::string& pathsFileName = networkPathSP + "all_paths.txt";
-        std::cout << "Save " << pathsFileName << " as paths file\n";
-        std::ofstream output_file(pathsFileName);
-        std::ostream_iterator<abm::graph::vertex_t> output_iterator(output_file, "\n");
-        std::copy(all_paths.begin(), all_paths.end(), output_iterator);
-      }
-      */
-
-
-    //map person to their initial edge
-    /*
-	for (int i = 0; i < all_paths.size(); i++) {
-        if ((all_paths[i] == -1) && (i == 0)) {
-            street_graph->person_to_init_edge_[count] = -1;
-            count++;
-		} else if ((all_paths[i] == -1) && (all_paths[i+1] == -1)) {
-            street_graph->person_to_init_edge_[count] = -1;
-            count++;
-        } else if ((all_paths[i] != -1) && (all_paths[i-1] == -1)) {
-            street_graph->person_to_init_edge_[count] = all_paths[i];
-            count++;
-        } else if ((all_paths[i] == -1) && (i == (all_paths.size() - 1))) {
-            break;
-        }
-	}
-    */
-
-    /*
-    int count = 0;
-	for (int i = 0; i < all_paths.size(); i++) {
-        if ((all_paths[i] == -1) && (i == 0)) {
-            street_graph->person_to_init_edge_[count] = i;
-            count++;
-		} else if ((all_paths[i] == -1) && (all_paths[i+1] == -1)) {
-            street_graph->person_to_init_edge_[count] = i;
-            count++;
-        } else if ((all_paths[i] != -1) && (all_paths[i-1] == -1)) {
-            street_graph->person_to_init_edge_[count] = i;
-            count++;
-        } else if ((all_paths[i] == -1) && (i == (all_paths.size() - 1))) {
-            break;
-        }
-	}
-    //std::cout << "person_to_init_edge size " << street_graph->person_to_init_edge_.size() << "\n";
-    */
-      
-
-	  //auto stop = high_resolution_clock::now();
-	  //auto duration = duration_cast<milliseconds>(stop - start);
-	  //std::cout << "# of paths = " << all_paths.size() << "\n";
-	  
-      //std::cout << "Shortest path time = " << duration.count() << " ms \n";
-      //printf("[TIME] Shortest path = %d ms\n", timer_shortest_path.elapsed());
 
 	  //create a set of people for simulation (trafficPersonVec)
 	  b18TrafficSimulator.createB2018PeopleSP(startDemandH, endDemandH, limitNumPeople, addRandomPeople, street_graph, a, b, T, all_od_pairs_);
