@@ -212,53 +212,58 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       << std::endl;
 	int mpi_rank = 0;
 	int mpi_size = 1;
+    bool fistInitialization = true;
+    float end_time;
+    float newEndTimeH;
+    std::vector<abm::graph::vertex_t> paths_subset;
     while (currentTime < endTime) {
 
-      float end_time = (float) count_iters + iter_printout;
-      /* When beginning the simulation (first hour) */
+        /* When beginning the simulation (first hour) */
+        if (currentTime == startTime) {
+              end_time = (float) count_iters + iter_printout;
+              newEndTimeH = startTimeH + (end_time * deltaTime) / 3600;
 
-      //filter the next set of od pair/departures in the next hour
-      B18TrafficSP::filter_od_pairs(all_od_pairs, dep_times, startTimeH, deltaTime, end_time, filtered_od_pairs_, filtered_dep_times_, true);
+              //filter the next set of od pair/departures in the next hour
+              B18TrafficSP::filter_od_pairs(all_od_pairs, dep_times, startTimeH, newEndTimeH, filtered_od_pairs_, filtered_dep_times_);
 
-      //compute the new routes of the filtered OD pairs
-      std::vector<abm::graph::vertex_t> paths_subset;
-	  paths_subset = B18TrafficSP::compute_routes(mpi_rank, mpi_size, graph_, filtered_od_pairs_);
+              //compute the new routes of the filtered OD pairs
+              paths_subset = B18TrafficSP::compute_routes(mpi_rank, mpi_size, graph_, filtered_od_pairs_);
 
-      int count = 0;
-	  for (int i = 0; i < paths_subset.size(); i++) {
-          if ((paths_subset[i] == -1) && (i == 0)) {
-            graph_->person_to_init_edge_[count] = i;
-            count++;
-		  } else if ((paths_subset[i] == -1) && (paths_subset[i+1] == -1)) {
-            graph_->person_to_init_edge_[count] = i;
-            count++;
-          } else if ((paths_subset[i] != -1) && (paths_subset[i-1] == -1)) {
-            graph_->person_to_init_edge_[count] = i;
-            count++;
-          } else if ((paths_subset[i] == -1) && (i == (paths_subset.size() - 1))) {
-            break;
-          }
-	  }
+              int count = 0;
+              for (int i = 0; i < paths_subset.size(); i++) {
+                  if ((paths_subset[i] == -1) && (i == 0)) {
+                    graph_->person_to_init_edge_[count] = i;
+                    count++;
+                  } else if ((paths_subset[i] == -1) && (paths_subset[i+1] == -1)) {
+                    graph_->person_to_init_edge_[count] = i;
+                    count++;
+                  } else if ((paths_subset[i] != -1) && (paths_subset[i-1] == -1)) {
+                    graph_->person_to_init_edge_[count] = i;
+                    count++;
+                  } else if ((paths_subset[i] == -1) && (i == (paths_subset.size() - 1))) {
+                    break;
+                  }
+              }
 
-      //fill indexPathVec again
-	  B18TrafficSP::convertVector(paths_subset, indexPathVec, edgeDescToLaneMapNumSP, graph_);
+              //fill indexPathVec again
+              B18TrafficSP::convertVector(paths_subset, indexPathVec, edgeDescToLaneMapNumSP, graph_);
 
-      // Init Cuda
-      //initCudaBench.startMeasuring();
-      QTime timer_init_cuda;
-      timer_init_cuda.start();
-      bool fistInitialization = true;
-      b18InitCUDA(fistInitialization, trafficPersonVec,
-                  indexPathVec, edgesData, laneMap, trafficLights, intersections, startTimeH, endTimeH, 
-                  accSpeedPerLinePerTimeInterval, 
-                  numVehPerLinePerTimeInterval, deltaTime);
-      printf("[TIME] Init cuda = %d ms\n", timer_init_cuda.elapsed());
-        
-      //simulate again
-      b18SimulateTrafficCUDA(currentTime, filtered_od_pairs_.size(), intersections.size(), deltaTime, s_0);
+              // Init Cuda
+              //initCudaBench.startMeasuring();
+              QTime timer_init_cuda;
+              timer_init_cuda.start();
+              b18InitCUDA(fistInitialization, trafficPersonVec,
+                          indexPathVec, edgesData, laneMap, trafficLights, intersections, startTimeH, endTimeH, 
+                          accSpeedPerLinePerTimeInterval, 
+                          numVehPerLinePerTimeInterval, deltaTime);
+              printf("[TIME] Init cuda = %d ms\n", timer_init_cuda.elapsed());
+
+              //simulate again
+              b18SimulateTrafficCUDA(currentTime, filtered_od_pairs_.size(), intersections.size(), deltaTime, s_0);
+        }
 
       /* For the next hours */
-      if (count % iter_printout == 0) {
+      if (count_iters % iter_printout == 0) {
         std::cerr << std::fixed << std::setprecision(2) 
           << "Current time: " << (currentTime / 3600.0f)
           << " (" << (100.0f - (100.0f * (endTime - currentTime) / (endTime - startTime))) << "%)"
@@ -287,12 +292,15 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         printf("[TIME] Process edge speeds for loop = %d ms\n", timer_process_edge_speeds.elapsed());
 
         //filter the next set of od pair/departures in the next hour
-        B18TrafficSP::filter_od_pairs(all_od_pairs, dep_times, count_iters, deltaTime, end_time, filtered_od_pairs_, filtered_dep_times_, false);
+        float startTime = (count_iters * deltaTime) / 3600;
+        end_time = (float) count_iters + iter_printout;
+        newEndTimeH = startTime + (end_time * deltaTime) / 3600;
+        B18TrafficSP::filter_od_pairs(all_od_pairs, dep_times, count_iters, newEndTimeH, filtered_od_pairs_, filtered_dep_times_);
 
         //compute the new routes of the filtered OD pairs
 	    paths_subset = B18TrafficSP::compute_routes(mpi_rank, mpi_size, graph_, filtered_od_pairs_);
 
-      count = 0;
+      int count = 0;
 	  for (int i = 0; i < paths_subset.size(); i++) {
           if ((paths_subset[i] == -1) && (i == 0)) {
             graph_->person_to_init_edge_[count] = i;
@@ -311,6 +319,16 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         //fill indexPathVec again
 	    B18TrafficSP::convertVector(paths_subset, indexPathVec, edgeDescToLaneMapNumSP, graph_);
 
+        // Init Cuda
+        //initCudaBench.startMeasuring();
+        QTime timer_init_cuda;
+        timer_init_cuda.start();
+        b18InitCUDA(fistInitialization, trafficPersonVec,
+                  indexPathVec, edgesData, laneMap, trafficLights, intersections, startTimeH, endTimeH, 
+                  accSpeedPerLinePerTimeInterval, 
+                  numVehPerLinePerTimeInterval, deltaTime);
+        printf("[TIME] Init cuda = %d ms\n", timer_init_cuda.elapsed());
+
         //simulate again
         b18SimulateTrafficCUDA(currentTime, filtered_od_pairs_.size(), intersections.size(), deltaTime, s_0);
 
@@ -328,7 +346,9 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 
         timerLoop.restart();
         printf("[TIME] Process and save edge speeds total = %d ms\n", timer_process_and_save_edge_speeds.elapsed());
-      }
+      } else {
+            b18SimulateTrafficCUDA(currentTime, filtered_od_pairs_.size(), intersections.size(), deltaTime, s_0);
+        }
 
 
       //std::cout << "Current Time " << currentTime << "\n";

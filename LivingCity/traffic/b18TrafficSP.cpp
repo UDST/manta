@@ -128,18 +128,12 @@ std::vector<float> B18TrafficSP::read_dep_times(const std::string& filename) {
 }
 
 
-void B18TrafficSP::filter_od_pairs(std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs, std::vector<float> dep_times, float start_time, float deltaTime, float end_time, std::vector<std::array<abm::graph::vertex_t, 2>> &filtered_od_pairs_, std::vector<float> &filtered_dep_times_, bool start) {
-    if (start == false) {
-        float start_time = (start_time * deltaTime) / 3600;
-    }
-
-    float end_time_to_hr = start_time + ( end_time * deltaTime ) / 3600;
-    printf("startTime = %f, endTime = %f\n", start_time, end_time_to_hr);
+void B18TrafficSP::filter_od_pairs(std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs, std::vector<float> dep_times, float start_time, float end_time, std::vector<std::array<abm::graph::vertex_t, 2>> &filtered_od_pairs_, std::vector<float> &filtered_dep_times_) {
 
     int filt_size = 0;
     for (int x; x < od_pairs.size(); x++) {
-        if ((dep_times[x] >= start_time) && (dep_times[x] < end_time_to_hr)) {
-            printf("dep time = %f\n", dep_times[x]);
+        if ((dep_times[x] >= start_time) && (dep_times[x] < end_time)) {
+            //printf("dep time = %f\n", dep_times[x]);
             std::array<abm::graph::vertex_t, 2> od = {od_pairs[x][0], od_pairs[x][1]};
             filtered_od_pairs_.emplace_back(od);
             filtered_dep_times_.emplace_back(dep_times[x]);

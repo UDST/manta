@@ -47,12 +47,9 @@ class B18TrafficSP {
   static std::vector<float> read_dep_times(const std::string& filename);
 
 
-  //static void convertVector(std::vector<abm::graph::vertex_t> paths_SP, std::vector<uint>& indexPathVec, std::map<std::shared_ptr<abm::Graph::Edge>, uint> &edgeDescToLaneMapNumSP, const std::shared_ptr<abm::Graph>& graph_);
   static void convertVector(std::vector<abm::graph::vertex_t> paths_SP, std::vector<uint>& indexPathVec, tsl::robin_map<std::shared_ptr<abm::Graph::Edge>, uint> &edgeDescToLaneMapNumSP, const std::shared_ptr<abm::Graph>& graph_);
 
-  //static std::vector<std::array<abm::graph::vertex_t, 2>> filter_od_pairs(std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs, float startTimeSim, float deltaTime, float end_time);
-
-  static void filter_od_pairs(std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs, std::vector<float> dep_times, float start_time, float deltaTime, float end_time, std::vector<std::array<abm::graph::vertex_t, 2>> &filtered_od_pairs_, std::vector<float> &filtered_dep_times_, bool start);
+  static void filter_od_pairs(std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs, std::vector<float> dep_times, float start_time, float end_time, std::vector<std::array<abm::graph::vertex_t, 2>> &filtered_od_pairs_, std::vector<float> &filtered_dep_times_);
 
 
   explicit B18TrafficSP(const std::shared_ptr<abm::Graph>& graph) : graph_{graph} {};
