@@ -115,7 +115,7 @@ void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
 // GPU
 //////////////////////////////////////////////////
 void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
-    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_, std::vector<abm::graph::vertex_t> paths_SP, bool saveFiles, float s_0, std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs, std::vector<float> dep_times, std::vector<std::array<abm::graph::vertex_t, 2>> filtered_od_pairs, std::vector<float> filtered_dep_times) {
+    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_, std::vector<abm::graph::vertex_t> paths_SP, bool saveFiles, float s_0, std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs, std::vector<float> dep_times) {
   Benchmarker laneMapBench("Lane map", 2);
   Benchmarker passesBench("Simulation passes", 2);
   Benchmarker finishCudaBench("Cuda finish", 2);
@@ -295,13 +295,11 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       /* When beginning the simulation (first hour) */
 
       //filter the next set of od pair/departures in the next hour
-      B18TrafficSP::filter_od_pairs(all_od_pairs, dep_times, startTimeH, deltaTime, end_time, filtered_od_pairs, filtered_dep_times);
-
-      std::cout << "HELLO " << filtered_od_pairs[0][2] << "\n";
+      B18TrafficSP::filter_od_pairs(all_od_pairs, dep_times, startTimeH, deltaTime, end_time, filtered_od_pairs_, filtered_dep_times_, true);
 
       //compute the new routes of the filtered OD pairs
       std::vector<abm::graph::vertex_t> paths_subset;
-	  paths_subset = B18TrafficSP::compute_routes(mpi_rank, mpi_size, graph_, filtered_od_pairs);
+	  paths_subset = B18TrafficSP::compute_routes(mpi_rank, mpi_size, graph_, filtered_od_pairs_);
 
       int count = 0;
 	  for (int i = 0; i < paths_subset.size(); i++) {
@@ -334,7 +332,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       printf("[TIME] Init cuda = %d ms\n", timer_init_cuda.elapsed());
         
       //simulate again
-      b18SimulateTrafficCUDA(currentTime, filtered_od_pairs.size(), intersections.size(), deltaTime, s_0);
+      b18SimulateTrafficCUDA(currentTime, filtered_od_pairs_.size(), intersections.size(), deltaTime, s_0);
 
       /* For the next hours */
       if (count % iter_printout == 0) {
@@ -367,10 +365,10 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 
         //filter the next set of od pair/departures in the next hour
         //const auto filtered_od_pairs = B18TrafficSP::filter_od_pairs(all_od_pairs, startTimeH, deltaTime, count_iters);
-        B18TrafficSP::filter_od_pairs(all_od_pairs, dep_times, startTimeH, deltaTime, count_iters, filtered_od_pairs, filtered_dep_times);
+        B18TrafficSP::filter_od_pairs(all_od_pairs, dep_times, count_iters, deltaTime, end_time, filtered_od_pairs_, filtered_dep_times_, false);
 
         //compute the new routes of the filtered OD pairs
-	    paths_subset = B18TrafficSP::compute_routes(mpi_rank, mpi_size, graph_, filtered_od_pairs);
+	    paths_subset = B18TrafficSP::compute_routes(mpi_rank, mpi_size, graph_, filtered_od_pairs_);
 
       count = 0;
 	  for (int i = 0; i < paths_subset.size(); i++) {
@@ -392,7 +390,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 	    B18TrafficSP::convertVector(paths_subset, indexPathVec, edgeDescToLaneMapNumSP, graph_);
 
         //simulate again
-        b18SimulateTrafficCUDA(currentTime, filtered_od_pairs.size(), intersections.size(), deltaTime, s_0);
+        b18SimulateTrafficCUDA(currentTime, filtered_od_pairs_.size(), intersections.size(), deltaTime, s_0);
 
         //save avg_edge_vel vector to file
 

@@ -52,7 +52,7 @@ class B18TrafficSP {
 
   //static std::vector<std::array<abm::graph::vertex_t, 2>> filter_od_pairs(std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs, float startTimeSim, float deltaTime, float end_time);
 
-  static void filter_od_pairs(std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs, std::vector<float> dep_times, float startTimeSim, float deltaTime, float end_time, std::vector<std::array<abm::graph::vertex_t, 2>> filtered_od_pairs_, std::vector<float> filtered_dep_times_);
+  static void filter_od_pairs(std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs, std::vector<float> dep_times, float start_time, float deltaTime, float end_time, std::vector<std::array<abm::graph::vertex_t, 2>> &filtered_od_pairs_, std::vector<float> &filtered_dep_times_, bool start);
 
 
   explicit B18TrafficSP(const std::shared_ptr<abm::Graph>& graph) : graph_{graph} {};

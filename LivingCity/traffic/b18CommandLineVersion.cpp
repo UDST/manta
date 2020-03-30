@@ -64,8 +64,8 @@ void B18CommandLineVersion::runB18Simulation() {
   std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_;
   std::vector<float> dep_times_;
 
-  std::vector<std::array<abm::graph::vertex_t, 2>> filtered_od_pairs_;
-  std::vector<float> filtered_dep_times_;
+  //std::vector<std::array<abm::graph::vertex_t, 2>> filtered_od_pairs_;
+  //std::vector<float> filtered_dep_times_;
 
   const bool directed = true;
   auto street_graph = std::make_shared<abm::Graph>(directed);
@@ -179,7 +179,7 @@ void B18CommandLineVersion::runB18Simulation() {
   } else {
 	  //if useSP, convert all_paths to indexPathVec format and run simulation
     b18TrafficSimulator.simulateInGPU(numOfPasses, startSimulationH, endSimulationH,
-        useJohnsonRouting, useSP, street_graph, all_paths, saveFiles, s_0, all_od_pairs_, dep_times_, filtered_od_pairs_, filtered_dep_times_);
+        useJohnsonRouting, useSP, street_graph, all_paths, saveFiles, s_0, all_od_pairs_, dep_times_);
   }
   simulationBench.stopAndEndBenchmark();
 }
