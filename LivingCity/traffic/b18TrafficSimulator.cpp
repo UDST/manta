@@ -297,7 +297,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       //filter the next set of od pair/departures in the next hour
       B18TrafficSP::filter_od_pairs(all_od_pairs, dep_times, startTimeH, deltaTime, end_time, filtered_od_pairs, filtered_dep_times);
 
-      //std::cout << "HELLO " << filtered_od_pairs[0][2] << "\n";
+      std::cout << "HELLO " << filtered_od_pairs[0][2] << "\n";
 
       //compute the new routes of the filtered OD pairs
       std::vector<abm::graph::vertex_t> paths_subset;

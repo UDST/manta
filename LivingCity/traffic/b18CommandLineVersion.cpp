@@ -75,7 +75,8 @@ void B18CommandLineVersion::runB18Simulation() {
 	  all_od_pairs_ = B18TrafficSP::read_od_pairs(odFileName, std::numeric_limits<int>::max());
 	  dep_times_ = B18TrafficSP::read_dep_times(odFileName);
 
-      std::cout << "first pair time = " << all_od_pairs_[0][2] << "\n";
+      std::cout << "first pair second vertex = " << all_od_pairs_[0][2] << "\n";
+      std::cout << "first dep time = " << dep_times_[0] << "\n";
 	  printf("# of OD pairs = %d\n", all_od_pairs_.size());
 
 	  //compute the routes for every OD pair
