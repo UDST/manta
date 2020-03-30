@@ -37,6 +37,7 @@ struct B18EdgeData {
   float curr_iter_num_cars = 0;
   float curr_iter_cum_vel = 0;
   float curr_cum_vel = 0;
+  float duration;
 };
 
 struct B18IntersectionData {

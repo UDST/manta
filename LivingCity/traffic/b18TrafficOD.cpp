@@ -494,7 +494,7 @@ void B18TrafficOD::loadB18TrafficPeople(
 void B18TrafficOD::loadB18TrafficPeopleSP(
     float startTimeH, float endTimeH,
     std::vector<B18TrafficPerson> &trafficPersonVec, // out
-    const std::shared_ptr<abm::Graph>& graph_, const int limitNumPeople, const bool addRandomPeople, float a, float b, float T) {
+    const std::shared_ptr<abm::Graph>& graph_, const int limitNumPeople, const bool addRandomPeople, float a, float b, float T, std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_) {
 
   trafficPersonVec.clear();
   QTime timer;
@@ -514,6 +514,7 @@ void B18TrafficOD::loadB18TrafficPeopleSP(
   }();
   trafficPersonVec.resize(totalNumPeople);
 
+  /*
   boost::mt19937 rng;
   srand(45321654);
   //boost::math::non_central_t_distribution<> td(v=2.09,delta=7.51);
@@ -521,7 +522,7 @@ void B18TrafficOD::loadB18TrafficPeopleSP(
   boost::normal_distribution<> nd(7.5, 0.75);
   boost::variate_generator<boost::mt19937 &, boost::normal_distribution<> > var(
     rng, nd);
-
+  */
   int numPeople = 0;
   for (int d = 0; (d < RoadGraphB2018::demandB2018.size()) &&
        (numPeople < totalNumPeople); d++) {
@@ -535,7 +536,8 @@ void B18TrafficOD::loadB18TrafficPeopleSP(
       float goToWorkH;
 
       if (gaussianDistribution) {
-        goToWorkH  = var();
+        //goToWorkH  = var();
+        goToWorkH = all_od_pairs_[d][2];
       } else {
         goToWorkH = sampleFileDistribution();
       }

@@ -61,7 +61,7 @@ class B18TrafficOD {
 
   void loadB18TrafficPeopleSP(float startTimeH, float endTimeH,
     std::vector<B18TrafficPerson> &trafficPersonVec, // out
-    const std::shared_ptr<abm::Graph>& graph_, const int limitNumPeople, const bool addRandomPeople, float a, float b, float T);
+    const std::shared_ptr<abm::Graph>& graph_, const int limitNumPeople, const bool addRandomPeople, float a, float b, float T, std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_);
 
   void resetTrafficPersonJob(std::vector<B18TrafficPerson> &trafficPersonVec);
 };

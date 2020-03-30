@@ -69,7 +69,7 @@ void B18TrafficSimulator::createB2018People(float startTime, float endTime, int 
 }
 
 void B18TrafficSimulator::createB2018PeopleSP(float startTime, float endTime, int limitNumPeople,
-    bool addRandomPeople, const std::shared_ptr<abm::Graph>& graph_, float a, float b, float T) {
+    bool addRandomPeople, const std::shared_ptr<abm::Graph>& graph_, float a, float b, float T, std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_) {
     QTime timer_reset_traffic_person;
     timer_reset_traffic_person.start();
   b18TrafficOD.resetTrafficPersonJob(trafficPersonVec);
@@ -78,7 +78,7 @@ void B18TrafficSimulator::createB2018PeopleSP(float startTime, float endTime, in
     QTime timer_load_people;
     timer_load_people.start();
   b18TrafficOD.loadB18TrafficPeopleSP(startTime, endTime, trafficPersonVec,
-      graph_, limitNumPeople, addRandomPeople, a, b, T);
+      graph_, limitNumPeople, addRandomPeople, a, b, T, all_od_pairs_);
     printf("[TIME] Load people = %d ms\n", timer_load_people.elapsed());
 }
 
@@ -115,7 +115,7 @@ void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
 // GPU
 //////////////////////////////////////////////////
 void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
-    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_, std::vector<abm::graph::vertex_t> paths_SP, bool saveFiles, float s_0) {
+    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_, std::vector<abm::graph::vertex_t> paths_SP, bool saveFiles, float s_0, std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs, std::vector<float> dep_times, std::vector<std::array<abm::graph::vertex_t, 2>> filtered_od_pairs, std::vector<float> filtered_dep_times) {
   Benchmarker laneMapBench("Lane map", 2);
   Benchmarker passesBench("Simulation passes", 2);
   Benchmarker finishCudaBench("Cuda finish", 2);
@@ -134,6 +134,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
   QTime pathTimer;
   pathTimer.start();
 
+  /*
   int weigthMode;
   float peoplePathSampling[] = {1.0f, 1.0f, 0.5f, 0.25f, 0.12f, 0.67f};
 
@@ -181,7 +182,16 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     }
 
     roadGenerationBench.stopAndEndBenchmark();
+    */
 
+    //set the indexPathInit of each person in trafficPersonVec to the correct one
+    QTime timer_set_init_to_edge;
+    timer_set_init_to_edge.start();
+      for (int p = 0; p < trafficPersonVec.size(); p++) {
+        trafficPersonVec[p].indexPathInit = graph_->person_to_init_edge_[p];
+        //std::cout << p << " indexPathInit " << trafficPersonVec[p].indexPathInit << "\n";
+      }
+    printf("[TIME] Set init to edge = %d ms\n", timer_set_init_to_edge.elapsed());
 
     
     QTime timer_write_edge_vertices_file;
@@ -214,22 +224,25 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 
     /////////////////////////////////////
     // 1. Init Cuda
-    initCudaBench.startMeasuring();
+    //initCudaBench.startMeasuring();
+    /*
     QTime timer_init_cuda;
     timer_init_cuda.start();
-    bool fistInitialization = (nP == 0);
+    //bool fistInitialization = (nP == 0);
+    bool fistInitialization = true;
     uint count = 0;
     b18InitCUDA(fistInitialization, trafficPersonVec, indexPathVec, edgesData,
         laneMap, trafficLights, intersections, startTimeH, endTimeH,
         accSpeedPerLinePerTimeInterval, numVehPerLinePerTimeInterval, deltaTime);
     printf("[TIME] Init cuda = %d ms\n", timer_init_cuda.elapsed());
+    */
 
     //for (int x = 0; x < 30; x++) {
     //    printf("index %d edgesData length %f\n", x, edgesData[x].length);
     //}
-    initCudaBench.stopAndEndBenchmark();
+    //initCudaBench.stopAndEndBenchmark();
 
-    simulateBench.startMeasuring();
+    //simulateBench.startMeasuring();
     float startTime = startTimeH * 3600.0f; //7.0f
     float endTime = endTimeH * 3600.0f; //8.0f//10.0f
 
@@ -268,21 +281,149 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     int iter_printout = 7200;
     int iter_printout_index = 0;
     int ind = 0;
+    uint count_iters = 0;
     std::cerr
       << "Running main loop from " << (startTime / 3600.0f)
       << " to " << (endTime / 3600.0f)
       << " with " << trafficPersonVec.size() << " person..."
       << std::endl;
+	int mpi_rank = 0;
+	int mpi_size = 1;
     while (currentTime < endTime) {
-      //std::cout << "Current Time " << currentTime << "\n";
-      //std::cout << "count " << count << "\n";
-      count++;
+
+      float end_time = (float) count_iters + iter_printout;
+      /* When beginning the simulation (first hour) */
+
+      //filter the next set of od pair/departures in the next hour
+      B18TrafficSP::filter_od_pairs(all_od_pairs, dep_times, startTimeH, deltaTime, end_time, filtered_od_pairs, filtered_dep_times);
+
+      //std::cout << "HELLO " << filtered_od_pairs[0][2] << "\n";
+
+      //compute the new routes of the filtered OD pairs
+      std::vector<abm::graph::vertex_t> paths_subset;
+	  paths_subset = B18TrafficSP::compute_routes(mpi_rank, mpi_size, graph_, filtered_od_pairs);
+
+      int count = 0;
+	  for (int i = 0; i < paths_subset.size(); i++) {
+          if ((paths_subset[i] == -1) && (i == 0)) {
+            graph_->person_to_init_edge_[count] = i;
+            count++;
+		  } else if ((paths_subset[i] == -1) && (paths_subset[i+1] == -1)) {
+            graph_->person_to_init_edge_[count] = i;
+            count++;
+          } else if ((paths_subset[i] != -1) && (paths_subset[i-1] == -1)) {
+            graph_->person_to_init_edge_[count] = i;
+            count++;
+          } else if ((paths_subset[i] == -1) && (i == (paths_subset.size() - 1))) {
+            break;
+          }
+	  }
+
+      //fill indexPathVec again
+	  B18TrafficSP::convertVector(paths_subset, indexPathVec, edgeDescToLaneMapNumSP, graph_);
+
+      // Init Cuda
+      //initCudaBench.startMeasuring();
+      QTime timer_init_cuda;
+      timer_init_cuda.start();
+      bool fistInitialization = true;
+      b18InitCUDA(fistInitialization, trafficPersonVec,
+                  indexPathVec, edgesData, laneMap, trafficLights, intersections, startTimeH, endTimeH, 
+                  accSpeedPerLinePerTimeInterval, 
+                  numVehPerLinePerTimeInterval, deltaTime);
+      printf("[TIME] Init cuda = %d ms\n", timer_init_cuda.elapsed());
+        
+      //simulate again
+      b18SimulateTrafficCUDA(currentTime, filtered_od_pairs.size(), intersections.size(), deltaTime, s_0);
+
+      /* For the next hours */
       if (count % iter_printout == 0) {
         std::cerr << std::fixed << std::setprecision(2) 
           << "Current time: " << (currentTime / 3600.0f)
           << " (" << (100.0f - (100.0f * (endTime - currentTime) / (endTime - startTime))) << "%)"
           << " with " << (timerLoop.elapsed() / (float) iter_printout) << " ms per simulation step (average over 1800)"
           << "\r";
+
+        //get edge and person data from device
+        b18GetDataCUDA(trafficPersonVec, edgesData);
+
+        //calculate the edge speeds and then convert them to duration and set these in edgesData
+        QTime timer_process_edge_speeds;
+        timer_process_edge_speeds.start();
+        int index = 0;
+        std::vector<float> avg_edge_vel(graph_->edges_.size());
+        for (auto const& x : graph_->edges_) {
+            ind = edgeDescToLaneMapNumSP[x.second];
+
+            //calculate average edge speed and the time spent on edge
+            avg_edge_vel[index] = edgesData[ind].curr_cum_vel / edgesData[ind].curr_iter_num_cars;// * 2.23694;
+            edgesData[ind].duration = edgesData[ind].length / avg_edge_vel[index];
+
+            //update the edge weights in the graph to be the duration now
+            graph_->update_edge(std::get<0>(std::get<0>(x)), std::get<1>(std::get<0>(x)), edgesData[ind].duration);
+            index++;
+        }
+        printf("[TIME] Process edge speeds for loop = %d ms\n", timer_process_edge_speeds.elapsed());
+
+        //filter the next set of od pair/departures in the next hour
+        //const auto filtered_od_pairs = B18TrafficSP::filter_od_pairs(all_od_pairs, startTimeH, deltaTime, count_iters);
+        B18TrafficSP::filter_od_pairs(all_od_pairs, dep_times, startTimeH, deltaTime, count_iters, filtered_od_pairs, filtered_dep_times);
+
+        //compute the new routes of the filtered OD pairs
+	    paths_subset = B18TrafficSP::compute_routes(mpi_rank, mpi_size, graph_, filtered_od_pairs);
+
+      count = 0;
+	  for (int i = 0; i < paths_subset.size(); i++) {
+          if ((paths_subset[i] == -1) && (i == 0)) {
+            graph_->person_to_init_edge_[count] = i;
+            count++;
+		  } else if ((paths_subset[i] == -1) && (paths_subset[i+1] == -1)) {
+            graph_->person_to_init_edge_[count] = i;
+            count++;
+          } else if ((paths_subset[i] != -1) && (paths_subset[i-1] == -1)) {
+            graph_->person_to_init_edge_[count] = i;
+            count++;
+          } else if ((paths_subset[i] == -1) && (i == (paths_subset.size() - 1))) {
+            break;
+          }
+	  }
+
+        //fill indexPathVec again
+	    B18TrafficSP::convertVector(paths_subset, indexPathVec, edgeDescToLaneMapNumSP, graph_);
+
+        //simulate again
+        b18SimulateTrafficCUDA(currentTime, filtered_od_pairs.size(), intersections.size(), deltaTime, s_0);
+
+        //save avg_edge_vel vector to file
+
+        QTime timer_process_and_save_edge_speeds;
+        timer_process_and_save_edge_speeds.start();
+        std::string name = "./all_edges_vel_" + std::to_string(iter_printout_index) + ".txt";
+        std::ofstream output_file(name);
+        std::ostream_iterator<float> output_iterator(output_file, "\n");
+        std::copy(avg_edge_vel.begin(), avg_edge_vel.end(), output_iterator);
+
+        //fill avg_edge_vel vector back to 0 for next iter_printout iterations
+        //std::fill(std::begin(avg_edge_vel), std::end(avg_edge_vel), 0);
+        iter_printout_index++;
+
+        timerLoop.restart();
+        printf("[TIME] Process and save edge speeds total = %d ms\n", timer_process_and_save_edge_speeds.elapsed());
+      }
+
+
+      //std::cout << "Current Time " << currentTime << "\n";
+      //std::cout << "count " << count << "\n";
+      count_iters++;
+
+      /*
+      if (count % iter_printout == 0) {
+        std::cerr << std::fixed << std::setprecision(2) 
+          << "Current time: " << (currentTime / 3600.0f)
+          << " (" << (100.0f - (100.0f * (endTime - currentTime) / (endTime - startTime))) << "%)"
+          << " with " << (timerLoop.elapsed() / (float) iter_printout) << " ms per simulation step (average over 1800)"
+          << "\r";
+        
 
       }
 
@@ -307,12 +448,11 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
             QTime timer_process_and_save_edge_speeds;
             timer_process_and_save_edge_speeds.start();
             //get the average values from edgesData structure
-            /*
+            
             for (int x = 0; x < edgesData.size(); x++) {
                 avg_edge_vel[x] = (float) edgesData[x].curr_cum_vel / (float) iter_printout;
                 //std::cout << "cum_vel = " << edgesData[x].curr_cum_vel << "\n" << "avg_edge_vel = " << avg_edge_vel[x] << "\n" << "iter printout = " << iter_printout << "\n";
             }
-            */
 
             //int tNumMapWidth = 0;
             QTime timer_process_edge_speeds;
@@ -326,10 +466,12 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
                 ind = edgeDescToLaneMapNumSP[x.second];
                 //avg_edge_vel[index] = edgesData[ind].curr_cum_vel / count;// * 2.23694;
                 avg_edge_vel[index] = edgesData[ind].curr_cum_vel / edgesData[ind].curr_iter_num_cars;// * 2.23694;
+                //edgesData[ind].duration = edgesData[ind].length / avg_edge_vel[index];
                 //avg_edge_vel[index] = ((edgesData[ind].curr_iter_cum_vel / edgesData[ind].curr_iter_num_cars) / count) * 2.23694;
                 index++;
             }
             printf("[TIME] Process edge speeds for loop = %d ms\n", timer_process_edge_speeds.elapsed());
+            */
                 
             /*
             int counter = 0;
@@ -356,6 +498,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
                 //std::cout << "cum_vel = " << edgesData[x].curr_cum_vel << "\n" << "avg_edge_vel = " << avg_edge_vel[x] << "\n" << "iter printout = " << iter_printout << "\n";
             }
             */
+
+            /*
             //save avg_edge_vel vector to file
             std::string name = "./all_edges_vel_" + std::to_string(iter_printout_index) + ".txt";
             std::ofstream output_file(name);
@@ -369,6 +513,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
             timerLoop.restart();
             printf("[TIME] Process and save edge speeds total = %d ms\n", timer_process_and_save_edge_speeds.elapsed());
       }
+      */
 #ifdef B18_RUN_WITH_GUI
 
       if (clientMain != nullptr &&
@@ -395,11 +540,11 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 #endif
       currentTime += deltaTime;
     }
-	std::cout << "Total # iterations = " << count << "\n";
+	std::cout << "Total # iterations = " << count_iters << "\n";
     //std::cerr << std::setw(90) << " " << "\rDone" << std::endl;
-    simulateBench.stopAndEndBenchmark();
+    //simulateBench.stopAndEndBenchmark();
 
-    getDataBench.startMeasuring();
+    //getDataBench.startMeasuring();
 
     // 3. Finish
     b18GetDataCUDA(trafficPersonVec, edgesData);
@@ -432,11 +577,11 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     if (saveFiles) {
         QTime timer_file_save;
         timer_file_save.start();
-        savePeopleAndRoutesSP(nP, graph_, paths_SP, (int) startTimeH, (int) endTimeH);
+        savePeopleAndRoutesSP(0, graph_, paths_SP, (int) startTimeH, (int) endTimeH);
         printf("File saving time = %d ms\n", timer_file_save.elapsed());
     }
-    getDataBench.stopAndEndBenchmark();
-  }
+    //getDataBench.stopAndEndBenchmark();
+  //}
 
   passesBench.stopAndEndBenchmark();
   finishCudaBench.startMeasuring();

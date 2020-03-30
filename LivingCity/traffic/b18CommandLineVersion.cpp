@@ -61,12 +61,21 @@ void B18CommandLineVersion::runB18Simulation() {
   B18TrafficSimulator b18TrafficSimulator(deltaTime, &cg.roadGraph);
   //auto all_paths = std::vector<abm::graph::vertex_t>;
   std::vector<abm::graph::vertex_t> all_paths;
+  std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_;
+  std::vector<float> dep_times_;
+
+  std::vector<std::array<abm::graph::vertex_t, 2>> filtered_od_pairs_;
+  std::vector<float> filtered_dep_times_;
+
   const bool directed = true;
   auto street_graph = std::make_shared<abm::Graph>(directed);
   if (useSP) {
 	  //make the graph from edges file and load the OD demand from od file
 	  std::string odFileName = RoadGraphB2018::loadABMGraph(networkPathSP, street_graph, (int) startDemandH, (int) endDemandH);
-	  const auto all_od_pairs_ = B18TrafficSP::read_od_pairs(odFileName, std::numeric_limits<int>::max());
+	  all_od_pairs_ = B18TrafficSP::read_od_pairs(odFileName, std::numeric_limits<int>::max());
+	  dep_times_ = B18TrafficSP::read_dep_times(odFileName);
+
+      std::cout << "first pair time = " << all_od_pairs_[0][2] << "\n";
 	  printf("# of OD pairs = %d\n", all_od_pairs_.size());
 
 	  //compute the routes for every OD pair
@@ -75,6 +84,7 @@ void B18CommandLineVersion::runB18Simulation() {
 	  //auto start = high_resolution_clock::now();
       QTime timer_shortest_path;
       timer_shortest_path.start();
+      /*
       if (usePrevPaths) {
             // open file    
             //std::ifstream inputFile("./all_paths_incl_zeros.txt");
@@ -99,10 +109,10 @@ void B18CommandLineVersion::runB18Simulation() {
         std::ostream_iterator<abm::graph::vertex_t> output_iterator(output_file, "\n");
         std::copy(all_paths.begin(), all_paths.end(), output_iterator);
       }
+      */
 
 
     //map person to their initial edge
-    int count = 0;
     /*
 	for (int i = 0; i < all_paths.size(); i++) {
         if ((all_paths[i] == -1) && (i == 0)) {
@@ -119,6 +129,9 @@ void B18CommandLineVersion::runB18Simulation() {
         }
 	}
     */
+
+    /*
+    int count = 0;
 	for (int i = 0; i < all_paths.size(); i++) {
         if ((all_paths[i] == -1) && (i == 0)) {
             street_graph->person_to_init_edge_[count] = i;
@@ -134,18 +147,18 @@ void B18CommandLineVersion::runB18Simulation() {
         }
 	}
     //std::cout << "person_to_init_edge size " << street_graph->person_to_init_edge_.size() << "\n";
-
+    */
       
 
 	  //auto stop = high_resolution_clock::now();
 	  //auto duration = duration_cast<milliseconds>(stop - start);
-	  std::cout << "# of paths = " << all_paths.size() << "\n";
+	  //std::cout << "# of paths = " << all_paths.size() << "\n";
 	  
       //std::cout << "Shortest path time = " << duration.count() << " ms \n";
-      printf("[TIME] Shortest path = %d ms\n", timer_shortest_path.elapsed());
+      //printf("[TIME] Shortest path = %d ms\n", timer_shortest_path.elapsed());
 
 	  //create a set of people for simulation (trafficPersonVec)
-	  b18TrafficSimulator.createB2018PeopleSP(startDemandH, endDemandH, limitNumPeople, addRandomPeople, street_graph, a, b, T);
+	  b18TrafficSimulator.createB2018PeopleSP(startDemandH, endDemandH, limitNumPeople, addRandomPeople, street_graph, a, b, T, all_od_pairs_);
 
   } else {
 	  graphLoadBench.startMeasuring();
@@ -165,7 +178,7 @@ void B18CommandLineVersion::runB18Simulation() {
   } else {
 	  //if useSP, convert all_paths to indexPathVec format and run simulation
     b18TrafficSimulator.simulateInGPU(numOfPasses, startSimulationH, endSimulationH,
-        useJohnsonRouting, useSP, street_graph, all_paths, saveFiles, s_0);
+        useJohnsonRouting, useSP, street_graph, all_paths, saveFiles, s_0, all_od_pairs_, dep_times_, filtered_od_pairs_, filtered_dep_times_);
   }
   simulationBench.stopAndEndBenchmark();
 }

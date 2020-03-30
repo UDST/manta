@@ -96,6 +96,7 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
     float max_speed;
     float uber_std; //Uber std dev in mps (8.9 mph)
     //max_speed = std::get<1>(x)->second[2] + (rand() % 30);//(qrand() % 39 + (-20));
+
     max_speed = std::get<1>(x)->second[2];
 
     //printf("max speed = %f\n", max_speed);

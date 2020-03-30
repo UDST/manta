@@ -71,7 +71,7 @@ class B18TrafficSimulator {
   //                   bool useJohnsonRouting, bool useSP);
   
   void simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
-    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_, std::vector<abm::graph::vertex_t> paths_SP, bool saveFiles, float s_0);
+    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_, std::vector<abm::graph::vertex_t> paths_SP, bool saveFiles, float s_0, std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs, std::vector<float> dep_times, std::vector<std::array<abm::graph::vertex_t, 2>> filtered_od_pairs, std::vector<float> filtered_dep_times);
 
   // Lanes
   std::vector<uchar> laneMap;
@@ -97,7 +97,7 @@ class B18TrafficSimulator {
 #endif
   void createB2018People(float startTime, float endTime, int limitNumPeople, bool addRandomPeople, bool useSP);
   
-  void createB2018PeopleSP(float startTime, float endTime, int limitNumPeople, bool addRandomPeople, const std::shared_ptr<abm::Graph>& graph_, float a, float b, float T);
+  void createB2018PeopleSP(float startTime, float endTime, int limitNumPeople, bool addRandomPeople, const std::shared_ptr<abm::Graph>& graph_, float a, float b, float T, std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_);
 
   void resetPeopleJobANDintersections();
   void saveODToFile() {}; // TODO
