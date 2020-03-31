@@ -198,7 +198,6 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     // Reset people to inactive.
     b18ResetPeopleLanesCUDA(trafficPersonVec.size());
     // 2. Execute
-    printf("First time_departure %f\n", currentTime);
     QTime timerLoop;
 
     int iter_printout = 7200;
@@ -222,9 +221,10 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         if (currentTime == startTime) {
               end_time = (float) count_iters + iter_printout;
               newEndTimeH = startTimeH + (end_time * deltaTime) / 3600;
-
+              printf("filtered start time = %f, filtered end time = %f\n", startTimeH, newEndTimeH);
               //filter the next set of od pair/departures in the next hour
               B18TrafficSP::filter_od_pairs(all_od_pairs, dep_times, startTimeH, newEndTimeH, filtered_od_pairs_, filtered_dep_times_);
+              printf("filtered od pairs size = %d\n", filtered_od_pairs_.size());
 
               //compute the new routes of the filtered OD pairs
               paths_subset = B18TrafficSP::compute_routes(mpi_rank, mpi_size, graph_, filtered_od_pairs_);
@@ -247,15 +247,19 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 
               //fill indexPathVec again
               B18TrafficSP::convertVector(paths_subset, indexPathVec, edgeDescToLaneMapNumSP, graph_);
+              printf("traffic person vec size = %d\n", trafficPersonVec.size());
+              printf("index path vec size = %d\n", indexPathVec.size());
+              printf("edgesData size = %d\n", edgesData.size());
+              printf("laneMap size = %d\n", laneMap.size());
+              printf("intersections size = %d\n", intersections.size());
 
               // Init Cuda
               //initCudaBench.startMeasuring();
               QTime timer_init_cuda;
               timer_init_cuda.start();
-              b18InitCUDA(fistInitialization, trafficPersonVec,
-                          indexPathVec, edgesData, laneMap, trafficLights, intersections, startTimeH, endTimeH, 
-                          accSpeedPerLinePerTimeInterval, 
-                          numVehPerLinePerTimeInterval, deltaTime);
+              b18InitCUDA(fistInitialization, trafficPersonVec, indexPathVec, edgesData, laneMap, 
+                          trafficLights, intersections, startTimeH, endTimeH, 
+                          accSpeedPerLinePerTimeInterval, numVehPerLinePerTimeInterval, deltaTime);
               printf("[TIME] Init cuda = %d ms\n", timer_init_cuda.elapsed());
 
               //simulate again
@@ -355,30 +359,6 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       //std::cout << "count " << count << "\n";
       count_iters++;
 
-#ifdef B18_RUN_WITH_GUI
-
-      if (clientMain != nullptr &&
-          clientMain->ui.b18RenderSimulationCheckBox->isChecked()) {
-        steps++;
-
-        if (steps % clientMain->ui.b18RenderStepSpinBox->value() ==
-            0) { //each "steps" steps, render
-          b18GetDataCUDA(trafficPersonVec); // trafficLights
-          QString timeT;
-
-          int timeH = currentTime / 3600.0f;
-          int timeM = (currentTime - timeH * 3600.0f) / 60.0f;
-          timeT.sprintf("%d:%02d", timeH, timeM);
-          clientMain->ui.b18TimeLCD->display(timeT);
-
-          QApplication::processEvents();
-          QApplication::processEvents();
-          clientMain->glWidget3D->updateGL();
-          QApplication::processEvents();
-        }
-      }
-
-#endif
       currentTime += deltaTime;
     }
 	std::cout << "Total # iterations = " << count_iters << "\n";
