@@ -115,7 +115,7 @@ void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
 // GPU
 //////////////////////////////////////////////////
 void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
-    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_, std::vector<abm::graph::vertex_t> paths_SP, bool saveFiles, float s_0, std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs, std::vector<float> dep_times) {
+    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_, std::vector<abm::graph::vertex_t> paths_SP, bool saveFiles, float s_0, std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs, std::vector<float> dep_times, bool usePrevPaths, std::string networkPathSP) {
   Benchmarker laneMapBench("Lane map", 2);
   Benchmarker passesBench("Simulation passes", 2);
   Benchmarker finishCudaBench("Cuda finish", 2);
@@ -227,8 +227,31 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
               B18TrafficSP::filter_od_pairs(all_od_pairs, dep_times, startTimeH, newEndTimeH, filtered_od_pairs_, filtered_dep_times_);
               printf("filtered od pairs size = %d\n", filtered_od_pairs_.size());
 
-              //compute the new routes of the filtered OD pairs
-              paths_subset = B18TrafficSP::compute_routes(mpi_rank, mpi_size, graph_, filtered_od_pairs_);
+              if (usePrevPaths) {
+                    // open file    
+                    //std::ifstream inputFile("./paths_subset_incl_zeros.txt");
+                    const std::string& pathsFileName = networkPathSP + "paths_subset_start.txt";
+                    std::cout << "Loading " << pathsFileName << " as paths file\n";
+                    //std::ifstream inputFile("./paths_subset.txt");
+                    std::ifstream inputFile(pathsFileName);
+                    // test file open   
+                    if (inputFile) {        
+                        abm::graph::vertex_t value;
+                        // read the elements in the file into a vector  
+                        while (inputFile >> value) {
+                            paths_subset.push_back(value);
+                            }
+                    }
+              } else {
+                //compute the new routes of the filtered OD pairs
+                paths_subset = B18TrafficSP::compute_routes(mpi_rank, mpi_size, graph_, filtered_od_pairs_);
+                //write paths to file so that we can just load them instead
+                const std::string& pathsFileName = networkPathSP + "paths_subset_start.txt";
+                std::cout << "Save " << pathsFileName << " as paths file\n";
+                std::ofstream output_file(pathsFileName);
+                std::ostream_iterator<abm::graph::vertex_t> output_iterator(output_file, "\n");
+                std::copy(paths_subset.begin(), paths_subset.end(), output_iterator);
+              }
 
               int count = 0;
               for (int i = 0; i < paths_subset.size(); i++) {

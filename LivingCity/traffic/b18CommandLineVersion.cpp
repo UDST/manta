@@ -103,7 +103,7 @@ void B18CommandLineVersion::runB18Simulation() {
   } else {
 	  //if useSP, convert all_paths to indexPathVec format and run simulation
     b18TrafficSimulator.simulateInGPU(numOfPasses, startSimulationH, endSimulationH,
-        useJohnsonRouting, useSP, street_graph, all_paths, saveFiles, s_0, all_od_pairs_, dep_times_);
+        useJohnsonRouting, useSP, street_graph, all_paths, saveFiles, s_0, all_od_pairs_, dep_times_, usePrevPaths, networkPathSP);
   }
   simulationBench.stopAndEndBenchmark();
 }
