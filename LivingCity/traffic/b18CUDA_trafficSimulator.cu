@@ -108,6 +108,7 @@ void b18InitCUDA(
     printf("size of TrafficPerson %d\n", sizeof(LC::B18TrafficPerson));
     printf("trafficPersonVec size = %d\n", trafficPersonVec.size());
     if (firstInitialization) gpuErrchk(cudaMalloc((void **) &trafficPersonVec_d, size));   // Allocate array on device
+    printf("size of trafficPersonVec_d = %d\n", sizeof(trafficPersonVec_d));
     printf("HELLO HELLO HELLO\n");
     gpuErrchk(cudaMemcpy(trafficPersonVec_d, trafficPersonVec.data(), size, cudaMemcpyHostToDevice));
     printf("HELLO HELLO AGAIN\n");
