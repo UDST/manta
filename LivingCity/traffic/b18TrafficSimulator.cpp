@@ -211,7 +211,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       << std::endl;
 	int mpi_rank = 0;
 	int mpi_size = 1;
-    bool fistInitialization = true;
+    int nP = 0;
+    bool firstInitialization = (nP == 0);
     float end_time;
     float newEndTimeH;
     std::vector<abm::graph::vertex_t> paths_subset;
@@ -257,7 +258,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
               //initCudaBench.startMeasuring();
               QTime timer_init_cuda;
               timer_init_cuda.start();
-              b18InitCUDA(fistInitialization, trafficPersonVec, indexPathVec, edgesData, laneMap, 
+              b18InitCUDA(firstInitialization, trafficPersonVec, indexPathVec, edgesData, laneMap, 
                           trafficLights, intersections, startTimeH, endTimeH, 
                           accSpeedPerLinePerTimeInterval, numVehPerLinePerTimeInterval, deltaTime);
               printf("[TIME] Init cuda = %d ms\n", timer_init_cuda.elapsed());
@@ -327,7 +328,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         //initCudaBench.startMeasuring();
         QTime timer_init_cuda;
         timer_init_cuda.start();
-        b18InitCUDA(fistInitialization, trafficPersonVec,
+        b18InitCUDA(firstInitialization, trafficPersonVec,
                   indexPathVec, edgesData, laneMap, trafficLights, intersections, startTimeH, endTimeH, 
                   accSpeedPerLinePerTimeInterval, 
                   numVehPerLinePerTimeInterval, deltaTime);
