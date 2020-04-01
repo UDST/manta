@@ -105,13 +105,9 @@ void b18InitCUDA(
   const uint numStepsTogether = 12; //change also in density (10 per hour)
   { // people
     size_t size = trafficPersonVec.size() * sizeof(LC::B18TrafficPerson);
-    printf("size of TrafficPerson %d\n", sizeof(LC::B18TrafficPerson));
     printf("trafficPersonVec size = %d\n", trafficPersonVec.size());
     if (firstInitialization) gpuErrchk(cudaMalloc((void **) &trafficPersonVec_d, size));   // Allocate array on device
-    printf("size of trafficPersonVec_d = %d\n", sizeof(trafficPersonVec_d));
-    printf("HELLO HELLO HELLO\n");
     gpuErrchk(cudaMemcpy(trafficPersonVec_d, trafficPersonVec.data(), size, cudaMemcpyHostToDevice));
-    printf("HELLO HELLO AGAIN\n");
 
   }
   
