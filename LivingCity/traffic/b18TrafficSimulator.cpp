@@ -172,6 +172,13 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     initCudaBench.startMeasuring();
     bool fistInitialization = (nP == 0);
     uint count = 0;
+
+      printf("traffic person vec size = %d\n", trafficPersonVec.size());
+      printf("index path vec size = %d\n", indexPathVec.size());
+      printf("edgesData size = %d\n", edgesData.size());
+      printf("laneMap size = %d\n", laneMap.size());
+      printf("intersections size = %d\n", intersections.size());
+
     b18InitCUDA(fistInitialization, trafficPersonVec, indexPathVec, edgesData,
         laneMap, trafficLights, intersections, startTimeH, endTimeH,
         accSpeedPerLinePerTimeInterval, numVehPerLinePerTimeInterval, deltaTime);
@@ -271,7 +278,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     getDataBench.startMeasuring();
 
     // 3. Finish
-    b18GetDataCUDA(trafficPersonVec);
+    b18GetDataCUDA(trafficPersonVec, edgesData);
     b18GetSampleTrafficCUDA(accSpeedPerLinePerTimeInterval,
                             numVehPerLinePerTimeInterval);
     {
