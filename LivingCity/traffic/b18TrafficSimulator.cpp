@@ -232,7 +232,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
               if (usePrevPaths) {
                     // open file    
                     //std::ifstream inputFile("./paths_subset_incl_zeros.txt");
-                    const std::string& pathsFileName = networkPathSP + "paths_subset_ " + std::to_string(startTimeH) + ".txt";
+                    const std::string& pathsFileName = networkPathSP + "paths_subset_" + std::to_string(startTimeH) + ".txt";
                     std::cout << "Loading " << pathsFileName << " as paths file\n";
                     //std::ifstream inputFile("./paths_subset.txt");
                     std::ifstream inputFile(pathsFileName);
@@ -248,7 +248,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
                 //compute the new routes of the filtered OD pairs
                 paths_subset = B18TrafficSP::compute_routes(mpi_rank, mpi_size, graph_, filtered_od_pairs_);
                 //write paths to file so that we can just load them instead
-                const std::string& pathsFileName = networkPathSP + "paths_subset_ " + std::to_string(startTimeH) + ".txt";
+                const std::string& pathsFileName = networkPathSP + "paths_subset_" + std::to_string(startTimeH) + ".txt";
                 std::cout << "Save " << pathsFileName << " as paths file\n";
                 std::ofstream output_file(pathsFileName);
                 std::ostream_iterator<abm::graph::vertex_t> output_iterator(output_file, "\n");
@@ -325,7 +325,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       if (usePrevPaths) {
             // open file    
             //std::ifstream inputFile("./paths_subset_incl_zeros.txt");
-            const std::string& pathsFileName = networkPathSP + "paths_subset_ " + std::to_string(startTime) + ".txt";
+            const std::string& pathsFileName = networkPathSP + "paths_subset_" + std::to_string(startTime) + ".txt";
             std::cout << "Loading " << pathsFileName << " as paths file\n";
             //std::ifstream inputFile("./paths_subset.txt");
             std::ifstream inputFile(pathsFileName);
@@ -341,7 +341,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         //compute the new routes of the filtered OD pairs
         paths_subset = B18TrafficSP::compute_routes(mpi_rank, mpi_size, graph_, filtered_od_pairs_);
         //write paths to file so that we can just load them instead
-        const std::string& pathsFileName = networkPathSP + "paths_subset_ " + std::to_string(startTime) + ".txt";
+        const std::string& pathsFileName = networkPathSP + "paths_subset_" + std::to_string(startTime) + ".txt";
         std::cout << "Save " << pathsFileName << " as paths file\n";
         std::ofstream output_file(pathsFileName);
         std::ostream_iterator<abm::graph::vertex_t> output_iterator(output_file, "\n");
