@@ -91,10 +91,10 @@ std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::read_od_pairs(con
     in.read_header(csvio::ignore_extra_column, "origin", "destination");
     abm::graph::vertex_t v1, v2;
     abm::graph::weight_t weight;
-    float dep_time;
     while (in.read_row(v1, v2)) {
       //std::array<abm::graph::vertex_t, 2> od = {v1, v2};
       std::array<abm::graph::vertex_t, 2> od = {v1, v2};
+      //printf("v1 = %u, v2 = %u\n", v1, v2);
       od_pairs.emplace_back(od);
       RoadGraphB2018::demandB2018.push_back(DemandB2018(1, v1, v2)); //there is only one person for each OD pair
     }
@@ -124,18 +124,23 @@ std::vector<float> B18TrafficSP::read_dep_times(const std::string& filename) {
     std::cout << "Read OD file: " << exception.what() << "\n";
     status = false;
   }
+  //printf("dep time size %d\n", dep_time_vec.size());
   return dep_time_vec;
 }
 
 
 void B18TrafficSP::filter_od_pairs(std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs, std::vector<float> dep_times, float start_time, float end_time, std::vector<std::array<abm::graph::vertex_t, 2>> &filtered_od_pairs_, std::vector<float> &filtered_dep_times_) {
-
+    filtered_od_pairs_.clear();
+    filtered_dep_times_.clear();
     int filt_size = 0;
-    for (int x; x < od_pairs.size(); x++) {
+    for (int x = 0; x < od_pairs.size(); x++) {
+        //printf("dep time = %f\n", dep_times[x]);
+        //printf("od_pair v1 = %u\n, od_pair v2 = %u\n", od_pairs[x][0], od_pairs[x][1]);
         if ((dep_times[x] >= start_time) && (dep_times[x] < end_time)) {
             //printf("dep time = %f\n", dep_times[x]);
             std::array<abm::graph::vertex_t, 2> od = {od_pairs[x][0], od_pairs[x][1]};
             filtered_od_pairs_.emplace_back(od);
+            //printf("od_pairs v1 = %d, od_pairs v2 = %d\n", filtered_od_pairs_[filt_size][0], filtered_od_pairs_[filt_size][1]);
             filtered_dep_times_.emplace_back(dep_times[x]);
             filt_size++;
         }
@@ -144,6 +149,8 @@ void B18TrafficSP::filter_od_pairs(std::vector<std::array<abm::graph::vertex_t, 
 
 //void B18TrafficSP::convertVector(std::vector<abm::graph::vertex_t> paths_SP, std::vector<uint>& indexPathVec, std::map<std::shared_ptr<abm::Graph::Edge>, uint> &edgeDescToLaneMapNumSP, const std::shared_ptr<abm::Graph>& graph_) {
 void B18TrafficSP::convertVector(std::vector<abm::graph::vertex_t> paths_SP, std::vector<uint>& indexPathVec, tsl::robin_map<std::shared_ptr<abm::Graph::Edge>, uint> &edgeDescToLaneMapNumSP, const std::shared_ptr<abm::Graph>& graph_) {
+
+    //indexPathVec.clear();
     for (auto& x: paths_SP) {
         if (x != -1) {
             indexPathVec.emplace_back(edgeDescToLaneMapNumSP[graph_->edges_[graph_->edge_ids_to_vertices[x]]]);
