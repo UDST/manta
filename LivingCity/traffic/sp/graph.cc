@@ -4,7 +4,7 @@
 inline void abm::Graph::add_edge(
     abm::graph::vertex_t vertex1, abm::graph::vertex_t vertex2,
     std::vector<float> edge_vals, abm::graph::vertex_t edgeid = std::numeric_limits<abm::graph::vertex_t>::max()) {
-	abm::graph::weight_t weight = edge_vals[0];
+	abm::graph::weight_t weight = edge_vals[3];
 	/*
     abm::graph::weight_t weight = 1,
     abm::graph::vertex_t edgeid =
@@ -167,9 +167,9 @@ bool abm::Graph::read_graph_osm(const std::string& filename) {
     in.read_header(csvio::ignore_no_column, "uniqueid", "u", "v", "length", "lanes", "speed_mph");
     abm::graph::vertex_t edgeid, v1, v2;
     //abm::graph::weight_t weight;
-    std::vector<float> edge_vals(3);
+    std::vector<float> edge_vals(4);
     abm::graph::vertex_t nvertices = 0;
-    float length, lanes, speed_mph;
+    float length, lanes, speed_mph, speed_mps;
     //int lanes, speed_mph;
     //while (in.read_row(edgeid, v1, v2, weight, lanes, speed_mph)) {
     //while (in.read_row(edgeid, v1, v2, edge_vals[0], edge_vals[1], edge_vals[2])) {
@@ -178,7 +178,9 @@ bool abm::Graph::read_graph_osm(const std::string& filename) {
 	    
         edge_vals[0] = length;
 	    edge_vals[1] = lanes;
-	    edge_vals[2] = ( speed_mph / 3600 ) * 1609.34; //convert from mph to meters/second
+	    speed_mps = ( speed_mph / 3600 ) * 1609.34; //convert from mph to meters/second
+	    edge_vals[2] = speed_mps;
+	    edge_vals[3] = length / speed_mps; //get average duration (in s) on that edge
 	    //this->add_edge(edge_vertex_map_[v1], edge_vertex_map_[v2], edge_vals, edgeid);
         //Don't add if there is already an edge with the same vertices
         if (edges_.find(std::make_pair(v1, v2)) == edges_.end()) {

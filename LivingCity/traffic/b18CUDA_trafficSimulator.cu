@@ -787,9 +787,11 @@ __global__ void kernel_trafficSimulation(
                     }
                 //trafficPersonVec[p].maxSpeedMperSec = 2.0*new_speed + edgesData[indexPathVec[trafficPersonVec[p].indexPathCurr]].maxSpeedMperSec;
                 trafficPersonVec[p].maxSpeedMperSec = 2.0*uber_std*new_speed + new_max_speed;
+                /*
                 if (p == 13) {
                     printf("new immediate speed limit [%d] = %f\n", p, trafficPersonVec[p].maxSpeedMperSec);
                 }
+                */
         }
 
 
@@ -805,12 +807,38 @@ __global__ void kernel_trafficSimulation(
          (trafficPersonVec[p].v * trafficPersonVec[p].T + (trafficPersonVec[p].v *
          delta_v) / (2 * sqrtf(trafficPersonVec[p].a * trafficPersonVec[p].b))));
        thirdTerm =powf(((s_star) / (s)), 2);
-       //printf("s_star[%d] = %f\n", p, s_star);
+       /*
+       if (p == 13) {
+       printf("s_star[%d] = %f\n", p, s_star);
+        }
+       */
        //printf(">FOUND s_star %f thirdTerm %f!!!!\n",s_star,thirdTerm);
      }
 
      float dv_dt = trafficPersonVec[p].a * (1.0f - std::pow((
        trafficPersonVec[p].v / trafficPersonVec[p].maxSpeedMperSec), 4) - thirdTerm);
+
+     /*
+     if (p == 13) {
+             printf("index path curr %d, person speed limit %f, velocity %f\n", trafficPersonVec[p].indexPathCurr, trafficPersonVec[p].maxSpeedMperSec, trafficPersonVec[p].v);
+             //printf("s_star[%d] = %f\n", p, s_star);
+             printf("s_0[%d] = %f\n", p, s_0);
+             printf("T[%d] = %f\n", p, trafficPersonVec[p].T);
+             printf("b[%d] = %f\n", p, trafficPersonVec[p].b);
+             printf("s[%d] = %f\n", p, s);
+             printf("delta_v[%d] = %f\n", p, delta_v);
+             printf("thirdTerm[%d] = %f\n", p, thirdTerm);
+             printf("a [%d] = %f\n", p, trafficPersonVec[p].a);
+             //printf("p = %d\n", p);
+             //printf("edge index = %d\n", trafficPersonVec[p].indexPathCurr);
+             //printf("original speed limit %d = %f\n", p, edgesData[indexPathVec[trafficPersonVec[p].indexPathCurr]].maxSpeedMperSec);
+             //printf("new speed limit [%d] = %f\n", p, trafficPersonVec[p].maxSpeedMperSec);
+             //printf("v [%d] = %f\n", p, trafficPersonVec[p].v);
+             //printf("velocity = %f\n", trafficPersonVec[p].v);
+             printf("dv_dt[%d] = %f\n", p, dv_dt);
+
+     }
+     */
 
      // 2.1.3 update values
      numMToMove = max(0.0f,
@@ -825,19 +853,7 @@ __global__ void kernel_trafficSimulation(
        dv_dt = 0.0f;
      }
 
-     if (p == 17) {
-             //printf("%d,%f,%f\n", trafficPersonVec[p].indexPathCurr, trafficPersonVec[p].maxSpeedMperSec, trafficPersonVec[p].v);
-             //printf("thirdTerm[%d] = %f\n", p, thirdTerm);
-             //printf("a [%d] = %f\n", p, trafficPersonVec[p].a);
-             //printf("p = %d\n", p);
-             //printf("edge index = %d\n", trafficPersonVec[p].indexPathCurr);
-             //printf("original speed limit %d = %f\n", p, edgesData[indexPathVec[trafficPersonVec[p].indexPathCurr]].maxSpeedMperSec);
-             //printf("new speed limit [%d] = %f\n", p, trafficPersonVec[p].maxSpeedMperSec);
-             //printf("v [%d] = %f\n", p, trafficPersonVec[p].v);
-             //printf("velocity = %f\n", trafficPersonVec[p].v);
-             //printf("dv_dt[%d] = %f\n", p, dv_dt);
 
-     }
 
      trafficPersonVec[p].cum_v += trafficPersonVec[p].v;
      //printf("vel person %d = %f\n", p, trafficPersonVec[p].cum_v);
