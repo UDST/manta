@@ -325,8 +325,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
                 std::copy(avg_edge_vel.begin(), avg_edge_vel.end(), output_iterator_edge);
                 printf("[TIME] Process and save edge speeds total = %d ms\n", timer_process_and_save_edge_speeds.elapsed());
 
-                B18TrafficSP::createTimeVector(allPathsMatrix, timeMatrix, graph_);
-                B18TrafficSP::updateRouteShares(timeMatrix, routeShareMatrix);
+                B18TrafficSP::createTimeMatrix(allPathsMatrix, timeMatrix, graph_);
+                B18TrafficSP::updateRouteShareMatrix(timeMatrix, routeShareMatrix);
                 
                 iter_printout_index++;
                 timerLoop.restart();

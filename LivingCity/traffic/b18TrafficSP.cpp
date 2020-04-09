@@ -161,7 +161,7 @@ void B18TrafficSP::convertVector(std::vector<abm::graph::vertex_t> paths_SP, std
 	//std::cout << "indexPathVec size = " << indexPathVec.size() << "\n";
 }
 
-void B18TrafficSP::createTimeVector(std::vector<std::vector<abm::graph::vertex_t>> pathsMatrix, std::vector<std::vector<float>>& timeMatrix, const std::shared_ptr<abm::Graph>& graph_) {
+void B18TrafficSP::createTimeMatrix(std::vector<std::vector<abm::graph::vertex_t>> pathsMatrix, std::vector<std::vector<float>>& timeMatrix, const std::shared_ptr<abm::Graph>& graph_) {
     //let's assume there is a vector of vectors that are output ([[all_paths1, all_paths2, all_paths3],])
     float routeTime = 0;
     for (int num_route = 0; num_route < pathsMatrix.size(); num_route++) {
@@ -178,7 +178,7 @@ void B18TrafficSP::createTimeVector(std::vector<std::vector<abm::graph::vertex_t
 
 int exponentiate(float x) {return exp(x);}
 
-void B18TrafficSP::updateRouteShares(std::vector<std::vector<float>>& timeMatrix, std::vector<std::vector<float>>& routeShareMatrix) {
+void B18TrafficSP::updateRouteShareMatrix(std::vector<std::vector<float>>& timeMatrix, std::vector<std::vector<float>>& routeShareMatrix) {
 
     std::vector<float> beta_vec = {.5, .3, .7}; //made up values for b1,b2,b3
     for (int edge = 0; edge < timeMatrix[edge].size(); edge++) {
