@@ -161,6 +161,55 @@ void B18TrafficSP::convertVector(std::vector<abm::graph::vertex_t> paths_SP, std
 	//std::cout << "indexPathVec size = " << indexPathVec.size() << "\n";
 }
 
+void B18TrafficSP::updateTimeVector(std::vector<std::vector<abm::graph::vertex_t>> pathsMatrix, std::vector<std::vector<float>>& timeMatrix, const std::shared_ptr<abm::Graph>& graph_) {
+    //let's assume there is a vector of vectors that are output ([[all_paths1, all_paths2, all_paths3],])
+    int index = 0;
+    float totalTime = 0;
+    for (int j = 0; j < pathsMatrix.size(); j++) {
+        for (int x = 0; x < pathsMatrix[j].size(); x++) {
+            if (pathsMatrix[j][x] != -1) {
+                totalTime += graph_->edge_costs_[pathsMatrix[j][x]];
+            } else {
+                timeMatrix[index].emplace_back(totalTime);
+                timeMatrix[index].emplace_back(-1);
+                totalTime = 0;
+                index++;
+            }
+        }
+    }
+}
+
+void B18TrafficSP::updateRouteShares(std::vector<std::vector<float>>& timeMatrix, std::vector<std::vector<float>>& routeShareMatrix) {
+
+    //made up values for b1,b2,b3
+    float b1 = .5;
+    float b2 = .3;
+    float b3 = .7;
+    for (int j = 0; j < timeMatrix.size(); j++) {
+        for (int x = 0; x < timeMatrix[j].size(); x++) {
+                if (timeMatrix[x][j] != -1) {
+                        float util_1 = b1*timeMatrix[x][j];
+                        float util_2 = b2*timeMatrix[x][j];
+                        float util_3 = b3*timeMatrix[x][j];
+
+                        float prob_1 = exp(util_1) / (exp(util_1) + exp(util_2) + exp(util_3));
+                        float prob_2 = exp(util_2) / (exp(util_1) + exp(util_2) + exp(util_3));
+                        float prob_3 = exp(util_3) / (exp(util_1) + exp(util_2) + exp(util_3));
+
+                        std::vector<float> prob_vec = {prob_1, prob_2, prob_3};
+                        routeShareMatrix.emplace_back(prob_vec);
+                        //int max_prob_index = std::max_element(prob_vector.begin(), prob_vector.end()) - prob_vector.begin();
+                        //path_j = timeMatrix[j][max_prob_index];
+                        //paths_vector.emplace_back(path_j);
+                } else {
+                    routeShareMatrix.emplace_back(-1);
+                }
+        }
+    }
+}
+
+
+
 
 std::vector<abm::graph::vertex_t> B18TrafficSP::compute_routes(int mpi_rank,
                                                           int mpi_size,

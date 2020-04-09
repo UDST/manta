@@ -90,6 +90,9 @@ class B18TrafficSimulator {
   // People
   std::vector<B18TrafficPerson> trafficPersonVec;
   std::vector<uint> indexPathVec;
+  std::vector<std::vector<float>> timeMatrix;
+  std::vector<std::vector<float>> routeShareMatrix;
+  std::vector<std::vector<abm::graph::vertex_t>> allPathsMatrix;
 
 
   std::vector<std::array<abm::graph::vertex_t, 2>> filtered_od_pairs_;
