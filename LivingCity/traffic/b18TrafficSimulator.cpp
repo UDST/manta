@@ -312,15 +312,6 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
                     //update the edge weights in the graph to be the duration now
                     graph_->update_edge(std::get<0>(std::get<0>(x)), std::get<1>(std::get<0>(x)), edgesData[ind].duration);
 
-
-                    /*
-                    //first check whether any edge value times have changed; if so, change it
-                    if (edgesData[ind].duration != new_duration) {
-                        edgesData[ind].duration = new_duration;
-                    }
-                    */
-                    
-
                     index++;
                 }
                 printf("[TIME] Process edge speeds for loop = %d ms\n", timer_process_edge_speeds.elapsed());
@@ -340,29 +331,6 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
                 iter_printout_index++;
                 timerLoop.restart();
 
-
-                /* Let's assume the shortest path outputs the actual total times for each route for each person, on top of the 3 routes themselves. We then have the route that has been currently chosen. Then, we check, for every person at this time until the next hour, that person's chosen shortest path, look through each edge of that shortest path, and see if the time of that edge has changed, 
-
-                int paths_count = 0;
-                for (int y = init_index; y < all_paths.size(); y++) {
-                    for (int j = 0; j < 3; j++) {
-                            if (paths_count == filtered_od_pairs_.size()) {
-                                break;
-                            } else {
-                                paths_subset.emplace_back(all_paths[y]);
-                                if (all_paths[y].duration != new_duration) {
-                                    all_paths[paths_count] += (all_paths[y].duration - new_duration);
-                                    all_paths[y].duration = new_duration;
-                                }
-                            }
-
-                            if (all_paths[y] == -1) {
-                                paths_count++;
-                            }
-
-                            init_index++;
-                    }
-                } 
 
 
                 //filter the next set of od pair/departures in the next hour
@@ -388,7 +356,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
                     }
                     init_index++;
                 } 
-                */
+
+                //TODO(pavan): add a function / code to map the paths_subset to the proper trips in indexPathVec and then change indexPathVec if needed (don't convert)
 
 
                 // Init Cuda
