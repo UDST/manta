@@ -161,50 +161,43 @@ void B18TrafficSP::convertVector(std::vector<abm::graph::vertex_t> paths_SP, std
 	//std::cout << "indexPathVec size = " << indexPathVec.size() << "\n";
 }
 
-void B18TrafficSP::updateTimeVector(std::vector<std::vector<abm::graph::vertex_t>> pathsMatrix, std::vector<std::vector<float>>& timeMatrix, const std::shared_ptr<abm::Graph>& graph_) {
+void B18TrafficSP::createTimeVector(std::vector<std::vector<abm::graph::vertex_t>> pathsMatrix, std::vector<std::vector<float>>& timeMatrix, const std::shared_ptr<abm::Graph>& graph_) {
     //let's assume there is a vector of vectors that are output ([[all_paths1, all_paths2, all_paths3],])
-    int index = 0;
-    float totalTime = 0;
-    for (int j = 0; j < pathsMatrix.size(); j++) {
-        for (int x = 0; x < pathsMatrix[j].size(); x++) {
-            if (pathsMatrix[j][x] != -1) {
-                totalTime += graph_->edge_costs_[pathsMatrix[j][x]];
+    float routeTime = 0;
+    for (int num_route = 0; num_route < pathsMatrix.size(); num_route++) {
+        for (int edge = 0; edge < pathsMatrix[num_route].size(); edge++) {
+            if (pathsMatrix[num_route][edge] != -1) {
+                routeTime += graph_->edge_costs_[pathsMatrix[num_route][edge]];
             } else {
-                timeMatrix[index].emplace_back(totalTime);
-                timeMatrix[index].emplace_back(-1);
-                totalTime = 0;
-                index++;
+                timeMatrix[num_route].emplace_back(routeTime);
+                routeTime = 0;
             }
         }
     }
 }
 
+int exponentiate(float x) {return exp(x);}
+
 void B18TrafficSP::updateRouteShares(std::vector<std::vector<float>>& timeMatrix, std::vector<std::vector<float>>& routeShareMatrix) {
 
-    //made up values for b1,b2,b3
-    float b1 = .5;
-    float b2 = .3;
-    float b3 = .7;
-    for (int j = 0; j < timeMatrix.size(); j++) {
-        for (int x = 0; x < timeMatrix[j].size(); x++) {
-                if (timeMatrix[x][j] != -1) {
-                        float util_1 = b1*timeMatrix[x][j];
-                        float util_2 = b2*timeMatrix[x][j];
-                        float util_3 = b3*timeMatrix[x][j];
-
-                        float prob_1 = exp(util_1) / (exp(util_1) + exp(util_2) + exp(util_3));
-                        float prob_2 = exp(util_2) / (exp(util_1) + exp(util_2) + exp(util_3));
-                        float prob_3 = exp(util_3) / (exp(util_1) + exp(util_2) + exp(util_3));
-
-                        std::vector<float> prob_vec = {prob_1, prob_2, prob_3};
-                        routeShareMatrix.emplace_back(prob_vec);
-                        //int max_prob_index = std::max_element(prob_vector.begin(), prob_vector.end()) - prob_vector.begin();
-                        //path_j = timeMatrix[j][max_prob_index];
-                        //paths_vector.emplace_back(path_j);
-                } else {
-                    routeShareMatrix.emplace_back(-1);
-                }
+    std::vector<float> beta_vec = {.5, .3, .7}; //made up values for b1,b2,b3
+    for (int edge = 0; edge < timeMatrix[edge].size(); edge++) {
+        std::vector<float> util_vec;
+        std::vector<float> prob_vec;
+        for (int num_route = 0; num_route < timeMatrix.size(); num_route++) {
+                float util = beta_vec[num_route]*timeMatrix[num_route][edge];
+                util_vec.emplace_back(util);
         }
+        
+        std::vector<float> denominator_vec;
+        denominator_vec.resize(util_vec.size()); // unfortunately this is necessary
+        std::transform(util_vec.begin(), util_vec.end(), denominator_vec.begin(), exponentiate);
+        float sum_util = accumulate(denominator_vec.begin(),denominator_vec.end(),0);
+        for (int num_route = 0; num_route < timeMatrix.size(); num_route++) {
+                float prob = exp(util_vec[num_route]) / sum_util;
+                prob_vec.emplace_back(prob);
+        }
+        routeShareMatrix.emplace_back(prob_vec);
     }
 }
 

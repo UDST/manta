@@ -51,7 +51,7 @@ class B18TrafficSP {
 
   static void filter_od_pairs(std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs, std::vector<float> dep_times, float start_time, float end_time, std::vector<std::array<abm::graph::vertex_t, 2>> &filtered_od_pairs_, std::vector<float> &filtered_dep_times_);
 
-  static void updateTimeVector(std::vector<std::vector<abm::graph::vertex_t>> pathsMatrix, std::vector<std::vector<float>>& timeMatrix, const std::shared_ptr<abm::Graph>& graph_);
+  static void createTimeVector(std::vector<std::vector<abm::graph::vertex_t>> pathsMatrix, std::vector<std::vector<float>>& timeMatrix, const std::shared_ptr<abm::Graph>& graph_);
 
   static void updateRouteShares(std::vector<std::vector<float>>& timeMatrix, std::vector<std::vector<float>>& routeShareMatrix);
 
