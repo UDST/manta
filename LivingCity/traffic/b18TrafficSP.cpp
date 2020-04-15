@@ -129,7 +129,7 @@ std::vector<float> B18TrafficSP::read_dep_times(const std::string& filename) {
 }
 
 
-void B18TrafficSP::filter_od_pairs(std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs, std::vector<float> dep_times, float start_time, float end_time, std::vector<std::array<abm::graph::vertex_t, 2>> &filtered_od_pairs_, std::vector<float> &filtered_dep_times_) {
+void B18TrafficSP::filterODByHour(std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs, std::vector<float> dep_times, float start_time, float end_time, std::vector<std::array<abm::graph::vertex_t, 2>> &filtered_od_pairs_, std::vector<float> &filtered_dep_times_) {
     filtered_od_pairs_.clear();
     filtered_dep_times_.clear();
     int filt_size = 0;
@@ -201,7 +201,110 @@ void B18TrafficSP::updateRouteShareMatrix(std::vector<std::vector<float>>& timeM
     }
 }
 
+void B18TrafficSP::createTimeMap(std::map<std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>, std::vector<std::vector<abm::graph::vertex_t>>> &subgraphPathsMap, std::map<std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>, std::vector<float>> &subgraphTimeMap, const std::shared_ptr<abm::Graph>& graph_) {
+    for (auto const& x: subgraphPathsMap) {
+        for (int num_route = 0; num_route < x.second.size(); num_route++) {
+            subgraphTimeMap[x.first][num_route] += graph_->edge_costs_[graph_->edge_ids_[x.first]];
+        }
+    }
+}
 
+void B18TrafficSP::updateRouteShareMap(std::map<std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>, std::vector<float>> &subgraphTimeMap, std::map<std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>, std::vector<float>> &subgraphRouteShareMap) {
+    std::vector<float> beta_vec = {.5, .3, .7}; //made up values for b1,b2,b3
+    for (auto const& x: subgraphTimeMap) {
+        std::vector<float> util_vec;
+        std::vector<float> prob_vec;
+        for (int num_route = 0; num_route < x.second.size(); num_route++) {
+                float util = beta_vec[num_route]*x.second[num_route];
+                util_vec.emplace_back(util);
+        }
+        
+        std::vector<float> denominator_vec;
+        denominator_vec.resize(util_vec.size()); // unfortunately this is necessary
+        std::transform(util_vec.begin(), util_vec.end(), denominator_vec.begin(), exponentiate);
+        float sum_util = accumulate(denominator_vec.begin(),denominator_vec.end(),0);
+        for (int num_route = 0; num_route < denominator_vec.size(); num_route++) {
+                float prob = exp(util_vec[num_route]) / sum_util;
+                prob_vec.emplace_back(prob);
+        }
+        subgraphRouteShareMap[x.first] = prob_vec;
+    }
+}
+
+int randNumGen(std::vector<float> odRouteShare) {
+    int i, RandNumIndex;
+    srand((unsigned)time(NULL));
+    int N = 100;
+ 
+    RandNumIndex = (int) N * rand() / (RAND_MAX + 1); 
+
+    for (int index = 0; index < odRouteShare.size(); index++) {
+            if (RandNumIndex <= odRouteShare[index]) {
+                RandNumIndex = index;
+                break;
+            }
+    }
+    return RandNumIndex;
+}
+     
+        
+void B18TrafficSP::filterODByHourAndSubgraph(std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs,
+                                             std::vector<float> dep_times,
+                                             float start_time,
+                                             float end_time,
+                                             std::vector<std::array<abm::graph::vertex_t, 2>> &filtered_od_pairs_,
+                                             std::vector<float> &filtered_dep_times_,
+                                             std::map<std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>, std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>> &localToSubMap,
+                                             std::map<std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>, std::vector<std::vector<abm::graph::vertex_t>>> &subgraphPathsMap,
+                                             std::map<std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>, std::vector<float>> &subgraphRouteShareMap,
+                                             std::vector<abm::graph::vertex_t> &reconstructed_all_paths,
+                                             std::vector<abm::graph::vertex_t> &LtoS,
+                                             std::vector<abm::graph::vertex_t> &StoL) {
+        
+        B18TrafficSP::filterODByHour(od_pairs, dep_times, start_time, end_time, filtered_od_pairs_, filtered_dep_times_);
+
+        for (int edge_verts = 0; edge_verts < filtered_od_pairs_.size(); edge_verts++) {
+            std::tuple<abm::graph::vertex_t, abm::graph::vertex_t> od = std::make_pair(filtered_od_pairs_[edge_verts][0], filtered_od_pairs_[edge_verts][1]);
+            std::tuple<abm::graph::vertex_t, abm::graph::vertex_t> subgraph_od = localToSubMap[od];
+
+            std::vector<float> subgraph_od_route_share = subgraphRouteShareMap[subgraph_od];
+
+            int route_index = randNumGen(subgraph_od_route_share);
+
+            std::vector<abm::graph::vertex_t> od_chosen_path = subgraphPathsMap[subgraph_od][route_index];
+
+
+            //keep reconstructing allPaths vector
+            reconstructAllPaths(reconstructed_all_paths, od, LtoS, StoL, od_chosen_path);
+            
+        }
+}
+
+void B18TrafficSP::reconstructAllPaths(std::vector<abm::graph::vertex_t> &reconstructed_all_paths,
+                                       std::tuple<abm::graph::vertex_t, abm::graph::vertex_t> od,
+                                       std::vector<abm::graph::vertex_t> &LtoS,
+                                       std::vector<abm::graph::vertex_t> &StoL,
+                                       std::vector<abm::graph::vertex_t> od_chosen_path) {
+    
+    reconstructed_all_paths.emplace_back(std::get<0>(od));
+    
+    for (int x = 0; x < LtoS.size(); x++) {
+        reconstructed_all_paths.emplace_back(LtoS[x]);
+    }
+        
+    for (int x = 0; x < od_chosen_path.size(); x++) {
+        reconstructed_all_paths.emplace_back(od_chosen_path[x]);
+    }
+    
+    for (int x = 0; x < StoL.size(); x++) {
+        reconstructed_all_paths.emplace_back(StoL[x]);
+    }
+  
+    reconstructed_all_paths.emplace_back(std::get<1>(od));
+    
+    reconstructed_all_paths.emplace_back(-1);
+
+}
 
 
 std::vector<abm::graph::vertex_t> B18TrafficSP::compute_routes(int mpi_rank,

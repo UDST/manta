@@ -7,6 +7,7 @@
 #define LC_B18_TRAFFIC_SIMULATOR_H
 
 #include "../misctools/misctools.h"
+#include "sp/tsl/robin_map.h"
 
 #include "b18TrafficOD.h"
 #include "b18TrafficLaneMap.h"
@@ -93,10 +94,21 @@ class B18TrafficSimulator {
   std::vector<std::vector<float>> timeMatrix;
   std::vector<std::vector<float>> routeShareMatrix;
   std::vector<std::vector<abm::graph::vertex_t>> allPathsMatrix;
+  
+  std::vector<abm::graph::vertex_t> LtoS;
+  std::vector<abm::graph::vertex_t> StoL;
 
 
   std::vector<std::array<abm::graph::vertex_t, 2>> filtered_od_pairs_;
   std::vector<float> filtered_dep_times_;
+  int start_index_filtered;
+
+  std::map<std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>, std::vector<std::vector<abm::graph::vertex_t>>> subgraphPathsMap;
+  std::map<std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>, std::vector<float>> subgraphTimeMap;
+  std::map<std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>, std::vector<float>> subgraphRouteShareMap;
+
+  std::map<std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>, std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>> localToSubMap;
+  std::vector<abm::graph::vertex_t> reconstructed_all_paths;
 
 
 #ifdef B18_RUN_WITH_GUI

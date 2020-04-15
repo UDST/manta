@@ -49,12 +49,30 @@ class B18TrafficSP {
 
   static void convertVector(std::vector<abm::graph::vertex_t> paths_SP, std::vector<uint>& indexPathVec, tsl::robin_map<std::shared_ptr<abm::Graph::Edge>, uint> &edgeDescToLaneMapNumSP, const std::shared_ptr<abm::Graph>& graph_);
 
-  static void filter_od_pairs(std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs, std::vector<float> dep_times, float start_time, float end_time, std::vector<std::array<abm::graph::vertex_t, 2>> &filtered_od_pairs_, std::vector<float> &filtered_dep_times_);
+  static void filterODByHour(std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs, std::vector<float> dep_times, float start_time, float end_time, std::vector<std::array<abm::graph::vertex_t, 2>> &filtered_od_pairs_, std::vector<float> &filtered_dep_times_);
+
+  static void filterODByHourAndSubgraph(std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs,
+                                             std::vector<float> dep_times,
+                                             float start_time,
+                                             float end_time,
+                                             std::vector<std::array<abm::graph::vertex_t, 2>> &filtered_od_pairs_,
+                                             std::vector<float> &filtered_dep_times_,
+                                             std::map<std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>, std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>> &localToSubMap,
+                                             std::map<std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>, std::vector<std::vector<abm::graph::vertex_t>>> &subgraphPathsMap,
+                                             std::map<std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>, std::vector<float>> &subgraphRouteShareMap,
+                                             std::vector<abm::graph::vertex_t> &reconstructed_all_paths,
+                                             std::vector<abm::graph::vertex_t> &LtoS,
+                                             std::vector<abm::graph::vertex_t> &StoL);
 
   static void createTimeMatrix(std::vector<std::vector<abm::graph::vertex_t>> pathsMatrix, std::vector<std::vector<float>>& timeMatrix, const std::shared_ptr<abm::Graph>& graph_);
 
   static void updateRouteShareMatrix(std::vector<std::vector<float>>& timeMatrix, std::vector<std::vector<float>>& routeShareMatrix);
 
+  static void createTimeMap(std::map<std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>, std::vector<std::vector<abm::graph::vertex_t>>> &subgraphPathsMap, std::map<std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>, std::vector<float>> &subgraphTimeMap, const std::shared_ptr<abm::Graph>& graph_);
+
+  static void updateRouteShareMap(std::map<std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>, std::vector<float>> &subgraphTimeMap, std::map<std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>, std::vector<float>> &subgraphRouteShareMap);
+
+  static void reconstructAllPaths(std::vector<abm::graph::vertex_t> &reconstructed_all_paths, std::tuple<abm::graph::vertex_t, abm::graph::vertex_t> od, std::vector<abm::graph::vertex_t> &LtoS, std::vector<abm::graph::vertex_t> &StoL, std::vector<abm::graph::vertex_t> od_chosen_path);
 
   explicit B18TrafficSP(const std::shared_ptr<abm::Graph>& graph) : graph_{graph} {};
  private:

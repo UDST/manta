@@ -325,8 +325,11 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
                 std::copy(avg_edge_vel.begin(), avg_edge_vel.end(), output_iterator_edge);
                 printf("[TIME] Process and save edge speeds total = %d ms\n", timer_process_and_save_edge_speeds.elapsed());
 
-                B18TrafficSP::createTimeMatrix(allPathsMatrix, timeMatrix, graph_);
-                B18TrafficSP::updateRouteShareMatrix(timeMatrix, routeShareMatrix);
+                //B18TrafficSP::createTimeMatrix(allPathsMatrix, timeMatrix, graph_);
+                //B18TrafficSP::updateRouteShareMatrix(timeMatrix, routeShareMatrix);
+
+                B18TrafficSP::createTimeMap(subgraphPathsMap, subgraphTimeMap, graph_);
+                B18TrafficSP::updateRouteShareMap(subgraphTimeMap, subgraphRouteShareMap);
                 
                 iter_printout_index++;
                 timerLoop.restart();
@@ -338,26 +341,23 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
                 printf("iteration # = %d\n", count_iters);
                 newEndTimeH = startTime + (iter_printout * deltaTime) / 3600;
                 printf("filtered start time = %f, filtered end time = %f\n", startTime, newEndTimeH);
-                B18TrafficSP::filter_od_pairs(all_od_pairs, dep_times, startTime, newEndTimeH, filtered_od_pairs_, filtered_dep_times_);
+                B18TrafficSP::filterODByHourAndSubgraph(all_od_pairs,
+                                                        dep_times,
+                                                        startTime,
+                                                        newEndTimeH,
+                                                        filtered_od_pairs_,
+                                                        filtered_dep_times_,
+                                                        localToSubMap,
+                                                        subgraphPathsMap,
+                                                        subgraphRouteShareMap,
+                                                        reconstructed_all_paths,
+                                                        LtoS,
+                                                        StoL);
                 printf("filtered od pairs size = %d\n", filtered_od_pairs_.size());
-
-
-                //after computing the routes, we need to take only a portion of the routes the size of filtered_od_pairs, which already has the trips based on the dep times
-                int paths_count = 0;
-                for (int y = init_index; y < all_paths.size(); y++) {
-                    if (paths_count == filtered_od_pairs_.size()) {
-                        break;
-                    } else {
-                        paths_subset.emplace_back(all_paths[y]);
-                    }
-
-                    if (all_paths[y] == -1) {
-                        paths_count++;
-                    }
-                    init_index++;
-                } 
-
-                //TODO(pavan): add a function / code to map the paths_subset to the proper trips in indexPathVec and then change indexPathVec if needed (don't convert)
+                
+                //clear the current indexPathVec and refill it
+                indexPathVec.clear();
+                B18TrafficSP::convertVector(reconstructed_all_paths, indexPathVec, edgeDescToLaneMapNumSP, graph_);
 
 
                 // Init Cuda
