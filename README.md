@@ -27,10 +27,10 @@ Clone the repo in your home directory with:
 git clone git@github.com:udst/manta.git ~/manta && cd ~/manta
 ```
 
-(If necessary, you can checkout a different branch than master (`edge_speeds_over_time` for instance):
+If necessary, you can checkout a different branch than master (`edge_speeds_over_time` for instance):
 ```bash
 git checkout edge_speeds_over_time
-```)
+```
 
 Create `Makefile` and compile with:
 ```bash
