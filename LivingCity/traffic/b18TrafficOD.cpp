@@ -140,7 +140,7 @@ void B18TrafficOD::randomPerson(int p, B18TrafficPerson &person,
   // Data
   person.init_intersection = srcvertex;
   person.end_intersection = tgtvertex;
-  person.time_departure = startTimeH * 3600.0f; //seconds
+  person.time_departure = startTimeH;// * 3600.0f; //seconds
   //printf("Person %d: init %u end %u Time %f\n",p,srcvertex,tgtvertex,goToWork);
   // Status
   qsrand(p);
