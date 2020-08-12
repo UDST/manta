@@ -2356,7 +2356,8 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared
 		    streamR << edge_id_val << ",";
 		    //streamR << "," << indexPathVec[index];
             //std::cout << "edge_id val = " << edge_id_val << "\n";
-		    personDistance[p] += graph_->edges_[graph_->edge_pointer_to_vertices_[laneMapNumToEdgeDescSP[indexPathVec[i]]]]->second[0];
+		    //personDistance[p] += graph_->edges_[graph_->edge_pointer_to_vertices_[laneMapNumToEdgeDescSP[indexPathVec[i]]]]->second[0];
+		    personDistance[p] += graph_->edges_[graph_->edge_ids_to_vertices[x]]->second[0];
 		} else {
                     streamR << "]\n";
                     p++;
