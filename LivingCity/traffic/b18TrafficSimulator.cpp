@@ -2332,7 +2332,7 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared
       printf("Save route %d\n", trafficPersonVec.size());
       QHash<uint, uint> laneMapNumCount;
       QTextStream streamR(&routeFile);
-      std::vector<float> personDistance(trafficPersonVec.size(), 0.0f);
+      //std::vector<float> personDistance(trafficPersonVec.size(), 0.0f);
       streamR << "p:route\n";
 
       //for (int x = 0; x < indexPathVec.size(); x++) {
@@ -2357,7 +2357,7 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared
 		    //streamR << "," << indexPathVec[index];
             //std::cout << "edge_id val = " << edge_id_val << "\n";
 		    //personDistance[p] += graph_->edges_[graph_->edge_pointer_to_vertices_[laneMapNumToEdgeDescSP[indexPathVec[i]]]]->second[0];
-		    personDistance[p] += graph_->edges_[graph_->edge_ids_to_vertices[x]]->second[0];
+		    //personDistance[p] += graph_->edges_[graph_->edge_ids_to_vertices[x]]->second[0];
 		} else {
                     streamR << "]\n";
                     p++;
@@ -2384,7 +2384,8 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared
         streamP << "," << trafficPersonVec[p].num_steps * deltaTime;
         streamP << "," << trafficPersonVec[p].co;
         streamP << "," << trafficPersonVec[p].gas;
-        streamP << "," << personDistance[p];
+        //streamP << "," << personDistance[p];
+        streamP << "," << trafficPersonVec[p].dist_traveled;
 
         streamP << "," << trafficPersonVec[p].a;
         streamP << "," << trafficPersonVec[p].b;

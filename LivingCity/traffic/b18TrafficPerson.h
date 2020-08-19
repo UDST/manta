@@ -17,6 +17,7 @@ struct B18TrafficPerson {
   unsigned int init_intersection;
   unsigned int end_intersection;
   float time_departure;
+  float dist_traveled = 0;
 
   unsigned short active;//0 inactive 1 active 2 finished
   unsigned short numOfLaneInEdge;//number of lane in that edge

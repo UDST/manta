@@ -819,6 +819,7 @@ __global__ void kernel_trafficSimulation(
        trafficPersonVec[p].length) { //reach intersection
        numMToMove = trafficPersonVec[p].posInLaneM - trafficPersonVec[p].length;
        getToNextEdge = true;
+       trafficPersonVec[p].dist_traveled += trafficPersonVec[p].length;
      } else { //does not reach an intersection
        ////////////////////////////////////////////////////////
        // LANE CHANGING (happens when we are not reached the intersection)
@@ -1095,6 +1096,7 @@ __global__ void kernel_trafficSimulation(
      ushort end_intersection=trafficPersonVec[p].end_intersection;
      //2.1 check if end*/
      if (nextEdge == -1) { //if(curr_intersection==end_intersection)
+       trafficPersonVec[p].dist_traveled += trafficPersonVec[p].length;
        trafficPersonVec[p].active = 2; //finished
        return;
      }
