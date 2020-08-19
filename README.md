@@ -48,3 +48,14 @@ cd LivingCity
 ```
 In `command_line_options.ini`, you can modify the timestep (default dt = .5 seconds), simulation time range (default 5am-12pm), specific path to the network and OD demand, whether you would like to compute the shortest paths or use a previous version, and which type of routing.
 
+## Citation
+
+If this code is used in any shape or form for your project, please cite this paper accordingly:
+
+P. Yedavalli, K. Kumar, and P. Waddell, “Microsimulation Analysis for Network Traffic Assignment (MANTA) at Metropolitan-Scale for Agile Transportation Planning,” arXiv:2007.03614 [physics], Jul. 2020, Available: http://arxiv.org/abs/2007.03614.
+
+Thank you!
+
+
+
+
