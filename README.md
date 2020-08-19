@@ -48,7 +48,9 @@ cd LivingCity
 ```
 In `command_line_options.ini`, you can modify the timestep (default dt = .5 seconds), simulation time range (default 5am-12pm), specific path to the network and OD demand, whether you would like to compute the shortest paths or use a previous version, and which type of routing.
 
-## Citation
+## Acknowledgments
+
+This repository and code have been developed and maintained by Pavan Yedavalli, Ignacio Garcia Dorado, Krishna Kumar, and Paul Waddell. This work heavily derives from Ignacio Garcia Dorado's Automatic Urban Modeling project: http://www.ignaciogarciadorado.com/p/2014_EG/2014_EG.html.
 
 If this code is used in any shape or form for your project, please cite this paper accordingly:
 
