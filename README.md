@@ -21,7 +21,7 @@ correct versions of each one are used:
 export PATH=PATH=/usr/local/cuda-9.0/bin:$PATH
 export LIBRARY_PATH=/usr/local/cuda-9.0/lib64:$LIBRARY_PATH 
 export LD_LIBRARY_PATH=/usr/local/cuda-9.0/lib64:$LD_LIBRARY_PATH 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/USER_NAME/pandana/src
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/{YOUR_USERNAME}/pandana/src
 ```
 
 You can also add the `export` lines at the end of your user's `~/.bashrc` to
