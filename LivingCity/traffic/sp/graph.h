@@ -139,6 +139,8 @@ class Graph {
   std::map<graph::vertex_t, QVector3D> vertices_data_;
   //Vertex to an index
   std::map<graph::vertex_t, graph::vertex_t> vertex_map_;
+  //index back to vertex
+  std::map<graph::vertex_t, graph::vertex_t> index_to_vertex_map_;
   // Edges - vertices to edge pointer
   std::map<std::tuple<graph::vertex_t, graph::vertex_t>, std::shared_ptr<Edge>>
       edges_;

@@ -9,6 +9,7 @@
 #include "qcoreapplication.h"
 
 #include "sp/graph.h"
+#include "accessibility.h"
 #include "traffic/b18TrafficSP.h"
 #include "../roadGraphB2018Loader.h"
 
@@ -55,6 +56,7 @@ void B18CommandLineVersion::runB18Simulation() {
   B18TrafficSimulator b18TrafficSimulator(deltaTime, &cg.roadGraph);
   //auto all_paths = std::vector<abm::graph::vertex_t>;
   std::vector<abm::graph::vertex_t> all_paths;
+  vector<vector<int>> all_paths_ch;
   const bool directed = true;
   auto street_graph = std::make_shared<abm::Graph>(directed);
   if (useSP) {
@@ -71,7 +73,7 @@ void B18CommandLineVersion::runB18Simulation() {
       if (usePrevPaths) {
             // open file    
             //std::ifstream inputFile("./all_paths_incl_zeros.txt");
-            const std::string& pathsFileName = networkPathSP + "all_paths.txt";
+            const std::string& pathsFileName = networkPathSP + "all_paths_ch.txt";
             std::cout << "Loading " << pathsFileName << " as paths file\n";
             //std::ifstream inputFile("./all_paths.txt");
             std::ifstream inputFile(pathsFileName);
@@ -84,14 +86,82 @@ void B18CommandLineVersion::runB18Simulation() {
                     }
             }
       } else {
+
+        std::vector<std::vector<long>> edge_vals;
+
+        std::vector<std::vector<double>> edge_weights;
+        edge_weights.reserve(street_graph->edges_.size());
+
+        std::vector<long> sources;
+        std::vector<long> targets;
+        sources.reserve(street_graph->edges_.size());
+        targets.reserve(street_graph->edges_.size());
+
+
+        for (int x = 0; x < all_od_pairs_.size(); x++) {
+            sources.emplace_back(street_graph->vertex_map_[all_od_pairs_[x][0]]);
+            targets.emplace_back(street_graph->vertex_map_[all_od_pairs_[x][1]]);
+            //std::cout << "origin = " << sources[x] << " \n";
+            //std::cout << "dest = " << targets[x] << " \n";
+        }
+
+        //get the edge lengths
+        std::vector<double> edge_weights_inside_vec;
+        for (auto const& x : street_graph->edges_) {
+            double metersLength = std::get<1>(x)->second[0];
+            edge_weights_inside_vec.emplace_back(metersLength);
+            //std::cout << "edge length = " << metersLength << " \n";
+
+            std::vector<long> edge_nodes = {street_graph->vertex_map_[std::get<0>(x.first)], street_graph->vertex_map_[std::get<1>(x.first)]};
+            edge_vals.emplace_back(edge_nodes);
+            //edge_vals.emplace_back((long) street_graph->edge_ids_[x.first]);
+            //std::cout << "origin = " << sources[x] << " \n";
+
+            //std::cout << "Start node id = " << edge_nodes[0] << " End node id = " << edge_nodes[1] << "\n";
+        }
+        edge_weights.emplace_back(edge_weights_inside_vec);
+        std::cout << "# nodes = " << street_graph->vertices_data_.size() << "\n";
+
+        MTC::accessibility::Accessibility *graph_ch = new MTC::accessibility::Accessibility((int) street_graph->vertices_data_.size(), edge_vals, edge_weights, false);
+
+        all_paths_ch = graph_ch->Routes(sources, targets, 0);
+	    std::cout << "# of paths = " << all_paths_ch.size() << " \n";
+
+	    auto start = high_resolution_clock::now();
+        //convert from nodes to edges
+        for (int i=0; i < all_paths_ch.size(); i++) {
+            for (int j=0; j < all_paths_ch[i].size()-1; j++) {
+                all_paths.emplace_back(street_graph->edge_ids_[std::make_tuple(street_graph->index_to_vertex_map_[all_paths_ch[i][j]], street_graph->index_to_vertex_map_[all_paths_ch[i][j+1]])]);
+                //if (i == 0) {
+                //    std::cout << "node 1 " << street_graph->index_to_vertex_map_[all_paths_ch[i][j]] << " node 2 " << street_graph->index_to_vertex_map_[all_paths_ch[i][j+1]] << "\n";
+                //    std::cout << "edge " << street_graph->edge_ids_[std::make_tuple(street_graph->index_to_vertex_map_[all_paths_ch[i][j]], street_graph->index_to_vertex_map_[all_paths_ch[i][j+1]])] << "\n";
+                //}
+            }
+            all_paths.emplace_back(-1);
+        }
+	    auto stop = high_resolution_clock::now();
+	    auto duration = duration_cast<milliseconds>(stop - start);
+        std::cout << "Convert to edges time = " << duration.count() << " ms \n";
+
+        /*
+        //add the -1 after every single route (for use in simulator)
+        for (int i=0; i < all_paths_ch.size(); i++) {
+            for (int j=0; j < all_paths_ch[i].size(); j++) {
+                all_paths.emplace_back(all_paths_ch[i][j]);
+            }
+            all_paths.emplace_back(-1);
+        }
+        */
+/*
 	    auto start = high_resolution_clock::now();
 	    all_paths = B18TrafficSP::compute_routes(mpi_rank, mpi_size, street_graph, all_od_pairs_);
 	    auto stop = high_resolution_clock::now();
 	    auto duration = duration_cast<milliseconds>(stop - start);
         std::cout << "Shortest path time = " << duration.count() << " ms \n";
 	    std::cout << "# of paths = " << all_paths.size() << "\n";
+*/
         //write paths to file so that we can just load them instead
-        const std::string& pathsFileName = networkPathSP + "all_paths.txt";
+        const std::string& pathsFileName = networkPathSP + "all_paths_ch.txt";
         std::cout << "Save " << pathsFileName << " as paths file\n";
         std::ofstream output_file(pathsFileName);
         std::ostream_iterator<abm::graph::vertex_t> output_iterator(output_file, "\n");
@@ -142,9 +212,11 @@ void B18CommandLineVersion::runB18Simulation() {
       //std::cout << "Shortest path time = " << duration.count() << " ms \n";
 
 	  //create a set of people for simulation (trafficPersonVec)
+
+//}
 	  b18TrafficSimulator.createB2018PeopleSP(startDemandH, endDemandH, limitNumPeople, addRandomPeople, street_graph, dep_times);
 
-  } else {
+ } else {
 	  graphLoadBench.startMeasuring();
 	  RoadGraphB2018::loadB2018RoadGraph(cg.roadGraph, networkPath);
 	  graphLoadBench.stopAndEndBenchmark();
