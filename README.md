@@ -46,14 +46,43 @@ sudo qmake LivingCity/LivingCity.pro && sudo make -j
 
 ## Running
 
-If you wish to edit the microsimulation configuration, modify `command_line_options.ini`.
+If you wish to edit the microsimulation configuration, modify `command_line_options.ini`, which contains the following:
+
+```[General]
+GUI=false
+USE_CPU=false
+NETWORK_PATH=berkeley_2018/new_full_network/
+USE_JOHNSON_ROUTING=false
+USE_SP_ROUTING=true
+USE_PREV_PATHS=true
+LIMIT_NUM_PEOPLE=256000
+ADD_RANDOM_PEOPLE=false
+NUM_PASSES=1
+TIME_STEP=0.5
+START_HR=5
+END_HR=12
+```
+
+Here, you can modify the:
+
+1. `GUI` - deprecated. Do not touch.
+2. `USE_CPU` - deprecated. Do not touch.
+3. `NETWORK_PATH` - specific path to the network files. Default is `berkeley_2018/new_full_network/`.
+4. `USE_JOHNSON_ROUTING` - uses Johnson's all pairs shortest path routing. This should always be set to `false`.
+5. `USE_SP_ROUTING` - uses new SP routing framework. This should always be set to `true`.
+6. `USE_PREV_PATHS` - uses paths already produced and saved to file. Set to `false` if running for the first time. Set to `true` if the simulation was already run and it was saved to file. 
+7. `LIMIT_NUM_PEOPLE` - deprecated. Do not touch.
+8. `ADD_RANDOM_PEOPLE` - deprecated. Do not touch.
+9. `NUM_PASSES` - the number of times the simulation is run. Set to 1.
+10. `TIME_STEP` - timestep. Default is .5 seconds.
+11. `START_HR` - start hour of the simulation. Default is 5am.
+12. `END_HR` - end hour of the simulation. Default is 12pm.
 
 Run with:
 ```bash
 cd LivingCity
 ./LivingCity
 ```
-In `command_line_options.ini`, you can modify the timestep (default dt = .5 seconds), simulation time range (default 5am-12pm), specific path to the network and OD demand, whether you would like to compute the shortest paths or use a previous version, and which type of routing.
 
 ## Acknowledgments
 
