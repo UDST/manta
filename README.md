@@ -11,7 +11,7 @@ Microsimulation Analysis for Network Traffic Assignment. MANTA employs a highly 
  - CUDA (used versions: 9.0 in Ubuntu)
  - g++ (used versions: 6.4.0 in Ubuntu)
  - Qt5 (used versions: 5.9.5 in Ubuntu)
- - qmake (used verions: 3.1 in Ubuntu)
+ - qmake (used versions: 3.1 in Ubuntu)
 
 ## Installation & Compilation
 
@@ -32,7 +32,7 @@ Clone the repo in your home directory with:
 git clone git@github.com:udst/manta.git ~/manta && cd ~/manta
 ```
 
-Please also clone the [Pandana repository](https://github.com/UDST/pandana) in UDST, as MANTA now uses a fast contraction hierarchies framework for shortest path routing. Other implemented shortest path frameworks include Johnson's all pairs shortest path and a parallelized Dijkstra's priority queue.
+Please also clone the [Pandana repository](https://github.com/UDST/pandana) to your home directory, as MANTA now uses a fast contraction hierarchies framework for shortest path routing. Previously implemented shortest path frameworks include Johnson's all pairs shortest path and a parallelized Dijkstra's priority queue.
 
 If necessary, you can checkout a different branch than master (`edge_speeds_over_time` for instance):
 ```bash
@@ -83,6 +83,10 @@ Run with:
 cd LivingCity
 ./LivingCity
 ```
+
+## Development
+
+Should you wish to make any changes, please create a new branch. In addition, once the original Makefile is created, you can simply run `sudo make -j` from the `manta/` directory to compile any new changes.
 
 ## Acknowledgments
 
