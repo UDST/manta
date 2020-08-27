@@ -39,6 +39,17 @@ Create `Makefile` and compile with:
 sudo qmake LivingCity/LivingCity.pro && sudo make -j
 ```
 
+## Data
+
+Before running everything, you need the appropriate data:
+
+1. Network
+2. Demand
+
+The networks currently reside in `manta/LivingCity/berkeley_2018`, and the default directory is the full SF Bay Area network in `new_full_network/`. This contains the `nodes.csv` and `edges.csv` files to create the network.
+
+The demand is not in `new_full_network/`, but needs to reside there in order to run it. Please contact [Pavan Yedavalli](pavyedav@gmail.com) to procure real or sample demands.
+
 ## Running
 
 If you wish to edit the microsimulation configuration, modify `command_line_options.ini`, which contains the following:
