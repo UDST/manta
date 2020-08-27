@@ -186,6 +186,7 @@ bool abm::Graph::read_graph_osm(const std::string& filename) {
         //std::cout << "v1 map = " << edge_vertex_map_[v1] << "\n";
         ++index;
     }
+    std::cout << "total edges = " << index << "\n";
     
     this->assign_nvertices(nvertices);
     std::cout << "# of edges: " << this->edges_.size() << "\n";
@@ -218,6 +219,7 @@ bool abm::Graph::read_vertices(const std::string& filename) {
         //std::cout << "index = " << index << "\n";
         //map edge vertex ids to smaller values
         vertex_map_[vertex] = index;
+        index_to_vertex_map_[index] = vertex;
         //std::cout << "vertex map = " << vertex_map_[vertex] << "\n";
         ++index;
     }
