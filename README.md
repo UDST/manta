@@ -39,6 +39,44 @@ Create `Makefile` and compile with:
 sudo qmake LivingCity/LivingCity.pro && sudo make -j
 ```
 
+Importantly, because MANTA uses a shared library from Pandana, a Pandana makefile must be created (to create a shared object file) and the MANTA makefile must be modified.
+
+Pandana `Makefile`:
+
+1. Create Makefile in `pandana/src/` containing the following:
+
+```# Makefile for pandana C++ contraction hierarchy library
+
+CC = gcc  # C compiler
+CXX = g++
+CPPFLAGS = -DLINUX -DMAC -std=c++0x -c -fPIC -g -O3 -Wall -pedantic -fopenmp  # C flags
+LDFLAGS = -shared   # linking flags
+RM = rm -f   # rm command
+TARGET_LIB = libchrouting.so  # target lib
+
+SRCS =  accessibility.cpp graphalg.cpp contraction_hierarchies/src/libch.cpp
+
+OBJS = $(SRCS:.cpp=.o)
+
+.PHONY: all
+all: ${TARGET_LIB}
+
+$(TARGET_LIB): $(OBJS)
+        $(CXX) ${LDFLAGS} -o $@ $^
+
+.PHONY: clean
+clean:
+        -${RM} ${TARGET_LIB} ${OBJS}
+```
+2. Run `make`.
+
+MANTA `Makefile`:
+
+1. Add `-I/home/pavan/pandana/src` to `INCPATH`.
+2. Add `-L/home/pavan/pandana/src -lchrouting` to `LIBS`.
+3. Run `sudo make -j`.
+
+
 ## Data
 
 Before running everything, you need the appropriate data:
