@@ -34,11 +34,6 @@ git clone git@github.com:udst/manta.git ~/manta && cd ~/manta
 
 Clone the [Pandana repository](https://github.com/UDST/pandana) to your home directory. This is necessary since MANTA now uses a fast contraction hierarchies framework for shortest path routing. Previously implemented shortest path frameworks include Johnson's all pairs shortest path and a parallelized Dijkstra's priority queue.
 
-If necessary, you can checkout a different branch than master (`edge_speeds_over_time` for instance):
-```bash
-git checkout edge_speeds_over_time
-```
-
 Create `Makefile` and compile with:
 ```bash
 sudo qmake LivingCity/LivingCity.pro && sudo make -j
@@ -87,6 +82,11 @@ cd LivingCity
 ## Development
 
 Should you wish to make any changes, please create a new branch. In addition, once the original Makefile is created, you can simply run `sudo make -j` from the `manta/` directory to compile any new changes.
+
+If necessary, you can checkout a different existing branch from main (`edge_speeds_over_time` for instance):
+```bash
+git checkout edge_speeds_over_time
+```
 
 ## Acknowledgments
 
