@@ -32,7 +32,7 @@ Clone the repo in your home directory with:
 git clone git@github.com:udst/manta.git ~/manta && cd ~/manta
 ```
 
-Please also clone the [Pandana repository](https://github.com/UDST/pandana) to your home directory, as MANTA now uses a fast contraction hierarchies framework for shortest path routing. Previously implemented shortest path frameworks include Johnson's all pairs shortest path and a parallelized Dijkstra's priority queue.
+Clone the [Pandana repository](https://github.com/UDST/pandana) to your home directory. This is necessary since MANTA now uses a fast contraction hierarchies framework for shortest path routing. Previously implemented shortest path frameworks include Johnson's all pairs shortest path and a parallelized Dijkstra's priority queue.
 
 If necessary, you can checkout a different branch than master (`edge_speeds_over_time` for instance):
 ```bash
