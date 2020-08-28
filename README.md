@@ -72,8 +72,8 @@ clean:
 
 MANTA `Makefile`:
 
-1. Add `-I/home/pavan/pandana/src` to `INCPATH`.
-2. Add `-L/home/pavan/pandana/src -lchrouting` to `LIBS`.
+1. Add `-I/home/{YOUR_USERNAME}/pandana/src` to `INCPATH`.
+2. Add `-L/home/{YOUR_USERNAME}/pandana/src -lchrouting` to `LIBS`.
 3. Run `sudo make -j`.
 
 
@@ -90,7 +90,7 @@ The demand is not in `new_full_network/`, but needs to reside there in order to 
 
 ## Running
 
-If you wish to edit the microsimulation configuration, modify `command_line_options.ini`, which contains the following:
+If you wish to edit the microsimulation configuration, modify `manta/LivingCity/command_line_options.ini`, which contains the following:
 
 ```[General]
 GUI=false
@@ -132,7 +132,7 @@ cd LivingCity
 
 Should you wish to make any changes, please create a new branch. In addition, once the original Makefile is created, you can simply run `sudo make -j` from the `manta/` directory to compile any new changes.
 
-If necessary, you can checkout a different existing branch from main (`edge_speeds_over_time` for instance):
+If necessary, you can checkout a different existing branch from main (`edge_speeds_over_time`, for instance):
 ```bash
 git checkout edge_speeds_over_time
 ```
