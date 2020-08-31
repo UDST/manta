@@ -18,7 +18,7 @@ Microsimulation Analysis for Network Traffic Assignment. MANTA employs a highly 
 Once the necessary dependencies are installed, you can use the following lines to make sure the
 correct versions of each one are used:
 ```bash
-export PATH=PATH=/usr/local/cuda-9.0/bin:$PATH
+export PATH=/usr/local/cuda-9.0/bin:$PATH
 export LIBRARY_PATH=/usr/local/cuda-9.0/lib64:$LIBRARY_PATH 
 export LD_LIBRARY_PATH=/usr/local/cuda-9.0/lib64:$LD_LIBRARY_PATH 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/{YOUR_USERNAME}/pandana/src
