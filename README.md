@@ -32,7 +32,7 @@ Clone the repo in your home directory with:
 git clone git@github.com:udst/manta.git ~/manta && cd ~/manta
 ```
 
-Clone the [Pandana repository](https://github.com/UDST/pandana) to your home directory. This is necessary since MANTA now uses a fast contraction hierarchies framework for shortest path routing. Previously implemented shortest path frameworks include Johnson's all pairs shortest path and a parallelized Dijkstra's priority queue.
+Clone the [Pandana repository](https://github.com/UDST/pandana) to your home directory and switch to the `vectorized-paths` branch. This is necessary since MANTA now uses a fast contraction hierarchies framework for shortest path routing. Previously implemented shortest path frameworks include Johnson's all pairs shortest path and a parallelized Dijkstra's priority queue.
 
 Create `Makefile` and compile with:
 ```bash
