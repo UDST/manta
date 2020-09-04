@@ -5,14 +5,16 @@ import os
 
 """
   Compares the distances of each person according to the output obtained from 0_people5to12.csv
-  and the sum of the edges obtained from 0_route5to12.csv and edges.csv
+  and the sum of the edges obtained from 0_route5to12.csv and edges.csv.
+  Saves the merge of both distances for each person as a csv file.
+  In case of finding any discrepancies, outputs one of them.
 
   Args:
     edges_file: Path to the edges information file.
 
-    people_file: Path to the people information file. Default: "../0_people5to12.csv"
+    people_file: Path to the people information file. Default: "../LivingCity/0_people5to12.csv"
 
-    route_file: Path to the route information file. Default: "../0_route5to12.csv"
+    route_file: Path to the route information file. Default: "../LivingCity/0_route5to12.csv"
 
     stop_if_discrepancy_found:  if true, stops as soon as it finds a discrepancy between
                                 the two distances of a person. Useful for testing without having to
@@ -26,18 +28,24 @@ import os
 """
 def merge_and_compare_route_vs_people_distances(
       edges_file,
-      people_file = "../0_people5to12.csv",
-      route_file = "../0_route5to12.csv",
+      people_file = "../LivingCity/0_people5to12.csv",
+      route_file = "../LivingCity/0_route5to12.csv",
       stop_if_discrepancy_found=True,
       output_file="distance_merge.csv"):
   
+  # check if output file already exists
   if (os.path.isfile(output_file)):
     answer = "no answer yet"
     while(not answer.lower() in {"y","yes","n","no",""}):
-      answer = raw_input("{} already exists. Do you want to replace it? (Y/n): ".format(output_file))
+      answer = input("{} already exists. Do you want to replace it? (Y/n): ".format(output_file))
     if (answer.lower() in {"n","no"}):
       print("Stopping.")
       return
+
+  # check if input files do not exist
+  for an_input_file in [edges_file,people_file,route_file]:
+    if (not os.path.isfile(an_input_file)):
+      raise FileNotFoundError("{} not found.".format(an_input_file))
 
   print("Loading edges from {}...".format(edges_file))
   print("Loading people from {}...".format(people_file))
@@ -51,6 +59,7 @@ def merge_and_compare_route_vs_people_distances(
 
   print("Processing routes...")
   # reads in chunks of 1000 to reduce memory usage
+  (discrepancy_person, discrepancy_distance_people_info, discrepancy_distance_sum_of_edges) = (None, None, None)
   for chunk_route in tqdm(pd.read_csv(route_file, sep=":", chunksize=1000), total=number_of_people/1000):
     for _, row in chunk_route.iterrows():
       person_id = str(row["p"])
@@ -61,32 +70,38 @@ def merge_and_compare_route_vs_people_distances(
       route = route.split(",")  # split
       route = route[:-1]  # delete last element due to the extra comma
 
-      # sums up the edges distances
+      # sums up the edge distances
       distance_sum_of_edges = 0
       for edge_id in route:
         distance_sum_of_edges += pd_edges.loc[int(edge_id)]["length"]
 
       distance_people_info = pd_people.loc[int(person_id)]['distance']
 
-      f.write("{},{},{}\n".format(
-        person_id, distance_sum_of_edges, distance_people_info))
+      f.write("{},{},{}\n".format(person_id, distance_sum_of_edges, distance_people_info))
 
-
-      if (stop_if_discrepancy_found and distance_sum_of_edges != distance_people_info):
-        print("Discrepancy has been found for person {}. \
-              Distance according to people info: {}. \
-              Distance according to sum of edges: {}. Stopping.". \
-              format(person_id,distance_people_info,distance_sum_of_edges))
-        return
-
+      # discrepancy found
+      if (distance_sum_of_edges != distance_people_info):
+        discrepancy_person = person_id
+        discrepancy_distance_people_info = distance_people_info
+        discrepancy_distance_sum_of_edges = distance_sum_of_edges
+    
+    if (stop_if_discrepancy_found and discrepancy_person):
+      break
 
   print("Saved {}.".format(output_file))
+  
+  if (discrepancy_person):
+    print("Discrepancy has been found for person {}. \
+           Distance according to people info: {}. \
+           Distance according to sum of edges: {}.\n Stopping.". \
+           format(discrepancy_person,discrepancy_distance_people_info,discrepancy_distance_sum_of_edges))
+  else:
+    print("No discrepancies found")
+
   f.close()
 
 if __name__ == '__main__':
   merge_and_compare_route_vs_people_distances(
     "../LivingCity/berkeley_2018/new_full_network/edges.csv",
-    people_file="../../0_people5to12.csv",
-    route_file="../../0_route5to12.csv",
     stop_if_discrepancy_found=True,
     output_file="distances.csv")
