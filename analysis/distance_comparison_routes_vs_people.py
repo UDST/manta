@@ -2,9 +2,10 @@ import pandas as pd
 from tqdm import tqdm
 from pdb import set_trace as st
 import os
+import constants
 
 """
-  Compares the distances of each person according to the output obtained from 0_people5to12.csv
+  Merges the distances of each person according to the output obtained from 0_people5to12.csv
   and the sum of the edges obtained from 0_route5to12.csv and edges.csv.
   Saves the merge of both distances for each person as a csv file.
   In case of finding any discrepancies, outputs one of them.
@@ -12,26 +13,26 @@ import os
   Args:
     edges_file: Path to the edges information file.
 
-    people_file: Path to the people information file. Default: "../LivingCity/0_people5to12.csv"
+    people_file: Path to the people information file. Default given by constants.py
 
-    route_file: Path to the route information file. Default: "../LivingCity/0_route5to12.csv"
+    route_file: Path to the route information file. Default given by constants.py
 
     stop_if_discrepancy_found:  if true, stops as soon as it finds a discrepancy between
                                 the two distances of a person. Useful for testing without having to
                                 wait for the whole network to be processed. Default: true
 
-    output_file: Path to distance merge output. Default: distance_merge.csv
+    output_file: Path to distance merge output. Default given by constants.py
                 Outputted as csv with 3 columns: person_id,distance_sum_of_edges,distance_people_info
   
   Returns:
     Nothing
 """
-def merge_and_compare_route_vs_people_distances(
+def merge_distances_from_route_and_people_files(
       edges_file,
-      people_file = "../LivingCity/0_people5to12.csv",
-      route_file = "../LivingCity/0_route5to12.csv",
+      people_file = constants.DEFAULT_PEOPLE_FILE_PATH,
+      route_file = constants.DEFAULT_ROUTE_FILE_PATH,
       stop_if_discrepancy_found=True,
-      output_file="distance_merge.csv"):
+      output_file = constants.DEFAULT_DISTANCE_MERGE_OUTPUT_FILE_PATH):
   
   # check if output file already exists
   if (os.path.isfile(output_file)):
@@ -58,19 +59,17 @@ def merge_and_compare_route_vs_people_distances(
   f.write("person_id,distance_sum_of_edges,distance_people_info\n")
 
   print("Processing routes...")
-  # reads in chunks of 1000 to reduce memory usage
+  # reads in chunks to reduce memory usage
   (discrepancy_person, discrepancy_distance_people_info, discrepancy_distance_sum_of_edges) = (None, None, None)
-  for chunk_route in tqdm(pd.read_csv(route_file, sep=":", chunksize=1000), total=number_of_people/1000):
+  for chunk_route in tqdm(pd.read_csv(route_file, sep=":", chunksize=constants.PANDAS_CHUNKSIZE), total=number_of_people/1000):
     for _, row in chunk_route.iterrows():
       person_id = str(row["p"])
+
       route = str(row["route"])
-
-      # gets each edge of the route inside the brackets
       route = route.replace("[", "").replace("]", "")
-      route = route.split(",")  # split
-      route = route[:-1]  # delete last element due to the extra comma
+      route = route.split(",")
+      route = route[:-1]  # delete last extra comma
 
-      # sums up the edge distances
       distance_sum_of_edges = 0
       for edge_id in route:
         distance_sum_of_edges += pd_edges.loc[int(edge_id)]["length"]
@@ -79,7 +78,6 @@ def merge_and_compare_route_vs_people_distances(
 
       f.write("{},{},{}\n".format(person_id, distance_sum_of_edges, distance_people_info))
 
-      # discrepancy found
       if (distance_sum_of_edges != distance_people_info):
         discrepancy_person = person_id
         discrepancy_distance_people_info = distance_people_info
@@ -100,8 +98,8 @@ def merge_and_compare_route_vs_people_distances(
 
   f.close()
 
+
 if __name__ == '__main__':
-  merge_and_compare_route_vs_people_distances(
-    "../LivingCity/berkeley_2018/new_full_network/edges.csv",
-    stop_if_discrepancy_found=True,
-    output_file="distances.csv")
+  merge_distances_from_route_and_people_files(
+    constants.DEFAULT_EDGES_FILE_PATH,
+    stop_if_discrepancy_found=False)
