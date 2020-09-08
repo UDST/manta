@@ -1,8 +1,9 @@
 import pandas as pd
 from tqdm import tqdm
 from pdb import set_trace as st
-import os
-import constants
+import os,sys
+
+import config
 
 """
   Merges the distances of each person according to the output obtained from 0_people5to12.csv
@@ -13,15 +14,15 @@ import constants
   Args:
     edges_file: Path to the edges information file.
 
-    people_file: Path to the people information file. Default given by constants.py
+    people_file: Path to the people information file. Default given by config.py
 
-    route_file: Path to the route information file. Default given by constants.py
+    route_file: Path to the route information file. Default given by config.py
 
     stop_if_discrepancy_found:  if true, stops as soon as it finds a discrepancy between
                                 the two distances of a person. Useful for testing without having to
                                 wait for the whole network to be processed. Default: true
 
-    output_file: Path to distance merge output. Default given by constants.py
+    output_file: Path to distance merge output. Default given by config.py
                 Outputted as csv with 3 columns: person_id,distance_sum_of_edges,distance_people_info
   
   Returns:
@@ -29,10 +30,10 @@ import constants
 """
 def merge_distances_from_route_and_people_files(
       edges_file,
-      people_file = constants.DEFAULT_PEOPLE_FILE_PATH,
-      route_file = constants.DEFAULT_ROUTE_FILE_PATH,
+      people_file = config.DEFAULT_PEOPLE_FILE_PATH,
+      route_file = config.DEFAULT_ROUTE_FILE_PATH,
       stop_if_discrepancy_found=True,
-      output_file = constants.DEFAULT_DISTANCE_MERGE_OUTPUT_FILE_PATH):
+      output_file = config.DEFAULT_DISTANCE_MERGE_OUTPUT_FILE_PATH):
   
   # check if output file already exists
   if (os.path.isfile(output_file)):
@@ -61,7 +62,7 @@ def merge_distances_from_route_and_people_files(
   print("Processing routes...")
   # reads in chunks to reduce memory usage
   (discrepancy_person, discrepancy_distance_people_info, discrepancy_distance_sum_of_edges) = (None, None, None)
-  for chunk_route in tqdm(pd.read_csv(route_file, sep=":", chunksize=constants.PANDAS_CHUNKSIZE), total=number_of_people/1000):
+  for chunk_route in tqdm(pd.read_csv(route_file, sep=":", chunksize=config.PANDAS_CHUNKSIZE), total=number_of_people/1000):
     for _, row in chunk_route.iterrows():
       person_id = str(row["p"])
 
@@ -101,5 +102,5 @@ def merge_distances_from_route_and_people_files(
 
 if __name__ == '__main__':
   merge_distances_from_route_and_people_files(
-    constants.DEFAULT_EDGES_FILE_PATH,
-    stop_if_discrepancy_found=False)
+    config.DEFAULT_EDGES_FILE_PATH,
+    stop_if_discrepancy_found=True)
