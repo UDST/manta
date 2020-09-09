@@ -30,10 +30,10 @@ import config
 """
 def merge_distances_from_route_and_people_files(
       edges_file,
-      people_file = config.DEFAULT_PEOPLE_FILE_PATH,
-      route_file = config.DEFAULT_ROUTE_FILE_PATH,
+      people_file = config.people_file,
+      route_file = config.route_file,
       stop_if_discrepancy_found=True,
-      output_file = config.DEFAULT_DISTANCE_MERGE_OUTPUT_FILE_PATH):
+      output_file = config.distance_merge_file):
   
   # check if output file already exists
   if (os.path.isfile(output_file)):
@@ -62,7 +62,7 @@ def merge_distances_from_route_and_people_files(
   print("Processing routes...")
   # reads in chunks to reduce memory usage
   (discrepancy_person, discrepancy_distance_people_info, discrepancy_distance_sum_of_edges) = (None, None, None)
-  for chunk_route in tqdm(pd.read_csv(route_file, sep=":", chunksize=config.PANDAS_CHUNKSIZE), total=number_of_people/1000):
+  for chunk_route in tqdm(pd.read_csv(route_file, sep=":", chunksize=config.pandas_chunksize), total=number_of_people/1000):
     for _, row in chunk_route.iterrows():
       person_id = str(row["p"])
 
@@ -102,5 +102,5 @@ def merge_distances_from_route_and_people_files(
 
 if __name__ == '__main__':
   merge_distances_from_route_and_people_files(
-    config.DEFAULT_EDGES_FILE_PATH,
+    config.edges_file,
     stop_if_discrepancy_found=True)

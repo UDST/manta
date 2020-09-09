@@ -1,7 +1,7 @@
 import os
 
-PANDAS_CHUNKSIZE = int(os.getenv("MANTA_PANDAS_CHUNKSIZE", "1000"))
-DEFAULT_EDGES_FILE_PATH = "../LivingCity/berkeley_2018/new_full_network/edges.csv"
-DEFAULT_DISTANCE_MERGE_OUTPUT_FILE_PATH = "distances.csv"
-DEFAULT_PEOPLE_FILE_PATH = "../LivingCity/0_people5to12.csv"
-DEFAULT_ROUTE_FILE_PATH = "../LivingCity/0_route5to12.csv"
+edges_file = os.getenv("EDGES_FILE", "../LivingCity/berkeley_2018/new_full_network/edges.csv")
+people_file = os.getenv("PEOPLE_FILE","../LivingCity/0_people5to12.csv")
+route_file = os.getenv("ROUTE_FILE","../LivingCity/0_route5to12.csv")
+pandas_chunksize = int(os.getenv("PANDAS_CHUNKSIZE", "1000"))
+distance_merge_file = os.getenv("DISTANCE_MERGE_FILE","distances.csv")
