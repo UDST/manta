@@ -1098,7 +1098,6 @@ __global__ void kernel_trafficSimulation(
     ushort end_intersection=trafficPersonVec[p].end_intersection;
     //2.1 check if end*/
     if (nextEdge == -1) { //if(curr_intersection==end_intersection)
-      trafficPersonVec[p].dist_traveled += trafficPersonVec[p].length;
       trafficPersonVec[p].active = 2; //finished
       return;
     }
