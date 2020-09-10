@@ -1,7 +1,8 @@
 import pandas as pd
 from tqdm import tqdm
 from pdb import set_trace as st
-import os,sys
+import os
+import sys
 
 import config
 
