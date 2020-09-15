@@ -175,6 +175,9 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 
       printf("traffic person vec size = %d\n", trafficPersonVec.size());
       printf("index path vec size = %d\n", indexPathVec.size());
+      //for (int h = 0; h < indexPathVec.size(); h++) {
+      //  printf("indexPathVec[%d] = %u\n", h, indexPathVec[h]);
+      //}
       printf("edgesData size = %d\n", edgesData.size());
       printf("laneMap size = %d\n", laneMap.size());
       printf("intersections size = %d\n", intersections.size());
@@ -2344,25 +2347,26 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared
     //std::ostream_iterator<abm::graph::vertex_t> output_iterator(output_file, "\n");
     //std::copy(indexPathVec.begin(), indexPathVec.end(), output_iterator);
 
-    int p = 0;
+    int r = 0;
     int i = 0;
 	// Save route for each person
-    streamR << p << ":[";
+    streamR << r << ":[";
 	for (auto& x: paths_SP) {
 		if (x != -1) {
 		    //abm::graph::vertex_t edge_id_val = indexPathVec[i];
-		    abm::graph::vertex_t edge_id_val = x;
+		    //abm::graph::vertex_t edge_id_val = x;
 		    //streamR << "," << edge_id_val;
-		    streamR << edge_id_val << ",";
+		    //streamR << edge_id_val << ",";
+		    streamR << x << ",";
 		    //streamR << "," << indexPathVec[index];
             //std::cout << "edge_id val = " << edge_id_val << "\n";
 		    //personDistance[p] += graph_->edges_[graph_->edge_pointer_to_vertices_[laneMapNumToEdgeDescSP[indexPathVec[i]]]]->second[0];
 		    //personDistance[p] += graph_->edges_[graph_->edge_ids_to_vertices[x]]->second[0];
 		} else {
                     streamR << "]\n";
-                    p++;
+                    r++;
 		    if (i != paths_SP.size() - 1) {
-                    	streamR << p << ":[";
+                    	streamR << r << ":[";
 		    }
         }
         i++;

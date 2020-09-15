@@ -144,9 +144,15 @@ void B18TrafficOD::randomPerson(int p, B18TrafficPerson &person,
   //printf("Person %d: init %u end %u Time %f\n",p,srcvertex,tgtvertex,goToWork);
   // Status
   qsrand(p);
-  person.a = 1.0f + ((float) qrand()) / RAND_MAX; //acceleration 1-2m/s2
-  person.b = 1.0f + ((float) qrand()) / RAND_MAX; //break 1-2m/s2
-  person.T = 0.8f + 1.2f * (((float) qrand()) / RAND_MAX); //time heading 0.8-2s
+  //person.a = 1.0f + ((float) qrand()) / RAND_MAX; //acceleration 1-2m/s2
+  //person.b = 1.0f + ((float) qrand()) / RAND_MAX; //break 1-2m/s2
+  //person.T = 0.8f + 1.2f * (((float) qrand()) / RAND_MAX); //time heading 0.8-2s
+  person.a = 6.377269699846975;
+  person.b = 3.590473364266212;
+  person.T = 0.8881429791688249;
+    if (p == 0) {
+        printf("Person %d: init %u end %u time %f\ a %f b %f T %f\n",p,srcvertex,tgtvertex,person.time_departure, person.a, person.b, person.T);
+    }
   person.v = 0;
   person.num_steps = 0;
   person.co = 0;

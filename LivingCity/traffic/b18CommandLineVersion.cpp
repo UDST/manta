@@ -74,6 +74,7 @@ void B18CommandLineVersion::runB18Simulation() {
             // open file    
             //std::ifstream inputFile("./all_paths_incl_zeros.txt");
             const std::string& pathsFileName = networkPathSP + "all_paths_ch.txt";
+            //const std::string& pathsFileName = networkPathSP + "all_paths_new_mtc.txt";
             std::cout << "Loading " << pathsFileName << " as paths file\n";
             //std::ifstream inputFile("./all_paths.txt");
             std::ifstream inputFile(pathsFileName);
@@ -188,16 +189,17 @@ void B18CommandLineVersion::runB18Simulation() {
 	}
     */
 	for (int i = 0; i < all_paths.size(); i++) {
-        if ((all_paths[i] == -1) && (i == 0)) {
+        //if ((all_paths[i] == -1) && (i == 0)) {
+        if (i == 0) { //first one that doesn't contain a -1 for logic
+            street_graph->person_to_init_edge_[count] = i; 
+            count++;
+		} else if ((all_paths[i] == -1) && (all_paths[i+1] == -1)) { //if current is -1 and next is -1, increment (will result in nan)
             street_graph->person_to_init_edge_[count] = i;
             count++;
-		} else if ((all_paths[i] == -1) && (all_paths[i+1] == -1)) {
+        } else if ((all_paths[i] != -1) && (all_paths[i-1] == -1)) { //if previous is -1, use this as first edge for p
             street_graph->person_to_init_edge_[count] = i;
             count++;
-        } else if ((all_paths[i] != -1) && (all_paths[i-1] == -1)) {
-            street_graph->person_to_init_edge_[count] = i;
-            count++;
-        } else if ((all_paths[i] == -1) && (i == (all_paths.size() - 1))) {
+        } else if ((all_paths[i] == -1) && (i == (all_paths.size() - 1))) { //reach the end
             break;
         }
 	}
