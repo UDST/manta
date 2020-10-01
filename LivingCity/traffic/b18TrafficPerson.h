@@ -14,6 +14,7 @@
 namespace LC {
 
 struct B18TrafficPerson {
+public:
   unsigned int init_intersection;
   unsigned int end_intersection;
   float time_departure;

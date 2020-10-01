@@ -14,6 +14,7 @@
 #include "b18TrafficSP.h"
 #include "b18CUDA_trafficSimulator.h"
 #include "roadGraphB2018Loader.h"
+#include <cassert>
 
 #define DEBUG_TRAFFIC 0
 #define DEBUG_SIMULATOR 0
@@ -36,18 +37,42 @@ void printPercentageMemoryUsed() {
 #endif
 namespace LC {
 
-const float s_0 = 1.5f * 4.12f; // ALWAYS USED
+//const float parameter_s_0 = 1.5f * 4.12f; // ALWAYS USED
 const float intersectionClearance = 7.8f;
 const bool calculatePollution = true;
 
-B18TrafficSimulator::B18TrafficSimulator(float _deltaTime, RoadGraph *originalRoadGraph,
-    LCUrbanMain *urbanMain) : deltaTime(_deltaTime) {
+B18TrafficSimulator::B18TrafficSimulator(const float _deltaTime, RoadGraph *originalRoadGraph,
+  const float input_a ,const float input_b, const float input_T, const float input_s_0) :
+  deltaTime(_deltaTime), parameter_a(input_a), parameter_b(input_b), parameter_T(input_T),
+  parameter_s_0(input_s_0) {
   simRoadGraph = new RoadGraph(*originalRoadGraph);
-  clientMain = urbanMain;
+  clientMain = nullptr;
 }
 
 B18TrafficSimulator::~B18TrafficSimulator() {
   delete simRoadGraph;
+}
+
+void B18TrafficSimulator::createB2018People(float startTime, float endTime, int limitNumPeople,
+    bool addRandomPeople, bool useSP, const float parameter_a, const float parameter_b, const float parameter_T) {
+  b18TrafficOD.resetTrafficPersonJob(trafficPersonVec);
+  b18TrafficOD.loadB18TrafficPeople(startTime, endTime, trafficPersonVec,
+      simRoadGraph->myRoadGraph_BI, limitNumPeople, addRandomPeople, parameter_a, parameter_b, parameter_T);
+}
+                                              
+void B18TrafficSimulator::createB2018PeopleSP(float startTime, float endTime, int limitNumPeople,
+    bool addRandomPeople, const std::shared_ptr<abm::Graph>& graph_, std::vector<float> dep_times,
+    const float parameter_a, const float parameter_b, const float parameter_T) {
+    QTime timer_reset_traffic_person;
+    timer_reset_traffic_person.start();
+  b18TrafficOD.resetTrafficPersonJob(trafficPersonVec);
+    //printf("[TIME] Reset traffic person job = %d ms\n", timer_reset_traffic_person.elapsed());
+
+    QTime timer_load_people;
+    timer_load_people.start();
+  b18TrafficOD.loadB18TrafficPeopleSP(startTime, endTime, trafficPersonVec,
+      graph_, limitNumPeople, addRandomPeople, dep_times, parameter_a, parameter_b, parameter_T);
+    //printf("[TIME] Load people = %d ms\n", timer_load_people.elapsed());
 }
 
 #ifdef B18_RUN_WITH_GUI
@@ -61,26 +86,6 @@ void B18TrafficSimulator::createRandomPeople(float startTime, float endTime,
 }//
 #endif
 
-void B18TrafficSimulator::createB2018People(float startTime, float endTime, int limitNumPeople,
-    bool addRandomPeople, bool useSP) {
-  b18TrafficOD.resetTrafficPersonJob(trafficPersonVec);
-  b18TrafficOD.loadB18TrafficPeople(startTime, endTime, trafficPersonVec,
-      simRoadGraph->myRoadGraph_BI, limitNumPeople, addRandomPeople);
-}
-
-void B18TrafficSimulator::createB2018PeopleSP(float startTime, float endTime, int limitNumPeople,
-    bool addRandomPeople, const std::shared_ptr<abm::Graph>& graph_, float a, float b, float T) {
-    QTime timer_reset_traffic_person;
-    timer_reset_traffic_person.start();
-  b18TrafficOD.resetTrafficPersonJob(trafficPersonVec);
-    printf("[TIME] Reset traffic person job = %d ms\n", timer_reset_traffic_person.elapsed());
-
-    QTime timer_load_people;
-    timer_load_people.start();
-  b18TrafficOD.loadB18TrafficPeopleSP(startTime, endTime, trafficPersonVec,
-      graph_, limitNumPeople, addRandomPeople, a, b, T);
-    printf("[TIME] Load people = %d ms\n", timer_load_people.elapsed());
-}
 
 void B18TrafficSimulator::resetPeopleJobANDintersections() {
   b18TrafficOD.resetTrafficPersonJob(trafficPersonVec);
@@ -115,7 +120,9 @@ void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
 // GPU
 //////////////////////////////////////////////////
 void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
-    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_, std::vector<abm::graph::vertex_t> paths_SP, bool saveFiles, float s_0) {
+    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_,
+    std::vector<abm::graph::vertex_t> paths_SP, bool saveFiles, const float s_0) {
+
   Benchmarker laneMapBench("Lane map", 2);
   Benchmarker passesBench("Simulation passes", 2);
   Benchmarker finishCudaBench("Cuda finish", 2);
@@ -125,7 +132,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     QTime timer_create_lane_map;
     timer_create_lane_map.start();
 	  createLaneMapSP(graph_);
-    printf("[TIME] Create lane map = %d ms\n", timer_create_lane_map.elapsed());
+    //printf("[TIME] Create lane map = %d ms\n", timer_create_lane_map.elapsed());
   } else {
 	  createLaneMap();
   }
@@ -158,20 +165,20 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
           indexPathVec, edgeDescToLaneMapNum, weigthMode, peoplePathSampling[nP]);
       shortestPathBench.stopAndEndBenchmark();
     } else if (useSP) {
-    QTime timer_convert_paths_to_index_path_vec;
-    timer_convert_paths_to_index_path_vec.start();
-	  B18TrafficSP::convertVector(paths_SP, indexPathVec, edgeDescToLaneMapNumSP, graph_);
-    printf("[TIME] Convert paths to index path vec = %d ms\n", timer_convert_paths_to_index_path_vec.elapsed());
-	  //printf("trafficPersonVec size = %d\n", trafficPersonVec.size());
+      QTime timer_convert_paths_to_index_path_vec;
+      timer_convert_paths_to_index_path_vec.start();
+      B18TrafficSP::convertVector(paths_SP, indexPathVec, edgeDescToLaneMapNumSP, graph_);
+      //printf("[TIME] Convert paths to index path vec = %d ms\n", timer_convert_paths_to_index_path_vec.elapsed());
+      //printf("trafficPersonVec size = %d\n", trafficPersonVec.size());
 
-      //set the indexPathInit of each person in trafficPersonVec to the correct one
-    QTime timer_set_init_to_edge;
-    timer_set_init_to_edge.start();
+        //set the indexPathInit of each person in trafficPersonVec to the correct one
+      QTime timer_set_init_to_edge;
+      timer_set_init_to_edge.start();
       for (int p = 0; p < trafficPersonVec.size(); p++) {
         trafficPersonVec[p].indexPathInit = graph_->person_to_init_edge_[p];
         //std::cout << p << " indexPathInit " << trafficPersonVec[p].indexPathInit << "\n";
       }
-    printf("[TIME] Set init to edge = %d ms\n", timer_set_init_to_edge.elapsed());
+      //printf("[TIME] Set init to edge = %d ms\n", timer_set_init_to_edge.elapsed());
 
     } else {
       printf("***Start generateRoutesMulti Disktra\n");
@@ -209,7 +216,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     std::copy(v.begin(), v.end(), output_iterator_v);
     printf("Wrote edge vertices files!\n");
     
-    printf("[TIME] Write edge vertices file = %d ms\n", timer_write_edge_vertices_file.elapsed());
+    //printf("[TIME] Write edge vertices file = %d ms\n", timer_write_edge_vertices_file.elapsed());
 
 
     /////////////////////////////////////
@@ -232,7 +239,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     b18InitCUDA(fistInitialization, trafficPersonVec, indexPathVec, edgesData,
         laneMap, trafficLights, intersections, startTimeH, endTimeH,
         accSpeedPerLinePerTimeInterval, numVehPerLinePerTimeInterval, deltaTime);
-    printf("[TIME] Init cuda = %d ms\n", timer_init_cuda.elapsed());
+    //printf("[TIME] Init cuda = %d ms\n", timer_init_cuda.elapsed());
 
     //for (int x = 0; x < 30; x++) {
     //    printf("index %d edgesData length %f\n", x, edgesData[x].length);
@@ -299,85 +306,85 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 
       if (count % iter_printout != 0) {
         b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
-                             intersections.size(), deltaTime, s_0);
+                             intersections.size(), deltaTime, parameter_s_0);
         //b18GetDataCUDA(trafficPersonVec, edgesData);
       } else {
         QTime timer_simulate_in_gpu;
         timer_simulate_in_gpu.start();
         b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
-                             intersections.size(), deltaTime, s_0);
-        printf("[TIME] Simulation per timestep = %d ms\n", timer_simulate_in_gpu.elapsed());
+                             intersections.size(), deltaTime, parameter_s_0);
+        //printf("[TIME] Simulation per timestep = %d ms\n", timer_simulate_in_gpu.elapsed());
         QTime timer_get_data_from_gpu;
         timer_get_data_from_gpu.start();
         b18GetDataCUDA(trafficPersonVec, edgesData);
-        printf("[TIME] GPU to CPU data transfer = %d ms\n", timer_get_data_from_gpu.elapsed());
+        //printf("[TIME] GPU to CPU data transfer = %d ms\n", timer_get_data_from_gpu.elapsed());
       }
         
       if (count % iter_printout == 0) {
-            QTime timer_process_and_save_edge_speeds;
-            timer_process_and_save_edge_speeds.start();
-            //get the average values from edgesData structure
-            /*
-            for (int x = 0; x < edgesData.size(); x++) {
-                avg_edge_vel[x] = (float) edgesData[x].curr_cum_vel / (float) iter_printout;
-                //std::cout << "cum_vel = " << edgesData[x].curr_cum_vel << "\n" << "avg_edge_vel = " << avg_edge_vel[x] << "\n" << "iter printout = " << iter_printout << "\n";
-            }
-            */
+        QTime timer_process_and_save_edge_speeds;
+        timer_process_and_save_edge_speeds.start();
+        //get the average values from edgesData structure
+        /*
+        for (int x = 0; x < edgesData.size(); x++) {
+            avg_edge_vel[x] = (float) edgesData[x].curr_cum_vel / (float) iter_printout;
+            //std::cout << "cum_vel = " << edgesData[x].curr_cum_vel << "\n" << "avg_edge_vel = " << avg_edge_vel[x] << "\n" << "iter printout = " << iter_printout << "\n";
+        }
+        */
 
-            //int tNumMapWidth = 0;
-            QTime timer_process_edge_speeds;
-            timer_process_edge_speeds.start();
-            int index = 0;
-            std::vector<float> avg_edge_vel(graph_->edges_.size());
-            for (auto const& x : graph_->edges_) {
-	            //const int numLanes = std::get<1>(x)->second[1];
-                //const int numWidthNeeded = ceil(edgesData[tNumMapWidth].length / kMaxMapWidthM);
-                //tNumMapWidth += numLanes * numWidthNeeded;
-                ind = edgeDescToLaneMapNumSP[x.second];
-                //avg_edge_vel[index] = edgesData[ind].curr_cum_vel / count;// * 2.23694;
-                avg_edge_vel[index] = edgesData[ind].curr_cum_vel / edgesData[ind].curr_iter_num_cars;// * 2.23694;
-                //avg_edge_vel[index] = ((edgesData[ind].curr_iter_cum_vel / edgesData[ind].curr_iter_num_cars) / count) * 2.23694;
-                index++;
+        //int tNumMapWidth = 0;
+        QTime timer_process_edge_speeds;
+        timer_process_edge_speeds.start();
+        int index = 0;
+        std::vector<float> avg_edge_vel(graph_->edges_.size());
+        for (auto const& x : graph_->edges_) {
+          //const int numLanes = std::get<1>(x)->second[1];
+            //const int numWidthNeeded = ceil(edgesData[tNumMapWidth].length / kMaxMapWidthM);
+            //tNumMapWidth += numLanes * numWidthNeeded;
+            ind = edgeDescToLaneMapNumSP[x.second];
+            //avg_edge_vel[index] = edgesData[ind].curr_cum_vel / count;// * 2.23694;
+            avg_edge_vel[index] = edgesData[ind].curr_cum_vel / edgesData[ind].curr_iter_num_cars;// * 2.23694;
+            //avg_edge_vel[index] = ((edgesData[ind].curr_iter_cum_vel / edgesData[ind].curr_iter_num_cars) / count) * 2.23694;
+            index++;
+        }
+        //printf("[TIME] Process edge speeds for loop = %d ms\n", timer_process_edge_speeds.elapsed());
+            
+        /*
+        int counter = 0;
+        int index = 0;
+        int delta_val = 0;
+        std::vector<float> avg_edge_vel(graph_->edges_.size());
+        for (auto const& x : graph_->edges_) {
+            //printf("ind = %d\n", ind);
+            ind = edgeDescToLaneMapNumSP[x.second] - delta_val;
+            //printf("counter = %d\n", counter);
+            //printf("index = %d\n", index);
+            //printf("ind = %d\n", ind);
+            //avg_edge_vel[ind] = ( (float) edgesData[ind].curr_cum_vel / (float) count ) * 3600 / 1609.34 ;
+            for (int j = counter; j < (counter + ind); j++) {
+                avg_edge_vel[index] += edgesData[j].curr_cum_vel; //add up all the lanes' velocities in that edge
             }
-            printf("[TIME] Process edge speeds for loop = %d ms\n", timer_process_edge_speeds.elapsed());
-                
-            /*
-            int counter = 0;
-            int index = 0;
-            int delta_val = 0;
-            std::vector<float> avg_edge_vel(graph_->edges_.size());
-            for (auto const& x : graph_->edges_) {
-                //printf("ind = %d\n", ind);
-                ind = edgeDescToLaneMapNumSP[x.second] - delta_val;
-                //printf("counter = %d\n", counter);
-                //printf("index = %d\n", index);
-                //printf("ind = %d\n", ind);
-                //avg_edge_vel[ind] = ( (float) edgesData[ind].curr_cum_vel / (float) count ) * 3600 / 1609.34 ;
-                for (int j = counter; j < (counter + ind); j++) {
-                    avg_edge_vel[index] += edgesData[j].curr_cum_vel; //add up all the lanes' velocities in that edge
-                }
-                //avg_edge_vel[index] /= std::get<1>(x)->second[1]; //divide by the number of lanes
-                avg_edge_vel[index] /= ind; //divide by the number of split up parts of the edge (lanes, etc.)
-                //avg_edge_vel[index] /= (float) (count); //divide by the number of iterations
-                avg_edge_vel[index] *= 2.23694 ; //convert from meters per second to mph
-                counter += ind;
-                index++;
-                delta_val = edgeDescToLaneMapNumSP[x.second];
-                //std::cout << "cum_vel = " << edgesData[x].curr_cum_vel << "\n" << "avg_edge_vel = " << avg_edge_vel[x] << "\n" << "iter printout = " << iter_printout << "\n";
-            }
-            */
-            //save avg_edge_vel vector to file
-            std::string name = "./all_edges_vel_" + std::to_string(iter_printout_index) + ".txt";
-            std::ofstream output_file(name);
-            std::ostream_iterator<float> output_iterator(output_file, "\n");
-            std::copy(avg_edge_vel.begin(), avg_edge_vel.end(), output_iterator);
+            //avg_edge_vel[index] /= std::get<1>(x)->second[1]; //divide by the number of lanes
+            avg_edge_vel[index] /= ind; //divide by the number of split up parts of the edge (lanes, etc.)
+            //avg_edge_vel[index] /= (float) (count); //divide by the number of iterations
+            avg_edge_vel[index] *= 2.23694 ; //convert from meters per second to mph
+            counter += ind;
+            index++;
+            delta_val = edgeDescToLaneMapNumSP[x.second];
+            //std::cout << "cum_vel = " << edgesData[x].curr_cum_vel << "\n" << "avg_edge_vel = " << avg_edge_vel[x] << "\n" << "iter printout = " << iter_printout << "\n";
+        }
+        */
+        //save avg_edge_vel vector to file
+        std::string name = "./all_edges_vel_" + std::to_string(iter_printout_index) + ".txt";
+        std::ofstream output_file(name);
+        std::ostream_iterator<float> output_iterator(output_file, "\n");
+        std::copy(avg_edge_vel.begin(), avg_edge_vel.end(), output_iterator);
 
-            //fill avg_edge_vel vector back to 0 for next iter_printout iterations
-            //std::fill(std::begin(avg_edge_vel), std::end(avg_edge_vel), 0);
-            iter_printout_index++;
+        //fill avg_edge_vel vector back to 0 for next iter_printout iterations
+        //std::fill(std::begin(avg_edge_vel), std::end(avg_edge_vel), 0);
+        iter_printout_index++;
 
-            timerLoop.restart();
-            printf("[TIME] Process and save edge speeds total = %d ms\n", timer_process_and_save_edge_speeds.elapsed());
+        timerLoop.restart();
+        //printf("[TIME] Process and save edge speeds total = %d ms\n", timer_process_and_save_edge_speeds.elapsed());
       }
 #ifdef B18_RUN_WITH_GUI
 
@@ -799,7 +806,11 @@ void simulateOnePersonCPU(
   std::vector<LC::B18EdgeData> &edgesData,
   std::vector<uchar> &laneMap,
   std::vector<B18IntersectionData> &intersections,
-  std::vector<uchar> &trafficLights) {
+  std::vector<uchar> &trafficLights,
+  const float parameter_a,
+  const float parameter_b,
+  const float parameter_T,
+  const float parameter_s_0) {
   //if(DEBUG_TRAFFIC==1)printf("currentTime %f   0 Person: %d State %d Time Dep %f\n",currentTime,p,trafficPersonVec[p].active, trafficPersonVec[p].time_departure);
   ///////////////////////////////
   //2.0. check if finished
@@ -851,7 +862,7 @@ void simulateOnePersonCPU(
       uchar laneChar;
       bool placed = false;
 
-      ushort numCellsEmptyToBePlaced = s_0;
+      ushort numCellsEmptyToBePlaced = parameter_s_0;
       ushort countEmptyCells = 0;
 
       for (ushort b = initShift; (b < numOfCells) && (placed == false); b++) {
@@ -1106,7 +1117,7 @@ void simulateOnePersonCPU(
 
   if (found == true) { //car in front and slower than us
     // 2.1.2 calculate dv_dt
-    s_star = s_0 + std::max(0.0f,
+    s_star = parameter_s_0 + std::max(0.0f,
                             (trafficPersonVec[p].v * trafficPersonVec[p].T + (trafficPersonVec[p].v *
                                 delta_v) / (2 * std::sqrt(trafficPersonVec[p].a * trafficPersonVec[p].b))));
     thirdTerm = std::pow(((s_star) / (s)), 2);
@@ -1287,12 +1298,12 @@ void simulateOnePersonCPU(
             } else { // NOT ALONE
               float b1A = 0.05f, b2A = 0.15f;
               float b1B = 0.15f, b2B = 0.40f;
-              // s_0-> critical lead gap
+              // parameter_s_0-> critical lead gap
               float g_na_D, g_bn_D;
               bool acceptLC = true;
 
               if (gap_a != 1000.0f) {
-                g_na_D = std::max(s_0, s_0 + b1A * trafficPersonVec[p].v + b2A *
+                g_na_D = std::max(parameter_s_0, parameter_s_0 + b1A * trafficPersonVec[p].v + b2A *
                                   (trafficPersonVec[p].v - v_a * 3.0f));
 
                 if (gap_a < g_na_D) { //gap smaller than critical gap
@@ -1301,7 +1312,7 @@ void simulateOnePersonCPU(
               }
 
               if (acceptLC == true && gap_b != 1000.0f) {
-                g_bn_D = std::max(s_0, s_0 + b1B * v_b * 3.0f + b2B * (v_b * 3.0f -
+                g_bn_D = std::max(parameter_s_0, parameter_s_0 + b1B * v_b * 3.0f + b2B * (v_b * 3.0f -
                                   trafficPersonVec[p].v));
 
                 if (gap_b < g_bn_D) { //gap smaller than critical gap
@@ -1429,7 +1440,7 @@ void simulateOnePersonCPU(
               float b1A = 0.05f, b2A = 0.15f;
               float b1B = 0.15f, b2B = 0.40f;
               float gamma = 0.000025;
-              // s_0-> critical lead gap
+              // parameter_s_0-> critical lead gap
               float distEnd = trafficPersonVec[p].length - trafficPersonVec[p].posInLaneM;
               float expTerm = (1 - exp(-gamma * distEnd * distEnd));
 
@@ -1437,7 +1448,7 @@ void simulateOnePersonCPU(
               bool acceptLC = true;
 
               if (gap_a != 1000.0f) {
-                g_na_M = std::max(s_0, s_0 + (b1A * trafficPersonVec[p].v + b2A *
+                g_na_M = std::max(parameter_s_0, parameter_s_0 + (b1A * trafficPersonVec[p].v + b2A *
                                               (trafficPersonVec[p].v - v_a * 3.0f)));
 
                 if (gap_a < g_na_M) { //gap smaller than critical gap
@@ -1446,7 +1457,7 @@ void simulateOnePersonCPU(
               }
 
               if (acceptLC == true && gap_b != 1000.0f) {
-                g_bn_M = std::max(s_0, s_0 + (b1B * v_b * 3.0f + b2B * (v_b * 3.0f -
+                g_bn_M = std::max(parameter_s_0, parameter_s_0 + (b1B * v_b * 3.0f + b2B * (v_b * 3.0f -
                                               trafficPersonVec[p].v)));
 
                 if (gap_b < g_bn_M) { //gap smaller than critical gap
@@ -1924,7 +1935,7 @@ void B18TrafficSimulator::simulateInCPU(float startTimeH, float endTimeH) {
     for (int p = 0; p < numPeople; p++) {
       simulateOnePersonCPU(p, deltaTime, currentTime, mapToReadShift, mapToWriteShift,
                            trafficPersonVec, indexPathVec, edgesData, laneMap, intersections,
-                           trafficLights);
+                           trafficLights, parameter_a, parameter_b, parameter_T, parameter_s_0);
     }//for people
 
     ////////////////////////////////////////////////////////////
@@ -2668,7 +2679,7 @@ void B18TrafficSimulator::calculateAndDisplayTrafficDensity(int numOfPass) {
         int numLane = edgeDescToLaneMapNum[*ei];
         //  0.8f to make easier to become red
         float maxVehicles = 0.5f * simRoadGraph->myRoadGraph_BI[*ei].edgeLength *
-                            simRoadGraph->myRoadGraph_BI[*ei].numberOfLanes / (s_0);
+                            simRoadGraph->myRoadGraph_BI[*ei].numberOfLanes / (parameter_s_0);
 
         if (maxVehicles < 1.0f) {
           maxVehicles = 1.0f;
@@ -2733,7 +2744,7 @@ void B18TrafficSimulator::calculateAndDisplayTrafficDensity(int numOfPass) {
       int numLane = edgeDescToLaneMapNum[*ei];
       //0.8f to make easier to become red
       float maxVehicles = 0.5f * simRoadGraph->myRoadGraph_BI[*ei].edgeLength *
-                          simRoadGraph->myRoadGraph_BI[*ei].numberOfLanes / (s_0);
+                          simRoadGraph->myRoadGraph_BI[*ei].numberOfLanes / (parameter_s_0);
 
       if (maxVehicles < 1.0f) {
         maxVehicles = 1.0f;

@@ -46,7 +46,9 @@ class B18TrafficLightRender {
 class B18TrafficSimulator {
 
  public:
-  B18TrafficSimulator(float deltaTime, RoadGraph *geoRoadGraph, LCUrbanMain *urbanMain = nullptr);
+  B18TrafficSimulator(const float _deltaTime, RoadGraph *originalRoadGraph,
+                      const float input_a ,const float input_b, const float input_T,
+                      const float input_s_0);
   ~B18TrafficSimulator();
 
   // init data
@@ -56,6 +58,12 @@ class B18TrafficSimulator {
   float deltaTime;
   int threadNumber;
   float avgTravelTime;
+
+  // parameters
+  const float parameter_a;
+  const float parameter_b;
+  const float parameter_T;
+  const float parameter_s_0;
 
   //PM
   B18TrafficOD b18TrafficOD;
@@ -91,13 +99,18 @@ class B18TrafficSimulator {
   std::vector<B18TrafficPerson> trafficPersonVec;
   std::vector<uint> indexPathVec;
 
+  
+  void createB2018People(float startTime, float endTime, int limitNumPeople,
+    bool addRandomPeople, bool useSP,  const float parameter_a, const float parameter_b, const float parameter_T) ;
+  void createB2018PeopleSP(float startTime, float endTime, int limitNumPeople,
+    bool addRandomPeople, const std::shared_ptr<abm::Graph>& graph_, std::vector<float> dep_times,
+    const float parameter_a, const float parameter_b, const float parameter_T);
+
+
 #ifdef B18_RUN_WITH_GUI
   void createRandomPeople(float startTime, float endTime, int numberPeople,
                           PeopleJobInfoLayers &peopleJobInfoLayers);
 #endif
-  void createB2018People(float startTime, float endTime, int limitNumPeople, bool addRandomPeople, bool useSP);
-  
-  void createB2018PeopleSP(float startTime, float endTime, int limitNumPeople, bool addRandomPeople, const std::shared_ptr<abm::Graph>& graph_, float a, float b, float T);
 
   void resetPeopleJobANDintersections();
   void saveODToFile() {}; // TODO
