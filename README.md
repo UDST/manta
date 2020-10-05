@@ -137,6 +137,35 @@ If necessary, you can checkout a different existing branch from main (`edge_spee
 git checkout edge_speeds_over_time
 ```
 
+### Debugging
+For debugging we recommend `cuda-gdb`. In order to use it, `manta/Makefile` must be modified by adding the flag `-G` to enable debugging and changing `-O3` to `-O` to avoid optimizations that restrict the use of the debugger.
+
+For example, to enable debugging at `LivingCity/traffic/b18CUDA_trafficSimulator.cu`,  its compilation at the line `manta/Makefile:1756`:
+<pre>
+/usr/local/cuda-9.0/bin/nvcc -m64 <b>-O3</b> -arch=sm_50 -c --compiler-options -f
+no-strict-aliasing -use_fast_math --ptxas-options=-v -Xcompiler -fopenmp -I/u
+sr/include/opencv2/ -I/opt/local/include/ -I/usr/local/boost_1_59_0/ -I/home/
+<b>{YOUR_USERNAME}</b>/manta/LivingCity/glew/include/ -I/usr/local/cuda-9.0/include  -L/opt/l
+ocal/lib -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lcudart -lcuda -g -lgomp
+LivingCity/traffic/b18CUDA_trafficSimulator.cu -o
+${OBJECTS_DIR}b18CUDA_trafficSimulator_cuda.o
+</pre>
+
+must be modified to:
+<pre>
+/usr/local/cuda-9.0/bin/nvcc -m64 <b>-O</b> -arch=sm_50 -c --compiler-options -f
+no-strict-aliasing -use_fast_math --ptxas-options=-v -Xcompiler -fopenmp -I/u
+sr/include/opencv2/ -I/opt/local/include/ -I/usr/local/boost_1_59_0/ -I/home/
+<b>{YOUR_USERNAME}</b>/manta/LivingCity/glew/include/ -I/usr/local/cuda-9.0/include  -L/opt/l
+ocal/lib -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lcudart -lcuda -g <b>-G</b>
+-lgomp LivingCity/traffic/b18CUDA_trafficSimulator.cu -o
+${OBJECTS_DIR}b18CUDA_trafficSimulator_cuda.o
+</pre>
+
+After this modification, `sudo make clean` and `sudo make -j` must be run.
+
+Please keep in mind that this alteration slows the program down. For more information about `cuda-gdb`, please refer to the official [Website](https://docs.nvidia.com/cuda/cuda-gdb/index.html) and [Documentation](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwiBgbqg9fzrAhUMIrkGHby9Db8QFjADegQIAxAB&url=https%3A%2F%2Fdeveloper.download.nvidia.com%2Fcompute%2FDevZone%2Fdocs%2Fhtml%2FC%2Fdoc%2Fcuda-gdb.pdf&usg=AOvVaw3J9Il2vHkkxtcX83EHC3-z).
+
 ## Acknowledgments
 
 This repository and code have been developed and maintained by Pavan Yedavalli, Ignacio Garcia Dorado, Krishna Kumar, and Paul Waddell. This work heavily derives from Ignacio Garcia Dorado's [Automatic Urban Modeling project](http://www.ignaciogarciadorado.com/p/2014_EG/2014_EG.html).
