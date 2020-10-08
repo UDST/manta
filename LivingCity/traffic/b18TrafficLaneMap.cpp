@@ -16,6 +16,8 @@
 #include <boost/random.hpp>
 #include <boost/random/normal_distribution.hpp>
 #include <boost/math/distributions/non_central_t.hpp>
+#include "sp/config.h"
+
 
 #define LANE_DEBUG 1
 
@@ -44,7 +46,8 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
       std::vector<B18EdgeData> &edgesData, std::vector<B18IntersectionData> &intersections,
       std::vector<uchar> &trafficLights, 
       std::map<uint, std::shared_ptr<abm::Graph::Edge>> &laneMapNumToEdgeDescSP,
-      tsl::robin_map<std::shared_ptr<abm::Graph::Edge>, uint> &edgeDescToLaneMapNumSP) {
+      tsl::robin_map<std::shared_ptr<abm::Graph::Edge>, uint> &edgeDescToLaneMapNumSP,
+      vector<uint> &edgeIdToLaneMapNum){
 	/* FOR DATA ACCESS SANITY
 	for (auto const& x : graph_->edges_) {
 		//std::cout << "vertex = " << std::get<1>(std::get<0>(x)) << "\n"; //gets the second vertex value of edge
@@ -67,6 +70,13 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
   
   edgeDescToLaneMapNumSP.clear();
   laneMapNumToEdgeDescSP.clear();
+  
+  abm::graph::edge_id_t max_edge_id = 0;
+  for(auto it = graph_->edge_ids_.begin(); it != graph_->edge_ids_.end(); ++it){
+    max_edge_id = max(max_edge_id, it->second);
+  }
+  printf("max_edge_id: %i", max_edge_id);
+  edgeIdToLaneMapNum = vector<uint>(max_edge_id+1);
 
   // Check distribution of street length
   float binLength = 1.0f;//1km
@@ -95,60 +105,9 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
     edgesData[tNumMapWidth].length = std::get<1>(x)->second[0];
     float max_speed;
     float uber_std; //Uber std dev in mps (8.9 mph)
-    //max_speed = std::get<1>(x)->second[2] + (rand() % 30);//(qrand() % 39 + (-20));
     max_speed = std::get<1>(x)->second[2];
 
-    //printf("max speed = %f\n", max_speed);
-
-    /*
-    if ((max_speed > 8) & (max_speed < 9)) {
-        max_speed = 9.37;
-        uber_std = 2.98;
-    } else if ((max_speed > 11) & (max_speed < 12)) {
-        max_speed = 11.06;
-        uber_std = 3.63;
-    } else if ((max_speed > 13) & (max_speed < 14)) {
-        max_speed = 12.19;
-        uber_std = 3.72;
-    } else if ((max_speed > 15) & (max_speed < 16)) {
-        max_speed = 13.21;
-        uber_std = 3.10;
-    } else if ((max_speed > 17) & (max_speed < 18)) {
-        max_speed = 13.96;
-        uber_std = 3.50;
-    } else if ((max_speed > 20) & (max_speed < 21)) {
-        max_speed = 13.92;
-        uber_std = 4.42;
-    } else if ((max_speed > 22) & (max_speed < 23)) {
-        max_speed = 15.09;
-        uber_std = 5.82;
-    } else if ((max_speed > 29) & (max_speed < 30)) {
-        max_speed = 26.94;
-        uber_std = 4.65;
-    }
-
-    boost::mt19937 rng;
-    srand(45321654);
-    boost::normal_distribution<> nd(max_speed, 3.0*uber_std);
-    boost::variate_generator<boost::mt19937 &, boost::normal_distribution<> > var(rng, nd);
-    float smoothed_max_speed  = var();
-    edgesData[tNumMapWidth].maxSpeedMperSec = smoothed_max_speed;//(qrand() % 39 + (-20));
-    */
-
-        //printf("changed 20 mph speed limit to 50 mph!\n");
-    //(qrand() % 39 + (-20));
-   // if (std::get<1>(x)->second[2] >= 55.0) {
-        //max_speed = std::get<1>(x)->second[2] + (qrand() % 19 + (-10)); 
-        //max_speed = std::get<1>(x)->second[2] + (qrand() % 30); 
-    /*
-    if (std::get<1>(x)->second[2] == 25.0) {
-        max_speed = std::get<1>(x)->second[2] + (rand() % 20);
-    } else {
-        max_speed = std::get<1>(x)->second[2];//(qrand() % 39 + (-20));
-    }
-    */
-    //edgesData[tNumMapWidth].maxSpeedMperSec = std::get<1>(x)->second[2];//(qrand() % 39 + (-20));
-    edgesData[tNumMapWidth].maxSpeedMperSec = max_speed;//(qrand() % 39 + (-20));
+    edgesData[tNumMapWidth].maxSpeedMperSec = max_speed;
 
     if (maxLength < edgesData[tNumMapWidth].length) { maxLength = edgesData[tNumMapWidth].length; }
     if (maxNumLanes < numLanes) { maxNumLanes = numLanes; }
@@ -160,15 +119,30 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
     //std::cout << " edge " << edge_count << " nextInters " << edgesData[tNumMapWidth].nextInters << "\n";
     //std::cout << " tNumMapWidth " <<tNumMapWidth << " nextInters " << edgesData[tNumMapWidth].nextInters << "\n";
 
-    //edgeDescToLaneMapNum.insert(std::make_pair(*ei, tNumMapWidth));
-    //laneMapNumToEdgeDesc.insert(std::make_pair(tNumMapWidth, *ei));
     edgeDescToLaneMapNumSP.insert(std::make_pair(x.second, tNumMapWidth));
     laneMapNumToEdgeDescSP.insert(std::make_pair(tNumMapWidth, x.second));
+
+    std::tuple<abm::graph::vertex_t, abm::graph::vertex_t> edge_vertices = std::get<1>(x)->first;
+    abm::graph::edge_id_t edge_id = graph_->edge_ids_[edge_vertices];
+    if (edge_id >= edgeIdToLaneMapNum.size()){
+      printf("edge_id exceeds upper bound. Edge_id: %i  vector size: %i\n",
+              edge_id, edgeIdToLaneMapNum.size());
+    }
+    if (edge_id < 0){
+      printf("edge_id exceeds lower bound\n");
+    }
+    edgeIdToLaneMapNum[edge_id] = tNumMapWidth;
 
     tNumMapWidth += numLanes * numWidthNeeded;
     tNumLanes += numLanes;
     //std::cout << "tNumMapWidth = " << tNumMapWidth << "\n";
     edge_count++;
+  }
+  if (edge_count != graph_->nedges()){
+    printf("Error! Edge count does not match number of edges in graph.\n");
+    printf("Edge count: %i  |   Number of edges in graph: %i\n", edge_count, graph_->nedges());
+  }else{
+    printf("Edge count is exactly like number of edges: %i\n",edge_count);
   }
 
   edgesData.resize(tNumMapWidth);
@@ -180,7 +154,6 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
     //printf("edgesData size = %d\n", edgesData.size());
 
   // 2. RESIZE LANE MAP
-
   printf("Total Memory %d\n", kMaxMapWidthM * tNumMapWidth * 2);
   laneMap.resize(kMaxMapWidthM * tNumMapWidth * 2); // 2: to have two maps.
   memset(laneMap.data(), -1, laneMap.size()*sizeof(unsigned char)); //
@@ -191,17 +164,12 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
   RoadGraph::roadGraphVertexIter_BI vi, viEnd;
   RoadGraph::in_roadGraphEdgeIter_BI Iei, Iei_end;
   RoadGraph::out_roadGraphEdgeIter_BI Oei, Oei_end;
-  //intersections.resize(boost::num_vertices(inRoadGraph.myRoadGraph_BI));//as many as vertices
   intersections.resize(graph_->vertex_edges_.size());//as many as vertices
   //std::cout << "intersections size = " << intersections.size() << "\n";
   trafficLights.assign(tNumMapWidth, 0);
-  //trafficLights.resize(tNumMapWidth); // we could use tNumLanes but then the edge number would not match and we would need to add logic.
-  //memset(trafficLights.data(), 0, trafficLights.size()*sizeof(uchar));
-    /*
-  for (int x = 0; x < trafficLights.size(); x++) {
-        std::cout << "TL " << x << "val " << (int) trafficLights[x] << "\n";
-    }
-    */
+  /*for (int x = 0; x < trafficLights.size(); x++) {
+    std::cout << "TL " << x << "val " << (int) trafficLights[x] << "\n";
+  }*/
   int index = 0;
   for (const auto& vertex : graph_->vertex_edges_) {
     //std::cout << "GET<0> VERTEX = " << std::get<0>(vertex) << "\n";
@@ -215,14 +183,14 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
       continue;
     }
 
-  if (intersections[graph_->vertex_map_[std::get<0>(vertex)]].totalInOutEdges >= 20) {
+    if (intersections[graph_->vertex_map_[std::get<0>(vertex)]].totalInOutEdges >= 20) {
       printf("Vertex with more than 20 in/out edges\n");
       continue;
     }
     index++;
 
     
-  //sort by angle
+    //sort by angle
     QVector3D referenceVector(0, 1, 0);
     QVector3D p0, p1;
     //std::vector<std::pair<LC::RoadGraph::roadGraphEdgeDesc_BI, float>> edgeAngleOut;
@@ -253,7 +221,6 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
       numOutEdges++;
       //edgeAngleOut.push_back(std::make_pair(edge_pair.first,angle));
     }
-    
    
     std::vector<std::pair<std::shared_ptr<abm::Graph::Edge>, float>> edgeAngleIn;
     int numInEdges = 0;

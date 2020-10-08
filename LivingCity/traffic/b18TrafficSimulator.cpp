@@ -98,7 +98,7 @@ void B18TrafficSimulator::createLaneMap() {
 }//
 
 void B18TrafficSimulator::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph_) { //
-	b18TrafficLaneMap.createLaneMapSP(graph_, laneMap, edgesData, intersections, trafficLights, laneMapNumToEdgeDescSP, edgeDescToLaneMapNumSP);
+	b18TrafficLaneMap.createLaneMapSP(graph_, laneMap, edgesData, intersections, trafficLights, laneMapNumToEdgeDescSP, edgeDescToLaneMapNumSP, edgeIdToLaneMapNum);
 }
 
 void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
@@ -121,7 +121,7 @@ void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
 //////////////////////////////////////////////////
 void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
     bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_,
-    std::vector<abm::graph::vertex_t> paths_SP, bool saveFiles, const float s_0) {
+    std::vector<abm::graph::edge_id_t> paths_SP, bool saveFiles, const float s_0) {
 
   Benchmarker laneMapBench("Lane map", 2);
   Benchmarker passesBench("Simulation passes", 2);
@@ -167,8 +167,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     } else if (useSP) {
       QTime timer_convert_paths_to_index_path_vec;
       timer_convert_paths_to_index_path_vec.start();
-      B18TrafficSP::convertVector(paths_SP, indexPathVec, edgeDescToLaneMapNumSP, graph_);
-      //printf("[TIME] Convert paths to index path vec = %d ms\n", timer_convert_paths_to_index_path_vec.elapsed());
+      B18TrafficSP::convertVector(paths_SP, indexPathVec, edgeIdToLaneMapNum, graph_);
+      printf("[TIME] Convert paths to index path vec = %d ms\n", timer_convert_paths_to_index_path_vec.elapsed());
       //printf("trafficPersonVec size = %d\n", trafficPersonVec.size());
 
         //set the indexPathInit of each person in trafficPersonVec to the correct one

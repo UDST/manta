@@ -47,6 +47,8 @@ void B18CommandLineVersion::runB18Simulation() {
   printf("b18CommandLineVersion received the parameters [a:%f, b:%f, T:%f, s_0:%f]\n",
         parameter_a, parameter_b, parameter_T, parameter_s_0);
 
+  if (parameter_T < 0) { printf("ERROR. parameter T cannot be negative\n"); }
+  if (parameter_s_0 < 0) { printf("ERROR. parameter s_0 cannot be negative\n"); }
   //const float deltaTime = 0.5f; //Time step of .5 seconds
   //const float startDemandH = 5.00f; //Start time for the simulation (hour)
   //const float endDemandH = 12.00f; //End time for the simulation (hour)
@@ -63,7 +65,7 @@ void B18CommandLineVersion::runB18Simulation() {
   ClientGeometry cg;
   B18TrafficSimulator b18TrafficSimulator(deltaTime, &cg.roadGraph, parameter_a ,parameter_b, parameter_T, parameter_s_0);
   //auto all_paths = std::vector<abm::graph::vertex_t>;
-  std::vector<abm::graph::vertex_t> all_paths;
+  std::vector<abm::graph::edge_id_t> all_paths;
   vector<vector<int>> all_paths_ch;
   const bool directed = true;
   auto street_graph = std::make_shared<abm::Graph>(directed);

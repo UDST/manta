@@ -46,8 +46,7 @@ class B18TrafficSP {
   
   static std::vector<float> read_dep_times(const std::string& filename);
 
-  //static void convertVector(std::vector<abm::graph::vertex_t> paths_SP, std::vector<uint>& indexPathVec, std::map<std::shared_ptr<abm::Graph::Edge>, uint> &edgeDescToLaneMapNumSP, const std::shared_ptr<abm::Graph>& graph_);
-  static void convertVector(std::vector<abm::graph::vertex_t> paths_SP, std::vector<uint>& indexPathVec, tsl::robin_map<std::shared_ptr<abm::Graph::Edge>, uint> &edgeDescToLaneMapNumSP, const std::shared_ptr<abm::Graph>& graph_);
+  static void convertVector(std::vector<abm::graph::edge_id_t> paths_SP, std::vector<uint>& indexPathVec, std::vector<uint> &edgeIdToLaneMapNum, const std::shared_ptr<abm::Graph>& graph_);
 
 
   explicit B18TrafficSP(const std::shared_ptr<abm::Graph>& graph) : graph_{graph} {};
