@@ -71,9 +71,10 @@ class B18TrafficSimulator {
   //                   bool useJohnsonRouting, bool useSP);
   
   void simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
-    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_, std::vector<abm::graph::vertex_t> paths_SP);
+    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_, std::vector<abm::graph::edge_id_t> paths_SP);
 
   // Lanes
+  std::vector<uint> edgeIdToLaneMapNum;
   std::vector<uchar> laneMap;
   std::vector<B18EdgeData> edgesData;
   std::map<RoadGraph::roadGraphEdgeDesc_BI, uint> edgeDescToLaneMapNum;
