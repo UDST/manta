@@ -70,10 +70,10 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
   
 
   abm::graph::edge_id_t max_edge_id = 0;
-  for(auto it = graph_->edge_ids_.begin(); it != graph_->edge_ids_.end(); ++it){
-    max_edge_id = std::max(max_edge_id, it->second);
+  for (const std::pair<std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>, abm::graph::edge_id_t > it: graph_->edge_ids_) {
+    max_edge_id = std::max(max_edge_id, it.second);
   }
-  printf("max_edge_id: %i", max_edge_id);
+  std::cout << "max_edge_id " << max_edge_id << "\n";
   edgeIdToLaneMapNum = std::vector<uint>(max_edge_id+1);
   
   // Check distribution of street length
