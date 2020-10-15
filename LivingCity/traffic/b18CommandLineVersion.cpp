@@ -54,8 +54,8 @@ void B18CommandLineVersion::runB18Simulation() {
 
   ClientGeometry cg;
   B18TrafficSimulator b18TrafficSimulator(deltaTime, &cg.roadGraph);
-  //auto all_paths = std::vector<abm::graph::vertex_t>;
-  std::vector<abm::graph::vertex_t> all_paths;
+  
+  std::vector<abm::graph::edge_id_t> all_paths;
   vector<vector<int>> all_paths_ch;
   const bool directed = true;
   auto street_graph = std::make_shared<abm::Graph>(directed);

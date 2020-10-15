@@ -148,7 +148,7 @@ class Graph {
   std::map<std::shared_ptr<Edge>, std::tuple<graph::vertex_t, graph::vertex_t>>
       edge_pointer_to_vertices_;
   //Edges to an index
-  std::map <graph::vertex_t, graph::vertex_t> edge_vertex_map_;
+  std::map <graph::edge_id_t, graph::vertex_t> edge_vertex_map_;
   // adjacency list with iteration over each edge
   tsl::robin_map<graph::vertex_t, std::vector<std::shared_ptr<Edge>>>
       vertex_edges_;
@@ -161,16 +161,16 @@ class Graph {
   // Vertices and counts
   tsl::robin_map<graph::vertex_t, graph::vertex_t> vertices_;
   // Global edges
-  std::map<std::tuple<graph::vertex_t, graph::vertex_t>, graph::vertex_t>
+  std::map<std::tuple<graph::vertex_t, graph::vertex_t>, graph::edge_id_t>
       edge_ids_;
 
   //person to their initial edge
-  std::map<graph::vertex_t, graph::vertex_t> person_to_init_edge_;
+  std::map<graph::vertex_t, graph::edge_id_t> person_to_init_edge_;
 
-  std::map<graph::vertex_t, std::tuple<graph::vertex_t, graph::vertex_t>>
+  std::map<graph::edge_id_t, std::tuple<graph::vertex_t, graph::vertex_t>>
       edge_ids_to_vertices;
   // Vertices and counts
-  tsl::robin_map<graph::vertex_t, graph::weight_t> edge_costs_;
+  tsl::robin_map<graph::edge_id_t, graph::weight_t> edge_costs_;
 };
 
 }  // namespace abm

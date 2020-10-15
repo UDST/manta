@@ -86,7 +86,7 @@ void B18TrafficSimulator::createLaneMap() {
 }//
 
 void B18TrafficSimulator::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph_) { //
-	b18TrafficLaneMap.createLaneMapSP(graph_, laneMap, edgesData, intersections, trafficLights, laneMapNumToEdgeDescSP, edgeDescToLaneMapNumSP);
+	b18TrafficLaneMap.createLaneMapSP(graph_, laneMap, edgesData, intersections, trafficLights, laneMapNumToEdgeDescSP, edgeDescToLaneMapNumSP, edgeIdToLaneMapNum);
 }
 
 void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
@@ -108,7 +108,7 @@ void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
 // GPU
 //////////////////////////////////////////////////
 void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
-    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_, std::vector<abm::graph::vertex_t> paths_SP) {
+    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_, std::vector<abm::graph::edge_id_t> paths_SP) {
   Benchmarker laneMapBench("Lane map", 2);
   Benchmarker passesBench("Simulation passes", 2);
   Benchmarker finishCudaBench("Cuda finish", 2);
@@ -148,7 +148,11 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
           indexPathVec, edgeDescToLaneMapNum, weigthMode, peoplePathSampling[nP]);
       shortestPathBench.stopAndEndBenchmark();
     } else if (useSP) {
-	  B18TrafficSP::convertVector(paths_SP, indexPathVec, edgeDescToLaneMapNumSP, graph_);
+    QTime timer_convert_paths_to_index_path_vec;
+    timer_convert_paths_to_index_path_vec.start();
+	  B18TrafficSP::convertVector(paths_SP, indexPathVec, edgeIdToLaneMapNum, graph_);
+    printf("[TIME] Convert paths to index path vec = %d ms\n", timer_convert_paths_to_index_path_vec.elapsed());
+    
 	  //printf("trafficPersonVec size = %d\n", trafficPersonVec.size());
 
       //set the indexPathInit of each person in trafficPersonVec to the correct one
@@ -2326,9 +2330,24 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared
     // SAVE TO FILE
     QFile peopleFile(QString::number(numOfPass) + "_people" + QString::number(start_time) + "to" + QString::number(end_time) + ".csv");
     QFile routeFile(QString::number(numOfPass) + "_route" + QString::number(start_time) + "to" + QString::number(end_time) + ".csv");
+    QFile indexPathVecFile(QString::number(numOfPass) + "_indexPathVec" + QString::number(start_time) + "to" + QString::number(end_time) + ".csv");
 
     if (peopleFile.open(QIODevice::ReadWrite | QIODevice::Truncate) &&
-        routeFile.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
+        routeFile.open(QIODevice::ReadWrite | QIODevice::Truncate) &&
+        indexPathVecFile.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
+
+      ///////////////
+      // indexPathVec
+      printf("Save indexPathVec %d\n", trafficPersonVec.size());
+      QTextStream indexPathVecStream(&indexPathVecFile);
+      indexPathVecStream <<
+              "p,init_intersection,end_intersection,time_departure,num_steps,co,gas,distance,a,b,T\n";
+
+      for (int elem = 0; elem < indexPathVec.size(); elem++) {
+        indexPathVecStream << elem << "\n";
+      } // indexPathVec
+
+      indexPathVecFile.close();
 
       /////////////
       // People Route
