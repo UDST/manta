@@ -12,6 +12,7 @@ Microsimulation Analysis for Network Traffic Assignment. MANTA employs a highly 
  - g++ (used versions: 6.4.0 in Ubuntu)
  - Qt5 (used versions: 5.9.5 in Ubuntu)
  - qmake (used versions: 3.1 in Ubuntu)
+ - pytest (used versions: 6.1.1 in Ubuntu)
 
 ## Installation & Compilation
 
@@ -165,6 +166,20 @@ ${OBJECTS_DIR}b18CUDA_trafficSimulator_cuda.o
 After this modification, `sudo make clean` and `sudo make -j` must be run.
 
 Please keep in mind that this alteration slows the program down. For more information about `cuda-gdb`, please refer to the official [Website](https://docs.nvidia.com/cuda/cuda-gdb/index.html) and [Documentation](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwiBgbqg9fzrAhUMIrkGHby9Db8QFjADegQIAxAB&url=https%3A%2F%2Fdeveloper.download.nvidia.com%2Fcompute%2FDevZone%2Fdocs%2Fhtml%2FC%2Fdoc%2Fcuda-gdb.pdf&usg=AOvVaw3J9Il2vHkkxtcX83EHC3-z).
+
+### Testing
+In order to run the system tests you should first move to `manta/LivingCity`
+```bash
+cd LivingCity
+```
+and then run 
+```bash
+pytest tests/systemTestSuite.py
+```
+If you wish to see the output of each simulation add the `-s` flag in the following way
+```bash
+pytest -s tests/systemTestSuite.py
+```
 
 ## Acknowledgments
 
