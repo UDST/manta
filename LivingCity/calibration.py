@@ -1,55 +1,27 @@
+import os, sys
 import time
-import os, zipfile, requests, pandas as pd
-import geopandas as gpd
-import osmnx as ox, networkx as nx
-import ast
-import statistics
-import numpy as np
-from skopt import gp_minimize
-from skopt.plots import plot_convergence
-#from sklearn.neighbors import BallTree
-from shapely.geometry import Point
-import random
-from matplotlib import pyplot as plt
-import matplotlib.path as mpltPath
-import matplotlib.cm as cm
-import matplotlib.colors as colors
-import json 
-from ast import literal_eval
-import itertools
-from collections import Counter
-import descartes
-import matplotlib
-from shapely.geometry import LineString # To create line geometries that can be used in a GeoDataFrame
 import math
-import folium # To generate a Leaflet-based map of my data throughout my analysis
-import branca.colormap as cm
+import pandas as pd
+import numpy as np
+#from sklearn.neighbors import BallTree
+from shapely.geometry import LineString # To create line geometries that can be used in a GeoDataFrame
 import time
-from time import gmtime, strftime
-from selenium import webdriver
-import imageio
-import imgkit
-import requests
-import calendar
-import seaborn as sns
-import sys
+import json
 #sys.path.insert(1, '../google_data/baytraffic_share/credentials')
 #from google_key import GOOGLE_MAPS_API_KEY
 import subprocess
 
-from keplergl import KeplerGl 
-from mapboxgl.utils import *
-from mapboxgl.viz import *
-
-# Load an empty map
-from geopandas import GeoDataFrame # To create a GeoDataFrame from a DataFrame
 from shapely.geometry import LineString # To create line geometries that can be used in a GeoDataFrame
 pd.options.display.max_colwidth = 100
 
+from datetime import datetime
+
+import re
+from termcolor import colored
+from pdb import set_trace as st
 
 
-print('ox {}\nnx {}'.format(ox.__version__, nx.__version__))
-start_time = time.time()
+#start_time = time.time()
 
 
 def load_network(nodes_file, edges_file, path):
@@ -90,7 +62,7 @@ def merge_edges_with_times_with_uber_edges(edge_vels_df, same_edges_df):
     new_df = pd.merge(edge_vels_df, same_edges_df,  how='left', on=['u','v'])
     return new_df
 
-def write_options_file(a_prev, b_prev, T_prev, s_0_prev, a, b, T, s_0):
+def write_options_file(params):
     fin = open("command_line_options.ini", "r+")
 
     # Read in the file
@@ -98,17 +70,15 @@ def write_options_file(a_prev, b_prev, T_prev, s_0_prev, a, b, T, s_0):
         filedata = file.read()
 
     # Replace the target string
-    filedata = filedata.replace('A={}'.format(a_prev), 'A={}'.format(a)).replace('B={}'.format(b_prev), 'B={}'.format(b)).replace('T={}'.format(T_prev), 'T={}'.format(T)).replace('s_0={}'.format(s_0_prev), 's_0={}'.format(s_0))
+    for (parameter_name, parameter_value) in params.items():
+        filedata = re.sub('{}=(-|(0-9)|.)*\n'.format(parameter_name), \
+                          "{}={}\n".format(parameter_name,parameter_value), \
+                          filedata)
+
 
     # Write the file out again
     with open('command_line_options.ini', 'w') as file:
         file.write(filedata)
-
-    #for line in fin:
-    #    fin.write(line.replace('A={}'.format(a_prev), '{}'.format(a)))
-    #    fin.write(line.replace('B={}'.format(b_prev), '{}'.format(b)))
-    #    fin.write(line.replace('T={}'.format(T_prev), '{}'.format(T)))
-    #fin.close()
 
 def load_edges_u_v(path):
     edges_u = pd.read_csv('{}/edges_u.txt'.format(path), names=['index'], header=None)
@@ -227,54 +197,57 @@ def compare_to_uber_new(path, start_time=5, end_time=12, one_time_slice=False):
     return merged_time_edges
 
 
-def calibrate_new(a_b_T_s_0_vec, path, start_time=5, end_time=12, one_time_slice=False):
-    a_prev = 0.8
-    b_prev = 0.8
-    T_prev = 1.5
-    s_0_prev = 7.0
-
-    diff_vec = []
+class benchmark():
+    def __init__(self, task_name):
+        self.task_name = task_name
+        self.start_time_benchmark = time.time()
+        print(colored("Starting task '{}'".format(task_name), 'green'))
     
+    def end(self):
+        elapsed_time = time.time() - self.start_time_benchmark
+        print(colored("Ended task '{}'. Time elapsed: ~{} mins"\
+            .format(self.task_name, round(elapsed_time/60,4)),'green'))
 
 
+def calibrate_new(param_list, path, new_uber, start_time, end_time, one_time_slice=False):
+    min_diff = None
+    min_params = None
 
-    for x in a_b_T_s_0_vec:
-        a = x[0]
-        b = x[1]
-        T = x[2]
-        s_0 = x[3]
+    for params in param_list:
+        a = params["a"]
+        b = params["b"]
+        T = params["T"]
+        s_0 = params["s_0"]
 
-        write_options_file(a_prev, b_prev, T_prev, s_0_prev, a, b, T, s_0)
-        print(a, b, T, s_0)
+        write_options_file(params)
 
+        print("Running LivingCity with params [a:{}, b:{}, T:{}, s_0:{}]".\
+                        format(params["a"], params["b"], params["T"], params["s_0"]))
         subprocess.run(["./LivingCity", "&"])
 
+
+        edges_u, edges_v = load_edges_u_v(path)
+        
         #load street network and edge/node data
         nodes, edges = load_network("nodes.csv", "edges.csv", "berkeley_2018/new_full_network")
-        edges_u, edges_v = load_edges_u_v(path)
+
         #get edge speed data from microsim
         edge_vels_df = create_network_from_edges_node_ids(edges_u, edges_v, nodes, edges, path)
-    
-        #filter Uber data to 5am to 12pm
-        uber_speeds_df = pd.read_csv("berkeley_2018/uber_data/movement-speeds-quarterly-by-hod-san-francisco-2019-Q2.csv")
-        uber_speeds_5_to_12 = uber_speeds_df[(uber_speeds_df['hour_of_day'] >= start_time) & (uber_speeds_df['hour_of_day'] < end_time)]
-        new_uber = uber_speeds_5_to_12[['osm_start_node_id','osm_end_node_id','speed_mph_mean']].groupby(['osm_start_node_id','osm_end_node_id']).mean()
-        #new_uber = uber_speeds_5_to_12[['osm_start_node_id','osm_end_node_id','speed_mph_p85']].groupby(['osm_start_node_id','osm_end_node_id']).mean()
-        new_uber = new_uber.reset_index(level=['osm_start_node_id', 'osm_end_node_id'])
-        print("number of trips from {} to {} = {} in actual Uber data".format(start_time, end_time, uber_speeds_5_to_12.shape[0]))
-
 
         # Merge our network edges with Uber edges
         merged_edges = merge_edges_with_uber_edges(edges, new_uber)
+
         merged_edges = merged_edges.dropna()
 
         # Merge edge vels (with x timesteps) with the merged Uber data
         merged_edges = merge_edges_with_times_with_uber_edges(edge_vels_df, merged_edges)
+
         merged_edges = merged_edges.dropna()
-        print("number of trips from {} to {} = {}".format(start_time, end_time, merged_edges.shape[0]))
+        #print("number of trips from {} to {} = {}".format(start_time, end_time, merged_edges.shape[0]))
 
         # Average the speeds over all the timesteps from the microsim and add column to the df
         merged_time_edges = merged_edges.copy()
+
         if one_time_slice:
             merged_time_edges['microsim_avg'] = merged_time_edges['time_{}'.format(start_time - 5)]
         else: 
@@ -288,158 +261,157 @@ def calibrate_new(a_b_T_s_0_vec, path, start_time=5, end_time=12, one_time_slice
                                                     'x_u', 'y_u', 'osmid_v', 'x_v', 'y_v', 'uniqueid_y',
                                                     'length_y', 'lanes_y', 'speed_mph_y', 'osm_start_node_id', 'osm_end_node_id'], axis=1)
         """
+
         # Add *difference* column to show delta between our microsim and Uber speeds
         merged_time_edges['diff'] = merged_time_edges['speed_mph_mean'] - merged_time_edges['microsim_avg']
         #merged_time_edges['diff'] = abs(merged_time_edges['speed_mph_p85'] - merged_time_edges['microsim_avg'])
         merged_time_edges['microsim_avg'] = merged_time_edges[['time_0', 'time_1', 'time_2', 'time_3', 'time_4', 'time_5', 'time_6']].mean(axis=1)
         merged_time_edges['speed_limit_vs_microsim'] = merged_time_edges['speed_mph'] - merged_time_edges['microsim_avg']
-        print("merged with uber edges length = {}".format(merged_time_edges.shape[0]))
+        #print("merged with uber edges length = {}".format(merged_time_edges.shape[0]))
         print("uber avg = {}".format(merged_time_edges['speed_mph_mean'].mean()))
         print("microsim avg = {}".format(merged_time_edges['microsim_avg'].mean()))
 
         merged_time_edges['uber_microsim_ratio'] = merged_time_edges['speed_mph_mean'] / merged_time_edges['microsim_avg']
-        #merged_time_edges['uber_microsim_ratio'] = merged_time_edges['speed_mph_p85'] / merged_time_edges['speed_mph']
-        #merged_time_edges['uber_speed_limit_ratio'] = merged_time_edges['speed_mph_p85'] / merged_time_edges['speed_mph_x']
-        print("average uber / microsim ratio = {}".format(merged_time_edges['uber_microsim_ratio'].mean()))
-        #print("average uber / speed_limit ratio = {}".format(merged_time_edges['uber_speed_limit_ratio'].mean()))
-
+        #print("average uber / microsim ratio = {}".format(merged_time_edges['uber_microsim_ratio'].mean()))
 
         #calculate RMSE
-        #rmse = np.sqrt(sum(merged_time_edges['diff']**2) / merged_time_edges.shape[0])
         diff = abs(merged_time_edges['diff'].mean())
-        #print(diff)
-        diff_vec += [diff,]
-        print("diff mean = {}".format(diff))
 
         #calculate RMSE
         rmse = np.sqrt(sum(merged_time_edges['diff']**2) / merged_time_edges.shape[0])
-        print("RMSE = {}".format(rmse))
 
-        T_prev = T
-        b_prev = b
-        a_prev = a
-        s_0_prev = s_0
-        print("diff vector = {}".format(diff_vec))
+        print("For [a:{}, b:{}, T:{}, s_0:{}] we have diff:{} and RMSE:{}".format(params["a"], \
+                    params["b"], params["T"], params["s_0"], diff, rmse))
+        
+        if (min_diff == None or diff < min_diff):
+            print("Found new minimum.")
+            min_diff = diff
+            min_params = params.copy()
 
-    min_diff = min(diff_vec)
-    index = diff_vec.index(min_diff)
-    return diff_vec, min_diff, index, a_prev, b_prev, T_prev, s_0_prev
-
-
-
-
-def calibrate(a_b_T_vec):
+        sys.stdout.flush()
     
-    a_prev = 0.8
-    b_prev = 0.8
-    T_prev = 1.5
-
-    diff_vec = []
-    for x in a_b_T_vec:
-        a = x[0]
-        b = x[1]
-        T = x[2]
-
-        write_options_file(a_prev, b_prev, T_prev, a, b, T)
-        print(a, b, T)
-
-        subprocess.run(["./LivingCity", "&"])
-
-        #load street network
-        nodes, edges = load_network("nodes.csv", "edges.csv", "berkeley_2018/new_full_network")
-
-        #create dataframe with every edge's speed for each timestep
-        edge_vels_df = create_per_edge_speeds_df(7, ".", edges, nodes, remove_error=True, save=False)
-
-        #load Uber speeds
-        uber_speeds_df = pd.read_csv("berkeley_2018/uber_data/movement-speeds-quarterly-by-hod-san-francisco-2019-Q2.csv")
-
-        #filter Uber data to 5am to 12pm
-        uber_speeds_5_to_12 = uber_speeds_df[(uber_speeds_df['hour_of_day'] >= 5) & (uber_speeds_df['hour_of_day'] < 12)]
-
-        # Make new df that calculates the avg. speed across the 7 hours for every edge (as one row as opposed to 7 different rows for the same edge)
-        new_uber = uber_speeds_5_to_12[['osm_start_node_id','osm_end_node_id','speed_mph_mean']].groupby(['osm_start_node_id','osm_end_node_id']).mean()
-        new_uber = new_uber.reset_index(level=['osm_start_node_id', 'osm_end_node_id'])
-
-        # Merge our network edges with Uber edges
-        merged_edges = merge_edges_with_uber_edges(edges, new_uber)
-        merged_edges = merged_edges.dropna()
-
-        # Merge edge vels (with x timesteps) with the merged Uber data
-        merged_edges = merge_edges_with_times_with_uber_edges(edge_vels_df, merged_edges)
-        merged_edges = merged_edges.dropna()
-
-        # Average the speeds over all the timesteps from the microsim and add column to the df
-        merged_time_edges = merged_edges.copy()
-        merged_time_edges['microsim_avg'] = merged_time_edges[['time_0', 'time_1', 'time_2', 'time_3', 'time_4', 'time_5', 'time_6']].mean(axis=1)
-
-        # Drop unnecessary columns
-        merged_time_edges = merged_time_edges.drop(['time_0', 'time_1', 'time_2', 'time_3', 'time_4', 'time_5', 'time_6',
-                                                    'uniqueid_x' , 'osmid_u',
-                                                    'x_u', 'y_u', 'osmid_v', 'x_v', 'y_v', 'uniqueid_y',
-                                                    'length_y', 'lanes_y', 'speed_mph_y', 'osm_start_node_id', 'osm_end_node_id'], axis=1)
-
-        # Add *difference* column to show delta between our microsim and Uber speeds
-        merged_time_edges['diff'] = merged_time_edges['speed_mph_mean'] - merged_time_edges['microsim_avg']
+    return min_diff, min_params
 
 
-        #print(merged_time_edges.head())
+def generate_next_step_parameters(params, decay, learning_rate_params, lower_bound_params = None):
+    # Based on the current parameters, we return a possibility for the next step's parameters
+    
+    upper_bound_params = {"a":10, "b":10, "T":math.inf, "s_0":math.inf}
+    next_step_params = {}
 
-        #calculate RMSE
-        #rmse = np.sqrt(sum(merged_time_edges['diff']**2) / merged_time_edges.shape[0])
-        diff = merged_time_edges['diff'].mean()
-        #print(diff)
-        diff_vec += [diff,]
-                
-        T_prev = T
-        b_prev = b
-        a_prev = a
-        print("diff vector = {}".format(diff_vec))
+    for param in params.keys():
+        if not param in lower_bound_params or lower_bound_params[param] < 0:
+            lower_bound_params[param] = 0
 
-    min_diff = min(diff_vec)
-    index = diff_vec.index(min_diff)
-    return diff_vec, min_diff, index
+    for param in params.keys():
+        found_next_step_in_bounds = False
+        while not found_next_step_in_bounds:
+            step = np.random.uniform(-1*learning_rate_params[param]*decay, learning_rate_params[param]*decay)
+            next_step_params[param] = params[param] + step
+            
+            if next_step_params[param] > lower_bound_params[param] and next_step_params[param] < upper_bound_params[param]:
+                found_next_step_in_bounds = True
+    
+    
+    return next_step_params.copy()
 
+def first_step_parameters():
+    first_step_params = {"a": np.random.uniform(low=1, high=10), \
+                         "b": np.random.uniform(low=1, high=10), \
+                         "T": np.random.uniform(low=0.1, high=2.0), \
+                         "s_0": np.random.uniform(low=1, high=5.0)}
 
-def gradient_descent(epsilon=0.02):
+    return first_step_params.copy()
+
+def gradient_descent(epsilon=0.04, learning_rate_params = None, progress_filename = None, lower_bound_params = None, start_time=5, end_time=12):
+    print("Using progress file {}".format(progress_filename))
+    print("Using lower bound for parameters {}".format(lower_bound_params))
     # epsilon = max delta (in mph) that we're willing to have our RMSE
-    flag = True
+
+    #filter Uber data to 5am to 12pm
+    uber_speeds_df = pd.read_csv("berkeley_2018/uber_data/movement-speeds-quarterly-by-hod-san-francisco-2019-Q2.csv")
+    uber_speeds_5_to_12 = uber_speeds_df[(uber_speeds_df['hour_of_day'] >= start_time) & (uber_speeds_df['hour_of_day'] < end_time)]
+    new_uber = uber_speeds_5_to_12[['osm_start_node_id','osm_end_node_id','speed_mph_mean']].groupby(['osm_start_node_id','osm_end_node_id']).mean()
+    #new_uber = uber_speeds_5_to_12[['osm_start_node_id','osm_end_node_id','speed_mph_p85']].groupby(['osm_start_node_id','osm_end_node_id']).mean()
+    new_uber = new_uber.reset_index(level=['osm_start_node_id', 'osm_end_node_id'])
+    print("number of trips from {} to {} = {} in actual Uber data".format(start_time, end_time, uber_speeds_5_to_12.shape[0]))
+
+    progress = []
+
     iteration = 0
-    diff_vec = []
-    min_diff = 0
-    min_index = 0
-    while flag:
+    prev_params = {"a": None, "b": None, "T": None, "s_0": None}
+    current_params = {"a": None, "b": None, "T": None, "s_0": None}
+    prev_diff = None
 
-        if iteration == 0:
-            #a_vec = [1 + np.random.uniform(0,1), 6 + np.random.uniform(0,1)]
-            #b_vec = [1 + np.random.uniform(0,1), 6 + np.random.uniform(0,1)]
-            #T_vec = [.8 + np.random.uniform(0,1), 2 + np.random.uniform(0,1)]
-            a_vec = np.random.uniform(low=1, high=10, size=(5,)) 
-            b_vec = np.random.uniform(low=1, high=10, size=(5,)) 
-            T_vec = np.random.uniform(low=0.1, high=2.0, size=(5,)) 
-            s_0_vec = np.random.uniform(low=1, high=5.0, size=(5,)) 
+    default_learning_rate_params = {"a":1, "b":1, "T": 0.5, "s_0": 0.1}
+    for param in default_learning_rate_params.keys():
+        if not param in learning_rate_params:
+            learning_rate_params[param] = default_learning_rate_params[param]
+    print("Learning rate for parameters: {}".format(learning_rate_params))
+    
+    if progress_filename and os.path.isfile('{}.csv'.format(progress_filename)):
+        print("Loading saved progress from {}...".format(progress_filename))
+        with open('{}.json'.format(progress_filename), 'r') as fp:
+            loaded_progress = json.load(fp)
+        iteration = loaded_progress["number_of_iterations"]+1
+        progress = loaded_progress["progress"]
+        current_params = progress[-1]["params"].copy()
+        current_diff = progress[-1]["current_diff"]
+        prev_diff = current_diff
+    
+
+    while True:
+        if iteration == 0 and not os.path.isfile('{}.csv'.format(progress_filename)):
+            possible_next_params = [first_step_parameters() for _ in range(5)]
+            current_diff = None
         else:
-            write_options_file(a_prev, b_prev, T_prev, s_0_prev, 0.8, 0.8, 1.5, 7.0)
-            a_vec = a_b_T_s_0_vec[min_index][0] + np.random.uniform(-1, 1, size=(5,))
-            b_vec = a_b_T_s_0_vec[min_index][1] + np.random.uniform(-1, 1, size=(5,))
-            T_vec = a_b_T_s_0_vec[min_index][2] + np.random.uniform(-1, 1, size=(5,))
-            s_0_vec = a_b_T_s_0_vec[min_index][3] + np.random.uniform(-1, 1, size=(5,))
+            # we store the previous values
+            prev_params = current_params.copy()
+            if len(progress) <= 7:
+                decay = 1 # no decay
+            elif len(progress) > 7:
+                decay = 0.1
+            elif len(progress) > 12:
+                decay = 0.01
+            elif len(progress) > 15:
+                decay = 0.001
+            possible_next_params = [generate_next_step_parameters(current_params, decay, learning_rate_params=learning_rate_params, lower_bound_params=lower_bound_params) for _ in range(5)]
 
-        a_b_T_s_0_vec = [x for x in zip(a_vec, b_vec, T_vec, s_0_vec)]
-        print("ITERATION #{}\n".format(iteration))
-        print("a_b_T_s_0_vec = {}".format(a_b_T_s_0_vec))
+        print(colored("----------------- ITERATION #{}\n".format(iteration), "cyan"))
+        print("Current progress: {}" .format(progress))
+        print("Current parameters: {}".format(current_params))
+        print("Current diff: {}".format(current_diff))
+        
+        print("Next steps that will be tested on this iteration:")
+        for one_possible_step in possible_next_params:
+            print(one_possible_step)
+        prev_params = current_params.copy()
+        current_diff, current_params = calibrate_new(possible_next_params, ".", new_uber, start_time, end_time)
 
-        #diff_vec, min_diff, min_index = calibrate(a_b_T_vec)
-        diff_vec, min_diff, min_index, a_prev, b_prev, T_prev, s_0_prev = calibrate_new(a_b_T_s_0_vec, ".")
+        if (prev_diff != None and current_diff >= prev_diff):
+            print("Not moving in that direction since current_diff={} and prev_diff={}".format(current_diff, prev_diff))
+            current_params = prev_params.copy()
+            current_diff = prev_diff
+        else:
+            prev_diff = current_diff
+            progress.append({"params":current_params, "current_diff":current_diff})
+
+        if progress_filename:
+            print("Saving progress at {}...".format(progress_filename))
+            saved_progress = {}
+            saved_progress["number_of_iterations"] = iteration
+            saved_progress["progress"] = progress
+            with open('{}.json'.format(progress_filename), 'w') as fp:
+                json.dump(saved_progress, fp)
 
         
 
-        if abs(min_diff) < epsilon:
-            flag = False
+        if abs(current_diff) < epsilon:
             print("Found the best model parameters a, b, T, and s_0!")
-            print("a = {}, b = {}, T = {}, s_0 = {}".format(a_b_T_s_0_vec[min_index][0], a_b_T_s_0_vec[min_index][1], a_b_T_s_0_vec[min_index][2], a_b_T_s_0_vec[min_index][3]))
-            return a_b_T_s_0_vec[min_index][0], a_b_T_s_0_vec[min_index][1], a_b_T_s_0_vec[min_index][2], a_b_T_s_0_vec[min_index][3]
+            print(current_parms)
+            return current_parms
         iteration += 1
+
 
 
 def compare_to_uber(path):
@@ -502,8 +474,11 @@ def compare_to_uber(path):
     
 
 if __name__== "__main__":
+    now = datetime.now()
+    print("Running at {}hs PST on the day {} (d/m/Y).".format(now.strftime("%H:%M:%S"),now.strftime("%d/%m/%Y")))
 
-    gradient_descent()
+    gradient_descent(learning_rate_params = {"a":3, "b":3}, progress_filename = "calibration_progress_6oct", lower_bound_params={"s_0":1, "T":0.1})
+
 
 
     #compare_to_uber("high_acceleration_with_1_point_19_multiplier")
