@@ -12,7 +12,11 @@ Microsimulation Analysis for Network Traffic Assignment. MANTA employs a highly 
  - g++ (used versions: 6.4.0 in Ubuntu)
  - Qt5 (used versions: 5.9.5 in Ubuntu)
  - qmake (used versions: 3.1 in Ubuntu)
- - pytest (used versions: 6.1.1 in Ubuntu)
+ - Python (used versions: 3.6.5 in Ubuntu)
+ - pytest (used versions: 6.1.1 in Ubuntu) 
+ - pytest-cov (used versions: 2.10.1 in Ubuntu) 
+ - pytest-remotedata (used versions: 0.3.2 in Ubuntu) 
+
 
 ## Installation & Compilation
 
@@ -174,12 +178,10 @@ cd LivingCity
 ```
 and then run 
 ```bash
-pytest tests/systemTestSuite.py
+pytest -s -x tests/systemTestSuite.py
 ```
-If you wish to see the output of each simulation add the `-s` flag in the following way
-```bash
-pytest -s tests/systemTestSuite.py
-```
+Because of the tests' long duration, we recommend using the flag `-s` to show the whole output of the simulation and `-x` to stop at the first failure.
+
 
 ## Acknowledgments
 
