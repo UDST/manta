@@ -150,7 +150,7 @@ def test03_prev_paths_should_have_consistent_people_files(network_setup):
 def test_04_distance_in_people_file_should_match_the_sum_of_the_edges_in_the_route_file(network_setup):
     log("Comparing that the distance in the people file matches the sum of the edges in the route file with a margin of {}...".format(
         pytest.distance_margin_between_route_and_people_file))
-    log("(Since testing for > 2 million people takes several hours, it is tested on 1.000 random people).")
+    log("(Since testing for > 2 million people takes several hours, it is tested on 10.000 random people).")
     pd_people = pd.read_csv("0_people5to12_first_run.csv")
     pd_edges = pd.read_csv(pytest.edges_path)
 
