@@ -109,17 +109,20 @@ void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
 //////////////////////////////////////////////////
 void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
     bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_, std::vector<abm::graph::edge_id_t> paths_SP) {
-  Benchmarker laneMapBench("Lane map", 2);
-  Benchmarker passesBench("Simulation passes", 2);
-  Benchmarker finishCudaBench("Cuda finish", 2);
+  Benchmarker passesBench("Simulation passes");
+  Benchmarker finishCudaBench("Cuda finish");
+  Benchmarker laneMapCreation("Lane_Map_creation", true);
    
-  laneMapBench.startMeasuring();
+  laneMapCreation.startMeasuring();
   if (useSP) {
 	  createLaneMapSP(graph_);
   } else {
 	  createLaneMap();
   }
-  laneMapBench.stopAndEndBenchmark();
+  laneMapCreation.stopAndEndBenchmark();
+
+  Benchmarker microsimulationInGPU("Microsimulation_in_GPU", true);
+  microsimulationInGPU.startMeasuring();
 
   QTime pathTimer;
   pathTimer.start();
@@ -129,11 +132,12 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 
   passesBench.startMeasuring();
   for (int nP = 0; nP < numOfPasses; nP++) {
-    Benchmarker roadGenerationBench("Road generation", 3);
-    Benchmarker initCudaBench("Init Cuda step", 3);
-    Benchmarker simulateBench("Simulation step", 3);
-    Benchmarker getDataBench("Data retrieve step", 3);
-    Benchmarker shortestPathBench("Shortest path step", 3);
+    Benchmarker roadGenerationBench("Road generation");
+    Benchmarker initCudaBench("Init Cuda step");
+    Benchmarker simulateBench("Simulation step");
+    Benchmarker getDataBench("Data retrieve step");
+    Benchmarker shortestPathBench("Shortest path step");
+    Benchmarker fileOutput("File_output", true);
 
     roadGenerationBench.startMeasuring();
     weigthMode = 1;
@@ -148,10 +152,11 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
           indexPathVec, edgeDescToLaneMapNum, weigthMode, peoplePathSampling[nP]);
       shortestPathBench.stopAndEndBenchmark();
     } else if (useSP) {
-    QTime timer_convert_paths_to_index_path_vec;
-    timer_convert_paths_to_index_path_vec.start();
+    
+    Benchmarker routesConversionIntoGPUformat("Convert_routes_into_GPU_data_structure_format", true);
+    routesConversionIntoGPUformat.startMeasuring();
 	  B18TrafficSP::convertVector(paths_SP, indexPathVec, edgeIdToLaneMapNum, graph_);
-    printf("[TIME] Convert paths to index path vec = %d ms\n", timer_convert_paths_to_index_path_vec.elapsed());
+    routesConversionIntoGPUformat.stopAndEndBenchmark();
     
 	  //printf("trafficPersonVec size = %d\n", trafficPersonVec.size());
 
@@ -311,11 +316,10 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     //
     //calculateAndDisplayTrafficDensity(nP);
     //savePeopleAndRoutes(nP);
-    QTime timer_file_save;
     //G::global()["cuda_render_displaylist_staticRoadsBuildings"] = 1;//display list
-    timer_file_save.start();
+    fileOutput.startMeasuring();
     savePeopleAndRoutesSP(nP, graph_, paths_SP, (int) startTimeH, (int) endTimeH);
-    printf("File saving time = %d ms\n", timer_file_save.elapsed());
+    fileOutput.stopAndEndBenchmark();
     getDataBench.stopAndEndBenchmark();
   }
 
@@ -331,6 +335,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
   }
 
 #endif
+  microsimulationInGPU.stopAndEndBenchmark();
   finishCudaBench.stopAndEndBenchmark();
 }//
 
@@ -2590,7 +2595,8 @@ void B18TrafficSimulator::calculateAndDisplayTrafficDensity(int numOfPass) {
       }
     }
 
-
+    speedFile.close();
+    utilizationFile.close();
   }
 
   if (updateSpeeds) {

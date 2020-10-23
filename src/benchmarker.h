@@ -12,19 +12,23 @@ using Duration = std::chrono::nanoseconds;
 
 class Benchmarker {
     public:
-        Benchmarker(const std::string desc, int depth);
+        Benchmarker(const std::string desc, const bool print = false);
 
         void startMeasuring();
         void stopMeasuring();
         void endBenchmark();
         void stopAndEndBenchmark();
+        static bool showBenchmarks;
+        static void enableShowBenchmarks();
 
     private:
         bool on;
-        Timestamp lastTimestamp;
+        Timestamp startTimeStamp;
+        Timestamp stopTimeStamp;
         Duration elapsed;
         std::string description;
         std::string margin;
+        bool printToStdout;
 
         static std::ofstream outStream;
         static int amountOpened;
