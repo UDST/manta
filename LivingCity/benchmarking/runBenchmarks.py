@@ -2,6 +2,7 @@
     Requirements under linux:
     - Python 3.6.5
 """
+import sys
 import time
 import subprocess
 import random
@@ -14,54 +15,6 @@ import psutil
 from pdb import set_trace as st
 
 
-mock_output = """[TIME] Started: <Load_network>. Time since epoch (ms): 1603407603301
-berkeley_2018/new_full_network/edges.csv as edges file
-berkeley_2018/new_full_network/nodes.csv as nodes file
-berkeley_2018/new_full_network/od_demand_5to12.csv as OD file
-total edges = 547697
-# of edges: 540827
-# of vertices: 223328
-[TIME] Ended <Load_network>. Elapsed: 8227 ms. Time since epoch (ms): 1603407611529
-[TIME] Started: <Load_OD_demand_data>. Time since epoch (ms): 1603407611529
-[TIME] Ended <Load_OD_demand_data>. Elapsed: 7400 ms. Time since epoch (ms): 1603407618929
-# of OD pairs = 3441953
-Loading berkeley_2018/new_full_network/all_paths_ch.txt as paths file
-Person 0: init 1723768799 end 65319536 time 35570.496094 a 6.377270 b 3.590473 T 0.888143
-loadB18TrafficPeople: People 3441953
-[TIME] Started: <Lane_Map_creation>. Time since epoch (ms): 1603407638732
-  >> createLaneMap
-max_edge_id 547696
-Edge count is exactly like number of edges: 540827
-Num edges 540827 Num Lanes 610933 Num Lanes Width 627199 Max Leng 26716.257812 Max num lanes 11
-Total Memory 1284503552
-Start intersection info
-[TIME] Ended <Lane_Map_creation>. Elapsed: 8342 ms. Time since epoch (ms): 1603407647074
-[TIME] Started: <Microsimulation_in_GPU>. Time since epoch (ms): 1603407647074
-traffic person vec size = 3441953
-index path vec size = 222515167
-edgesData size = 627199
-laneMap size = 1284503552
-intersections size = 223328
-trafficPersonVec size = 3441953
-indexPathVec size = 222515167
-edgesData size = 627199
-laneMap size = 1284503552
-intersections size = 223328
-<<b18InitCUDA
-GPU memory usage: used = 2951, free = 5166 MB, total = 8118 MB
-First time_departure 18000.000000
-Running main loop from 5 to 12 with 3441953 person...
-Total # iterations = 504000%) with 4.67 ms per simulation step (average over 1800)
-Total num steps 12203238400.0 Avg 29.55 min Avg CO 727.69
-Simulation time = 266444 ms
-[TIME] Started: <File output>. Time since epoch (ms): 1603407921590
-Save indexPathVec 3441953
-Save route 3441953
-Save people 3441953
-[TIME] Ended <File output>. Elapsed: 67260 ms. Time since epoch (ms): 1603407988850
-[TIME] Ended <Microsimulation_in_GPU>. Elapsed: 341808 ms. Time since epoch (ms): 1603407988882
-
->>Simulation Ended"""
 def write_options_file(params):
     filedata = """[General]
                 mem_used = GUI=false
@@ -99,10 +52,10 @@ def obtain_gpu_memory_used():
     return int(subprocess.check_output(command.split()).decode('ascii').split('\n')[:-1][-1].split()[0])
 
 def time_since_epoch_miliseconds():
-    return int(time.time()*100)
+    return int(time.time()*1000)
 
 csv_columns  =  ["Load_network", \
-                "Load_OD_demand data", \
+                "Load_OD_demand_data", \
                 "Routing_CH", \
                 "CH_output_nodes_to_edges_conversion", \
                 "Convert_routes_into_GPU_data_structure_format", \
@@ -172,6 +125,9 @@ def benchmark_one_run(number_of_run, network_path = "berkeley_2018/new_full_netw
     # ================= Combine and process resource polls and parsed benchmarks
     log("Combining and parsing proces resource polls and parsed benchmarks...")
     for component_name, component_resources in all_components.items():
+        component_resources["cpu_used"] = []
+        component_resources["mem_used"] = []
+        component_resources["gpu_memory_used"] = []
         for one_resource_timestamp in resources_timestamps:
             try:
                 if one_resource_timestamp["time_since_epoch_ms"] > component_resources["Started"] and \
@@ -198,8 +154,8 @@ def benchmark_one_run(number_of_run, network_path = "berkeley_2018/new_full_netw
         with open("benchmarking/{}.csv".format(one_resource),"a") as benchmarks_file:
             line_to_write = []
             for component_name in csv_columns:
-                line_to_write.append(all_components[component_name][one_resource])
-            benchmarks_file.write(','.join(line_to_write)+"\n")    
+                line_to_write.append(str(all_components[component_name][one_resource]))
+            benchmarks_file.write((str(number_of_run) + ',' + (','.join(line_to_write))) + "\n")
 
     log("Done")
 
@@ -210,8 +166,9 @@ def benchmark_one_run(number_of_run, network_path = "berkeley_2018/new_full_netw
 
 def benchmark_multiple_runs(number_of_runs):
     subprocess.call("rm -r benchmarking/runsOutput/*", shell=True)
-    with open("benchmarking/benchmarks.csv","w") as benchmarks_file:
-        benchmarks_file.write(','.join(csv_columns)+"\n")
+    for one_resource in ["cpu_used", "mem_used", "gpu_memory_used", "Elapsed_time(ms)"]:
+        with open("benchmarking/{}.csv".format(one_resource),"w") as benchmarks_file:
+            benchmarks_file.write('number_of_run,'.join(csv_columns)+"\n")
 
     for i in range(number_of_runs):
         benchmark_one_run(i)
@@ -219,13 +176,4 @@ def benchmark_multiple_runs(number_of_runs):
 
 
 if __name__ == "__main__":
-    try:
-        benchmark_multiple_runs(2)
-    except:
-        type, value, tb = sys.exc_info()
-        traceback.print_exc()
-        last_frame = lambda tb=tb: last_frame(tb.tb_next) if tb.tb_next else tb
-        frame = last_frame().tb_frame
-        ns = dict(frame.f_globals)
-        ns.update(frame.f_locals)
-        code.interact(local=ns)
+    benchmark_multiple_runs(2)
