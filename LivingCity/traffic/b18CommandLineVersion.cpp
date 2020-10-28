@@ -40,10 +40,6 @@ void B18CommandLineVersion::runB18Simulation() {
   const float endDemandH = settings.value("END_HR", 12).toFloat();
   const bool showBenchmarks = settings.value("SHOW_BENCHMARKS", false).toBool();
 
-  //const float deltaTime = 0.5f; //Time step of .5 seconds
-  //const float startDemandH = 5.00f; //Start time for the simulation (hour)
-  //const float endDemandH = 12.00f; //End time for the simulation (hour)
-
   float startSimulationH = startDemandH;
   float endSimulationH = endDemandH;
 
@@ -53,7 +49,6 @@ void B18CommandLineVersion::runB18Simulation() {
   Benchmarker loadODDemandData("Load_OD_demand_data", true);
   Benchmarker routingCH("Routing_CH", true);
   Benchmarker CHoutputNodesToEdgesConversion("CH_output_nodes_to_edges_conversion", true);
-  Benchmarker fileOutput("File_output", true);
   
   // ----
 
@@ -85,14 +80,10 @@ void B18CommandLineVersion::runB18Simulation() {
 	  //compute the routes for every OD pair
 	  int mpi_rank = 0;
 	  int mpi_size = 1;
-	  //auto start = high_resolution_clock::now();
     if (usePrevPaths) {
       // open file    
-      //std::ifstream inputFile("./all_paths_incl_zeros.txt");
       const std::string& pathsFileName = networkPathSP + "all_paths_ch.txt";
-      //const std::string& pathsFileName = networkPathSP + "all_paths_new_mtc.txt";
       std::cout << "Loading " << pathsFileName << " as paths file\n";
-      //std::ifstream inputFile("./all_paths.txt");
       std::ifstream inputFile(pathsFileName);
       // test file open   
       if (inputFile) {        
@@ -140,9 +131,12 @@ void B18CommandLineVersion::runB18Simulation() {
 
       routingCH.startMeasuring();
       MTC::accessibility::Accessibility *graph_ch = new MTC::accessibility::Accessibility((int) street_graph->vertices_data_.size(), edge_vals, edge_weights, false);
-      routingCH.stopAndEndBenchmark();
+      // constructor receives pairs of nodes, not edge ids
+      // so there's no way that routes can return directly edge ids
+      // idea: turn edge_ids_ from map<tuple> to vector<map<tuple>>
 
       all_paths_ch = graph_ch->Routes(sources, targets, 0);
+      routingCH.stopAndEndBenchmark();
 	    std::cout << "# of paths = " << all_paths_ch.size() << " \n";
 
 	    auto start = high_resolution_clock::now();

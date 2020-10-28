@@ -35,6 +35,7 @@ def write_options_file(params):
                 TIME_STEP=0.5
                 START_HR=5
                 END_HR=12
+                SHOW_BENCHMARKS=false
                 """
 
     for (parameter_name, parameter_value) in params.items():
