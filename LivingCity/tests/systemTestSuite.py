@@ -22,21 +22,20 @@ from pdb import set_trace as st  # used for debugging
 
 # ========================== Aux ==========================
 def write_options_file(params):
-    filedata = """[General]
-                GUI=false
-                USE_CPU=false
-                NETWORK_PATH=berkeley_2018/new_full_network/
-                USE_JOHNSON_ROUTING=false
-                USE_SP_ROUTING=true
-                USE_PREV_PATHS=false
-                LIMIT_NUM_PEOPLE=256000
-                ADD_RANDOM_PEOPLE=false
-                NUM_PASSES=1
-                TIME_STEP=0.5
-                START_HR=5
-                END_HR=12
-                SHOW_BENCHMARKS=false
-                """
+    filedata = "\n".join(["[General]",\
+                        "GUI=false",\
+                        "USE_CPU=false",\
+                        "NETWORK_PATH=berkeley_2018/new_full_network/",\
+                        "USE_JOHNSON_ROUTING=false",\
+                        "USE_SP_ROUTING=true",\
+                        "USE_PREV_PATHS=false",\
+                        "LIMIT_NUM_PEOPLE=256000",\
+                        "ADD_RANDOM_PEOPLE=false",\
+                        "NUM_PASSES=1",\
+                        "TIME_STEP=0.5",\
+                        "START_HR=5",\
+                        "END_HR=12",\
+                        "SHOW_BENCHMARKS=false"])
 
     for (parameter_name, parameter_value) in params.items():
         filedata = re.sub('{}=(-|(0-9)|.)*\n'.format(parameter_name),
@@ -71,13 +70,10 @@ For each network specified it does the following:
     * Produces 0_people5to12_first_run.csv, 0_indexPathVec5to12_first_run.csv, 0_route5to12_first_run.csv on the first run
     * Produces 0_people5to12_second_run.csv, 0_indexPathVec5to12_second_run.csv, 0_route5to12_second_run.csv on the second run
 """
-
-
 @pytest.fixture(params=["berkeley_2018/new_full_network/"], ids=["new_full_network"])
 def network_setup(request):
     network_path = pytest.network_path
-
-    if pytest.network_setup_has_run or "--skip-setup" in pytest.options:
+    if pytest.network_setup_has_run:
         return network_path
     pytest.network_setup_has_run = True
 

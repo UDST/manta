@@ -16,21 +16,20 @@ from pdb import set_trace as st
 # ================= Aux =================
 
 def write_options_file(params = None):
-    filedata = """[General]
-GUI=false
-USE_CPU=false
-NETWORK_PATH=berkeley_2018/new_full_network/
-USE_JOHNSON_ROUTING=false
-USE_SP_ROUTING=true
-USE_PREV_PATHS=false
-LIMIT_NUM_PEOPLE=256000
-ADD_RANDOM_PEOPLE=false
-NUM_PASSES=1
-TIME_STEP=0.5
-START_HR=5
-END_HR=12
-SHOW_BENCHMARKS=true
-"""
+    filedata = "\n".join(["[General]",\
+                            "GUI=false",\
+                            "USE_CPU=false",\
+                            "NETWORK_PATH=berkeley_2018/new_full_network/",\
+                            "USE_JOHNSON_ROUTING=false",\
+                            "USE_SP_ROUTING=true",\
+                            "USE_PREV_PATHS=false",\
+                            "LIMIT_NUM_PEOPLE=256000",\
+                            "ADD_RANDOM_PEOPLE=false",\
+                            "NUM_PASSES=1",\
+                            "TIME_STEP=0.5",\
+                            "START_HR=5",\
+                            "END_HR=12",\
+                            "SHOW_BENCHMARKS=true"])
 
     if params is not None:
         for (parameter_name, parameter_value) in params.items():
