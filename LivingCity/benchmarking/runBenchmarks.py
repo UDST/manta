@@ -224,17 +224,27 @@ def plot_benchmarks():
         ax = fig.add_subplot(2, 2, i+1)
         sns.set(style="whitegrid")
 
-        ticks = [readable_components[comp] for comp in all_component_names]
+        components_in_order = ["Load_network", \
+                            "Load_OD_demand_data", \
+                            "Routing_CH", \
+                            "CH_output_nodes_to_edges_conversion", \
+                            "Lane_Map_creation", \
+                            "Microsimulation_in_GPU", \
+                            "Convert_routes_into_GPU_data_structure_format", \
+                            "File_output"]
+
+        ticks = [readable_components[comp] for comp in components_in_order]
         if resource_name == "Elapsed_time_(ms)":
             df = df.drop(df[df["Component"] == "idle"].index)
-            current_components = all_component_names
+            current_components = components_in_order
         else:
             ticks += ["idle"]
-            current_components = all_component_names+["idle"]
+            current_components = components_in_order+["idle"]
         
         ax = sns.barplot(
             data=df,
             x=resource_name, y="Component",
+            order = components_in_order,
             capsize=.2
         )
         ax.set_yticks(range(len(ticks)))
