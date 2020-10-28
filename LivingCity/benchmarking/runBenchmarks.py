@@ -17,7 +17,7 @@ from pdb import set_trace as st
 
 def write_options_file(params = None):
     filedata = """[General]
-mem_used = GUI=false
+GUI=false
 USE_CPU=false
 NETWORK_PATH=berkeley_2018/new_full_network/
 USE_JOHNSON_ROUTING=false
