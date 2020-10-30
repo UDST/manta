@@ -228,9 +228,9 @@ def plot_benchmarks():
                             "Load_OD_demand_data", \
                             "Routing_CH", \
                             "CH_output_nodes_to_edges_conversion", \
+                            "Convert_routes_into_GPU_data_structure_format", \
                             "Lane_Map_creation", \
                             "Microsimulation_in_GPU", \
-                            "Convert_routes_into_GPU_data_structure_format", \
                             "File_output"]
 
         ticks = [readable_components[comp] for comp in components_in_order]
