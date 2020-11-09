@@ -4,7 +4,6 @@
 """
 import os
 import sys
-import getopt
 import time
 import subprocess
 import re
@@ -15,6 +14,7 @@ import psutil
 import seaborn as sns
 import matplotlib.pyplot as plt
 import xlwt
+import argparse
 from pdb import set_trace as st
 
 # ================= Aux =================
@@ -115,7 +115,6 @@ def benchmark_one_run(number_of_run, benchmark_name, network_path):
     all_components = { "Load_network":{}, "Load_OD_demand_data":{}, "Routing_CH":{}, "CH_output_nodes_to_edges_conversion":{}, "Convert_routes_into_GPU_data_structure_format":{}, "File_output":{}, "Lane_Map_creation":{}, "Microsimulation_in_GPU":{}}
     full_output = str(process.stdout.read())
     log("Showing full output...")
-    full_output_printable = full_output.replace("\\n", "\n")
     print(full_output)
     for output_line in full_output[2:].split("\\n"):
         for component_name,component_timestamp in all_components.items():
@@ -178,7 +177,7 @@ def benchmark_one_run(number_of_run, benchmark_name, network_path):
 
 
 def benchmark_multiple_runs(number_of_runs, benchmark_name = "benchmarks", network_path = "berkeley_2018/new_full_network/"):
-    log("Running system benchmarks for network {}. Number of runs: {}".format(network_path, number_of_runs))
+    log("Running system benchmarks for network {}. Benchmark name: {}. Number of runs: {}".format(network_path, benchmark_name, number_of_runs))
     log("Please do not run anything else on this PC until it is finished, since that may alter the benchmarking results.")
     subprocess.call("rm -r benchmarking/{}.csv".format(benchmark_name), shell=True)
 
@@ -282,9 +281,18 @@ def plot_benchmarks(benchmark_name = "benchmarks"):
 
 
 if __name__ == "__main__":
-    number_of_iterations = 1
-    benchmark_name = "benchmarks_edge_ids_and_index_to_vertex_conversion"
-    #benchmark_name = "benchmarks"
+    parser = argparse.ArgumentParser(description='Runs multiple benchmarks over LivingCity and outputs a csv, a plot'\
+                                                ' and a xls file with the results.')
+    parser.add_argument('-i', "--runs", type=int, help='Number of runs to run (min: 1).')
+    parser.add_argument('-n', "--name", type=str, help='Name of the benchmark for the output files')
+
+    args = parser.parse_args()
+
+    if not args.name or not args.runs:
+        print("Error! Argument missing. Usage:")
+        print("   python3 benchmarks/runBenchmarks.py --name={benchName} --runs={3}")
+        sys.exit()
+
     
-    benchmark_multiple_runs(number_of_iterations, benchmark_name = benchmark_name)
-    plot_benchmarks(benchmark_name = benchmark_name)
+    benchmark_multiple_runs(args.runs, benchmark_name = args.name)
+    plot_benchmarks(benchmark_name = args.name)
