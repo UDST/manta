@@ -189,14 +189,17 @@ In order to obtain a profiling of each component of the simulation, you should r
 ```bash
 python3 LivingCity/benchmarking/runBenchmarks --name={name_of_benchmark} --runs={number_of_iterations_to_run}
 ```
-The script will run LivingCity the specified number of times while polling the system resources. For each component, its resource and time consumption will be saved into a `csv` file, a plot and a `xls` file in `manta/LivingCity/benchmarking/`. The profiling of each version is encouraged to be stored in [here](https://docs.google.com/spreadsheets/d/14KCUY8vLp9HoLuelYC5DmZwKI7aLsiaNFp7e6Z8bVBU/edit?usp=sharing).
+The script will run LivingCity the specified number of times while polling the system resources. For each component, its resource and time consumption will be saved into a `csv` file, a plot and a `xls` file in `manta/LivingCity/benchmarking/`. The profiling of each version is stored in [here](https://docs.google.com/spreadsheets/d/14KCUY8vLp9HoLuelYC5DmZwKI7aLsiaNFp7e6Z8bVBU/edit?usp=sharing).
 
 Versions correspond to [the repository's tags](https://github.com/UDST/manta/tags). In order to create a new tag, just run
 ```bash
 git tag v0.x.0
 git push --tags
 ```
+<<<<<<< HEAD
 
+=======
+>>>>>>> Adds benchmarking to readme
 
 ## Acknowledgments
 
