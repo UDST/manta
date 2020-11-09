@@ -63,13 +63,12 @@ void B18CommandLineVersion::runB18Simulation() {
   std::vector<abm::graph::edge_id_t> all_paths;
   vector<vector<int>> all_paths_ch;
   const bool directed = true;
-  auto street_graph = std::make_shared<abm::Graph>(directed);
+  auto street_graph = std::make_shared<abm::Graph>(directed, networkPathSP);
   if (useSP) {
 	  //make the graph from edges file and load the OD demand from od file
     loadNetwork.startMeasuring();
 	  std::string odFileName = RoadGraphB2018::loadABMGraph(networkPathSP, street_graph, (int) startDemandH, (int) endDemandH);
     loadNetwork.stopAndEndBenchmark();
-    
     loadODDemandData.startMeasuring();
 	  const auto all_od_pairs_ = B18TrafficSP::read_od_pairs(odFileName, std::numeric_limits<int>::max());
 	  const auto dep_times = B18TrafficSP::read_dep_times(odFileName);
@@ -131,20 +130,20 @@ void B18CommandLineVersion::runB18Simulation() {
 
       routingCH.startMeasuring();
       MTC::accessibility::Accessibility *graph_ch = new MTC::accessibility::Accessibility((int) street_graph->vertices_data_.size(), edge_vals, edge_weights, false);
-      // constructor receives pairs of nodes, not edge ids
-      // so there's no way that routes can return directly edge ids
-      // idea: turn edge_ids_ from map<tuple> to vector<map<tuple>>
 
       all_paths_ch = graph_ch->Routes(sources, targets, 0);
       routingCH.stopAndEndBenchmark();
 	    std::cout << "# of paths = " << all_paths_ch.size() << " \n";
 
-	    auto start = high_resolution_clock::now();
       CHoutputNodesToEdgesConversion.startMeasuring();
       //convert from nodes to edges
       for (int i=0; i < all_paths_ch.size(); i++) {
         for (int j=0; j < all_paths_ch[i].size()-1; j++) {
-          all_paths.emplace_back(street_graph->edge_ids_[std::make_tuple(street_graph->index_to_vertex_map_[all_paths_ch[i][j]], street_graph->index_to_vertex_map_[all_paths_ch[i][j+1]])]);
+          auto vertex_from = street_graph->index_to_vertex_map_[all_paths_ch[i][j]];
+          auto vertex_to = street_graph->index_to_vertex_map_[all_paths_ch[i][j+1]];
+          auto one_edge = street_graph->edge_ids_[vertex_from][vertex_to];
+          all_paths.emplace_back(one_edge);
+          
           //if (i == 0) {
           //    std::cout << "node 1 " << street_graph->index_to_vertex_map_[all_paths_ch[i][j]] << " node 2 " << street_graph->index_to_vertex_map_[all_paths_ch[i][j+1]] << "\n";
           //    std::cout << "edge " << street_graph->edge_ids_[std::make_tuple(street_graph->index_to_vertex_map_[all_paths_ch[i][j]], street_graph->index_to_vertex_map_[all_paths_ch[i][j+1]])] << "\n";
@@ -153,9 +152,6 @@ void B18CommandLineVersion::runB18Simulation() {
         all_paths.emplace_back(-1);
       }
       CHoutputNodesToEdgesConversion.stopAndEndBenchmark();
-	    auto stop = high_resolution_clock::now();
-      auto duration = duration_cast<milliseconds>(stop - start);
-      std::cout << "Convert to edges time = " << duration.count() << " ms \n";
 
       /*
       //add the -1 after every single route (for use in simulator)

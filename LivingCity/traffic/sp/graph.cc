@@ -1,4 +1,5 @@
 #include "graph.h"
+#include <string>
 
 // Add edge
 inline void abm::Graph::add_edge(
@@ -30,12 +31,12 @@ inline void abm::Graph::add_edge(
 
   // Add edge id
   if (edgeid == std::numeric_limits<abm::graph::vertex_t>::max()) {
-    edge_ids_[std::make_tuple(vertex1, vertex2)] = this->edgeid_;
+    edge_ids_[vertex1][vertex2] = this->edgeid_;
     // Add edge cost
     edge_costs_[this->edgeid_] = weight;
     this->edgeid_ += 1;
   } else {
-    edge_ids_[std::make_tuple(vertex1, vertex2)] = edgeid;
+    edge_ids_[vertex1][vertex2] = edgeid;
     edge_ids_to_vertices[edgeid] = std::make_tuple(vertex1, vertex2);
     // Add edge cost
     edge_costs_[edgeid] = weight;
@@ -93,9 +94,8 @@ void abm::Graph::remove_edge(abm::graph::vertex_t vertex1,
   auto edge = edges_[std::make_tuple(vertex1, vertex2)];
   edges_.erase(edges_.find(std::make_tuple(vertex1, vertex2)));
 
-  if (edge_ids_.size() > 0 &&
-      edge_ids_.find(std::make_tuple(vertex1, vertex2)) != edge_ids_.end())
-    edge_ids_.erase(edge_ids_.find(std::make_tuple(vertex1, vertex2)));
+//  if ((edge_ids_[vertex1]).find(vertex2) != (edge_ids_[vertex1]).end())
+  //  (edge_ids_[vertex1]).erase((edge_ids_[vertex1]).find(vertex2));
 
   auto v1edge = vertex_edges_.at(vertex1);
   auto v2edge = vertex_edges_.at(vertex2);
@@ -155,13 +155,10 @@ bool abm::Graph::read_graph_matrix_market(const std::string& filename) {
 // Read MatrixMarket graph file format
 bool abm::Graph::read_graph_osm(const std::string& filename) {
   bool status = true;
+  std::cout << "reading graph osm" << std::endl;
   try {
-    csvio::CSVReader<6> in(filename);
-    //in.read_header(csvio::ignore_extra_column, "uniqueid", "u", "v", "length");
-    //in.read_header(csvio::ignore_extra_column, "uniqueid", "u", "v", "length", "lanes", "speed_mph");
-    in.read_header(csvio::ignore_no_column, "uniqueid", "u", "v", "length", "lanes", "speed_mph");
-    abm::graph::vertex_t edgeid, v1, v2;
-    //abm::graph::weight_t weight;
+    csvio::CSVReader<8> in(filename);
+    in.read_header(csvio::ignore_extra_column, "uniqueid", "osmid_u", "osmid_v", "length", "lanes", "speed_mph", "u", "v");
     std::vector<float> edge_vals(3);
     abm::graph::vertex_t nvertices = 0;
     float length, lanes, speed_mph;
@@ -169,22 +166,30 @@ bool abm::Graph::read_graph_osm(const std::string& filename) {
     //while (in.read_row(edgeid, v1, v2, weight, lanes, speed_mph)) {
     //while (in.read_row(edgeid, v1, v2, edge_vals[0], edge_vals[1], edge_vals[2])) {
     abm::graph::vertex_t index = 0;
-    while (in.read_row(edgeid, v1, v2, length, lanes, speed_mph)) {
+    abm::graph::edge_id_t edgeid;
+    abm::graph::vertex_t osmid_v1, osmid_v2, v1, v2;
+    while (in.read_row(edgeid, osmid_v1, osmid_v2, length, lanes, speed_mph, v1, v2)) {
 	    
-        edge_vals[0] = length;
+      edge_vals[0] = length;
 	    edge_vals[1] = lanes;
 	    edge_vals[2] = ( speed_mph / 3600 ) * 1609.34; //convert from mph to meters/second
 	    //this->add_edge(edge_vertex_map_[v1], edge_vertex_map_[v2], edge_vals, edgeid);
-        //Don't add if there is already an edge with the same vertices
-        if (edges_.find(std::make_pair(v1, v2)) == edges_.end()) {
-	        this->add_edge(v1, v2, edge_vals, edgeid);
+      //Don't add if there is already an edge with the same vertices
+      if (edges_.find(std::make_pair(v1, v2)) == edges_.end()) {
+        if (this->edge_ids_.size() <= v1){
+          std::cout << v1 << " is bigger than the size, which is " << this->edge_ids_.size() << std::endl;
         }
-        ++nvertices;
+        if (this->edge_ids_.size() <= v2){
+          std::cout << v2 << " is bigger than the size, which is " << this->edge_ids_.size() << std::endl;
+        }
+        this->add_edge(v1, v2, edge_vals, edgeid);
+      }
+      ++nvertices;
 
-        //map edge vertex ids to smaller values
-        edge_vertex_map_[v1] = index;
-        //std::cout << "v1 map = " << edge_vertex_map_[v1] << "\n";
-        ++index;
+      //map edge vertex ids to smaller values
+      edge_vertex_map_[v1] = index;
+      //std::cout << "v1 map = " << edge_vertex_map_[v1] << "\n";
+      ++index;
     }
     std::cout << "total edges = " << index << "\n";
     
@@ -208,62 +213,39 @@ bool abm::Graph::read_vertices(const std::string& filename) {
 	  QVector3D centerV(-minBox.x(), -minBox.y(), 0);
 	  QVector3D centerAfterSc(-sqSideSz, -sqSideSz, 0);
   bool status = true;
-  try {
-    csvio::CSVReader<3> in(filename);
-    in.read_header(csvio::ignore_extra_column, "osmid", "x", "y");
-    abm::graph::vertex_t vertex;
-    float lat, lon;
-    abm::graph::vertex_t index = 0;
-    while (in.read_row(vertex, lat, lon)) {
-        //std::cout << "vertex = " << vertex << "\n";
-        //std::cout << "index = " << index << "\n";
-        //map edge vertex ids to smaller values
-        vertex_map_[vertex] = index;
-        index_to_vertex_map_[index] = vertex;
-        //std::cout << "vertex map = " << vertex_map_[vertex] << "\n";
-        ++index;
-    }
-    csvio::CSVReader<3> in_new(filename);
-    in_new.read_header(csvio::ignore_extra_column, "osmid", "x", "y");
-    while (in_new.read_row(vertex, lat, lon)) {
-	  //std::cout << "osmid = " << vertex << "lat = " << lat << "lon = " << lon << "\n";
-	  //convert to QVector3D
-        //std::cout << "node " << vertex_index;
-	    QVector3D pos(lat, lon, 0);
-	    pos += centerV;//center
-	    pos *= scale;
-	    pos += centerAfterSc;
-	    pos.setX(pos.x() * -1.0f); // seems vertically rotated
-	    vertices_data_[vertex] = pos;
-    }
-    std::cout << "# of vertices: " << vertices_data_.size() << "\n";
+  csvio::CSVReader<6> in(filename);
+  in.read_header(csvio::ignore_extra_column, "osmid", "x", "y", "ref", "highway", "index");
+  float lat, lon;
+  abm::graph::vertex_t index = 0;
+  abm::graph::vertex_t nodeIndex, osmid;
+  std::string ref, highway;
 
-  } catch (std::exception& exception) {
-    std::cout << "Read OSM file: " << exception.what() << "\n";
-    status = false;
+  while (in.read_row(osmid, lat, lon, ref, highway, nodeIndex)) {
+    //std::cout << "vertex = " << vertex << "\n";
+    //std::cout << "index = " << index << "\n";
+    //map edge vertex ids to smaller values
+    vertex_map_[nodeIndex] = index;
+    index_to_vertex_map_[index] = nodeIndex; // todo: remove this structure
+    //std::cout << "vertex map = " << vertex_map_[vertex] << "\n";
+    ++index;
+    if (index != nodeIndex + 1){
+      std::cout << "index is " << index << ", while nodeIndex is " << nodeIndex << std::endl;
+    }
+
+    QVector3D pos(lat, lon, 0);
+    pos += centerV;//center
+    pos *= scale;
+    pos += centerAfterSc;
+    pos.setX(pos.x() * -1.0f); // seems vertically rotated
+    vertices_data_[nodeIndex] = pos;
   }
+  
+  std::cout << "# of vertices: " << vertices_data_.size() << "\n";
 
 
   return status;
 }
 
-/*
-void abm::Graph::generate_simple_graph() {
-  this->assign_nvertices(7);
-  // set up a simple graph
-  this->add_edge(1, 2, 1.5);
-  this->add_edge(1, 3, 9.1);
-  this->add_edge(1, 6, 14.3);
-  this->add_edge(2, 3, 15.9);
-  this->add_edge(2, 4, 5.5);
-  this->add_edge(3, 1, 5.6);
-  this->add_edge(3, 4, 11.6);
-  this->add_edge(3, 6, 2.4);
-  this->add_edge(4, 3, 0.2);
-  this->add_edge(4, 5, 6.2);
-  this->add_edge(5, 6, 9.7);
-}
-*/
 // Dijktra shortest paths from src to a vertex
 std::vector<abm::graph::vertex_t> abm::Graph::dijkstra(
     abm::graph::vertex_t source, abm::graph::vertex_t destination) {
@@ -398,8 +380,8 @@ std::vector<abm::graph::vertex_t> abm::Graph::dijkstra_edges(
     for (auto itr = path.begin(); itr != path.end() - 1; ++itr) {
       auto nitr = itr + 1;
       if (itr != path.end()) {
-        auto map_itr = edge_ids_.find(std::make_tuple(*itr, *nitr));
-        if (map_itr != edge_ids_.end())
+        auto map_itr = edge_ids_[*itr].find(*nitr);
+        if (map_itr != edge_ids_[*itr].end())
           route_edges.emplace_back((*map_itr).second);
       }
     }

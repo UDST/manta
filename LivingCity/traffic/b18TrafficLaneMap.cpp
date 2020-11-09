@@ -70,9 +70,12 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
   
 
   abm::graph::edge_id_t max_edge_id = 0;
-  for (const std::pair<std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>, abm::graph::edge_id_t > it: graph_->edge_ids_) {
-    max_edge_id = std::max(max_edge_id, it.second);
+  for (int v1_index = 0; v1_index < graph_->edge_ids_.size(); v1_index++){
+    for (const std::pair<abm::graph::vertex_t, abm::graph::edge_id_t > v2_it: graph_->edge_ids_[v1_index]) {
+      max_edge_id = std::max(max_edge_id, v2_it.second);
+    }
   }
+
   std::cout << "max_edge_id " << max_edge_id << "\n";
   edgeIdToLaneMapNum = std::vector<uint>(max_edge_id+1);
   
@@ -118,7 +121,7 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
     laneMapNumToEdgeDescSP.insert(std::make_pair(tNumMapWidth, x.second));
 
     std::tuple<abm::graph::vertex_t, abm::graph::vertex_t> edge_vertices = std::get<1>(x)->first;
-    abm::graph::edge_id_t edge_id = graph_->edge_ids_[edge_vertices];
+    abm::graph::edge_id_t edge_id = graph_->edge_ids_[get<0>(edge_vertices)][get<1>(edge_vertices)];
     if (edge_id >= edgeIdToLaneMapNum.size()){
       printf("edge_id exceeds upper bound. Edge_id: %i  vector size: %i\n",
               edge_id, edgeIdToLaneMapNum.size());
@@ -137,8 +140,6 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
   if (edge_count != graph_->nedges()){
     printf("Error! Edge count does not match number of edges in graph.\n");
     printf("Edge count: %i  |   Number of edges in graph: %i\n", edge_count, graph_->nedges());
-  }else{
-    printf("Edge count is exactly like number of edges: %i\n",edge_count);
   }
   
   edgesData.resize(tNumMapWidth);

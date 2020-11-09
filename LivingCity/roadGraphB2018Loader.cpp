@@ -21,7 +21,7 @@ using namespace std::chrono;
 
 std::vector<DemandB2018> RoadGraphB2018::demandB2018;
 int RoadGraphB2018::totalNumPeople;
-QHash<int, uint64_t> RoadGraphB2018::indToOsmid;
+QHash<int, uint64_t> RoadGraphB2018::indToNodeIndex;
 
 void updateMinMax2(const QVector2D &newPoint, QVector2D &minBox, QVector2D &maxBox) {
   if (newPoint.x() < minBox.x()) {
@@ -112,8 +112,8 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
   timer.start();
   QVector2D minBox(FLT_MAX, FLT_MAX);
   QVector2D maxBox(-FLT_MAX, -FLT_MAX);
-  QHash<uint64_t, QVector2D> osmidToVertexLoc;
-  QHash<uint64_t, uchar> osmidToBType; // node type
+  QHash<uint64_t, QVector2D> nodeIndexToVertexLoc;
+  QHash<uint64_t, uchar> nodeIndexToBType; // node type
 
   QHash<QString, uchar> bTypeStringTobType;
   bTypeStringTobType[""] = 0;
@@ -123,10 +123,11 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
   bTypeStringTobType["turning_circle"] = 4;
 
   QStringList headers = stream.readLine().split(",");
-  const int indexOsmid = headers.indexOf("osmid");
+  const int indexOsmid = headers.indexOf("osmid"); // the original value of osmid
   const int indexX = headers.indexOf("x");
   const int indexY = headers.indexOf("y");
   const int indexHigh = headers.indexOf("highway");
+  const int indexNodeIndex = headers.indexOf("index"); // the normalized index used to identify nodes across the code
 
   while (!stream.atEnd()) {
     line = stream.readLine();
@@ -140,15 +141,15 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
     float x = fields[indexX].toFloat();
     float y = fields[indexY].toFloat();
     //qDebug() << "x " << x << " y " << y;
-    uint64_t osmid = fields[indexOsmid].toLongLong();
-    osmidToVertexLoc[osmid] = QVector2D(x, y);
+    uint64_t nodeIndex = fields[indexNodeIndex].toLongLong();
+    nodeIndexToVertexLoc[nodeIndex] = QVector2D(x, y);
     updateMinMax2(QVector2D(x, y), minBox, maxBox);
 
     if (indexHigh >= fields.size()) {
-      osmidToBType[osmid] = 0;
+      nodeIndexToBType[nodeIndex] = 0;
     } else {
       QString bType = fields[indexHigh];
-      osmidToBType[osmid] = (!bTypeStringTobType.contains(bType)) ? 0 :
+      nodeIndexToBType[nodeIndex] = (!bTypeStringTobType.contains(bType)) ? 0 :
                             bTypeStringTobType[bType];
     }
   }
@@ -160,10 +161,10 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
   maxBox = QVector2D(-FLT_MAX, -FLT_MAX);
   QHash<uint64_t, QVector2D>::iterator i;
 
-  for (i = osmidToVertexLoc.begin(); i != osmidToVertexLoc.end(); ++i) {
-    osmidToVertexLoc[i.key()] = projLatLonToWorldMercator(i.value().x(),
+  for (i = nodeIndexToVertexLoc.begin(); i != nodeIndexToVertexLoc.end(); ++i) {
+    nodeIndexToVertexLoc[i.key()] = projLatLonToWorldMercator(i.value().x(),
                                 i.value().y(), /*isDeg=*/true);
-    updateMinMax2(osmidToVertexLoc[i.key()], minBox, maxBox);
+    updateMinMax2(nodeIndexToVertexLoc[i.key()], minBox, maxBox);
   }
 
   // TERRAIN
@@ -179,18 +180,18 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
   // ADD NODES
   std::vector<RoadGraph::roadGraphVertexDesc> vertex;
   std::vector<RoadGraph::roadGraphVertexDesc> vertex_SIM;
-  vertex.resize(osmidToVertexLoc.size());
-  vertex_SIM.resize(osmidToVertexLoc.size());
+  vertex.resize(nodeIndexToVertexLoc.size());
+  vertex_SIM.resize(nodeIndexToVertexLoc.size());
 
   int index = 0;
   QHash<uint64_t, int> dynIndToInd;
   
-  for (i = osmidToVertexLoc.begin(); i != osmidToVertexLoc.end(); ++i) {
+  for (i = nodeIndexToVertexLoc.begin(); i != nodeIndexToVertexLoc.end(); ++i) {
     uint64_t ind = i.key();
 
-    float x = osmidToVertexLoc[ind].x();
-    float y = osmidToVertexLoc[ind].y();
-    uchar bType = osmidToBType[ind];
+    float x = nodeIndexToVertexLoc[ind].x();
+    float y = nodeIndexToVertexLoc[ind].y();
+    uchar bType = nodeIndexToBType[ind];
 
     QVector3D pos(x, y, 0);
     pos += centerV;//center
@@ -207,7 +208,7 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
     inRoadGraph.myRoadGraph[vertex_SIM[index]].bType = bType;
 
     dynIndToInd[ind] = index;
-    indToOsmid[index] = ind;
+    indToNodeIndex[index] = ind;
     index++;
   }
 
@@ -366,30 +367,27 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
 }
 
 std::string RoadGraphB2018::loadABMGraph(const std::string& networkPath, const std::shared_ptr<abm::Graph>& graph_, int start_time, int end_time) {
+    const std::string& edgeFileName = networkPath + "edges.csv";
+    std::cout << edgeFileName << " as edges file\n";
 
-        const std::string& edgeFileName = networkPath + "edges.csv";
-        std::cout << edgeFileName << " as edges file\n";
+    const std::string& nodeFileName = networkPath + "nodes.csv";
+    std::cout << nodeFileName << " as nodes file\n";
 
-        const std::string& nodeFileName = networkPath + "nodes.csv";
-        std::cout << nodeFileName << " as nodes file\n";
+    const std::string& odFileName = networkPath + "od_demand_" + to_string(start_time) + "to" + to_string(end_time) + ".csv";
+    std::cout << odFileName << " as OD file\n";
 
-        const std::string& odFileName = networkPath + "od_demand_" + to_string(start_time) + "to" + to_string(end_time) + ".csv";
-        std::cout << odFileName << " as OD file\n";
-  //const bool directed = true;
-  //const auto graph = std::make_shared<abm::Graph>(directed);
-  auto start = high_resolution_clock::now();
-  //EDGES
-  //Create the graph directly from the file (don't deal with the creation of the boost graph first or any associated weights calculations)
-  graph_->read_graph_osm(edgeFileName);
-  //printf("# of edges: %d\n", graph_->nedges());
-  
-  //NODES
-  graph_->read_vertices(nodeFileName);
-  
-  auto stop = high_resolution_clock::now();
-  auto duration = duration_cast<milliseconds>(stop - start);
-  ///////////////////////////////
-  return odFileName;
+    auto start = high_resolution_clock::now();
+    //EDGES
+    graph_->read_graph_osm(edgeFileName);
+    //printf("# of edges: %d\n", graph_->nedges());
+    
+    //NODES
+    graph_->read_vertices(nodeFileName);
+    
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(stop - start);
+    ///////////////////////////////
+    return odFileName;
 }
 
 
