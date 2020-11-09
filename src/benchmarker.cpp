@@ -1,14 +1,20 @@
 #include "src/benchmarker.h"
+#include <QString>
 
 
 std::ofstream Benchmarker::outStream;
 int Benchmarker::amountOpened = 0;
+bool Benchmarker::showBenchmarks = false;
 
-Benchmarker::Benchmarker(const std::string desc, int depth) :
-    on(false),
-    elapsed(Duration::zero()),
-    description(desc),
-    margin(depth * 4, ' ')
+void Benchmarker::enableShowBenchmarks(){
+  Benchmarker::showBenchmarks = true;
+}
+
+Benchmarker::Benchmarker(const std::string desc, const bool print/* = false*/) :
+  on(false),
+  elapsed(Duration::zero()),
+  description(desc),
+  printToStdout(print)
 {
     if (amountOpened == 0) outStream.open("timestamps.info");
     ++amountOpened;
@@ -16,42 +22,64 @@ Benchmarker::Benchmarker(const std::string desc, int depth) :
 
 void Benchmarker::startMeasuring()
 {
-    if (on) return;
-    on = true;
+  if (on) return;
+  on = true;
 
-    lastTimestamp = std::chrono::high_resolution_clock::now(); 
+  startTimeStamp = std::chrono::high_resolution_clock::now();
 
-    return;
+  // For more information about epochs please refer to epochconverter.com
+  auto timeSinceEpoch = std::chrono::duration_cast<std::chrono::milliseconds>
+                (std::chrono::system_clock::now().time_since_epoch()).count();
+    
+
+  if (printToStdout && showBenchmarks){
+    std::cout << "[TIME] Started: <"
+              << description << ">. Time since epoch (ms): " << timeSinceEpoch
+              << std::endl;
+  }
+
+  auto timeNow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+
+  return;
 }
 
 void Benchmarker::stopMeasuring()
 {
-    if (!on) return;
+  if (!on) return;
 
-    elapsed += std::chrono::duration_cast<Duration>(
-            std::chrono::high_resolution_clock::now() - lastTimestamp);
+  stopTimeStamp = std::chrono::high_resolution_clock::now();
 
-    on = false;
+  elapsed += std::chrono::duration_cast<Duration>(
+          std::chrono::high_resolution_clock::now() - startTimeStamp);
+
+  on = false;
 }
 
 void Benchmarker::endBenchmark()
 {
-    outStream << margin
-        << " << Ended: " << description
-        << " (elapsed time: "
-        << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << ")"
-        << std::endl;
+  auto timeSinceEpoch = std::chrono::duration_cast<std::chrono::milliseconds>
+                (std::chrono::system_clock::now().time_since_epoch()).count();
 
-    --amountOpened;
-    if (amountOpened == 0) outStream.close();
+  if (printToStdout && showBenchmarks){
+    std::cout << "[TIME] Ended <"
+              << description
+              << ">. Elapsed: "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count()
+              << " ms. Time since epoch (ms): " << timeSinceEpoch
+              << std::endl;
+  }
+
+  --amountOpened;
+  if (amountOpened == 0) outStream.close();
 }
 
 void Benchmarker::stopAndEndBenchmark()
 {
-    stopMeasuring();
-    endBenchmark();
+
+  stopMeasuring();
+  endBenchmark();
 }
 
-Benchmarker mainBench("main function", 0);
-Benchmarker intersectionBench("Intersections total time", 0);
-Benchmarker peopleBench("People total time", 0);
+Benchmarker mainBench("main function");
+Benchmarker intersectionBench("Intersections total time");
+Benchmarker peopleBench("People total time");
