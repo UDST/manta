@@ -170,13 +170,11 @@ bool abm::Graph::read_graph_osm(const std::string& filename) {
       edge_vals[0] = length;
 	    edge_vals[1] = lanes;
 	    edge_vals[2] = ( speed_mph / 3600 ) * 1609.34; //convert from mph to meters/second
+
       //Don't add if there is already an edge with the same vertices
       if (edges_.find(std::make_pair(v1, v2)) == edges_.end()) {
         if (this->edge_ids_.size() <= v1){
           std::cout << v1 << " is bigger than the size, which is " << this->edge_ids_.size() << std::endl;
-        }
-        if (this->edge_ids_.size() <= v2){
-          std::cout << v2 << " is bigger than the size, which is " << this->edge_ids_.size() << std::endl;
         }
         this->add_edge(v1, v2, edge_vals, edgeid);
       }
