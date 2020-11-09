@@ -4,10 +4,6 @@
 """
 import os
 import sys
-<<<<<<< HEAD
-=======
-import getopt
->>>>>>> Makes use of the internal index to speed up CH output conversion. Changing to osmid in the output remains
 import time
 import subprocess
 import re
@@ -18,10 +14,7 @@ import psutil
 import seaborn as sns
 import matplotlib.pyplot as plt
 import xlwt
-<<<<<<< HEAD
 import argparse
-=======
->>>>>>> Makes use of the internal index to speed up CH output conversion. Changing to osmid in the output remains
 from pdb import set_trace as st
 
 # ================= Aux =================
@@ -121,11 +114,9 @@ def benchmark_one_run(number_of_run, benchmark_name, network_path):
     log("Parsing the simulation benchmarks...")
     all_components = { "Load_network":{}, "Load_OD_demand_data":{}, "Routing_CH":{}, "CH_output_nodes_to_edges_conversion":{}, "Convert_routes_into_GPU_data_structure_format":{}, "File_output":{}, "Lane_Map_creation":{}, "Microsimulation_in_GPU":{}}
     full_output = str(process.stdout.read())
+
     log("Showing full output...")
-<<<<<<< HEAD
-=======
     full_output_printable = full_output.replace("\\n", "\n")
->>>>>>> Makes use of the internal index to speed up CH output conversion. Changing to osmid in the output remains
     print(full_output)
     for output_line in full_output[2:].split("\\n"):
         for component_name,component_timestamp in all_components.items():
@@ -188,11 +179,7 @@ def benchmark_one_run(number_of_run, benchmark_name, network_path):
 
 
 def benchmark_multiple_runs(number_of_runs, benchmark_name = "benchmarks", network_path = "berkeley_2018/new_full_network/"):
-<<<<<<< HEAD
     log("Running system benchmarks for network {}. Benchmark name: {}. Number of runs: {}".format(network_path, benchmark_name, number_of_runs))
-=======
-    log("Running system benchmarks for network {}. Number of runs: {}".format(network_path, number_of_runs))
->>>>>>> Makes use of the internal index to speed up CH output conversion. Changing to osmid in the output remains
     log("Please do not run anything else on this PC until it is finished, since that may alter the benchmarking results.")
     subprocess.call("rm -r benchmarking/{}.csv".format(benchmark_name), shell=True)
 
