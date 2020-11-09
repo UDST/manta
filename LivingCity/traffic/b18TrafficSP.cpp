@@ -185,7 +185,7 @@ std::vector<abm::graph::vertex_t> B18TrafficSP::compute_routes(int mpi_rank,
 #pragma omp parallel for schedule(dynamic)
   for (abm::graph::vertex_t i = 0; i < od_pairs.size(); ++i) {
     //std::cout << "index " << i << "\n";
-    //const auto sp = graph_->dijkstra_edges(graph_->vertex_map_[od_pairs[i][0]], graph_->vertex_map_[od_pairs[i][1]]);
+    //const auto sp = graph_->dijkstra_edges(od_pairs[i][0], od_pairs[i][1]);
     const auto sp = graph_->dijkstra_edges(od_pairs[i][0], od_pairs[i][1]);
     //printf("od pair 1 o = %d, od pair 1 d = %d\n", od_pairs[i][0], od_pairs[i][1]);
 #pragma omp critical

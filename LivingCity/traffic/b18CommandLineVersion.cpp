@@ -105,8 +105,8 @@ void B18CommandLineVersion::runB18Simulation() {
 
 
       for (int x = 0; x < all_od_pairs_.size(); x++) {
-        sources.emplace_back(street_graph->vertex_map_[all_od_pairs_[x][0]]);
-        targets.emplace_back(street_graph->vertex_map_[all_od_pairs_[x][1]]);
+        sources.emplace_back(all_od_pairs_[x][0]);
+        targets.emplace_back(all_od_pairs_[x][1]);
         //std::cout << "origin = " << sources[x] << " \n";
         //std::cout << "dest = " << targets[x] << " \n";
       }
@@ -118,7 +118,7 @@ void B18CommandLineVersion::runB18Simulation() {
         edge_weights_inside_vec.emplace_back(metersLength);
         //std::cout << "edge length = " << metersLength << " \n";
 
-        std::vector<long> edge_nodes = {street_graph->vertex_map_[std::get<0>(x.first)], street_graph->vertex_map_[std::get<1>(x.first)]};
+        std::vector<long> edge_nodes = {std::get<0>(x.first), std::get<1>(x.first)};
         edge_vals.emplace_back(edge_nodes);
         //edge_vals.emplace_back((long) street_graph->edge_ids_[x.first]);
         //std::cout << "origin = " << sources[x] << " \n";
@@ -139,15 +139,10 @@ void B18CommandLineVersion::runB18Simulation() {
       //convert from nodes to edges
       for (int i=0; i < all_paths_ch.size(); i++) {
         for (int j=0; j < all_paths_ch[i].size()-1; j++) {
-          auto vertex_from = street_graph->index_to_vertex_map_[all_paths_ch[i][j]];
-          auto vertex_to = street_graph->index_to_vertex_map_[all_paths_ch[i][j+1]];
+          auto vertex_from = all_paths_ch[i][j];
+          auto vertex_to = all_paths_ch[i][j+1];
           auto one_edge = street_graph->edge_ids_[vertex_from][vertex_to];
           all_paths.emplace_back(one_edge);
-          
-          //if (i == 0) {
-          //    std::cout << "node 1 " << street_graph->index_to_vertex_map_[all_paths_ch[i][j]] << " node 2 " << street_graph->index_to_vertex_map_[all_paths_ch[i][j+1]] << "\n";
-          //    std::cout << "edge " << street_graph->edge_ids_[std::make_tuple(street_graph->index_to_vertex_map_[all_paths_ch[i][j]], street_graph->index_to_vertex_map_[all_paths_ch[i][j+1]])] << "\n";
-          //}
         }
         all_paths.emplace_back(-1);
       }

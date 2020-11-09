@@ -2346,7 +2346,7 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared
       printf("Save indexPathVec %d\n", trafficPersonVec.size());
       QTextStream indexPathVecStream(&indexPathVecFile);
       indexPathVecStream <<
-              "p,init_intersection,end_intersection,time_departure,num_steps,co,gas,distance,a,b,T\n";
+              "indexPathVec\n";
 
       for (int elem = 0; elem < indexPathVec.size(); elem++) {
         indexPathVecStream << elem << "\n";
@@ -2399,15 +2399,15 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared
 
       ///////////////
       // People
-      printf("Save people %d\n", trafficPersonVec.size());
+      printf("Save people %d. Intersections are in osmid.\n", trafficPersonVec.size());
       QTextStream streamP(&peopleFile);
       streamP <<
               "p,init_intersection,end_intersection,time_departure,num_steps,co,gas,distance,a,b,T,avg_v(mph)\n";
 
       for (int p = 0; p < trafficPersonVec.size(); p++) {
         streamP << p;
-        streamP << "," << trafficPersonVec[p].init_intersection;
-        streamP << "," << trafficPersonVec[p].end_intersection;
+        streamP << "," << graph_->nodeIndex_to_osmid_[trafficPersonVec[p].init_intersection];
+        streamP << "," << graph_->nodeIndex_to_osmid_[trafficPersonVec[p].end_intersection];
         streamP << "," << trafficPersonVec[p].time_departure;
         streamP << "," << trafficPersonVec[p].num_steps * deltaTime;
         streamP << "," << trafficPersonVec[p].co;
