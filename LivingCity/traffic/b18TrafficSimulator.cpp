@@ -2327,7 +2327,7 @@ void B18TrafficSimulator::render(VBORenderManager &rendManager) {
 }//
 #endif
 
-void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared_ptr<abm::Graph>& graph_, std::vector<abm::graph::vertex_t> paths_SP, int start_time, int end_time) {
+void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared_ptr<abm::Graph>& graph_, std::vector<abm::graph::edge_id_t> paths_SP, int start_time, int end_time) {
   const bool saveToFile = true;
 
   if (saveToFile) {

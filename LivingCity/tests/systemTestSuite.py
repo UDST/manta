@@ -7,7 +7,7 @@
     - pytest-cov 2.10.1
     - pytest-remotedata 0.3.2
 """
-
+import os
 import subprocess
 import random
 import filecmp
@@ -77,30 +77,31 @@ def network_setup(request):
         return network_path
     pytest.network_setup_has_run = True
 
-    log("\nRunning setup")
-    log("Running system test on output files for network {}".format(network_path))
+    log("Running system test setup on output files for network {}".format(network_path))
     output_files = ["route", "people", "indexPathVec"]
 
     log("Removing previous run files...")
-    for f in output_files:
-        subprocess.call(
-            "rm ./0_{0}5to12.csv ./0_people5to12_first_run.csv ./0_{0}5to12_{0}_run.csv".format(f), shell=True)
+    for output_file_name in output_files:
+        for run in ["", "_first_run", "_second_run"]:
+            filename = "./0_{}5to12{}.csv".format(output_file_name, run)
+            if os.path.exists(filename):
+                log("Removing old {}...".format(filename))
+                os.remove(filename)
 
     log("Running first simulation with use_prev_paths=false...")
     write_options_file({"NETWORK_PATH": "{}".format(
         network_path), "USE_PREV_PATHS": "false"})
     subprocess.run(["./LivingCity", "&"])
-    for f in output_files:
-        subprocess.call(
-            "mv ./0_{0}5to12.csv ./0_{0}5to12_first_run.csv".format(f), shell=True)
+
+    for output_file_name in output_files:
+        os.rename("./0_{}5to12.csv".format(output_file_name), "./0_{}5to12_first_run.csv".format(output_file_name))
 
     log("Running second simulation with use_prev_paths=true...")
     write_options_file({"NETWORK_PATH": "{}".format(
         network_path), "USE_PREV_PATHS": "true"})
     subprocess.run(["./LivingCity", "&"])
-    for f in output_files:
-        subprocess.call(
-            "mv ./0_{0}5to12.csv ./0_{0}5to12_second_run.csv".format(f), shell=True)
+    for output_file_name in output_files:
+        os.rename("./0_{}5to12.csv".format(output_file_name), "./0_{}5to12_second_run.csv".format(output_file_name))
 
     log("Finished setup.")
 

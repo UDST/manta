@@ -408,7 +408,7 @@ void B18TrafficOD::loadB18TrafficPeople(
     printf("No enough on file --> Add random people %d\n",
            (totalNumPeople - numPeople));
     // If this happens, the user ask to generate random people.
-    QList<int>  allVertexInd = RoadGraphB2018::indToOsmid.keys();
+    QList<int>  allVertexInd = RoadGraphB2018::indToNodeIndex.keys();
 
     for (; numPeople < totalNumPeople; numPeople++) {
       uint src_vertex = allVertexInd[rand() % allVertexInd.size()];
@@ -552,7 +552,7 @@ void B18TrafficOD::loadB18TrafficPeopleSP(
     printf("No enough on file --> Add random people %d\n",
            (totalNumPeople - numPeople));
     // If this happens, the user ask to generate random people.
-    QList<int>  allVertexInd = RoadGraphB2018::indToOsmid.keys();
+    QList<int>  allVertexInd = RoadGraphB2018::indToNodeIndex.keys();
 
     for (; numPeople < totalNumPeople; numPeople++) {
       uint src_vertex = allVertexInd[rand() % allVertexInd.size()];

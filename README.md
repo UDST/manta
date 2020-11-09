@@ -17,6 +17,7 @@ Microsimulation Analysis for Network Traffic Assignment. MANTA employs a highly 
  - pytest-cov (used versions: 2.10.1 in Ubuntu) 
  - pytest-remotedata (used versions: 0.3.2 in Ubuntu) 
  - psutil (used versions: 5.7.2 in Ubuntu) 
+ - xlwt (used versions: 1.3.0 in Ubuntu)
 
 
 ## Installation & Compilation
