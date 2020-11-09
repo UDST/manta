@@ -173,7 +173,6 @@ bool abm::Graph::read_graph_osm(const std::string& filename) {
       edge_vals[0] = length;
 	    edge_vals[1] = lanes;
 	    edge_vals[2] = ( speed_mph / 3600 ) * 1609.34; //convert from mph to meters/second
-	    //this->add_edge(edge_vertex_map_[v1], edge_vertex_map_[v2], edge_vals, edgeid);
       //Don't add if there is already an edge with the same vertices
       if (edges_.find(std::make_pair(v1, v2)) == edges_.end()) {
         if (this->edge_ids_.size() <= v1){
@@ -216,22 +215,14 @@ bool abm::Graph::read_vertices(const std::string& filename) {
   csvio::CSVReader<6> in(filename);
   in.read_header(csvio::ignore_extra_column, "osmid", "x", "y", "ref", "highway", "index");
   float lat, lon;
-  abm::graph::vertex_t index = 0;
   abm::graph::vertex_t nodeIndex, osmid;
   std::string ref, highway;
 
   while (in.read_row(osmid, lat, lon, ref, highway, nodeIndex)) {
-    //std::cout << "vertex = " << vertex << "\n";
-    //std::cout << "index = " << index << "\n";
-    //map edge vertex ids to smaller values
-    vertex_map_[nodeIndex] = index;
-    index_to_vertex_map_[index] = nodeIndex; // todo: remove this structure
-    //std::cout << "vertex map = " << vertex_map_[vertex] << "\n";
-    ++index;
-    if (index != nodeIndex + 1){
-      std::cout << "index is " << index << ", while nodeIndex is " << nodeIndex << std::endl;
-    }
+    //std::cout << "osmid = " << osmid << "\n";
+    //std::cout << "nodeIndex = " << nodeIndex << "\n";
 
+    this->nodeIndex_to_osmid_[nodeIndex] = osmid;
     QVector3D pos(lat, lon, 0);
     pos += centerV;//center
     pos *= scale;
