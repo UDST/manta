@@ -57,10 +57,14 @@ class Graph {
     std::cout << "max vertex index found " << maxVertexIndexFound << std::endl;
     this->edge_ids_ = std::vector<tsl::robin_map<graph::vertex_t, graph::edge_id_t>>(maxVertexIndexFound+1);
 <<<<<<< HEAD
+<<<<<<< HEAD
     this->nodeIndex_to_osmid_ = std::vector<graph::vertex_t>(maxVertexIndexFound+1);
 =======
     this->index_to_vertex_map_ = std::vector<graph::edge_id_t>(maxVertexIndexFound+1);
 >>>>>>> Makes use of the internal index to speed up CH output conversion. Changing to osmid in the output remains
+=======
+    this->nodeIndex_to_osmid_ = std::vector<graph::vertex_t>(maxVertexIndexFound+1);
+>>>>>>> Adds nodeIndex to osmid vector, to output vertexes' osmids instead of the internal index
     std::cout << "number of edges id when initializing " << (this->edge_ids_).size() << std::endl;
   }
 
@@ -162,10 +166,8 @@ class Graph {
   graph::vertex_t max_vertex_id_{std::numeric_limits<graph::vertex_t>::min()};
   //Vertex data
   std::map<graph::vertex_t, QVector3D> vertices_data_;
-
   // nodeIndex to osmid
   std::vector<graph::vertex_t> nodeIndex_to_osmid_;
-
   // Edges - vertices to edge pointer
   std::map<std::tuple<graph::vertex_t, graph::vertex_t>, std::shared_ptr<Edge>>
       edges_;
