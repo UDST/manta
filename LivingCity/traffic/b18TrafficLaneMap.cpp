@@ -70,9 +70,12 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
   
 
   abm::graph::edge_id_t max_edge_id = 0;
-  for (const std::pair<std::tuple<abm::graph::vertex_t, abm::graph::vertex_t>, abm::graph::edge_id_t > it: graph_->edge_ids_) {
-    max_edge_id = std::max(max_edge_id, it.second);
+  for (int v1_index = 0; v1_index < graph_->edge_ids_.size(); v1_index++){
+    for (const std::pair<abm::graph::vertex_t, abm::graph::edge_id_t > v2_it: graph_->edge_ids_[v1_index]) {
+      max_edge_id = std::max(max_edge_id, v2_it.second);
+    }
   }
+
   std::cout << "max_edge_id " << max_edge_id << "\n";
   edgeIdToLaneMapNum = std::vector<uint>(max_edge_id+1);
   
@@ -109,7 +112,6 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
     const int numWidthNeeded = ceil(edgesData[tNumMapWidth].length / kMaxMapWidthM);
     edgesData[tNumMapWidth].numLines = numLanes;
     edgesData[tNumMapWidth].nextInters = std::get<1>(std::get<0>(x));
-    edgesData[tNumMapWidth].nextInters = graph_->vertex_map_[std::get<1>(std::get<0>(x))];
     //std::cout << " edge " << edge_count << " nextInters " << edgesData[tNumMapWidth].nextInters << "\n";
     //std::cout << " tNumMapWidth " <<tNumMapWidth << " nextInters " << edgesData[tNumMapWidth].nextInters << "\n";
 
@@ -118,7 +120,7 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
     laneMapNumToEdgeDescSP.insert(std::make_pair(tNumMapWidth, x.second));
 
     std::tuple<abm::graph::vertex_t, abm::graph::vertex_t> edge_vertices = std::get<1>(x)->first;
-    abm::graph::edge_id_t edge_id = graph_->edge_ids_[edge_vertices];
+    abm::graph::edge_id_t edge_id = graph_->edge_ids_[get<0>(edge_vertices)][get<1>(edge_vertices)];
     if (edge_id >= edgeIdToLaneMapNum.size()){
       printf("edge_id exceeds upper bound. Edge_id: %i  vector size: %i\n",
               edge_id, edgeIdToLaneMapNum.size());
@@ -137,8 +139,6 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
   if (edge_count != graph_->nedges()){
     printf("Error! Edge count does not match number of edges in graph.\n");
     printf("Edge count: %i  |   Number of edges in graph: %i\n", edge_count, graph_->nedges());
-  }else{
-    printf("Edge count is exactly like number of edges: %i\n",edge_count);
   }
   
   edgesData.resize(tNumMapWidth);
@@ -171,17 +171,17 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
   int index = 0;
   for (const auto& vertex : graph_->vertex_edges_) {
     //std::cout << "GET<0> VERTEX = " << std::get<0>(vertex) << "\n";
-    //intersections[graph_->vertex_map_[std::get<0>(vertex)]].state = 0;
+    //intersections[std::get<0>(vertex)].state = 0;
     //intersections[std::get<0>(vertex)].nextEvent = 0.0f;
     //intersections[std::get<0>(vertex)].totalInOutEdges = vertex.second.size();
-    intersections[graph_->vertex_map_[std::get<0>(vertex)]].nextEvent = 0.0f;
-    intersections[graph_->vertex_map_[std::get<0>(vertex)]].totalInOutEdges = vertex.second.size();
-    if (intersections[graph_->vertex_map_[std::get<0>(vertex)]].totalInOutEdges <= 0) {
+    intersections[std::get<0>(vertex)].nextEvent = 0.0f;
+    intersections[std::get<0>(vertex)].totalInOutEdges = vertex.second.size();
+    if (intersections[std::get<0>(vertex)].totalInOutEdges <= 0) {
       printf("Vertex without in/out edges\n");
       continue;
     }
 
-  if (intersections[graph_->vertex_map_[std::get<0>(vertex)]].totalInOutEdges >= 20) {
+  if (intersections[std::get<0>(vertex)].totalInOutEdges >= 20) {
       printf("Vertex with more than 20 in/out edges\n");
       continue;
     }
@@ -243,7 +243,7 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
       numInEdges++;
     }
 
-    intersections[graph_->vertex_map_[std::get<0>(vertex)]].totalInOutEdges = numOutEdges + numInEdges;
+    intersections[std::get<0>(vertex)].totalInOutEdges = numOutEdges + numInEdges;
     //save in sorterd way as lane number
     if (edgeAngleOut.size() > 0) {
       std::sort(edgeAngleOut.begin(), edgeAngleOut.end(), compareSecondPartTupleCSP);
@@ -270,16 +270,16 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
            edgeAngleOut[outCount] <= edgeAngleIn[inCount]) ||
           (outCount < edgeAngleOut.size() && inCount >= edgeAngleIn.size())) {
         assert(edgeDescToLaneMapNumSP[edgeAngleOut[outCount].first] < 0x007fffff && "Edge number is too high");
-        intersections[graph_->vertex_map_[std::get<0>(vertex)]].edge[totalCount] = edgeDescToLaneMapNumSP[edgeAngleOut[outCount].first];
-        intersections[graph_->vertex_map_[std::get<0>(vertex)]].edge[totalCount] |= (edgesData[intersections[graph_->vertex_map_[std::get<0>(vertex)]].edge[totalCount]].numLines << 24); //put the number of lines in each edge
-        intersections[graph_->vertex_map_[std::get<0>(vertex)]].edge[totalCount] |= kMaskOutEdge; // 0x000000 mask to define out edge
+        intersections[std::get<0>(vertex)].edge[totalCount] = edgeDescToLaneMapNumSP[edgeAngleOut[outCount].first];
+        intersections[std::get<0>(vertex)].edge[totalCount] |= (edgesData[intersections[std::get<0>(vertex)].edge[totalCount]].numLines << 24); //put the number of lines in each edge
+        intersections[std::get<0>(vertex)].edge[totalCount] |= kMaskOutEdge; // 0x000000 mask to define out edge
         //std::cout << "edgeDesc " << edgeDescToLaneMapNumSP[edgeAngleOut[outCount].first] << "\n";
         outCount++;
       } else {
         assert(edgeDescToLaneMapNumSP[edgeAngleIn[inCount].first] < 0x007fffff && "Edge number is too high");
-        intersections[graph_->vertex_map_[std::get<0>(vertex)]].edge[totalCount] = edgeDescToLaneMapNumSP[edgeAngleIn[inCount].first];
-        intersections[graph_->vertex_map_[std::get<0>(vertex)]].edge[totalCount] |= (edgesData[intersections[graph_->vertex_map_[std::get<0>(vertex)]].edge[totalCount]].numLines << 24); //put the number of lines in each edge
-        intersections[graph_->vertex_map_[std::get<0>(vertex)]].edge[totalCount] |= kMaskInEdge; // 0x800000 mask to define in edge
+        intersections[std::get<0>(vertex)].edge[totalCount] = edgeDescToLaneMapNumSP[edgeAngleIn[inCount].first];
+        intersections[std::get<0>(vertex)].edge[totalCount] |= (edgesData[intersections[std::get<0>(vertex)].edge[totalCount]].numLines << 24); //put the number of lines in each edge
+        intersections[std::get<0>(vertex)].edge[totalCount] |= kMaskInEdge; // 0x800000 mask to define in edge
         inCount++;
       }
 
@@ -288,9 +288,9 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
     //std::cout << "outCount = " << outCount << " inCount = " << inCount << "\n";
 
 
-    if (totalCount != intersections[graph_->vertex_map_[std::get<0>(vertex)]].totalInOutEdges) {
+    if (totalCount != intersections[std::get<0>(vertex)].totalInOutEdges) {
       printf("Error totalCount!=intersections[vertex].totalInOutEdges %d %d\n",
-             totalCount, intersections[graph_->vertex_map_[std::get<0>(vertex)]].totalInOutEdges);
+             totalCount, intersections[std::get<0>(vertex)].totalInOutEdges);
     }
   }
 }

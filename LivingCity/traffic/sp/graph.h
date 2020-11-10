@@ -17,6 +17,10 @@
 #include <QVector3D>
 #include <stdint.h>
 #include <cfloat>
+#include <QString>
+#include <string>
+#include "splitVector.cpp"
+
 
 #include "external/csv.h"
 #include "tsl/robin_map.h"
@@ -31,13 +35,30 @@ class Graph {
  public:
   //! Edge {{v1, v2}, weight}
   using Edge =
-      //std::pair<std::pair<graph::vertex_t, graph::vertex_t>, graph::weight_t>;
       std::pair<std::pair<graph::vertex_t, graph::vertex_t>, std::vector<float>>;
-      //std::pair<std::pair<std::pair<std::pair<graph::vertex_t, graph::vertex_t>, graph::weight_t>, int lanes>, int speed_mph>;
 
   //! Construct directed / undirected graph
   //! \param[in] directed Defines if the graph is directed or not
-  explicit Graph(bool directed) : directed_{directed} {};
+  explicit Graph(bool directed, std::string networkPath) {
+    this->directed_ = directed;
+
+    // --- we get the max vertex id
+    const std::string& nodeFileName = networkPath + "nodes.csv";
+    csvio::CSVReader<1> inMaxVertexIndex(nodeFileName);
+    inMaxVertexIndex.read_header(csvio::ignore_extra_column, "index");
+    abm::graph::vertex_t osmid, nodeIndex;
+    std::string ref;
+    std::string highway;
+    float lat, lon;
+    abm::graph::vertex_t maxVertexIndexFound = 0;
+    while (inMaxVertexIndex.read_row(nodeIndex)) {
+      maxVertexIndexFound = std::max(nodeIndex, maxVertexIndexFound);
+    }
+    std::cout << "max vertex index found " << maxVertexIndexFound << std::endl;
+    this->edge_ids_ = std::vector<tsl::robin_map<graph::vertex_t, graph::edge_id_t>>(maxVertexIndexFound+1);
+    this->nodeIndex_to_osmid_ = std::vector<graph::vertex_t>(maxVertexIndexFound+1);
+    std::cout << "number of edges id when initializing " << (this->edge_ids_).size() << std::endl;
+  }
 
   //! Return number of vertices
   unsigned nvertices() const { return nvertices_; }
@@ -137,10 +158,8 @@ class Graph {
   graph::vertex_t max_vertex_id_{std::numeric_limits<graph::vertex_t>::min()};
   //Vertex data
   std::map<graph::vertex_t, QVector3D> vertices_data_;
-  //Vertex to an index
-  std::map<graph::vertex_t, graph::vertex_t> vertex_map_;
-  //index back to vertex
-  std::map<graph::vertex_t, graph::vertex_t> index_to_vertex_map_;
+  // nodeIndex to osmid
+  std::vector<graph::vertex_t> nodeIndex_to_osmid_;
   // Edges - vertices to edge pointer
   std::map<std::tuple<graph::vertex_t, graph::vertex_t>, std::shared_ptr<Edge>>
       edges_;
@@ -160,9 +179,9 @@ class Graph {
       vertex_out_edges_;
   // Vertices and counts
   tsl::robin_map<graph::vertex_t, graph::vertex_t> vertices_;
+
   // Global edges
-  std::map<std::tuple<graph::vertex_t, graph::vertex_t>, graph::edge_id_t>
-      edge_ids_;
+  std::vector<tsl::robin_map<graph::vertex_t, graph::edge_id_t>> edge_ids_;
 
   //person to their initial edge
   std::map<graph::vertex_t, graph::edge_id_t> person_to_init_edge_;

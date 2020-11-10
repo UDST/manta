@@ -17,6 +17,7 @@ Microsimulation Analysis for Network Traffic Assignment. MANTA employs a highly 
  - pytest-cov (used versions: 2.10.1 in Ubuntu) 
  - pytest-remotedata (used versions: 0.3.2 in Ubuntu) 
  - psutil (used versions: 5.7.2 in Ubuntu) 
+ - xlwt (used versions: 1.3.0 in Ubuntu)
 
 
 ## Installation & Compilation
@@ -182,6 +183,19 @@ and then run
 pytest -s -x tests/systemTestSuite.py
 ```
 Because of the tests' long duration, we recommend using the flag `-s` to show the whole output of the simulation and `-x` to stop at the first failure.
+
+### Benchmarking / profiling
+In order to obtain a profiling of each component of the simulation, you should run
+```bash
+python3 LivingCity/benchmarking/runBenchmarks --name={name_of_benchmark} --runs={number_of_iterations_to_run}
+```
+The script will run LivingCity the specified number of times while polling the system resources. For each component, its resource and time consumption will be saved into a `csv` file, a plot and a `xls` file in `manta/LivingCity/benchmarking/`. The profiling of each version is encouraged to be stored in [here](https://docs.google.com/spreadsheets/d/14KCUY8vLp9HoLuelYC5DmZwKI7aLsiaNFp7e6Z8bVBU/edit?usp=sharing).
+
+Versions correspond to [the repository's tags](https://github.com/UDST/manta/tags). In order to create a new tag, just run
+```bash
+git tag v0.x.0
+git push --tags
+```
 
 
 ## Acknowledgments
