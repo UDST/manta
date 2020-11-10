@@ -94,9 +94,6 @@ void abm::Graph::remove_edge(abm::graph::vertex_t vertex1,
   auto edge = edges_[std::make_tuple(vertex1, vertex2)];
   edges_.erase(edges_.find(std::make_tuple(vertex1, vertex2)));
 
-//  if ((edge_ids_[vertex1]).find(vertex2) != (edge_ids_[vertex1]).end())
-  //  (edge_ids_[vertex1]).erase((edge_ids_[vertex1]).find(vertex2));
-
   auto v1edge = vertex_edges_.at(vertex1);
   auto v2edge = vertex_edges_.at(vertex2);
 
