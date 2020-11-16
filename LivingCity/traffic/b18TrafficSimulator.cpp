@@ -36,12 +36,12 @@ void printPercentageMemoryUsed() {
 #endif
 namespace LC {
 
-const float s_0 = 1.5f * 4.12f; // ALWAYS USED
 const float intersectionClearance = 7.8f;
 const bool calculatePollution = true;
 
 B18TrafficSimulator::B18TrafficSimulator(float _deltaTime, RoadGraph *originalRoadGraph,
-    LCUrbanMain *urbanMain) : deltaTime(_deltaTime) {
+    const parameters inputSimParameters, LCUrbanMain *urbanMain) : deltaTime(_deltaTime), simParameters(inputSimParameters),
+    b18TrafficOD (B18TrafficOD(simParameters)) {
   simRoadGraph = new RoadGraph(*originalRoadGraph);
   clientMain = urbanMain;
 }
@@ -108,7 +108,8 @@ void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
 // GPU
 //////////////////////////////////////////////////
 void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
-    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_, std::vector<abm::graph::edge_id_t> paths_SP) {
+    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_,
+    std::vector<abm::graph::edge_id_t> paths_SP, const parameters simParameters) {
   Benchmarker passesBench("Simulation passes");
   Benchmarker finishCudaBench("Cuda finish");
   Benchmarker laneMapCreation("Lane_Map_creation", true);
@@ -175,6 +176,32 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 
     roadGenerationBench.stopAndEndBenchmark();
 
+    Benchmarker edgeOutputting("Edge outputting");
+    edgeOutputting.startMeasuring();
+
+    int index = 0;
+    std::vector<uint> u(graph_->edges_.size());
+    std::vector<uint> v(graph_->edges_.size());
+    for (auto const& x : graph_->edges_) {
+           u[index] = std::get<0>(std::get<0>(x));
+           v[index] = std::get<1>(std::get<0>(x));
+        index++;
+    }
+
+    //save avg_edge_vel vector to file
+    std::string name_u = "./edges_u.txt";
+    std::ofstream output_file_u(name_u);
+    std::ostream_iterator<uint> output_iterator_u(output_file_u, "\n");
+    std::copy(u.begin(), u.end(), output_iterator_u);
+
+    //save avg_edge_vel vector to file
+    std::string name_v = "./edges_v.txt";
+    std::ofstream output_file_v(name_v);
+    std::ostream_iterator<uint> output_iterator_v(output_file_v, "\n");
+    std::copy(v.begin(), v.end(), output_iterator_v);
+    printf("Wrote edge vertices files!\n");
+    edgeOutputting.stopAndEndBenchmark();
+
 
     /////////////////////////////////////
     // 1. Init Cuda
@@ -236,6 +263,9 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     printf("First time_departure %f\n", currentTime);
     QTime timerLoop;
 
+    int iter_printout = 7200;
+    int iter_printout_index = 0;
+    int ind = 0;
     std::cerr
       << "Running main loop from " << (startTime / 3600.0f)
       << " to " << (endTime / 3600.0f)
@@ -254,10 +284,42 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         timerLoop.restart();
       }
 
-      b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
-                             intersections.size(), deltaTime);
+      if (count % iter_printout != 0) {
+        b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
+                             intersections.size(), deltaTime, simParameters);
+      } else {
+        QTime timer_simulate_in_gpu;
+        timer_simulate_in_gpu.start();
+        b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
+                             intersections.size(), deltaTime, simParameters);
+        QTime timer_get_data_from_gpu;
+        timer_get_data_from_gpu.start();
+        b18GetDataCUDA(trafficPersonVec, edgesData);
 
-#ifdef B18_RUN_WITH_GUI
+        QTime timer_process_and_save_edge_speeds;
+        timer_process_and_save_edge_speeds.start();
+        QTime timer_process_edge_speeds;
+        timer_process_edge_speeds.start();
+        int index = 0;
+        std::vector<float> avg_edge_vel(graph_->edges_.size());
+        for (auto const& x : graph_->edges_) {
+          ind = edgeDescToLaneMapNumSP[x.second];
+          avg_edge_vel[index] = edgesData[ind].curr_cum_vel / edgesData[ind].curr_iter_num_cars;// * 2.23694;
+          index++;
+        }
+
+        //save avg_edge_vel vector to file
+        std::string name = "./all_edges_vel_" + std::to_string(iter_printout_index) + ".txt";
+        std::ofstream output_file(name);
+        std::ostream_iterator<float> output_iterator(output_file, "\n");
+        std::copy(avg_edge_vel.begin(), avg_edge_vel.end(), output_iterator);
+
+        iter_printout_index++;
+
+        timerLoop.restart();
+      }
+
+      #ifdef B18_RUN_WITH_GUI
 
       if (clientMain != nullptr &&
           clientMain->ui.b18RenderSimulationCheckBox->isChecked()) {
@@ -280,7 +342,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         }
       }
 
-#endif
+      #endif
       currentTime += deltaTime;
     }
 	std::cout << "Total # iterations = " << count << "\n";
@@ -675,7 +737,8 @@ void simulateOnePersonCPU(
   std::vector<LC::B18EdgeData> &edgesData,
   std::vector<uchar> &laneMap,
   std::vector<B18IntersectionData> &intersections,
-  std::vector<uchar> &trafficLights) {
+  std::vector<uchar> &trafficLights,
+  const parameters simParameters) {
   //if(DEBUG_TRAFFIC==1)printf("currentTime %f   0 Person: %d State %d Time Dep %f\n",currentTime,p,trafficPersonVec[p].active, trafficPersonVec[p].time_departure);
   ///////////////////////////////
   //2.0. check if finished
@@ -727,7 +790,7 @@ void simulateOnePersonCPU(
       uchar laneChar;
       bool placed = false;
 
-      ushort numCellsEmptyToBePlaced = s_0;
+      ushort numCellsEmptyToBePlaced = simParameters.s_0;
       ushort countEmptyCells = 0;
 
       for (ushort b = initShift; (b < numOfCells) && (placed == false); b++) {
@@ -982,7 +1045,7 @@ void simulateOnePersonCPU(
 
   if (found == true) { //car in front and slower than us
     // 2.1.2 calculate dv_dt
-    s_star = s_0 + std::max(0.0f,
+    s_star = simParameters.s_0 + std::max(0.0f,
                             (trafficPersonVec[p].v * trafficPersonVec[p].T + (trafficPersonVec[p].v *
                                 delta_v) / (2 * std::sqrt(trafficPersonVec[p].a * trafficPersonVec[p].b))));
     thirdTerm = std::pow(((s_star) / (s)), 2);
@@ -1168,7 +1231,7 @@ void simulateOnePersonCPU(
               bool acceptLC = true;
 
               if (gap_a != 1000.0f) {
-                g_na_D = std::max(s_0, s_0 + b1A * trafficPersonVec[p].v + b2A *
+                g_na_D = std::max(simParameters.s_0, simParameters.s_0 + b1A * trafficPersonVec[p].v + b2A *
                                   (trafficPersonVec[p].v - v_a * 3.0f));
 
                 if (gap_a < g_na_D) { //gap smaller than critical gap
@@ -1177,7 +1240,7 @@ void simulateOnePersonCPU(
               }
 
               if (acceptLC == true && gap_b != 1000.0f) {
-                g_bn_D = std::max(s_0, s_0 + b1B * v_b * 3.0f + b2B * (v_b * 3.0f -
+                g_bn_D = std::max(simParameters.s_0, simParameters.s_0 + b1B * v_b * 3.0f + b2B * (v_b * 3.0f -
                                   trafficPersonVec[p].v));
 
                 if (gap_b < g_bn_D) { //gap smaller than critical gap
@@ -1313,7 +1376,7 @@ void simulateOnePersonCPU(
               bool acceptLC = true;
 
               if (gap_a != 1000.0f) {
-                g_na_M = std::max(s_0, s_0 + (b1A * trafficPersonVec[p].v + b2A *
+                g_na_M = std::max(simParameters.s_0, simParameters.s_0 + (b1A * trafficPersonVec[p].v + b2A *
                                               (trafficPersonVec[p].v - v_a * 3.0f)));
 
                 if (gap_a < g_na_M) { //gap smaller than critical gap
@@ -1322,7 +1385,7 @@ void simulateOnePersonCPU(
               }
 
               if (acceptLC == true && gap_b != 1000.0f) {
-                g_bn_M = std::max(s_0, s_0 + (b1B * v_b * 3.0f + b2B * (v_b * 3.0f -
+                g_bn_M = std::max(simParameters.s_0, simParameters.s_0 + (b1B * v_b * 3.0f + b2B * (v_b * 3.0f -
                                               trafficPersonVec[p].v)));
 
                 if (gap_b < g_bn_M) { //gap smaller than critical gap
@@ -1800,7 +1863,7 @@ void B18TrafficSimulator::simulateInCPU(float startTimeH, float endTimeH) {
     for (int p = 0; p < numPeople; p++) {
       simulateOnePersonCPU(p, deltaTime, currentTime, mapToReadShift, mapToWriteShift,
                            trafficPersonVec, indexPathVec, edgesData, laneMap, intersections,
-                           trafficLights);
+                           trafficLights, simParameters);
     }//for people
 
     ////////////////////////////////////////////////////////////
@@ -2366,36 +2429,24 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared
       //      std::cout << "index = " << x << "indexPathVec = " << indexPathVec[x] << "\n";
       //}
 
-	//write paths to file so that we can just load them instead
-    //std::ofstream output_file("./indexPathVec.txt");
-    //std::ostream_iterator<abm::graph::vertex_t> output_iterator(output_file, "\n");
-    //std::copy(indexPathVec.begin(), indexPathVec.end(), output_iterator);
-
-    int r = 0;
-    int i = 0;
-	// Save route for each person
-    streamR << r << ":[";
-	for (auto& x: paths_SP) {
-		if (x != -1) {
-		    //abm::graph::vertex_t edge_id_val = indexPathVec[i];
-		    //abm::graph::vertex_t edge_id_val = x;
-		    //streamR << "," << edge_id_val;
-		    //streamR << edge_id_val << ",";
-		    streamR << x << ",";
-		    //streamR << "," << indexPathVec[index];
-            //std::cout << "edge_id val = " << edge_id_val << "\n";
-		    //personDistance[p] += graph_->edges_[graph_->edge_pointer_to_vertices_[laneMapNumToEdgeDescSP[indexPathVec[i]]]]->second[0];
-		    //personDistance[p] += graph_->edges_[graph_->edge_ids_to_vertices[x]]->second[0];
-		} else {
-                    streamR << "]\n";
-                    r++;
-		    if (i != paths_SP.size() - 1) {
-                    	streamR << r << ":[";
-		    }
+      //write paths to file so that we can just load them instead
+      int r = 0;
+      int i = 0;
+      // Save route for each person
+      streamR << r << ":[";
+      for (auto& x: paths_SP) {
+        if (x != -1) {
+          streamR << x << ",";
+        } else {
+          streamR << "]\n";
+          r++;
+          if (i != paths_SP.size() - 1) {
+            streamR << r << ":[";
+          }
         }
         i++;
-	}
-    routeFile.close();
+      }
+      routeFile.close();
 
       ///////////////
       // People
@@ -2559,7 +2610,7 @@ void B18TrafficSimulator::calculateAndDisplayTrafficDensity(int numOfPass) {
         int numLane = edgeDescToLaneMapNum[*ei];
         //  0.8f to make easier to become red
         float maxVehicles = 0.5f * simRoadGraph->myRoadGraph_BI[*ei].edgeLength *
-                            simRoadGraph->myRoadGraph_BI[*ei].numberOfLanes / (s_0);
+                            simRoadGraph->myRoadGraph_BI[*ei].numberOfLanes / (simParameters.s_0);
 
         if (maxVehicles < 1.0f) {
           maxVehicles = 1.0f;
@@ -2625,7 +2676,7 @@ void B18TrafficSimulator::calculateAndDisplayTrafficDensity(int numOfPass) {
       int numLane = edgeDescToLaneMapNum[*ei];
       //0.8f to make easier to become red
       float maxVehicles = 0.5f * simRoadGraph->myRoadGraph_BI[*ei].edgeLength *
-                          simRoadGraph->myRoadGraph_BI[*ei].numberOfLanes / (s_0);
+                          simRoadGraph->myRoadGraph_BI[*ei].numberOfLanes / (simParameters.s_0);
 
       if (maxVehicles < 1.0f) {
         maxVehicles = 1.0f;
