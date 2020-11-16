@@ -39,6 +39,18 @@ void B18CommandLineVersion::runB18Simulation() {
   const float startDemandH = settings.value("START_HR", 5).toFloat();
   const float endDemandH = settings.value("END_HR", 12).toFloat();
   const bool showBenchmarks = settings.value("SHOW_BENCHMARKS", false).toBool();
+  const parameters simParameters {
+      settings.value("A").toFloat(),
+      settings.value("B").toFloat(),
+      settings.value("T").toFloat(),
+      settings.value("s_0").toFloat()};
+
+  std::cout << "b18CommandLineVersion received the parameters "
+            << "[a: " << simParameters.a 
+            << ", b: " << simParameters.b
+            << ", T: " << simParameters.T
+            << ", s_0: " << simParameters.s_0
+            << "]" << std::endl;
 
   float startSimulationH = startDemandH;
   float endSimulationH = endDemandH;
@@ -58,7 +70,7 @@ void B18CommandLineVersion::runB18Simulation() {
 
 
   ClientGeometry cg;
-  B18TrafficSimulator b18TrafficSimulator(deltaTime, &cg.roadGraph);
+  B18TrafficSimulator b18TrafficSimulator(deltaTime, &cg.roadGraph, simParameters);
   
   std::vector<abm::graph::edge_id_t> all_paths;
   vector<vector<int>> all_paths_ch;
@@ -223,7 +235,7 @@ void B18CommandLineVersion::runB18Simulation() {
   } else {
 	  //if useSP, convert all_paths to indexPathVec format and run simulation
     b18TrafficSimulator.simulateInGPU(numOfPasses, startSimulationH, endSimulationH,
-        useJohnsonRouting, useSP, street_graph, all_paths);
+        useJohnsonRouting, useSP, street_graph, all_paths, simParameters);
   }
 
 }

@@ -38,8 +38,6 @@ namespace LC {
 namespace{
   LCUrbanMain *clientMain;
 
-  //const float s_0=1.5f*4.12f;// ALWAYS USED
-  const float s_0 = 1.5f * 5.7f; //REMOVED !!!!
   //const float intersectionClearance=7.0f;
   const float intersectionClearance = 7.8f;
   bool calculatePollution = true;
@@ -538,7 +536,8 @@ void simulateOnePersonCPU(
   std::vector<LC::edgeData> &edgesData,
   std::vector<uchar> &laneMap,
   std::vector<intersectionData> &intersections,
-  std::vector<uchar> &trafficLights) {
+  std::vector<uchar> &trafficLights.
+  parameters simParameters) {
   //if(DEBUG_TRAFFIC==1)printf("currentTime %f   0 Person: %d State %d Time Dep %f\n",currentTime,p,trafficPersonVec[p].active, trafficPersonVec[p].time_departure);
   ///////////////////////////////
   //2.0. check if finished
@@ -589,7 +588,7 @@ void simulateOnePersonCPU(
       uchar laneChar;
       bool placed = false;
 
-      ushort numCellsEmptyToBePlaced = s_0 / cellSize;
+      ushort numCellsEmptyToBePlaced = simParameters.s_0 / cellSize;
       ushort countEmptyCells = 0;
 
       for (ushort b = initShift; (b < numOfCells) && (placed == false); b++) {
@@ -805,7 +804,7 @@ void simulateOnePersonCPU(
 
   if (found == true) { //car in front and slower than us
     // 2.1.2 calculate dv_dt
-    s_star = s_0 + std::max(0.0f,
+    s_star = simParameters.s_0 + std::max(0.0f,
                             (trafficPersonVec[p].v * trafficPersonVec[p].T + (trafficPersonVec[p].v *
                                 delta_v) / (2 * std::sqrt(trafficPersonVec[p].a * trafficPersonVec[p].b))));
     thirdTerm = std::pow(((s_star) / (s)), 2);
@@ -974,7 +973,7 @@ void simulateOnePersonCPU(
               bool acceptLC = true;
 
               if (gap_a != 1000.0f) {
-                g_na_D = std::max(s_0, s_0 + b1A * trafficPersonVec[p].v + b2A *
+                g_na_D = std::max(simParameters.s_0, simParameters.s_0 + b1A * trafficPersonVec[p].v + b2A *
                                   (trafficPersonVec[p].v - v_a * 3.0f));
 
                 if (gap_a < g_na_D) { //gap smaller than critical gap
@@ -983,7 +982,7 @@ void simulateOnePersonCPU(
               }
 
               if (acceptLC == true && gap_b != 1000.0f) {
-                g_bn_D = std::max(s_0, s_0 + b1B * v_b * 3.0f + b2B * (v_b * 3.0f -
+                g_bn_D = std::max(simParameters.s_0, simParameters.s_0 + b1B * v_b * 3.0f + b2B * (v_b * 3.0f -
                                   trafficPersonVec[p].v));
 
                 if (gap_b < g_bn_D) { //gap smaller than critical gap
@@ -1117,7 +1116,7 @@ void simulateOnePersonCPU(
               bool acceptLC = true;
 
               if (gap_a != 1000.0f) {
-                g_na_M = std::max(s_0, s_0 + (b1A * trafficPersonVec[p].v + b2A *
+                g_na_M = std::max(simParameters.s_0, simParameters.s_0 + (b1A * trafficPersonVec[p].v + b2A *
                                               (trafficPersonVec[p].v - v_a * 3.0f)));
 
                 if (gap_a < g_na_M) { //gap smaller than critical gap
@@ -1126,7 +1125,7 @@ void simulateOnePersonCPU(
               }
 
               if (acceptLC == true && gap_b != 1000.0f) {
-                g_bn_M = std::max(s_0, s_0 + (b1B * v_b * 3.0f + b2B * (v_b * 3.0f -
+                g_bn_M = std::max(simParameters.s_0, simParameters.s_0 + (b1B * v_b * 3.0f + b2B * (v_b * 3.0f -
                                               trafficPersonVec[p].v)));
 
                 if (gap_b < g_bn_M) { //gap smaller than critical gap
@@ -2112,7 +2111,7 @@ void CUDATrafficSimulator::calculateAndDisplayTrafficDensity(/*RoadGraph& inRoad
     int offset;
     //0.8f to make easier to become red
     float maxVehicles = 0.5f * simRoadGraph->myRoadGraph_BI[*ei].edgeLength *
-                        simRoadGraph->myRoadGraph_BI[*ei].numberOfLanes / (s_0);
+                        simRoadGraph->myRoadGraph_BI[*ei].numberOfLanes / (simParameters.s_0);
 
     if (maxVehicles < 1.0f) {
       maxVehicles = 1.0f;
