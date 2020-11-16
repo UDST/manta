@@ -196,10 +196,6 @@ Versions correspond to [the repository's tags](https://github.com/UDST/manta/tag
 git tag v0.x.0
 git push --tags
 ```
-<<<<<<< HEAD
-
-=======
->>>>>>> Adds benchmarking to readme
 
 
 ## Acknowledgments
