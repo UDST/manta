@@ -316,14 +316,12 @@ def gradient_descent(epsilon=0.04, learning_rate_params = None, progress_filenam
             saved_progress["number_of_iterations"] = iteration
             saved_progress["progress"] = progress
             with open('{}.json'.format(progress_filename), 'w') as fp:
-                json.dump(saved_progress, fp)
-
-        
+                json.dump(saved_progress, fp)    
 
         if abs(current_diff) < epsilon:
             print("Found the best model parameters a, b, T, and s_0!")
-            print(current_parms)
-            return current_parms
+            print(current_params)
+            return current_params
         iteration += 1
 
 
