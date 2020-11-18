@@ -31,7 +31,7 @@ def create_per_edge_speeds_df(num_printouts, path, edges_df, nodes_df, remove_er
         edges_error_vals = edges_error['index'].tolist()
         filtered_edges = edges_df.drop(edges_df.index[edges_error_vals])
     
-    #merge osmids, lats, longs from     
+    #merge osmids, lats, longs
     edge_vels_df = edge_vels_df.join(filtered_edges, lsuffix='_caller', rsuffix='_other')
     edge_vels_df_node1 = pd.merge(edge_vels_df, nodes_df[['osmid', 'x', 'y']], left_on='osmid_u', right_on='osmid', how='left')
     edge_vels_df_node1_node2 = pd.merge(edge_vels_df_node1, nodes_df[['osmid', 'x', 'y']], left_on='osmid_v', right_on='osmid', how='left', suffixes=['_u', '_v'])
@@ -98,19 +98,12 @@ def create_network_from_edges_node_ids(edges_u, edges_v, nodes, edges, path, sav
     route_edge_node1 = pd.merge(new_df, nodes[['osmid', 'x', 'y']], left_on='osmid_u', right_on='osmid', how='left')
     route_edge_node1_node2 = pd.merge(route_edge_node1, nodes[['osmid', 'x', 'y']], left_on='osmid_v', right_on='osmid', how='left', suffixes=['_u', '_v'])
 
-    df = route_edge_node1_node2
-    if save:
-        df['geometry'] = df.apply(lambda row: 'LINESTRING ({} {}, {} {})'.format(row['x_u'], row['y_u'], row['x_v'], row['y_v']), axis=1)
-        df.to_csv('{}/edges_over_time.csv'.format(path), index=False)
-    else:
-        df['geometry'] = df.apply(lambda row: LineString([(row['x_u'], row['y_u']), (row['x_v'], row['y_v'])]), axis=1)
-        
-    
     new_df['time_0'] = pd.read_csv('{}/all_edges_vel_0.txt'.format(path), names=['time_0'], header=None)
     for ind in range(1,num_printouts):
         new_df['time_{}'.format(ind)] = pd.read_csv('{}/all_edges_vel_{}.txt'.format(path, ind)) * 2.23694
         
     new_df['microsim_avg'] = new_df[['time_0', 'time_1', 'time_2', 'time_3', 'time_4', 'time_5', 'time_6']].mean(axis=1)
+    
     
     print(new_df.shape[0])
     new_df = new_df.replace(0, pd.np.nan)
@@ -130,7 +123,7 @@ class benchmark():
             .format(self.task_name, round(elapsed_time/60,4)),'green'))
 
 
-def calibrate(param_list, path, new_uber, start_time, end_time, one_time_slice=False):
+def calibrate(param_list, path, new_uber, start_time, end_time):
     min_diff = None
     min_params = None
 
@@ -152,44 +145,28 @@ def calibrate(param_list, path, new_uber, start_time, end_time, one_time_slice=F
 
         # Merge our network edges with Uber edges
         merged_edges = merge_edges_with_uber_edges(edges, new_uber)
-
-
         merged_edges = merged_edges.dropna()
 
         # Merge edge vels (with x timesteps) with the merged Uber data
         merged_edges = merge_edges_with_times_with_uber_edges(edge_vels_df, merged_edges)
-
         merged_edges = merged_edges.dropna()
-        #print("number of trips from {} to {} = {}".format(start_time, end_time, merged_edges.shape[0]))
 
         # Average the speeds over all the timesteps from the microsim and add column to the df
         merged_time_edges = merged_edges.copy()
 
-        if one_time_slice:
-            merged_time_edges['microsim_avg'] = merged_time_edges['time_{}'.format(start_time - 5)]
-        else: 
-            merged_time_edges['microsim_avg'] = merged_time_edges[['time_0', 'time_1', 'time_2', 'time_3', 'time_4', 'time_5', 'time_6']].mean(axis=1)
-        #merged_time_edges['microsim_avg'] = merged_time_edges[['time_1', 'time_2', 'time_3', 'time_4', 'time_5', 'time_6']].mean(axis=1)
-
-        # Drop unnecessary columns
-        """
-        merged_time_edges = merged_time_edges.drop(['time_0', 'time_1', 'time_2', 'time_3', 'time_4', 'time_5', 'time_6',
-                                                    'uniqueid_x' , 'osmid_u',
-                                                    'x_u', 'y_u', 'osmid_v', 'x_v', 'y_v', 'uniqueid_y',
-                                                    'length_y', 'lanes_y', 'speed_mph_y', 'osm_start_node_id', 'osm_end_node_id'], axis=1)
-        """
+        merged_time_edges['microsim_avg'] = merged_time_edges[['time_0', 'time_1', 'time_2', 'time_3', 'time_4', 'time_5', 'time_6']].mean(axis=1)
 
         # Add *difference* column to show delta between our microsim and Uber speeds
         merged_time_edges['diff'] = merged_time_edges['speed_mph_mean'] - merged_time_edges['microsim_avg']
-        #merged_time_edges['diff'] = abs(merged_time_edges['speed_mph_p85'] - merged_time_edges['microsim_avg'])
+
+        
         merged_time_edges['microsim_avg'] = merged_time_edges[['time_0', 'time_1', 'time_2', 'time_3', 'time_4', 'time_5', 'time_6']].mean(axis=1)
         merged_time_edges['speed_limit_vs_microsim'] = merged_time_edges['speed_mph'] - merged_time_edges['microsim_avg']
-        #print("merged with uber edges length = {}".format(merged_time_edges.shape[0]))
+
         print("uber avg = {}".format(merged_time_edges['speed_mph_mean'].mean()))
         print("microsim avg = {}".format(merged_time_edges['microsim_avg'].mean()))
 
         merged_time_edges['uber_microsim_ratio'] = merged_time_edges['speed_mph_mean'] / merged_time_edges['microsim_avg']
-        #print("average uber / microsim ratio = {}".format(merged_time_edges['uber_microsim_ratio'].mean()))
 
         #calculate RMSE
         diff = abs(merged_time_edges['diff'].mean())
@@ -319,8 +296,9 @@ def gradient_descent(epsilon=0.04, learning_rate_params = None, progress_filenam
                 json.dump(saved_progress, fp)    
 
         if abs(current_diff) < epsilon:
-            print("Found the best model parameters a, b, T, and s_0!")
+            print("Found parameters that provide a diff minor to the given epsilon.")
             print(current_params)
+            print("epsilon: {}  |  diff: {}".format(epsilon, current_diff))
             return current_params
         iteration += 1
 

@@ -288,18 +288,10 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
                              intersections.size(), deltaTime, simParameters);
       } else {
-        QTime timer_simulate_in_gpu;
-        timer_simulate_in_gpu.start();
         b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
                              intersections.size(), deltaTime, simParameters);
-        QTime timer_get_data_from_gpu;
-        timer_get_data_from_gpu.start();
         b18GetDataCUDA(trafficPersonVec, edgesData);
 
-        QTime timer_process_and_save_edge_speeds;
-        timer_process_and_save_edge_speeds.start();
-        QTime timer_process_edge_speeds;
-        timer_process_edge_speeds.start();
         int index = 0;
         std::vector<float> avg_edge_vel(graph_->edges_.size());
         for (auto const& x : graph_->edges_) {
