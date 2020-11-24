@@ -183,9 +183,9 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     std::vector<uint> u(graph_->edges_.size());
     std::vector<uint> v(graph_->edges_.size());
     for (auto const& x : graph_->edges_) {
-           u[index] = std::get<0>(std::get<0>(x));
-           v[index] = std::get<1>(std::get<0>(x));
-        index++;
+      u[index] = std::get<0>(std::get<0>(x));
+      v[index] = std::get<1>(std::get<0>(x));
+      index++;
     }
 
     //save avg_edge_vel vector to file
@@ -209,14 +209,11 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     bool fistInitialization = (nP == 0);
     uint count = 0;
 
-      printf("traffic person vec size = %d\n", trafficPersonVec.size());
-      printf("index path vec size = %d\n", indexPathVec.size());
-      //for (int h = 0; h < indexPathVec.size(); h++) {
-      //  printf("indexPathVec[%d] = %u\n", h, indexPathVec[h]);
-      //}
-      printf("edgesData size = %d\n", edgesData.size());
-      printf("laneMap size = %d\n", laneMap.size());
-      printf("intersections size = %d\n", intersections.size());
+    printf("traffic person vec size = %d\n", trafficPersonVec.size());
+    printf("index path vec size = %d\n", indexPathVec.size());
+    printf("edgesData size = %d\n", edgesData.size());
+    printf("laneMap size = %d\n", laneMap.size());
+    printf("intersections size = %d\n", intersections.size());
 
     b18InitCUDA(fistInitialization, trafficPersonVec, indexPathVec, edgesData,
         laneMap, trafficLights, intersections, startTimeH, endTimeH,
@@ -263,6 +260,14 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     printf("First time_departure %f\n", currentTime);
     QTime timerLoop;
 
+    int numBlocks = ceil(trafficPersonVec.size() / 384.0f);
+    int threadsPerBlock = 384;
+    std::cout << "Running trafficSimulation with the following configuration:"  << std::endl
+              << ">  Number of people: " << trafficPersonVec.size() << std::endl
+              << ">  Number of blocks: " << numBlocks << std::endl
+              << ">  Number of threads per block: " << threadsPerBlock
+              << std::endl;
+
     int iter_printout = 7200;
     int iter_printout_index = 0;
     int ind = 0;
@@ -271,6 +276,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       << " to " << (endTime / 3600.0f)
       << " with " << trafficPersonVec.size() << " person..."
       << std::endl;
+      
+
     while (currentTime < endTime) {
       //std::cout << "Current Time " << currentTime << "\n";
       //std::cout << "count " << count << "\n";
@@ -284,12 +291,13 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         timerLoop.restart();
       }
 
+
       if (count % iter_printout != 0) {
         b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
-                             intersections.size(), deltaTime, simParameters);
+                             intersections.size(), deltaTime, simParameters, numBlocks, threadsPerBlock);
       } else {
         b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
-                             intersections.size(), deltaTime, simParameters);
+                             intersections.size(), deltaTime, simParameters, numBlocks, threadsPerBlock);
         b18GetDataCUDA(trafficPersonVec, edgesData);
 
         int index = 0;
@@ -337,7 +345,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       #endif
       currentTime += deltaTime;
     }
-	std::cout << "Total # iterations = " << count << "\n";
+	  std::cout << "Total # iterations = " << count << "\n";
     //std::cerr << std::setw(90) << " " << "\rDone" << std::endl;
     simulateBench.stopAndEndBenchmark();
 

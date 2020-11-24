@@ -1323,7 +1323,13 @@ void b18ResetPeopleLanesCUDA(uint numPeople) {
   cudaMemset(&laneMap_d[halfLaneMap], -1, halfLaneMap*sizeof(unsigned char));
 }
 
-void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersections, float deltaTime, const parameters simParameters) {
+void b18SimulateTrafficCUDA(float currentTime,
+  uint numPeople,
+  uint numIntersections,
+  float deltaTime,
+  const parameters simParameters,
+  int numBlocks,
+  int threadsPerBlock) {
   intersectionBench.startMeasuring();
   const uint numStepsTogether = 12; //change also in density (10 per hour)
   ////////////////////////////////////////////////////////////
@@ -1347,7 +1353,7 @@ void b18SimulateTrafficCUDA(float currentTime, uint numPeople, uint numIntersect
   
   peopleBench.startMeasuring();
   // Simulate people.
-  kernel_trafficSimulation <<< ceil(numPeople / 384.0f), 384>> > (numPeople, currentTime, mapToReadShift, mapToWriteShift, trafficPersonVec_d, indexPathVec_d, edgesData_d, laneMap_d, intersections_d, trafficLights_d, deltaTime, simParameters);
+  kernel_trafficSimulation <<< numBlocks, threadsPerBlock>> > (numPeople, currentTime, mapToReadShift, mapToWriteShift, trafficPersonVec_d, indexPathVec_d, edgesData_d, laneMap_d, intersections_d, trafficLights_d, deltaTime, simParameters);
   gpuErrchk(cudaPeekAtLastError());
   peopleBench.stopMeasuring();
 
