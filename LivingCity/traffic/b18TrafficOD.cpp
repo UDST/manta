@@ -12,7 +12,7 @@
 
 namespace LC {
 
-B18TrafficOD::B18TrafficOD() {
+B18TrafficOD::B18TrafficOD(const parameters & inputSimParameters) : simParameters(inputSimParameters) {
 }//
 B18TrafficOD::~B18TrafficOD() {
 }//
@@ -144,12 +144,10 @@ void B18TrafficOD::randomPerson(int p, B18TrafficPerson &person,
   //printf("Person %d: init %u end %u Time %f\n",p,srcvertex,tgtvertex,goToWork);
   // Status
   qsrand(p);
-  //person.a = 1.0f + ((float) qrand()) / RAND_MAX; //acceleration 1-2m/s2
-  //person.b = 1.0f + ((float) qrand()) / RAND_MAX; //break 1-2m/s2
-  //person.T = 0.8f + 1.2f * (((float) qrand()) / RAND_MAX); //time heading 0.8-2s
-  person.a = 6.377269699846975;
-  person.b = 3.590473364266212;
-  person.T = 0.8881429791688249;
+  
+  person.a = simParameters.a;
+  person.b = simParameters.b;
+  person.T = simParameters.T;
     if (p == 0) {
         printf("Person %d: init %u end %u time %f\ a %f b %f T %f\n",p,srcvertex,tgtvertex,person.time_departure, person.a, person.b, person.T);
     }
@@ -489,7 +487,8 @@ void B18TrafficOD::loadB18TrafficPeople(
 void B18TrafficOD::loadB18TrafficPeopleSP(
     float startTimeH, float endTimeH,
     std::vector<B18TrafficPerson> &trafficPersonVec, // out
-    const std::shared_ptr<abm::Graph>& graph_, const int limitNumPeople, const bool addRandomPeople, std::vector<float> dep_times) {
+    const std::shared_ptr<abm::Graph>& graph_,
+    const int limitNumPeople, const bool addRandomPeople, std::vector<float> dep_times) {
 
   trafficPersonVec.clear();
   QTime timer;

@@ -35,8 +35,6 @@ namespace LC {
 const float deltaTime = 0.5f;
 const float cellSize = 1.0f;//
 
-//const float s_0=1.5f*4.12f;// ALWAYS USED
-const float s_0 = 1.5f * 5.7f; //REMOVED !!!!
 const float s_0C = s_0 / cellSize;
 
 const float vCT2MS = cellSize / deltaTime;

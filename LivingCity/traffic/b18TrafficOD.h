@@ -31,11 +31,12 @@ namespace LC {
 class B18TrafficOD {
 
  public:
-  B18TrafficOD();
+  B18TrafficOD(const parameters & inputSimParameters);
   ~B18TrafficOD();
 
   cv::Mat *peopleDistribution;
   cv::Mat *jobDistribution;
+  const parameters simParameters;
 
   void randomPerson(int p, B18TrafficPerson &person, QVector3D housePos3D,
                     QVector3D jobPos3D, float startTimeH,

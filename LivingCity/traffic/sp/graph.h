@@ -19,7 +19,6 @@
 #include <cfloat>
 #include <QString>
 #include <string>
-#include "splitVector.cpp"
 
 
 #include "external/csv.h"
