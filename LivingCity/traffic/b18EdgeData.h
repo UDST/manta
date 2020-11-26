@@ -34,6 +34,8 @@ struct B18EdgeData {
   float length;
   float maxSpeedMperSec;
   uint nextIntersMapped;
+  float curr_cum_vel = 0;
+  float curr_iter_num_cars = 0;
 };
 
 struct B18IntersectionData {
