@@ -459,7 +459,7 @@ __global__ void kernel_trafficSimulation(
   LC::B18IntersectionData *intersections,
   uchar *trafficLights,
   float deltaTime,
-  const parameters simParameters)
+  const parameters & simParameters)
   {
   int p = blockIdx.x * blockDim.x + threadIdx.x;
   //printf("p %d Numpe %d\n",p,numPeople);
@@ -1327,7 +1327,7 @@ void b18SimulateTrafficCUDA(float currentTime,
   uint numPeople,
   uint numIntersections,
   float deltaTime,
-  const parameters simParameters,
+  const parameters & simParameters,
   int numBlocks,
   int threadsPerBlock) {
   intersectionBench.startMeasuring();

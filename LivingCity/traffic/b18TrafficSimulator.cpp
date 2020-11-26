@@ -40,7 +40,7 @@ const float intersectionClearance = 7.8f;
 const bool calculatePollution = true;
 
 B18TrafficSimulator::B18TrafficSimulator(float _deltaTime, RoadGraph *originalRoadGraph,
-    const parameters inputSimParameters, LCUrbanMain *urbanMain) : deltaTime(_deltaTime), simParameters(inputSimParameters),
+    const parameters & inputSimParameters, LCUrbanMain *urbanMain) : deltaTime(_deltaTime), simParameters(inputSimParameters),
     b18TrafficOD (B18TrafficOD(simParameters)) {
   simRoadGraph = new RoadGraph(*originalRoadGraph);
   clientMain = urbanMain;
@@ -109,7 +109,7 @@ void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
 //////////////////////////////////////////////////
 void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
     bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_,
-    std::vector<abm::graph::edge_id_t> paths_SP, const parameters simParameters) {
+    std::vector<abm::graph::edge_id_t> paths_SP, const parameters & simParameters) {
   Benchmarker passesBench("Simulation passes");
   Benchmarker finishCudaBench("Cuda finish");
   Benchmarker laneMapCreation("Lane_Map_creation", true);
@@ -199,7 +199,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     std::ofstream output_file_v(name_v);
     std::ostream_iterator<uint> output_iterator_v(output_file_v, "\n");
     std::copy(v.begin(), v.end(), output_iterator_v);
-    printf("Wrote edge vertices files!\n");
+    std::cout << "Wrote edge vertices files!" << std::endl;
     edgeOutputting.stopAndEndBenchmark();
 
 
@@ -738,7 +738,7 @@ void simulateOnePersonCPU(
   std::vector<uchar> &laneMap,
   std::vector<B18IntersectionData> &intersections,
   std::vector<uchar> &trafficLights,
-  const parameters simParameters) {
+  const parameters & simParameters) {
   //if(DEBUG_TRAFFIC==1)printf("currentTime %f   0 Person: %d State %d Time Dep %f\n",currentTime,p,trafficPersonVec[p].active, trafficPersonVec[p].time_departure);
   ///////////////////////////////
   //2.0. check if finished

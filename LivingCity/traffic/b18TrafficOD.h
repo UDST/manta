@@ -31,7 +31,7 @@ namespace LC {
 class B18TrafficOD {
 
  public:
-  B18TrafficOD(const parameters inputSimParameters);
+  B18TrafficOD(const parameters & inputSimParameters);
   ~B18TrafficOD();
 
   cv::Mat *peopleDistribution;
