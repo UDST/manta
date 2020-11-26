@@ -12,7 +12,7 @@
 
 namespace LC {
 
-B18TrafficOD::B18TrafficOD(const parameters inputSimParameters) : simParameters(inputSimParameters) {
+B18TrafficOD::B18TrafficOD(const parameters & inputSimParameters) : simParameters(inputSimParameters) {
 }//
 B18TrafficOD::~B18TrafficOD() {
 }//

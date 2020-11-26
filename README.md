@@ -190,7 +190,7 @@ In order to obtain a profiling of each component of the simulation, you should r
 python3 LivingCity/benchmarking/runBenchmarks.py
 ```
 
-If you with to specify the name of the benchmark outputs and/or the number of iterations, just run:
+If you wish to specify the name of the benchmark outputs and/or the number of iterations, just run:
 ```bash
 python3 LivingCity/benchmarking/runBenchmarks.py --name={name_of_benchmark} --runs={number_of_iterations_to_run}
 ```

@@ -46,7 +46,7 @@ class B18TrafficLightRender {
 class B18TrafficSimulator {
 
  public:
-  B18TrafficSimulator(float deltaTime, RoadGraph *geoRoadGraph, const parameters simParameters, LCUrbanMain *urbanMain = nullptr);
+  B18TrafficSimulator(float deltaTime, RoadGraph *geoRoadGraph, const parameters & simParameters, LCUrbanMain *urbanMain = nullptr);
   ~B18TrafficSimulator();
 
   // init data
@@ -73,7 +73,7 @@ class B18TrafficSimulator {
   
   void simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
     bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_,
-    std::vector<abm::graph::edge_id_t> paths_SP, const parameters simParameters);
+    std::vector<abm::graph::edge_id_t> paths_SP, const parameters & simParameters);
 
   // Lanes
   std::vector<uint> edgeIdToLaneMapNum;

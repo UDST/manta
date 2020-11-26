@@ -537,7 +537,7 @@ void simulateOnePersonCPU(
   std::vector<uchar> &laneMap,
   std::vector<intersectionData> &intersections,
   std::vector<uchar> &trafficLights.
-  parameters simParameters) {
+  parameters & simParameters) {
   //if(DEBUG_TRAFFIC==1)printf("currentTime %f   0 Person: %d State %d Time Dep %f\n",currentTime,p,trafficPersonVec[p].active, trafficPersonVec[p].time_departure);
   ///////////////////////////////
   //2.0. check if finished
