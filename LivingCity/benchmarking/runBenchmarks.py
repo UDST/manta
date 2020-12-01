@@ -81,7 +81,7 @@ all_resource_names = ["cpu_used", "mem_used", "gpu_memory_used", "Elapsed_time_(
 # ================= Benchmarking =================
 
 """
-    In order to benchmark how many resources simulation consumes, this function:
+    In order to benchmark how many resources the simulation consumes, this function:
     1. Runs the simulation while polling the resources being consumed for each half second
     2. Parses the simulation output, obtaining the timestamp for each component (when it started and ended)
     3. Combine the components' timestamps with the resources' poll
