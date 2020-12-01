@@ -40,10 +40,10 @@ void B18CommandLineVersion::runB18Simulation() {
   const float endDemandH = settings.value("END_HR", 12).toFloat();
   const bool showBenchmarks = settings.value("SHOW_BENCHMARKS", false).toBool();
   const parameters simParameters {
-      settings.value("A",0.9423627817042464).toDouble(),
-      settings.value("B",1.4927856811009153).toDouble(),
-      settings.value("T",1.1675957997007158).toDouble(),
-      settings.value("s_0",3.637803967100891).toDouble()};
+      settings.value("A",0.92079727430164).toDouble(),
+      settings.value("B",9.707664486480319).toDouble(),
+      settings.value("T",2.7821430095888173).toDouble(),
+      settings.value("s_0",1.2933582031631632).toDouble()};
 
 
   std::cout << "b18CommandLineVersion received the parameters "
