@@ -14,6 +14,7 @@ from termcolor import colored
 import psutil
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib
 import xlwt
 import argparse
 from pdb import set_trace as st
@@ -80,7 +81,7 @@ all_resource_names = ["cpu_used", "mem_used", "gpu_memory_used", "Elapsed_time_(
 # ================= Benchmarking =================
 
 """
-    In order to benchmark how many resources LivingCity consumes, this function:
+    In order to benchmark how many resources the simulation consumes, this function:
     1. Runs the simulation while polling the resources being consumed for each half second
     2. Parses the simulation output, obtaining the timestamp for each component (when it started and ended)
     3. Combine the components' timestamps with the resources' poll
@@ -98,10 +99,10 @@ def benchmark_one_run(number_of_run, benchmark_name, network_path):
     write_options_file({"NETWORK_PATH": network_path})
 
     args = "./LivingCity &".format(number_of_run).split()
-    start_time_LivingCity = time.time()
+    start_time_simulation = time.time()
     process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     
-    # While LivingCity is running we check the resources and write them down per second
+    # While the simulation is running we check the resources and write them down per second
     resources_timestamps = []
     while process.poll() is None:
         resources_timestamps.append({ \
@@ -113,8 +114,8 @@ def benchmark_one_run(number_of_run, benchmark_name, network_path):
         time.sleep(.5)
     
     full_output = str(process.stdout.read())
-    elapsed_time_LivingCity = time.time() - start_time_LivingCity
-    log("Total LivingCity duration: {} secs")
+    elapsed_time_simulation = time.time() - start_time_simulation
+    log("Total simulation duration: {} secs")
 
     assert process.returncode == 0
     
@@ -182,20 +183,26 @@ def benchmark_one_run(number_of_run, benchmark_name, network_path):
 
     # ================ Metadata ================
     log("Saving metadata...")
-    metadata = {'elapsed_time_LivingCity': elapsed_time_LivingCity}
+    metadata = {'elapsed_time_simulation': elapsed_time_simulation}
     for output_line in full_output[2:].split("\\n"):
         if re.search('Number of blocks: '.format(component_name), output_line, flags=0):
             metadata['number_of_blocks'] = int(output_line.split()[-1])
         if re.search('Number of threads per block: '.format(component_name), output_line, flags=0):
             metadata['number_of_threads_per_block'] = int(output_line.split()[-1])
     
+    df_nodes = pd.read_csv(os.path.join(network_path, "nodes.csv"))
+    metadata['number_of_nodes'] = len(df_nodes)
+
+    df_edges = pd.read_csv(os.path.join(network_path, "edges.csv"))
+    metadata['number_of_edges'] = len(df_edges)
+
     with open("benchmarking/metadata_{}.json".format(benchmark_name),"w") as metadata_file:
         json.dump(metadata, metadata_file)
 
     log("Done")
 
 
-def benchmark_multiple_runs(number_of_runs, benchmark_name = "benchmarks", network_path = "berkeley_2018/new_full_network/"):
+def benchmark_multiple_runs_and_save_csv(number_of_runs, benchmark_name = "benchmarks", network_path = "berkeley_2018/new_full_network/"):
     log("Running system benchmarks for network {}. Benchmark name: {}. Number of runs: {}".format(network_path, benchmark_name, number_of_runs))
     log("Please do not run anything else on this PC until it is finished, since that may alter the benchmarking results.")
 
@@ -208,7 +215,13 @@ def benchmark_multiple_runs(number_of_runs, benchmark_name = "benchmarks", netwo
         benchmark_one_run(i, benchmark_name, network_path)
 
 
-def generate_benchmark_report(benchmark_name = "benchmarks"):
+def load_csv_and_generate_benchmark_report(benchmark_name = "benchmarks", all_in_one_plot = True):
+    # ======================= Read metadata =======================
+    with open('benchmarking/metadata_{}.json'.format(benchmark_name)) as metadata_file:
+        metadata = json.load(metadata_file)
+
+    df_people = pd.read_csv('0_people5to12.csv')
+
     # ======================= Plot benchmarks =======================
     log("Plotting benchmarks")
     readable_components = { \
@@ -226,7 +239,8 @@ def generate_benchmark_report(benchmark_name = "benchmarks"):
 
     df = pd.read_csv('benchmarking/{}.csv'.format(benchmark_name))
 
-    fig_benchmarks = plt.figure(figsize=(18,9))
+    if all_in_one_plot:
+        fig_benchmarks = plt.figure(figsize=(18,9))
 
     # change from ms to secs
     df["Elapsed_time_(ms)"] = df["Elapsed_time_(ms)"].apply(lambda x: x / 1000)
@@ -235,7 +249,11 @@ def generate_benchmark_report(benchmark_name = "benchmarks"):
         ("GPU memory usage (MB)", "gpu_memory_used", "MB"), ("Elapsed time (secs)", "Elapsed_time_(ms)", "secs")]
     for i, (title, resource_name, resource_axis) in enumerate(resources):
         plt.subplots_adjust(wspace=0.8, hspace=0.8)
-        ax_benchmarks = fig_benchmarks.add_subplot(2, 2, i+1)
+        if all_in_one_plot:
+            ax_benchmarks = fig_benchmarks.add_subplot(2, 2, i+1)
+        else:
+            fig_benchmarks = plt.figure(figsize=(16,8))
+            ax_benchmarks = matplotlib.axes.Axes(fig = fig_benchmarks, rect = [0,0, 18, 9])
         sns.set(style="whitegrid")
 
         components_in_order = ["Load_network", \
@@ -253,57 +271,73 @@ def generate_benchmark_report(benchmark_name = "benchmarks"):
             current_components = components_in_order
         else:
             ticks += ["idle"]
-            current_components = components_in_order+["idle"]
+            current_components = components_in_order + ["idle"]
         
         ax_benchmarks = sns.barplot(
             data=df,
             x=resource_name, y="Component",
-            order = components_in_order,
+            order=components_in_order,
             capsize=.2
         )
         ax_benchmarks.set_yticks(range(len(ticks)))
         ax_benchmarks.set_yticklabels(ticks)
         plt.ylabel("")
         plt.xlabel(resource_axis)
-        plt.title(title)
+        if all_in_one_plot:
+            plt.title(title)
+        else:
+            plt.title("MANTA benchmarking  |  {}".format(title))
+        component_label_values = [df[df["Component"] == component_name][resource_name].mean() for component_name in current_components]
+
+        from mpl_toolkits.axes_grid.anchored_artists import AnchoredText
+
+
+        def add_custom_legend(ax, txt, fontsize = 12, loc = 1, *args, **kwargs):
+            at = AnchoredText(txt,
+                            prop=dict(size=fontsize), 
+                            frameon=True,
+                            loc=loc)
+            at.patch.set_boxstyle("round,pad=0.2,rounding_size=0.2")
+            ax.add_artist(at)
+            return at
+
+        for i, value in enumerate(component_label_values):
+            plt.text(value + 0.05*max(component_label_values), i, str(round(value, 3)))
+    
+        if not all_in_one_plot:
+            add_custom_legend(ax_benchmarks, "# Nodes: {}\n# Edges: {}\n# Trips: {}".format(
+                metadata["number_of_nodes"], metadata["number_of_edges"], len(df_people)))
+            if resource_name == "Elapsed_time_(ms)":
+                plt.text(0.73, 0.02, 'Total: {} secs ({} mins)'.format(
+                        round(sum(component_label_values),2), round(sum(component_label_values)/60,2)),
+                        fontsize=14, transform=plt.gcf().transFigure, weight = 'bold')
+            output_filepath = "benchmarking/{}_{}.png".format(benchmark_name, resource_name)
+            log("Saving figure at {}".format(output_filepath))
+            fig_benchmarks.savefig(output_filepath, dpi = 400)
+            plt.cla()
+            plt.clf()
+            plt.close()
+        elif resource_name == "Elapsed_time_(ms)":
+            plt.text(0.80, 0.055, 'Total: {} secs ({} mins)'.format(
+                    round(sum(component_label_values),2), round(sum(component_label_values)/60,2)),
+                    fontsize=12, transform=plt.gcf().transFigure, weight = 'bold')
+
+    number_of_runs = df['number_of_run'].nunique()
+    if all_in_one_plot:
+        if number_of_runs == 1:
+            fig_benchmarks.suptitle("MANTA benchmark for 1 run".format(number_of_runs), fontsize=16)    
+        else:
+            fig_benchmarks.suptitle("MANTA benchmark for {} runs".format(number_of_runs), fontsize=16)
         
-        lista = [df[df["Component"] == component_name][resource_name].mean() for component_name in current_components]
-
-    
-        for i, value in enumerate(lista):
-            plt.text(value + 0.05*max(lista), i, str(round(value, 3)))
-    
-    fig_benchmarks.suptitle("LivingCity benchmarks for {} runs".format(df['number_of_run'].nunique()), fontsize=16)
-    output_filepath = "benchmarking/{}.png".format(benchmark_name)
-    log("Saving figure at {}".format(output_filepath))
-    fig_benchmarks.savefig(output_filepath, dpi = 400)
-    plt.show()
-    plt.close()
-    plt.clf()
-
-    # ======================= Plot metadata (num steps) =======================
-    log("Plotting num steps distribution...")
-    df_people = pd.read_csv("0_people5to12.csv")
-    df_num_steps = df_people['num_steps'][df_people['num_steps'] > 0]
-    
-    fig_metadata = plt.figure(2, figsize=(6,2.4))
-    ax_metadata = df_num_steps.plot.hist(bins=50, alpha=1)
-    fig_metadata = ax_metadata.get_figure()
-    num_steps_output_filepath = 'benchmarking/run_time_in_steps_{}.png'.format(benchmark_name)
-    log("Saving figure at {}".format(num_steps_output_filepath))
-    plt.title("Trip run time distribution (in steps)")
-    plt.xlabel("Number of steps") 
-    plt.axvline(df_num_steps.mean(), color='red', linestyle='dashed', linewidth=2)
-    ax_metadata.legend(['Mean: {}\nStandard dev: {}'.format(round(df_num_steps.mean(),2), round(df_num_steps.std(),2))])    
-    fig_metadata.savefig(num_steps_output_filepath)
-    plt.show()
-    plt.close()
-    plt.clf()
+        output_filepath = "benchmarking/{}.png".format(benchmark_name)
+        log("Saving figure at {}".format(output_filepath))
+        fig_benchmarks.savefig(output_filepath, dpi = 400)
+        plt.close()
+        plt.clf()
 
     # ======================= Plot metadata (run time in minutes) =======================
-    delta_time = 0.5
     log("Plotting num steps distribution in minutes...")
-    df_num_steps_mins = df_people['num_steps'] * delta_time / 60
+    df_num_steps_mins = df_people['num_steps'] / 60
     
     fig_metadata = plt.figure(2, figsize=(6,2.4))
     ax_metadata = df_num_steps_mins.plot.hist(bins=50, alpha=1)
@@ -315,7 +349,6 @@ def generate_benchmark_report(benchmark_name = "benchmarks"):
     plt.axvline(df_num_steps_mins.mean(), color='red', linestyle='dashed', linewidth=2)
     ax_metadata.legend(['Mean: {}\nStandard dev: {}'.format(round(df_num_steps_mins.mean(),2), round(df_num_steps_mins.std(),2))])    
     fig_metadata.savefig(run_time_minutes_output_filepath)
-    plt.show()
     plt.close()
     plt.clf()
 
@@ -344,51 +377,44 @@ def generate_benchmark_report(benchmark_name = "benchmarks"):
                 resource_index+1, round(df[df["Component"] == component_name][resource_name].mean(), 2))
 
     vertical_offset += len(components_in_order) + 1
-
-    with open('benchmarking/metadata_{}.json'.format(benchmark_name)) as metadata_file:
-        metadata = json.load(metadata_file)
-
     
-    metadata_to_write = [("Total simulation time", round(metadata["elapsed_time_LivingCity"], 2)), \
-                        ("Number of trips simulated", len(df_num_steps)), \
+    metadata_to_write = [("Total simulation time (in secs)", round(df['Elapsed_time_(ms)'].sum(), 2)), \
+                        ("Total simulation time (in mins)", round(df['Elapsed_time_(ms)'].sum() / 60, 2)), \
+                        ("Number of trips simulated", len(df_num_steps_mins)), \
                         ("Number of blocks", round(metadata["number_of_blocks"], 2)), \
                         ("Number of threads per block", round(metadata["number_of_threads_per_block"], 2))]
 
-    run_time_in_steps = [("Run time mean", df_num_steps.mean()), \
-                        ("Run time std dev", df_num_steps.std()), \
-                        ("Total cumulative run time", df_num_steps.sum())]
+    trip_duration_simulated_mins = [("Trip duration mean (in simulated mins)", round(df_num_steps_mins.mean(), 2)), \
+                                    ("Trip duration std dev (in simulated mins)", round(df_num_steps_mins.std(), 2)), \
+                                    ("Total trip duration (in simulated mins)", round(df_num_steps_mins.sum(), 2))]
     
-    delta_time = 0.5 # each step is 0.5 seconds
-    run_time_in_minutes = [(name + " (in simulation mins)", round(steps * delta_time / 60, 2)) for (name, steps) in run_time_in_steps]
-    run_time_in_steps = [(name + " (in steps)", round(steps, 2)) for (name, steps) in run_time_in_steps]
+    def write_block_to_xls(block, vertical_position, horizontal_position):
+        for (i, (elem_name, elem_value)) in enumerate(block):
+            sheet_benchmarking.write(vertical_position + i, horizontal_position, elem_name)
+            sheet_benchmarking.write(vertical_position + i, horizontal_position + 1, elem_value)
 
-    sheet_benchmarking.write(vertical_offset, 0, "Metadata", style = title_style)
     vertical_offset += 1
-    for (i, (elem_name, elem_value)) in enumerate(metadata_to_write):
-        sheet_benchmarking.write(i + vertical_offset, 0, elem_name)
-        sheet_benchmarking.write(i + vertical_offset, 1, elem_value)
+    sheet_benchmarking.write(vertical_offset, 0, "Simulation metadata", style = title_style)
+
+    vertical_offset += 1
+    write_block_to_xls(metadata_to_write, vertical_offset, 0)
+
     vertical_offset += len(metadata_to_write) + 1
+    sheet_benchmarking.write(vertical_offset, 0, "Trips metadata", style = title_style)
 
-    sheet_benchmarking.write(vertical_offset, 0, "Trips run time", style = title_style)
     vertical_offset += 1
-    for (i, (elem_name, elem_value)) in enumerate(run_time_in_steps):
-        sheet_benchmarking.write(i + vertical_offset, 0, elem_name)
-        sheet_benchmarking.write(i + vertical_offset, 1, elem_value)
-    
-    for (i, (elem_name, elem_value)) in enumerate(run_time_in_minutes):
-        sheet_benchmarking.write(i + vertical_offset, 3, elem_name)
-        sheet_benchmarking.write(i + vertical_offset, 4, elem_value)
+    write_block_to_xls(trip_duration_simulated_mins, vertical_offset, 0)
 
-    date_horizontal_position = 7
-    sheet_benchmarking.write(0, date_horizontal_position,"Date (Y/M/D)")
-    sheet_benchmarking.write(0, date_horizontal_position+1, date.today().strftime("%Y/%m/%d"))
+    sheet_benchmarking.write(0, 7,"Date (Y/M/D)")
+    sheet_benchmarking.write(0, 8, date.today().strftime("%Y/%m/%d"))
     
     book.save(os.path.join("benchmarking", "{}.xls".format(benchmark_name)))
 
 
+def parse_input_arguments():
+    argument_values = {}
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Runs multiple benchmarks over LivingCity and outputs a csv, a plot'\
+    parser = argparse.ArgumentParser(description='Runs multiple benchmarks over simulation and outputs a csv, a plot'\
                                                 ' and a xls file with the results.')
     parser.add_argument('-i', "--runs", type=int, help='Number of runs to run (min: 1).')
     parser.add_argument('-n', "--name", type=str, help='Name of the benchmark for the output files')
@@ -397,15 +423,21 @@ if __name__ == "__main__":
 
     if not args.runs:
         log("Setting number of runs by default to: 1")
-        number_of_runs = 1
+        argument_values['number_of_runs'] = 1
     else:
-        number_of_runs = args.runs
+        argument_values['number_of_runs'] = args.runs
     
     if not args.name:
         log('Setting benchmark name by default to: "benchmark"')
-        benchmark_name = "benchmark"
+        argument_values['benchmark_name'] = "benchmark"
     else:
-        benchmark_name = args.name
+        argument_values['benchmark_name'] = args.name
     
-    benchmark_multiple_runs(number_of_runs, benchmark_name = benchmark_name)
-    generate_benchmark_report(benchmark_name = benchmark_name)
+    return argument_values
+
+if __name__ == "__main__":
+    argument_values = parse_input_arguments()
+    benchmark_multiple_runs_and_save_csv(argument_values['number_of_runs'],
+                                        benchmark_name = argument_values['benchmark_name'])
+    load_csv_and_generate_benchmark_report(benchmark_name = argument_values['benchmark_name'],
+                                            all_in_one_plot = True)
