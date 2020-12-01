@@ -40,15 +40,15 @@ void B18CommandLineVersion::runB18Simulation() {
   const float endDemandH = settings.value("END_HR", 12).toFloat();
   const bool showBenchmarks = settings.value("SHOW_BENCHMARKS", false).toBool();
   const parameters simParameters {
-      settings.value("A",0.9423627817042464).toFloat(),
-      settings.value("B",1.4927856811009153).toFloat(),
-      settings.value("T",1.1675957997007158).toFloat(),
-      settings.value("s_0",3.637803967100891).toFloat()};
+      settings.value("A",0.9423627817042464).toDouble(),
+      settings.value("B",1.4927856811009153).toDouble(),
+      settings.value("T",1.1675957997007158).toDouble(),
+      settings.value("s_0",3.637803967100891).toDouble()};
 
 
   std::cout << "b18CommandLineVersion received the parameters "
-            << "[a: " << simParameters.a 
-            << ", b: " << simParameters.b
+            << "[A: " << simParameters.a 
+            << ", B: " << simParameters.b
             << ", T: " << simParameters.T
             << ", s_0: " << simParameters.s_0
             << "]" << std::endl;
@@ -62,9 +62,6 @@ void B18CommandLineVersion::runB18Simulation() {
   Benchmarker loadODDemandData("Load_OD_demand_data", true);
   Benchmarker routingCH("Routing_CH", true);
   Benchmarker CHoutputNodesToEdgesConversion("CH_output_nodes_to_edges_conversion", true);
-  
-  // ----
-
   Benchmarker initBench("Initialize traffic simulator task");
   Benchmarker peopleBench("People creation task");
   Benchmarker simulationBench("Simulation task");
@@ -133,9 +130,7 @@ void B18CommandLineVersion::runB18Simulation() {
 
         std::vector<long> edge_nodes = {std::get<0>(x.first), std::get<1>(x.first)};
         edge_vals.emplace_back(edge_nodes);
-        //edge_vals.emplace_back((long) street_graph->edge_ids_[x.first]);
         //std::cout << "origin = " << sources[x] << " \n";
-
         //std::cout << "Start node id = " << edge_nodes[0] << " End node id = " << edge_nodes[1] << "\n";
       }
       edge_weights.emplace_back(edge_weights_inside_vec);
@@ -161,23 +156,6 @@ void B18CommandLineVersion::runB18Simulation() {
       }
       CHoutputNodesToEdgesConversion.stopAndEndBenchmark();
 
-      /*
-      //add the -1 after every single route (for use in simulator)
-      for (int i=0; i < all_paths_ch.size(); i++) {
-          for (int j=0; j < all_paths_ch[i].size(); j++) {
-              all_paths.emplace_back(all_paths_ch[i][j]);
-          }
-          all_paths.emplace_back(-1);
-      }
-      */
-      /*
-	    auto start = high_resolution_clock::now();
-	    all_paths = B18TrafficSP::compute_routes(mpi_rank, mpi_size, street_graph, all_od_pairs_);
-	    auto stop = high_resolution_clock::now();
-	    auto duration = duration_cast<milliseconds>(stop - start);
-        std::cout << "Shortest path time = " << duration.count() << " ms \n";
-	    std::cout << "# of paths = " << all_paths.size() << "\n";
-      */
       //write paths to file so that we can just load them instead
       const std::string& pathsFileName = networkPathSP + "all_paths_ch.txt";
       std::cout << "Save " << pathsFileName << " as paths file\n";
@@ -187,22 +165,6 @@ void B18CommandLineVersion::runB18Simulation() {
     }
     //map person to their initial edge
     int count = 0;
-    /*
-    for (int i = 0; i < all_paths.size(); i++) {
-      if ((all_paths[i] == -1) && (i == 0)) {
-        street_graph->person_to_init_edge_[count] = -1;
-        count++;
-      } else if ((all_paths[i] == -1) && (all_paths[i+1] == -1)) {
-        street_graph->person_to_init_edge_[count] = -1;
-        count++;
-      } else if ((all_paths[i] != -1) && (all_paths[i-1] == -1)) {
-        street_graph->person_to_init_edge_[count] = all_paths[i];
-        count++;
-      } else if ((all_paths[i] == -1) && (i == (all_paths.size() - 1))) {
-        break;
-      }
-    }
-    */
     for (int i = 0; i < all_paths.size(); i++) {
       //if ((all_paths[i] == -1) && (i == 0)) {
       if (i == 0) { //first one that doesn't contain a -1 for logic

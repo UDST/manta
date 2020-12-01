@@ -32,10 +32,12 @@ void Benchmarker::startMeasuring()
                 (std::chrono::system_clock::now().time_since_epoch()).count();
     
 
-  if (printToStdout && showBenchmarks){
-    std::cout << "[TIME] Started: <"
-              << description << ">. Time since epoch (ms): " << timeSinceEpoch
-              << std::endl;
+  if (printToStdout){
+    std::cout << "[TIME] Started: <" << description << ">. ";
+    if (showBenchmarks){
+      std::cout << "Time since epoch (ms): " << timeSinceEpoch;
+    }
+    std::cout << std::endl;
   }
 
   auto timeNow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -60,13 +62,16 @@ void Benchmarker::endBenchmark()
   auto timeSinceEpoch = std::chrono::duration_cast<std::chrono::milliseconds>
                 (std::chrono::system_clock::now().time_since_epoch()).count();
 
-  if (printToStdout && showBenchmarks){
+  if (printToStdout){
     std::cout << "[TIME] Ended <"
               << description
               << ">. Elapsed: "
               << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count()
-              << " ms. Time since epoch (ms): " << timeSinceEpoch
-              << std::endl;
+              << " ms. ";
+    if (showBenchmarks){
+      std::cout << "Time since epoch (ms): " << timeSinceEpoch;
+    }
+    std::cout << std::endl;
   }
 
   --amountOpened;
