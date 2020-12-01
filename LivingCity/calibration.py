@@ -1,3 +1,4 @@
+import sys
 import os
 import time
 import math
@@ -6,6 +7,7 @@ import numpy as np
 import time
 import json
 import subprocess
+import matplotlib.pyplot as plt
 from shapely.geometry import LineString
 pd.options.display.max_colwidth = 100
 from datetime import datetime
@@ -13,45 +15,19 @@ import re
 from termcolor import colored
 from pdb import set_trace as st
 
-
+def log(text):
+    print(colored(text, 'cyan'))
 
 def load_network(nodes_file, edges_file, path):
     nodes = pd.read_csv("{}/{}".format(path, nodes_file))
     edges = pd.read_csv("{}/{}".format(path, edges_file))
     return nodes, edges
 
-
-def create_per_edge_speeds_df(num_printouts, path, edges_df, nodes_df, remove_error=False, save=False):
-    edge_vels_df = pd.read_csv('{}/all_edges_vel_0.txt'.format(path), names=['time_0'], header=None)
-    for ind in range(1,num_printouts):
-        edge_vels_df['time_{}'.format(ind)] = pd.read_csv('{}/all_edges_vel_{}.txt'.format(path, ind))
-    
-    if remove_error:
-        edges_error = pd.read_csv('{}/edges_error.txt'.format(path), names=['index'], header=None)
-        edges_error_vals = edges_error['index'].tolist()
-        filtered_edges = edges_df.drop(edges_df.index[edges_error_vals])
-    
-    #merge osmids, lats, longs
-    edge_vels_df = edge_vels_df.join(filtered_edges, lsuffix='_caller', rsuffix='_other')
-    edge_vels_df_node1 = pd.merge(edge_vels_df, nodes_df[['osmid', 'x', 'y']], left_on='osmid_u', right_on='osmid', how='left')
-    edge_vels_df_node1_node2 = pd.merge(edge_vels_df_node1, nodes_df[['osmid', 'x', 'y']], left_on='osmid_v', right_on='osmid', how='left', suffixes=['_u', '_v'])
-    
-    df = edge_vels_df_node1_node2
-    if save:
-        df['geometry'] = df.apply(lambda row: 'LINESTRING ({} {}, {} {})'.format(row['x_u'], row['y_u'], row['x_v'], row['y_v']), axis=1)
-        df.to_csv('{}/edges_over_time.csv'.format(path), index=False)
-    else:
-        df['geometry'] = df.apply(lambda row: LineString([(row['x_u'], row['y_u']), (row['x_v'], row['y_v'])]), axis=1)
-        
-    return df
-
 def merge_edges_with_uber_edges(edges_df, uber_df):
-    new_df = pd.merge(edges_df, uber_df,  how='left', left_on=['osmid_u','osmid_v'], right_on = ['osm_start_node_id','osm_end_node_id'])
-    return new_df
+    return pd.merge(edges_df, uber_df,  how='inner', left_on=['osmid_u','osmid_v'], right_on = ['osm_start_node_id','osm_end_node_id'])
 
 def merge_edges_with_times_with_uber_edges(edge_vels_df, same_edges_df):
-    new_df = pd.merge(edge_vels_df, same_edges_df,  how='left', on=['osmid_u','osmid_v'])
-    return new_df
+    return pd.merge(edge_vels_df, same_edges_df,  how='inner', on=['osmid_u','osmid_v'])
 
 def write_options_file(params):
     filedata = "\n".join(["[General]",\
@@ -92,23 +68,20 @@ def load_edges_u_v(path):
         
     return edges_u, edges_v
 
-def create_network_from_edges_node_ids(edges_u, edges_v, nodes, edges, path, save=True):
-    num_printouts = 7
-    new_df = pd.DataFrame({'osmid_u': edges_u, 'osmid_v': edges_v})
-    route_edge_node1 = pd.merge(new_df, nodes[['osmid', 'x', 'y']], left_on='osmid_u', right_on='osmid', how='left')
-    route_edge_node1_node2 = pd.merge(route_edge_node1, nodes[['osmid', 'x', 'y']], left_on='osmid_v', right_on='osmid', how='left', suffixes=['_u', '_v'])
+def meters_per_second_to_miles_per_hour(df):
+    return df * 2.23694
 
-    new_df['time_0'] = pd.read_csv('{}/all_edges_vel_0.txt'.format(path), names=['time_0'], header=None)
-    for ind in range(1,num_printouts):
-        new_df['time_{}'.format(ind)] = pd.read_csv('{}/all_edges_vel_{}.txt'.format(path, ind)) * 2.23694
+def create_network_from_edges_node_ids(edges_u, edges_v, path):
+    num_printouts = 7
+    all_edges_vel = pd.DataFrame({'osmid_u': edges_u, 'osmid_v': edges_v})
+
+    for ind in range(num_printouts):
+        df_one_edge_vel = pd.read_csv('{}/all_edges_vel_{}.txt'.format(path, ind))
+        all_edges_vel['time_{}'.format(ind)] = meters_per_second_to_miles_per_hour(df_one_edge_vel)
         
-    new_df['microsim_avg'] = new_df[['time_0', 'time_1', 'time_2', 'time_3', 'time_4', 'time_5', 'time_6']].mean(axis=1)
-    
-    
-    print(new_df.shape[0])
-    new_df = new_df.replace(0, pd.np.nan)
-    new_df = new_df.dropna()
-    return new_df
+    all_edges_vel['microsim_avg'] = all_edges_vel[['time_0', 'time_1', 'time_2', 'time_3', 'time_4', 'time_5', 'time_6']].mean(axis=1)
+
+    return all_edges_vel
 
 
 class benchmark():
@@ -132,8 +105,11 @@ def calibrate(param_list, path, new_uber, start_time, end_time):
 
         print("Running LivingCity with params [a:{}, b:{}, T:{}, s_0:{}]".\
                         format(params["A"], params["B"], params["T"], params["s_0"]))
-        subprocess.run(["./LivingCity", "&"])
+        subprocess.run(["./LivingCity", "&"], check=True)
 
+        df_people = pd.read_csv("0_people5to12.csv")
+        
+        print("Number of nans: {}".format(df_people['avg_v(mph)'].isna().sum()))
 
         edges_u, edges_v = load_edges_u_v(path)
         
@@ -141,7 +117,7 @@ def calibrate(param_list, path, new_uber, start_time, end_time):
         nodes, edges = load_network("nodes.csv", "edges.csv", "berkeley_2018/new_full_network")
 
         #get edge speed data from microsim
-        edge_vels_df = create_network_from_edges_node_ids(edges_u, edges_v, nodes, edges, path)
+        edge_vels_df = create_network_from_edges_node_ids(edges_u, edges_v, path)
 
         # Merge our network edges with Uber edges
         merged_edges = merge_edges_with_uber_edges(edges, new_uber)
@@ -149,6 +125,7 @@ def calibrate(param_list, path, new_uber, start_time, end_time):
 
         # Merge edge vels (with x timesteps) with the merged Uber data
         merged_edges = merge_edges_with_times_with_uber_edges(edge_vels_df, merged_edges)
+
         merged_edges = merged_edges.dropna()
 
         # Average the speeds over all the timesteps from the microsim and add column to the df
@@ -185,16 +162,19 @@ def calibrate(param_list, path, new_uber, start_time, end_time):
     return min_diff, min_params
 
 
-def generate_next_step_parameters(params, decay, learning_rate_params, lower_bound_params = None):
+def generate_next_step_parameters(params, decay, learning_rate_params, lower_bound_params, upper_bound_params):
     # Based on the current parameters, we return a possibility for the next step's parameters
-    
-    upper_bound_params = {"A":10, "B":10, "T":math.inf, "s_0":math.inf}
-    next_step_params = {}
 
+    # Set default bounds
     for param in params.keys():
         if not param in lower_bound_params or lower_bound_params[param] < 0:
             lower_bound_params[param] = 0
+        
+        if not param in upper_bound_params:
+            upper_bound_params[param] = math.inf
 
+    # Search for next step parameters inside those bounds
+    next_step_params = {}
     for param in params.keys():
         found_next_step_in_bounds = False
         while not found_next_step_in_bounds:
@@ -207,25 +187,63 @@ def generate_next_step_parameters(params, decay, learning_rate_params, lower_bou
     
     return next_step_params.copy()
 
-def first_step_parameters():
-    first_step_params = {"A": np.random.uniform(low=1, high=10), \
-                         "B": np.random.uniform(low=1, high=10), \
-                         "T": np.random.uniform(low=0.1, high=2.0), \
-                         "s_0": np.random.uniform(low=1, high=5.0)}
+def first_step_parameters(lower_bound_params, upper_bound_params):
+    default_low = {'A': 1, 'B': 1, 'T': 0.1, 's_0': 1}
+    default_high = {'A':10, 'B':10, 'T':2, 's_0': 5}
+
+    first_step_params = {}
+    for param in ['A', 'B', 'T', 's_0']:
+        first_step_params[param] = np.random.uniform(low=max(default_low[param], lower_bound_params[param]),
+                                                    high=min(default_high[param], upper_bound_params[param]))
 
     return first_step_params.copy()
 
-def gradient_descent(epsilon=0.04, learning_rate_params = None, progress_filename = None, lower_bound_params = None, start_time=5, end_time=12):
-    print("Using progress file {}".format(progress_filename))
-    print("Using lower bound for parameters {}".format(lower_bound_params))
-    # epsilon = max delta (in mph) that we're willing to have our RMSE
+def determine_decay(number_of_steps):
+    if number_of_steps <= 7:
+        decay = 1 # no decay
+    elif number_of_steps > 7:
+        decay = 0.1
+    elif number_of_steps > 12:
+        decay = 0.01
+    elif number_of_steps > 15:
+        decay = 0.001
+    return decay
+
+def gradient_descent(epsilon=0.04,
+                    learning_rate_params = None,
+                    starting_params = None,
+                    progress_filename = None,
+                    load_saved_progress = False,
+                    lower_bound_params = None,
+                    upper_bound_params = None,
+                    start_time=5, end_time=12):
+    
+    assert starting_params is None or set(starting_params.keys()) == {'A', 'B', 'T', 's_0'}
+    assert not (starting_params and load_saved_progress), \
+            'Error! You cannot load saved progress and determine the starting parameters at the same time'
+    if load_saved_progress:
+        print("Loading progress from file {}".format(progress_filename))
+    else:
+        print("Saving progress at file {}".format(progress_filename))
+    if lower_bound_params:
+        print("Using lower bound for parameters {}".format(lower_bound_params))
+    if upper_bound_params:
+        print("Using lower bound for parameters {}".format(upper_bound_params))
+
+    for param in ['A', 'B', 'T', 's_0']:
+        if not param in lower_bound_params.keys():
+            lower_bound_params[param] = -math.inf
+        if not param in upper_bound_params.keys():
+            upper_bound_params[param] = math.inf
+    
+    print("Epsilon: {} (max delta in mph that we're willing to have our RMSE)".format(epsilon))
 
     #filter Uber data to 5am to 12pm
-    uber_speeds_df = pd.read_csv("berkeley_2018/uber_data/movement-speeds-quarterly-by-hod-san-francisco-2019-Q2.csv")
-    uber_speeds_5_to_12 = uber_speeds_df[(uber_speeds_df['hour_of_day'] >= start_time) & (uber_speeds_df['hour_of_day'] < end_time)]
-    new_uber = uber_speeds_5_to_12[['osm_start_node_id','osm_end_node_id','speed_mph_mean']].groupby(['osm_start_node_id','osm_end_node_id']).mean()
-    new_uber = new_uber.reset_index(level=['osm_start_node_id', 'osm_end_node_id'])
-    print("number of trips from {} to {} = {} in actual Uber data".format(start_time, end_time, uber_speeds_5_to_12.shape[0]))
+    df_uber = pd.read_csv("berkeley_2018/uber_data/movement-speeds-quarterly-by-hod-san-francisco-2019-Q2.csv")
+    df_uber = df_uber[(df_uber['hour_of_day'] >= start_time) & (df_uber['hour_of_day'] < end_time)]
+    df_uber = df_uber[['osm_start_node_id','osm_end_node_id','speed_mph_mean']].groupby(['osm_start_node_id','osm_end_node_id']).mean()
+    df_uber = df_uber.reset_index(level=['osm_start_node_id', 'osm_end_node_id'])
+    print("number of trips from {} to {} = {} in actual Uber data".format(start_time, end_time, df_uber.shape[0]))
 
     progress = []
 
@@ -239,34 +257,34 @@ def gradient_descent(epsilon=0.04, learning_rate_params = None, progress_filenam
         if not param in learning_rate_params:
             learning_rate_params[param] = default_learning_rate_params[param]
     print("Learning rate for parameters: {}".format(learning_rate_params))
+
+    decay = determine_decay(len(progress)) 
     
-    if progress_filename and os.path.isfile('{}.csv'.format(progress_filename)):
+    if load_saved_progress:
         print("Loading saved progress from {}...".format(progress_filename))
         with open('{}.json'.format(progress_filename), 'r') as fp:
             loaded_progress = json.load(fp)
-        iteration = loaded_progress["number_of_iterations"]+1
+        iteration = loaded_progress["number_of_iterations"] + 1
         progress = loaded_progress["progress"]
         current_params = progress[-1]["params"].copy()
         current_diff = progress[-1]["current_diff"]
         prev_diff = current_diff
-    
+    else:
+        if starting_params:
+            possible_next_params = [starting_params]
+        else:
+            possible_next_params = [first_step_parameters(lower_bound_params, upper_bound_params) for _ in range(5)]
+        current_diff = None
 
     while True:
-        if iteration == 0 and not os.path.isfile('{}.csv'.format(progress_filename)):
-            possible_next_params = [first_step_parameters() for _ in range(5)]
-            current_diff = None
-        else:
+        if iteration > 0:
             # we store the previous values
             prev_params = current_params.copy()
-            if len(progress) <= 7:
-                decay = 1 # no decay
-            elif len(progress) > 7:
-                decay = 0.1
-            elif len(progress) > 12:
-                decay = 0.01
-            elif len(progress) > 15:
-                decay = 0.001
-            possible_next_params = [generate_next_step_parameters(current_params, decay, learning_rate_params=learning_rate_params, lower_bound_params=lower_bound_params) for _ in range(5)]
+            possible_next_params = [generate_next_step_parameters(current_params, \
+                                                                decay, \
+                                                                learning_rate_params=learning_rate_params, \
+                                                                lower_bound_params=lower_bound_params, \
+                                                                upper_bound_params=upper_bound_params) for _ in range(5)]
 
         print(colored("----------------- ITERATION #{}\n".format(iteration), "cyan"))
         print("Current progress: {}" .format(progress))
@@ -277,7 +295,7 @@ def gradient_descent(epsilon=0.04, learning_rate_params = None, progress_filenam
         for one_possible_step in possible_next_params:
             print(one_possible_step)
         prev_params = current_params.copy()
-        current_diff, current_params = calibrate(possible_next_params, ".", new_uber, start_time, end_time)
+        current_diff, current_params = calibrate(possible_next_params, ".", df_uber, start_time, end_time)
 
         if (prev_diff != None and current_diff >= prev_diff):
             print("Not moving in that direction since current_diff={} and prev_diff={}".format(current_diff, prev_diff))
@@ -302,11 +320,50 @@ def gradient_descent(epsilon=0.04, learning_rate_params = None, progress_filenam
             return current_params
         iteration += 1
 
+def count_number_of_nans(params):
+    log("Running LivingCity with params [A:{}, B:{}, T:{}, s_0:{}]". \
+                        format(params["A"], params["B"], params["T"], params['s_0']))
+    subprocess.run(["./LivingCity", "&"], check=True)
+    df_people = pd.read_csv("0_people5to12.csv")
+    return df_people['avg_v(mph)'].isna().sum()
 
+def find_s_0_that_provides_no_nans(fixed_params, s_0_lower, s_0_upper, s_0_step):
+    assert fixed_params.keys() == {"A", "B", "T"}
+    log("Fixed parameters: {}".format(fixed_params))
+    log("Searching for a s_0 from {} to {} with a step of {}...".format(s_0_lower, s_0_upper, s_0_step))
+
+    nans_found_for_each_s_0 = {}
+
+    for s_0 in np.arange(s_0_lower, s_0_upper, s_0_step):
+        log("Running LivingCity with params [A:{}, B:{}, T:{}, s_0:{}]". \
+                        format(fixed_params["A"], fixed_params["B"], fixed_params["T"], s_0))
+        subprocess.run(["./LivingCity", "&"], check=True)
+
+        df_people = pd.read_csv("0_people5to12.csv")
+        number_of_nans = df_people['avg_v(mph)'].isna().sum()
+        log("Number of nans found at the column 'avg_v(mph)': {}".format(number_of_nans))
+
+        nans_found_for_each_s_0[s_0] = number_of_nans
+
+    log("Fixed parameters used: {}".format(fixed_params))
+    log("Searched for a s_0 from {} to {} with a step of {}.".format(s_0_lower, s_0_upper, s_0_step))
+    log("The values found were: {}".format(nans_found_for_each_s_0))
+
+    return fixed_params
+
+def plot_num_steps_vs_distance():
+    df_people = pd.read_csv('0_people5to12.csv')
+    plt.scatter(df_people.distance / 1000, df_people.num_steps / 60)
 
 if __name__== "__main__":
     now = datetime.now()
     print("Running at {}hs PST on the day {} (d/m/Y).".format(now.strftime("%H:%M:%S"),now.strftime("%d/%m/%Y")))
 
-    gradient_descent(learning_rate_params = {"A":3, "B":3}, progress_filename = "calibration_progress_16nov", lower_bound_params={"s_0":1, "T":0.1})
-  
+    # good starting point given by previous run
+    learning_rate = 0.1
+    params = gradient_descent(epsilon = 0.4,
+                    learning_rate_params = {"A": LR, "B": LR, 'T': LR, 's_0': LR},
+                    progress_filename = "calibration_progress",
+                    load_saved_progress = False,
+                    lower_bound_params = {"s_0":1, "T":0.1},
+                    upper_bound_params = {"A":10, "B":10, "s_0":1.5})

@@ -157,7 +157,6 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
 
   //////////////////////////////////////////////////////////
   // GENERATE INTERSECTION INFO
-  printf("Start intersection info\n");
   RoadGraph::roadGraphVertexIter_BI vi, viEnd;
   RoadGraph::in_roadGraphEdgeIter_BI Iei, Iei_end;
   RoadGraph::out_roadGraphEdgeIter_BI Oei, Oei_end;
@@ -378,7 +377,6 @@ void B18TrafficLaneMap::createLaneMap(
 
   //////////////////////////////////////////////////////////
   // GENERATE INTERSECTION INFO
-  printf("Start intersection info\n");
   RoadGraph::roadGraphVertexIter_BI vi, viEnd;
   RoadGraph::in_roadGraphEdgeIter_BI Iei, Iei_end;
   RoadGraph::out_roadGraphEdgeIter_BI Oei, Oei_end;
