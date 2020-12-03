@@ -183,8 +183,10 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     std::vector<uint> u(graph_->edges_.size());
     std::vector<uint> v(graph_->edges_.size());
     for (auto const& x : graph_->edges_) {
-      u[index] = std::get<0>(std::get<0>(x));
-      v[index] = std::get<1>(std::get<0>(x));
+      abm::graph::vertex_t vertex_u = std::get<0>(std::get<0>(x));
+      abm::graph::vertex_t vertex_v = std::get<1>(std::get<0>(x));
+      u[index] = graph_->nodeIndex_to_osmid_[vertex_u];
+      v[index] = graph_->nodeIndex_to_osmid_[vertex_v];
       index++;
     }
 
@@ -298,8 +300,13 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       } else {
         b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
                              intersections.size(), deltaTime, simParameters, numBlocks, threadsPerBlock);
+        Benchmarker getDataCudatrafficPersonAndEdgesData("Get data trafficPersonVec and edgesData (first time)");
         b18GetDataCUDA(trafficPersonVec, edgesData);
+        getDataCudatrafficPersonAndEdgesData.startMeasuring();
+        getDataCudatrafficPersonAndEdgesData.stopAndEndBenchmark();
 
+        Benchmarker allEdgesVelBenchmark("all_edges_vel_" + std::to_string(iter_printout_index), true);
+        allEdgesVelBenchmark.startMeasuring();
         int index = 0;
         std::vector<float> avg_edge_vel(graph_->edges_.size());
         for (auto const& x : graph_->edges_) {
@@ -307,12 +314,13 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
           avg_edge_vel[index] = edgesData[ind].curr_cum_vel / edgesData[ind].curr_iter_num_cars;// * 2.23694;
           index++;
         }
-
+        
         //save avg_edge_vel vector to file
         std::string name = "./all_edges_vel_" + std::to_string(iter_printout_index) + ".txt";
         std::ofstream output_file(name);
         std::ostream_iterator<float> output_iterator(output_file, "\n");
         std::copy(avg_edge_vel.begin(), avg_edge_vel.end(), output_iterator);
+        allEdgesVelBenchmark.stopAndEndBenchmark();
 
         iter_printout_index++;
 
@@ -327,7 +335,11 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 
         if (steps % clientMain->ui.b18RenderStepSpinBox->value() ==
             0) { //each "steps" steps, render
+
+          Benchmarker getDataCudatrafficPersonAndEdgesData("Get data trafficPersonVec");
           b18GetDataCUDA(trafficPersonVec); // trafficLights
+          getDataCudatrafficPersonAndEdgesData.startMeasuring();
+          getDataCudatrafficPersonAndEdgesData.stopAndEndBenchmark();
           QString timeT;
 
           int timeH = currentTime / 3600.0f;
@@ -352,7 +364,11 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     getDataBench.startMeasuring();
 
     // 3. Finish
+
+    Benchmarker getDataCudatrafficPersonAndEdgesData("Get data trafficPersonVec and edgesData (second time)");
     b18GetDataCUDA(trafficPersonVec, edgesData);
+    getDataCudatrafficPersonAndEdgesData.startMeasuring();
+    getDataCudatrafficPersonAndEdgesData.stopAndEndBenchmark();
     b18GetSampleTrafficCUDA(accSpeedPerLinePerTimeInterval,
                             numVehPerLinePerTimeInterval);
     {

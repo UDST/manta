@@ -166,7 +166,6 @@ void B18CommandLineVersion::runB18Simulation() {
     //map person to their initial edge
     int count = 0;
     for (int i = 0; i < all_paths.size(); i++) {
-      //if ((all_paths[i] == -1) && (i == 0)) {
       if (i == 0) { //first one that doesn't contain a -1 for logic
         street_graph->person_to_init_edge_[count] = i; 
         count++;

@@ -10,7 +10,7 @@ void Benchmarker::enableShowBenchmarks(){
   Benchmarker::showBenchmarks = true;
 }
 
-Benchmarker::Benchmarker(const std::string desc, const bool print/* = false*/) :
+Benchmarker::Benchmarker(const std::string desc, const bool print) :
   on(false),
   elapsed(Duration::zero()),
   description(desc),

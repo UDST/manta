@@ -20,6 +20,7 @@ import argparse
 from pdb import set_trace as st
 import numpy as np
 from datetime import date
+from mpl_toolkits.axes_grid.anchored_artists import AnchoredText
 
 # ================= Aux =================
 
@@ -288,8 +289,6 @@ def load_csv_and_generate_benchmark_report(benchmark_name = "benchmarks", all_in
         else:
             plt.title("MANTA benchmarking  |  {}".format(title))
         component_label_values = [df[df["Component"] == component_name][resource_name].mean() for component_name in current_components]
-
-        from mpl_toolkits.axes_grid.anchored_artists import AnchoredText
 
 
         def add_custom_legend(ax, txt, fontsize = 12, loc = 1, *args, **kwargs):

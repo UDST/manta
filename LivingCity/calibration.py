@@ -13,6 +13,7 @@ pd.options.display.max_colwidth = 100
 from datetime import datetime
 import re
 from termcolor import colored
+from mpl_toolkits.axes_grid.anchored_artists import AnchoredText
 from pdb import set_trace as st
 
 def log(text):
@@ -96,7 +97,24 @@ class benchmark():
             .format(self.task_name, round(elapsed_time/60,4)),'green'))
 
 
-def calibrate(param_list, path, new_uber, start_time, end_time):
+def add_custom_legend(ax, txt, fontsize = 12, loc = 1, *args, **kwargs):
+    at = AnchoredText(txt,
+                    prop=dict(size=fontsize), 
+                    frameon=True,
+                    loc=loc)
+    at.patch.set_boxstyle("round,pad=0.2,rounding_size=0.2")
+    ax.add_artist(at)
+    return at
+
+def make_legend_string_human_readable(params, diff):
+    result = ""
+    for param in ['A', 'B', 'T', 's_0']:
+        result += param + ': ' + str(params[param]) + '\n'
+    result += 'Avg diff. with Uber: {}'.format(round(diff, 4))
+    
+    return result
+
+def calibrate(param_list, path, new_uber, plot_num_steps_on_each_run = False):
     min_diff = None
     min_params = None
 
@@ -105,10 +123,13 @@ def calibrate(param_list, path, new_uber, start_time, end_time):
 
         print("Running LivingCity with params [a:{}, b:{}, T:{}, s_0:{}]".\
                         format(params["A"], params["B"], params["T"], params["s_0"]))
+
+        simulation_benchmark = benchmark("Simulation")
         subprocess.run(["./LivingCity", "&"], check=True)
+        simulation_benchmark.end()
 
         df_people = pd.read_csv("0_people5to12.csv")
-        
+
         print("Number of nans: {}".format(df_people['avg_v(mph)'].isna().sum()))
 
         edges_u, edges_v = load_edges_u_v(path)
@@ -148,13 +169,34 @@ def calibrate(param_list, path, new_uber, start_time, end_time):
         #calculate RMSE
         diff = abs(merged_time_edges['diff'].mean())
 
+
         #calculate RMSE
         rmse = np.sqrt(sum(merged_time_edges['diff']**2) / merged_time_edges.shape[0])
 
         print("For [a:{}, b:{}, T:{}, s_0:{}] we have diff:{} and RMSE:{}".format(params["A"], \
                     params["B"], params["T"], params["s_0"], diff, rmse))
+
         
-        if (min_diff == None or diff < min_diff):
+        if plot_num_steps_on_each_run:
+            # Plot num steps vs distance
+            filename = os.path.join('num_steps_vs_distance_experiment', 'run_{}.png'.format(params))
+            log('Plotting {}'.format(filename))
+            plt.scatter(df_people.distance / 1000, df_people.num_steps / 60)
+            ax = plt.gca()
+            add_custom_legend(ax, make_legend_string_human_readable(params, diff))
+            plt.title("Number of steps (simulated trip minutes) vs trip distance")
+            plt.xlabel('Trip distance (miles)')
+            plt.ylabel('Number of steps (simulated minutes)') 
+            fig = plt.gcf()
+            fig.set_size_inches(18.5, 10.5)
+            os.makedirs('num_steps_vs_distance_experiment', exist_ok=True)
+            plt.savefig(filename)
+            ax.clear()
+            plt.clf()
+            plt.close()
+        
+        
+        if (min_diff is None or diff < min_diff):
             print("Found new minimum.")
             min_diff = diff
             min_params = params.copy()
@@ -176,13 +218,12 @@ def generate_next_step_parameters(params, decay, learning_rate_params, lower_bou
     # Search for next step parameters inside those bounds
     next_step_params = {}
     for param in params.keys():
-        found_next_step_in_bounds = False
-        while not found_next_step_in_bounds:
-            step = np.random.uniform(-1*learning_rate_params[param]*decay, learning_rate_params[param]*decay)
-            next_step_params[param] = params[param] + step
-            
-            if next_step_params[param] > lower_bound_params[param] and next_step_params[param] < upper_bound_params[param]:
-                found_next_step_in_bounds = True
+        minimum_value_for_next_step_param = max(lower_bound_params[param],
+                                                params[param] - learning_rate_params[param]*decay)
+
+        maximum_value_for_next_step_param = min(upper_bound_params[param],
+                                                params[param] + learning_rate_params[param]*decay)
+        next_step_params[param] = np.random.uniform(minimum_value_for_next_step_param, maximum_value_for_next_step_param)
     
     
     return next_step_params.copy()
@@ -211,11 +252,12 @@ def determine_decay(number_of_steps):
 
 def gradient_descent(epsilon=0.04,
                     learning_rate_params = None,
-                    starting_params = None,
                     progress_filename = None,
+                    starting_params = None,
                     load_saved_progress = False,
                     lower_bound_params = None,
                     upper_bound_params = None,
+                    plot_num_steps_on_each_run = False,
                     start_time=5, end_time=12):
     
     assert starting_params is None or set(starting_params.keys()) == {'A', 'B', 'T', 's_0'}
@@ -277,16 +319,19 @@ def gradient_descent(epsilon=0.04,
         current_diff = None
 
     while True:
+        print(colored("----------------- ITERATION #{}\n".format(iteration), "cyan"))
+        bench_iteration = benchmark("Iteration #{}".format(iteration))
         if iteration > 0:
             # we store the previous values
             prev_params = current_params.copy()
+            bench_next_step = benchmark("Getting next step parameters")
             possible_next_params = [generate_next_step_parameters(current_params, \
                                                                 decay, \
                                                                 learning_rate_params=learning_rate_params, \
                                                                 lower_bound_params=lower_bound_params, \
                                                                 upper_bound_params=upper_bound_params) for _ in range(5)]
+            bench_next_step.end()
 
-        print(colored("----------------- ITERATION #{}\n".format(iteration), "cyan"))
         print("Current progress: {}" .format(progress))
         print("Current parameters: {}".format(current_params))
         print("Current diff: {}".format(current_diff))
@@ -295,7 +340,7 @@ def gradient_descent(epsilon=0.04,
         for one_possible_step in possible_next_params:
             print(one_possible_step)
         prev_params = current_params.copy()
-        current_diff, current_params = calibrate(possible_next_params, ".", df_uber, start_time, end_time)
+        current_diff, current_params = calibrate(possible_next_params, ".", df_uber, plot_num_steps_on_each_run)
 
         if (prev_diff != None and current_diff >= prev_diff):
             print("Not moving in that direction since current_diff={} and prev_diff={}".format(current_diff, prev_diff))
@@ -319,6 +364,7 @@ def gradient_descent(epsilon=0.04,
             print("epsilon: {}  |  diff: {}".format(epsilon, current_diff))
             return current_params
         iteration += 1
+        bench_iteration.end()
 
 def count_number_of_nans(params):
     log("Running LivingCity with params [A:{}, B:{}, T:{}, s_0:{}]". \
@@ -351,19 +397,48 @@ def find_s_0_that_provides_no_nans(fixed_params, s_0_lower, s_0_upper, s_0_step)
 
     return fixed_params
 
-def plot_num_steps_vs_distance():
+def plot_num_steps_vs_distance(save_path):
     df_people = pd.read_csv('0_people5to12.csv')
     plt.scatter(df_people.distance / 1000, df_people.num_steps / 60)
+    plt.savefig(save_path)
+
+def plot_num_steps_vs_distance_experiment():
+    params = {'A': 3,
+            'B': 5,
+            'T': 0.4,
+            's_0': 1.1}
+
+    write_options_file(params)
+    print("Running LivingCity with params [a:{}, b:{}, T:{}, s_0:{}]".\
+                        format(params["A"], params["B"], params["T"], params["s_0"]))
+    subprocess.run(["./LivingCity", "&"], check=True)
+
+    df_people = pd.read_csv('0_people5to12.csv')
+    plt.scatter(df_people.distance / 1000, df_people.num_steps / 60)
+
+    output_dir = os.path.join('numstepsvsdistance', 'changinga')
+    fig_filename = 'a_{}_b_{}_t_{}_s0_{}.png'.format(round(params['A'], 2), round(params['B'], 2), round(params['T'], 2), round(params['s_0'], 2))
+    plt.savefig(os.path.join(output_dir, fig_filename))
 
 if __name__== "__main__":
     now = datetime.now()
     print("Running at {}hs PST on the day {} (d/m/Y).".format(now.strftime("%H:%M:%S"),now.strftime("%d/%m/%Y")))
 
-    # good starting point given by previous run
-    learning_rate = 0.1
-    params = gradient_descent(epsilon = 0.4,
-                    learning_rate_params = {"A": LR, "B": LR, 'T': LR, 's_0': LR},
-                    progress_filename = "calibration_progress",
-                    load_saved_progress = False,
-                    lower_bound_params = {"s_0":1, "T":0.1},
-                    upper_bound_params = {"A":10, "B":10, "s_0":1.5})
+
+    # For [a:0.557040909258405, b:2.9020578588167, T:0.5433027817144876, s_0:1.3807498735425845]
+    # we have diff:0.3459298931668383 and RMSE:10.326982421083729
+
+    params = {'A':0.557040909258405, 'B':2.9020578588167, 'T':0.5433027817144876, 's_0':1.3807498735425845}
+    LR = {'A': 0.8, 'B': 0.5, 'T': 0.1, 's_0':0.1}
+    for epsilon in [1, 0.5, 0.12, 0.12]:
+        params = gradient_descent(epsilon = 0.4,
+                        learning_rate_params = {"A": LR["A"], "B": LR["B"], 'T': LR['T'], 's_0': LR['s_0']},
+                        starting_params = params, 
+                        progress_filename = "calibration_progress",
+                        lower_bound_params = {'A': 0.5, 'B': 2, "s_0": 1.0, "T": 0.3},
+                        upper_bound_params = {"A": 7, "B": 4, "s_0": 1.5, 'T': 0.85},
+                        plot_num_steps_on_each_run = True)
+                    
+        # decay after reaching epsilon
+        for k in LR.keys():
+            LR[k] = LR[k] * 0.6
