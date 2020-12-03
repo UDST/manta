@@ -76,7 +76,6 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
     }
   }
 
-  std::cout << "max_edge_id " << max_edge_id << "\n";
   edgeIdToLaneMapNum = std::vector<uint>(max_edge_id+1);
   
   // Check distribution of street length
