@@ -211,11 +211,11 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     bool fistInitialization = (nP == 0);
     uint count = 0;
 
-    printf("traffic person vec size = %d\n", trafficPersonVec.size());
-    printf("index path vec size = %d\n", indexPathVec.size());
-    printf("edgesData size = %d\n", edgesData.size());
-    printf("laneMap size = %d\n", laneMap.size());
-    printf("intersections size = %d\n", intersections.size());
+    std::cout << "Traffic person vec size = " << trafficPersonVec.size() << std::endl;
+    std::cout << "Index path vec size = " << indexPathVec.size() << std::endl;
+    std::cout << "EdgesData size = " << edgesData.size() << std::endl;
+    std::cout << "LaneMap size = " << laneMap.size() << std::endl;
+    std::cout << "Intersections size = " << intersections.size() << std::endl;
 
     b18InitCUDA(fistInitialization, trafficPersonVec, indexPathVec, edgesData,
         laneMap, trafficLights, intersections, startTimeH, endTimeH,
