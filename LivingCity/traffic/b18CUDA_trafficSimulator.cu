@@ -97,33 +97,28 @@ void b18InitCUDA(
   const uint numStepsTogether = 12; //change also in density (10 per hour)
   { // people
     size_t size = trafficPersonVec.size() * sizeof(LC::B18TrafficPerson);
-    printf("trafficPersonVec size = %d\n", trafficPersonVec.size());
     if (fistInitialization) gpuErrchk(cudaMalloc((void **) &trafficPersonVec_d, size));   // Allocate array on device
     gpuErrchk(cudaMemcpy(trafficPersonVec_d, trafficPersonVec.data(), size, cudaMemcpyHostToDevice));
   }
   
   { // indexPathVec
     size_t sizeIn = indexPathVec.size() * sizeof(uint);
-    printf("indexPathVec size = %d\n", indexPathVec.size());
     if (fistInitialization) gpuErrchk(cudaMalloc((void **) &indexPathVec_d, sizeIn));   // Allocate array on device
     gpuErrchk(cudaMemcpy(indexPathVec_d, indexPathVec.data(), sizeIn, cudaMemcpyHostToDevice));
   }
   {//edgeData
     size_t sizeD = edgesData.size() * sizeof(LC::B18EdgeData);
-    printf("edgesData size = %d\n", edgesData.size());
     if (fistInitialization) gpuErrchk(cudaMalloc((void **) &edgesData_d, sizeD));   // Allocate array on device
     gpuErrchk(cudaMemcpy(edgesData_d, edgesData.data(), sizeD, cudaMemcpyHostToDevice));
   }
   {//laneMap
     size_t sizeL = laneMap.size() * sizeof(uchar);
-    printf("laneMap size = %d\n", laneMap.size());
     if (fistInitialization) gpuErrchk(cudaMalloc((void **) &laneMap_d, sizeL));   // Allocate array on device
     gpuErrchk(cudaMemcpy(laneMap_d, laneMap.data(), sizeL, cudaMemcpyHostToDevice));
     halfLaneMap = laneMap.size() / 2;
   }
   {// intersections
     size_t sizeI = intersections.size() * sizeof(LC::B18IntersectionData);
-    printf("intersections size = %d\n", intersections.size());
     if (fistInitialization) gpuErrchk(cudaMalloc((void **) &intersections_d, sizeI));   // Allocate array on device
     gpuErrchk(cudaMemcpy(intersections_d, intersections.data(), sizeI, cudaMemcpyHostToDevice));
     size_t sizeT = trafficLights.size() * sizeof(uchar);//total number of lanes
