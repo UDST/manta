@@ -40,15 +40,16 @@ void B18CommandLineVersion::runB18Simulation() {
   const float endDemandH = settings.value("END_HR", 12).toFloat();
   const bool showBenchmarks = settings.value("SHOW_BENCHMARKS", false).toBool();
   const parameters simParameters {
-      settings.value("A",0.557040909258405).toDouble(),
-      settings.value("B",2.9020578588167).toDouble(),
+      settings.value("a",0.557040909258405).toDouble(),
+      settings.value("b",2.9020578588167).toDouble(),
       settings.value("T",0.5433027817144876).toDouble(),
       settings.value("s_0",1.3807498735425845).toDouble()};
 
+  std::string odDemandPath = settings.value("OD_DEMAND_FILENAME", "od_demand_5to12.csv").toString().toStdString();
 
   std::cout << "b18CommandLineVersion received the parameters "
-            << "[A: " << simParameters.a 
-            << ", B: " << simParameters.b
+            << "[a: " << simParameters.a 
+            << ", b: " << simParameters.b
             << ", T: " << simParameters.T
             << ", s_0: " << simParameters.s_0
             << "]" << std::endl;
@@ -77,7 +78,7 @@ void B18CommandLineVersion::runB18Simulation() {
   if (useSP) {
 	  //make the graph from edges file and load the OD demand from od file
     loadNetwork.startMeasuring();
-	  std::string odFileName = RoadGraphB2018::loadABMGraph(networkPathSP, street_graph, (int) startDemandH, (int) endDemandH);
+	  std::string odFileName = RoadGraphB2018::loadABMGraph(networkPathSP, odDemandPath, street_graph, (int) startDemandH, (int) endDemandH);
     loadNetwork.stopAndEndBenchmark();
     loadODDemandData.startMeasuring();
 	  const auto all_od_pairs_ = B18TrafficSP::read_od_pairs(odFileName, std::numeric_limits<int>::max());

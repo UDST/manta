@@ -45,10 +45,11 @@ def write_options_file(params):
                         "START_HR=5",\
                         "END_HR=12",\
                         "SHOW_BENCHMARKS=false",\
-                        "A=0.8",\
-                        "B=0.8",\
+                        "a=0.8",\
+                        "b=0.8",\
                         "T=7.0",\
                         "s_0=3.5", \
+                        "OD_DEMAND_FILENAME=od_demand_5to12.csv", \
                         " "])
 
     for (parameter_name, parameter_value) in params.items():
@@ -108,7 +109,7 @@ def add_custom_legend(ax, txt, fontsize = 12, loc = 1, *args, **kwargs):
 
 def make_legend_string_human_readable(params, diff):
     result = ""
-    for param in ['A', 'B', 'T', 's_0']:
+    for param in ['a', 'b', 'T', 's_0']:
         result += param + ': ' + str(params[param]) + '\n'
     result += 'Avg diff. with Uber: {}'.format(round(diff, 4))
     
@@ -122,7 +123,7 @@ def calibrate(param_list, path, new_uber, plot_num_steps_on_each_run = False):
         write_options_file(params)
 
         print("Running LivingCity with params [a:{}, b:{}, T:{}, s_0:{}]".\
-                        format(params["A"], params["B"], params["T"], params["s_0"]))
+                        format(params["a"], params["b"], params["T"], params["s_0"]))
 
         simulation_benchmark = benchmark("Simulation")
         subprocess.run(["./LivingCity", "&"], check=True)
@@ -173,8 +174,8 @@ def calibrate(param_list, path, new_uber, plot_num_steps_on_each_run = False):
         #calculate RMSE
         rmse = np.sqrt(sum(merged_time_edges['diff']**2) / merged_time_edges.shape[0])
 
-        print("For [a:{}, b:{}, T:{}, s_0:{}] we have diff:{} and RMSE:{}".format(params["A"], \
-                    params["B"], params["T"], params["s_0"], diff, rmse))
+        print("For [a:{}, b:{}, T:{}, s_0:{}] we have diff:{} and RMSE:{}".format( \
+            params["a"], params["b"], params["T"], params["s_0"], diff, rmse))
 
         
         if plot_num_steps_on_each_run:
@@ -229,11 +230,11 @@ def generate_next_step_parameters(params, decay, learning_rate_params, lower_bou
     return next_step_params.copy()
 
 def first_step_parameters(lower_bound_params, upper_bound_params):
-    default_low = {'A': 1, 'B': 1, 'T': 0.1, 's_0': 1}
-    default_high = {'A':10, 'B':10, 'T':2, 's_0': 5}
+    default_low = {'a': 1, 'b': 1, 'T': 0.1, 's_0': 1}
+    default_high = {'a':10, 'b':10, 'T':2, 's_0': 5}
 
     first_step_params = {}
-    for param in ['A', 'B', 'T', 's_0']:
+    for param in ['b', 'b', 'T', 's_0']:
         first_step_params[param] = np.random.uniform(low=max(default_low[param], lower_bound_params[param]),
                                                     high=min(default_high[param], upper_bound_params[param]))
 
@@ -260,7 +261,7 @@ def gradient_descent(epsilon=0.04,
                     plot_num_steps_on_each_run = False,
                     start_time=5, end_time=12):
     
-    assert starting_params is None or set(starting_params.keys()) == {'A', 'B', 'T', 's_0'}
+    assert starting_params is None or set(starting_params.keys()) == {'a', 'b', 'T', 's_0'}
     assert not (starting_params and load_saved_progress), \
             'Error! You cannot load saved progress and determine the starting parameters at the same time'
     if load_saved_progress:
@@ -270,9 +271,9 @@ def gradient_descent(epsilon=0.04,
     if lower_bound_params:
         print("Using lower bound for parameters {}".format(lower_bound_params))
     if upper_bound_params:
-        print("Using lower bound for parameters {}".format(upper_bound_params))
+        print("Using upper bound for parameters {}".format(upper_bound_params))
 
-    for param in ['A', 'B', 'T', 's_0']:
+    for param in ['a', 'b', 'T', 's_0']:
         if not param in lower_bound_params.keys():
             lower_bound_params[param] = -math.inf
         if not param in upper_bound_params.keys():
@@ -290,11 +291,11 @@ def gradient_descent(epsilon=0.04,
     progress = []
 
     iteration = 0
-    prev_params = {"A": None, "B": None, "T": None, "s_0": None}
-    current_params = {"A": None, "B": None, "T": None, "s_0": None}
+    prev_params = {"a": None, "b": None, "T": None, "s_0": None}
+    current_params = {"a": None, "b": None, "T": None, "s_0": None}
     prev_diff = None
 
-    default_learning_rate_params = {"A":1, "B":1, "T": 0.5, "s_0": 0.1}
+    default_learning_rate_params = {"a":1, "b":1, "T": 0.5, "s_0": 0.1}
     for param in default_learning_rate_params.keys():
         if not param in learning_rate_params:
             learning_rate_params[param] = default_learning_rate_params[param]
@@ -367,22 +368,22 @@ def gradient_descent(epsilon=0.04,
         bench_iteration.end()
 
 def count_number_of_nans(params):
-    log("Running LivingCity with params [A:{}, B:{}, T:{}, s_0:{}]". \
-                        format(params["A"], params["B"], params["T"], params['s_0']))
+    log("Running LivingCity with params [a:{}, b:{}, T:{}, s_0:{}]". \
+                        format(params["a"], params["b"], params["T"], params['s_0']))
     subprocess.run(["./LivingCity", "&"], check=True)
     df_people = pd.read_csv("0_people5to12.csv")
     return df_people['avg_v(mph)'].isna().sum()
 
 def find_s_0_that_provides_no_nans(fixed_params, s_0_lower, s_0_upper, s_0_step):
-    assert fixed_params.keys() == {"A", "B", "T"}
+    assert fixed_params.keys() == {"a", "b", "T"}
     log("Fixed parameters: {}".format(fixed_params))
     log("Searching for a s_0 from {} to {} with a step of {}...".format(s_0_lower, s_0_upper, s_0_step))
 
     nans_found_for_each_s_0 = {}
 
     for s_0 in np.arange(s_0_lower, s_0_upper, s_0_step):
-        log("Running LivingCity with params [A:{}, B:{}, T:{}, s_0:{}]". \
-                        format(fixed_params["A"], fixed_params["B"], fixed_params["T"], s_0))
+        log("Running LivingCity with params [a:{}, b:{}, T:{}, s_0:{}]". \
+                        format(fixed_params["a"], fixed_params["b"], fixed_params["T"], s_0))
         subprocess.run(["./LivingCity", "&"], check=True)
 
         df_people = pd.read_csv("0_people5to12.csv")
@@ -403,21 +404,22 @@ def plot_num_steps_vs_distance(save_path):
     plt.savefig(save_path)
 
 def plot_num_steps_vs_distance_experiment():
-    params = {'A': 3,
-            'B': 5,
+    params = {'a': 3,
+            'b': 5,
             'T': 0.4,
             's_0': 1.1}
 
     write_options_file(params)
     print("Running LivingCity with params [a:{}, b:{}, T:{}, s_0:{}]".\
-                        format(params["A"], params["B"], params["T"], params["s_0"]))
+                        format(params["a"], params["b"], params["T"], params["s_0"]))
     subprocess.run(["./LivingCity", "&"], check=True)
 
     df_people = pd.read_csv('0_people5to12.csv')
     plt.scatter(df_people.distance / 1000, df_people.num_steps / 60)
 
     output_dir = os.path.join('numstepsvsdistance', 'changinga')
-    fig_filename = 'a_{}_b_{}_t_{}_s0_{}.png'.format(round(params['A'], 2), round(params['B'], 2), round(params['T'], 2), round(params['s_0'], 2))
+    fig_filename = 'a_{}_b_{}_t_{}_s0_{}.png'.format(\
+        round(params['a'], 2), round(params['b'], 2), round(params['T'], 2), round(params['s_0'], 2))
     plt.savefig(os.path.join(output_dir, fig_filename))
 
 if __name__== "__main__":
@@ -428,15 +430,15 @@ if __name__== "__main__":
     # For [a:0.557040909258405, b:2.9020578588167, T:0.5433027817144876, s_0:1.3807498735425845]
     # we have diff:0.3459298931668383 and RMSE:10.326982421083729
 
-    params = {'A':0.557040909258405, 'B':2.9020578588167, 'T':0.5433027817144876, 's_0':1.3807498735425845}
-    LR = {'A': 0.8, 'B': 0.5, 'T': 0.1, 's_0':0.1}
+    params = {'a':0.557040909258405, 'b':2.9020578588167, 'T':0.5433027817144876, 's_0':1.3807498735425845}
+    LR = {'a': 0.8, 'b': 0.5, 'T': 0.1, 's_0':0.1}
     for epsilon in [1, 0.5, 0.12, 0.12]:
         params = gradient_descent(epsilon = 0.4,
-                        learning_rate_params = {"A": LR["A"], "B": LR["B"], 'T': LR['T'], 's_0': LR['s_0']},
+                        learning_rate_params = {"a": LR["a"], "b": LR["b"], 'T': LR['T'], 's_0': LR['s_0']},
                         starting_params = params, 
                         progress_filename = "calibration_progress",
-                        lower_bound_params = {'A': 0.5, 'B': 2, "s_0": 1.0, "T": 0.3},
-                        upper_bound_params = {"A": 7, "B": 4, "s_0": 1.5, 'T': 0.85},
+                        lower_bound_params = {'a': 0.5, 'b': 2, "s_0": 1.0, "T": 0.3},
+                        upper_bound_params = {"a": 7, "b": 4, "s_0": 1.5, 'T': 0.85},
                         plot_num_steps_on_each_run = True)
                     
         # decay after reaching epsilon
