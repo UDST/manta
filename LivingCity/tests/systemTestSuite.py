@@ -91,7 +91,7 @@ def network_setup(request):
     log("Running first simulation with use_prev_paths=false...")
     write_options_file({"NETWORK_PATH": "{}".format(
         network_path), "USE_PREV_PATHS": "false"})
-    subprocess.run(["./LivingCity", "&"])
+    subprocess.run(["./LivingCity", "&"], check=True)
 
     for output_file_name in output_files:
         os.rename("./0_{}5to12.csv".format(output_file_name), "./0_{}5to12_first_run.csv".format(output_file_name))
@@ -99,7 +99,7 @@ def network_setup(request):
     log("Running second simulation with use_prev_paths=true...")
     write_options_file({"NETWORK_PATH": "{}".format(
         network_path), "USE_PREV_PATHS": "true"})
-    subprocess.run(["./LivingCity", "&"])
+    subprocess.run(["./LivingCity", "&"], check=True)
     for output_file_name in output_files:
         os.rename("./0_{}5to12.csv".format(output_file_name), "./0_{}5to12_second_run.csv".format(output_file_name))
 
