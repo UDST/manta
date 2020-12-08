@@ -38,7 +38,9 @@ def write_options_file(params = None):
                             "TIME_STEP=0.5",\
                             "START_HR=5",\
                             "END_HR=12",\
-                            "SHOW_BENCHMARKS=true"])
+                            "SHOW_BENCHMARKS=true",\
+                            "OD_DEMAND_FILENAME=od_demand_5to12.csv", \
+                            " "])
 
     if params is not None:
         for (parameter_name, parameter_value) in params.items():
