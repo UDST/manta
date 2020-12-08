@@ -53,10 +53,8 @@ class Graph {
     while (inMaxVertexIndex.read_row(nodeIndex)) {
       maxVertexIndexFound = std::max(nodeIndex, maxVertexIndexFound);
     }
-    std::cout << "max vertex index found " << maxVertexIndexFound << std::endl;
     this->edge_ids_ = std::vector<tsl::robin_map<graph::vertex_t, graph::edge_id_t>>(maxVertexIndexFound+1);
     this->nodeIndex_to_osmid_ = std::vector<graph::vertex_t>(maxVertexIndexFound+1);
-    std::cout << "number of edges id when initializing " << (this->edge_ids_).size() << std::endl;
   }
 
   //! Return number of vertices

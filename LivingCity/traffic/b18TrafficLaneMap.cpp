@@ -76,7 +76,6 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
     }
   }
 
-  std::cout << "max_edge_id " << max_edge_id << "\n";
   edgeIdToLaneMapNum = std::vector<uint>(max_edge_id+1);
   
   // Check distribution of street length
@@ -157,7 +156,6 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
 
   //////////////////////////////////////////////////////////
   // GENERATE INTERSECTION INFO
-  printf("Start intersection info\n");
   RoadGraph::roadGraphVertexIter_BI vi, viEnd;
   RoadGraph::in_roadGraphEdgeIter_BI Iei, Iei_end;
   RoadGraph::out_roadGraphEdgeIter_BI Oei, Oei_end;
@@ -378,7 +376,6 @@ void B18TrafficLaneMap::createLaneMap(
 
   //////////////////////////////////////////////////////////
   // GENERATE INTERSECTION INFO
-  printf("Start intersection info\n");
   RoadGraph::roadGraphVertexIter_BI vi, viEnd;
   RoadGraph::in_roadGraphEdgeIter_BI Iei, Iei_end;
   RoadGraph::out_roadGraphEdgeIter_BI Oei, Oei_end;
