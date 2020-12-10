@@ -378,7 +378,7 @@ std::string RoadGraphB2018::loadABMGraph(
   const std::string& nodeFileName = networkPath + "nodes.csv";
   std::cout << nodeFileName << " as nodes file\n";
 
-  const std::string& odFileName = networkPath + "/" + odDemandPath;
+  const std::string& odFileName = networkPath + odDemandPath;
   std::cout << odFileName << " as OD file\n";
 
   auto start = high_resolution_clock::now();

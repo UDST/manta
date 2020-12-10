@@ -14,6 +14,7 @@
 #include "b18TrafficSP.h"
 #include "b18CUDA_trafficSimulator.h"
 #include "roadGraphB2018Loader.h"
+#include <thread>
 
 #define DEBUG_TRAFFIC 0
 #define DEBUG_SIMULATOR 0
@@ -2406,96 +2407,120 @@ void B18TrafficSimulator::render(VBORenderManager &rendManager) {
 }//
 #endif
 
-void B18TrafficSimulator::savePeopleAndRoutesSP(int numOfPass, const std::shared_ptr<abm::Graph>& graph_, std::vector<abm::graph::edge_id_t> paths_SP, int start_time, int end_time) {
+void writePeopleFile(int numOfPass,
+  const std::shared_ptr<abm::Graph> & graph_,
+  int start_time, int end_time,
+  const std::vector<B18TrafficPerson> &trafficPersonVec,
+  float deltaTime){
+  QFile peopleFile(QString::number(numOfPass) + "_people" + QString::number(start_time) + "to" + QString::number(end_time) + ".csv");
+  if (peopleFile.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
+    std::cout << "> Saving People file... (size " << trafficPersonVec.size() << ")" << std::endl;
+    QTextStream streamP(&peopleFile);
+    streamP << "p,init_intersection,end_intersection,time_departure,num_steps,co,gas,distance,a,b,T,avg_v(mph)\n";
+
+    for (int p = 0; p < trafficPersonVec.size(); p++) {
+      streamP << p;
+      streamP << "," << graph_->nodeIndex_to_osmid_[trafficPersonVec[p].init_intersection];
+      streamP << "," << graph_->nodeIndex_to_osmid_[trafficPersonVec[p].end_intersection];
+      streamP << "," << trafficPersonVec[p].time_departure;
+      streamP << "," << trafficPersonVec[p].num_steps * deltaTime;
+      streamP << "," << trafficPersonVec[p].co;
+      streamP << "," << trafficPersonVec[p].gas;
+      streamP << "," << trafficPersonVec[p].dist_traveled;
+      streamP << "," << trafficPersonVec[p].a;
+      streamP << "," << trafficPersonVec[p].b;
+      streamP << "," << trafficPersonVec[p].T;
+      streamP << "," << (trafficPersonVec[p].cum_v / trafficPersonVec[p].num_steps) * 3600 / 1609.34;
+      streamP << "\n";
+    }
+
+    peopleFile.close();
+    std::cout << "> Finished saving People file." << std::endl;
+  }
+}
+
+bool isLastEdgeOfPath(abm::graph::edge_id_t edgeInPath){
+  return edgeInPath == -1;
+}
+
+void writeRouteFile(int numOfPass,
+  const std::vector<abm::graph::edge_id_t> & paths_SP,
+  int start_time, int end_time){
+  QFile routeFile(QString::number(numOfPass) + "_route" + QString::number(start_time) + "to" + QString::number(end_time) + ".csv");
+  if (routeFile.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
+    std::cout << "> Saving Route file..." << std::endl;
+    QHash<uint, uint> laneMapNumCount;
+    QTextStream streamR(&routeFile);
+    streamR << "p:route\n";
+    int lineIndex = 0;
+    int peopleIndex = 0;
+    streamR << lineIndex << ":[";
+    for (const abm::graph::edge_id_t & edgeInPath: paths_SP) {
+      if (isLastEdgeOfPath(edgeInPath)) {
+        streamR << "]\n";
+        lineIndex++;
+        if (peopleIndex != paths_SP.size() - 1) {
+          streamR << lineIndex << ":[";
+        }
+      } else {
+        streamR << edgeInPath << ",";
+      }
+      peopleIndex++;
+    }
+    routeFile.close();
+  }
+  std::cout << "> Finished saving Route file." << std::endl;
+}
+
+void writeIndexPathVecFile(int numOfPass,
+  int start_time, int end_time,
+  const std::vector<uint> & indexPathVec){
+  QFile indexPathVecFile(QString::number(numOfPass) + "_indexPathVec" + QString::number(start_time) + "to" + QString::number(end_time) + ".csv");
+  if (indexPathVecFile.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
+    std::cout << "> Saving indexPathVec (size " << indexPathVec.size() << ")..." << std::endl;
+    QTextStream indexPathVecStream(&indexPathVecFile);
+    indexPathVecStream << "indexPathVec\n";
+
+    for (auto const & elemIndexPathVec: indexPathVec) {
+      indexPathVecStream << elemIndexPathVec << "\n";
+    }
+
+    indexPathVecFile.close();
+  }
+  std::cout << "> Finished saving indexPathVec..." << std::endl;
+}
+
+void B18TrafficSimulator::savePeopleAndRoutesSP(
+  int numOfPass,
+  const std::shared_ptr<abm::Graph>& graph_,
+  const std::vector<abm::graph::edge_id_t>& paths_SP,
+  int start_time, int end_time) {
+  bool enableMultiThreading = true;
   const bool saveToFile = true;
 
-  if (saveToFile) {
-    /////////////////////////////////
-    // SAVE TO FILE
-    QFile peopleFile(QString::number(numOfPass) + "_people" + QString::number(start_time) + "to" + QString::number(end_time) + ".csv");
-    QFile routeFile(QString::number(numOfPass) + "_route" + QString::number(start_time) + "to" + QString::number(end_time) + ".csv");
-    QFile indexPathVecFile(QString::number(numOfPass) + "_indexPathVec" + QString::number(start_time) + "to" + QString::number(end_time) + ".csv");
-
-    if (peopleFile.open(QIODevice::ReadWrite | QIODevice::Truncate) &&
-        routeFile.open(QIODevice::ReadWrite | QIODevice::Truncate) &&
-        indexPathVecFile.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
-
-      ///////////////
-      // indexPathVec
-      printf("Save indexPathVec %d\n", trafficPersonVec.size());
-      QTextStream indexPathVecStream(&indexPathVecFile);
-      indexPathVecStream <<
-              "indexPathVec\n";
-
-      for (int elem = 0; elem < indexPathVec.size(); elem++) {
-        indexPathVecStream << elem << "\n";
-      } // indexPathVec
-
-      indexPathVecFile.close();
-
-      /////////////
-      // People Route
-      printf("Save route %d\n", trafficPersonVec.size());
-      QHash<uint, uint> laneMapNumCount;
-      QTextStream streamR(&routeFile);
-      //std::vector<float> personDistance(trafficPersonVec.size(), 0.0f);
-      streamR << "p:route\n";
-
-      //for (int x = 0; x < indexPathVec.size(); x++) {
-      //      std::cout << "index = " << x << "indexPathVec = " << indexPathVec[x] << "\n";
-      //}
-
-      //write paths to file so that we can just load them instead
-      int r = 0;
-      int i = 0;
-      // Save route for each person
-      streamR << r << ":[";
-      for (auto& x: paths_SP) {
-        if (x != -1) {
-          streamR << x << ",";
-        } else {
-          streamR << "]\n";
-          r++;
-          if (i != paths_SP.size() - 1) {
-            streamR << r << ":[";
-          }
-        }
-        i++;
-      }
-      routeFile.close();
-
-      ///////////////
-      // People
-      printf("Save people %d. Intersections are in osmid.\n", trafficPersonVec.size());
-      QTextStream streamP(&peopleFile);
-      streamP <<
-              "p,init_intersection,end_intersection,time_departure,num_steps,co,gas,distance,a,b,T,avg_v(mph)\n";
-
-      for (int p = 0; p < trafficPersonVec.size(); p++) {
-        streamP << p;
-        streamP << "," << graph_->nodeIndex_to_osmid_[trafficPersonVec[p].init_intersection];
-        streamP << "," << graph_->nodeIndex_to_osmid_[trafficPersonVec[p].end_intersection];
-        streamP << "," << trafficPersonVec[p].time_departure;
-        streamP << "," << trafficPersonVec[p].num_steps * deltaTime;
-        streamP << "," << trafficPersonVec[p].co;
-        streamP << "," << trafficPersonVec[p].gas;
-        //streamP << "," << personDistance[p];
-        streamP << "," << trafficPersonVec[p].dist_traveled;
-
-        streamP << "," << trafficPersonVec[p].a;
-        streamP << "," << trafficPersonVec[p].b;
-        streamP << "," << trafficPersonVec[p].T;
-        streamP << "," << (trafficPersonVec[p].cum_v / trafficPersonVec[p].num_steps) * 3600 / 1609.34;
-        streamP << "\n";
-      } // people
-
-      peopleFile.close();
-
-    }
+  if (!saveToFile){
+    return;
   }
 
-  //printf("\n<<calculateAndDisplayTrafficDensity\n");
-}//
+
+  if (enableMultiThreading){
+    std::cout << "Saving People, Route and IndexPathVec files..." << std::endl;
+    std::thread threadWritePeopleFile(writePeopleFile, numOfPass, graph_, start_time, end_time, trafficPersonVec, deltaTime);
+    std::thread threadWriteRouteFile(writeRouteFile, numOfPass, paths_SP, start_time, end_time);
+    std::thread threadWriteIndexPathVecFile(writeIndexPathVecFile, numOfPass, start_time, end_time, indexPathVec);
+    threadWritePeopleFile.join();
+    threadWriteRouteFile.join();
+    threadWriteIndexPathVecFile.join();
+    std::cout << "Finished saving People, Route and IndexPathVec files." << std::endl;
+  } else {
+    writePeopleFile(numOfPass, graph_, start_time, end_time, trafficPersonVec, deltaTime);
+    writeRouteFile(numOfPass, paths_SP, start_time, end_time);
+    writeIndexPathVecFile(numOfPass, start_time, end_time, indexPathVec);
+  }
+  
+  
+
+}
 
 void B18TrafficSimulator::savePeopleAndRoutes(int numOfPass) {
   const bool saveToFile = true;
