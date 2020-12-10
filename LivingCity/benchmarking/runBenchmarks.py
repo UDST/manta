@@ -39,7 +39,7 @@ def write_options_file(params = None):
                             "START_HR=5",\
                             "END_HR=12",\
                             "SHOW_BENCHMARKS=true",\
-                            "OD_DEMAND_FILENAME=od_demand_5to12_different_one.csv", \
+                            "OD_DEMAND_FILENAME=od_demand_5to12.csv", \
                             " "])
 
     if params is not None:
