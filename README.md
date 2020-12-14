@@ -128,6 +128,12 @@ Here, you can modify the:
 10. `TIME_STEP` - timestep. Default is .5 seconds.
 11. `START_HR` - start hour of the simulation. Default is 5am.
 12. `END_HR` - end hour of the simulation. Default is 12pm.
+13. `a` - Simulation parameter. Default is 0.5570
+14. `b` - Simulation parameter. Default is 2.9020
+15. `T` - Simulation parameter. Default is 0.5433
+16. `s_0` - Simulation parameter. Default is 1.3807
+17. `OD_DEMAND_FILENAME` - Demand filename inside the `NETWORK_PATH` directory. Default is `od_demand_5to12.csv`
+
 
 Run with:
 ```bash
