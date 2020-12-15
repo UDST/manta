@@ -15,6 +15,7 @@
 #include "b18CUDA_trafficSimulator.h"
 #include "roadGraphB2018Loader.h"
 #include <thread>
+#include "accessibility.h"
 
 #define DEBUG_TRAFFIC 0
 #define DEBUG_SIMULATOR 0
@@ -310,10 +311,13 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         std::vector<float> avg_edge_vel(graph_->edges_.size());
         for (auto const& x : graph_->edges_) {
           ind = edgeDescToLaneMapNumSP[x.second];
-          avg_edge_vel[index] = edgesData[ind].curr_cum_vel / edgesData[ind].curr_iter_num_cars;// * 2.23694;
-          float new_duration = edgesData[ind].length / avg_edge_vel[index];
+          //TODO(pavan, juli): make sure that the ones that have not been traversed use the original travel time impedances. right now, in this logic below, they would become NaNs.
+          if (edgesData[ind].curr_cum_vel != 0) {
+            avg_edge_vel[index] = edgesData[ind].curr_cum_vel / edgesData[ind].curr_iter_num_cars;// * 2.23694;
+            float new_duration = edgesData[ind].length / avg_edge_vel[index];
           
           graph_->update_edge(std::get<0>(std::get<0>(x)), std::get<1>(std::get<0>(x)), edgesData[ind].duration);
+          }
 
           index++;
         }
@@ -358,7 +362,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         targets.reserve(graph_->edges_.size());
 
 
-        for (int x = 0; x < filtered_od_pairs.size(); x++) {
+        for (int x = 0; x < filtered_od_pairs_.size(); x++) {
             sources.emplace_back(filtered_od_pairs_[x][0]);
             targets.emplace_back(filtered_od_pairs_[x][1]);
         //std::cout << "origin = " << sources[x] << " \n";
@@ -402,11 +406,11 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 
         
         //clear the current indexPathVec and refill it with the new paths up until endTimeH
-        indexPathVec.clear();
+        //indexPathVec.clear();
         B18TrafficSP::convertVector(paths_SP, indexPathVec, edgeDescToLaneMapNumSP, graph_);
         
         // re-init cuda with new data structures
-        /*TODO(pavan, juli): there's a problem here. we don't want it to re-init trafficPersonVec. Really, we just want it to re-init edgesData
+        /*TODO(pavan, juli): there's a problem here. we don't want it to re-init trafficPersonVec. Really, we just want it to re-init edgesData*/
         QTime timer_init_cuda;
         timer_init_cuda.start();
         b18InitCUDA(firstInit, trafficPersonVec,
