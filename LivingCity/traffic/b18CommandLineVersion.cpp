@@ -39,7 +39,7 @@ void B18CommandLineVersion::runB18Simulation() {
   const float startDemandH = settings.value("START_HR", 5).toFloat();
   const float endDemandH = settings.value("END_HR", 12).toFloat();
   const bool showBenchmarks = settings.value("SHOW_BENCHMARKS", false).toBool();
-  int increment = settings.value("REROUTE_INCREMENT", 15).toInt(); //in minutes
+  int increment = settings.value("REROUTE_INCREMENT", 60).toInt(); //in minutes
   const parameters simParameters {
       settings.value("a",0.557040909258405).toDouble(),
       settings.value("b",2.9020578588167).toDouble(),
@@ -73,19 +73,21 @@ void B18CommandLineVersion::runB18Simulation() {
   ClientGeometry cg;
   B18TrafficSimulator b18TrafficSimulator(deltaTime, &cg.roadGraph, simParameters);
   
+  const bool directed = true;
+  auto street_graph = std::make_shared<abm::Graph>(directed, networkPathSP);
   std::vector<abm::graph::edge_id_t> all_paths;
   vector<vector<int>> all_paths_ch;
-  const bool directed = true;
+  std::string odFileName = RoadGraphB2018::loadABMGraph(networkPathSP, odDemandPath, street_graph, (int) startDemandH, (int) endDemandH);
+  const auto all_od_pairs_ = B18TrafficSP::read_od_pairs(odFileName, std::numeric_limits<int>::max());
+  const auto dep_times = B18TrafficSP::read_dep_times(odFileName);
+  std::vector<std::array<abm::graph::vertex_t, 2>> filtered_od_pairs_;
+  std::vector<float> filtered_dep_times_;
   float newEndTimeH = ( startSimulationH + (increment / 60)) * 3600; 
-  auto street_graph = std::make_shared<abm::Graph>(directed, networkPathSP);
   if (useSP) {
 	  //make the graph from edges file and load the OD demand from od file
     loadNetwork.startMeasuring();
-	  std::string odFileName = RoadGraphB2018::loadABMGraph(networkPathSP, odDemandPath, street_graph, (int) startDemandH, (int) endDemandH);
     loadNetwork.stopAndEndBenchmark();
     loadODDemandData.startMeasuring();
-	  const auto all_od_pairs_ = B18TrafficSP::read_od_pairs(odFileName, std::numeric_limits<int>::max());
-	  const auto dep_times = B18TrafficSP::read_dep_times(odFileName);
     loadODDemandData.stopAndEndBenchmark();
 
 	  printf("# of OD pairs = %d\n", all_od_pairs_.size());
@@ -117,17 +119,15 @@ void B18CommandLineVersion::runB18Simulation() {
       sources.reserve(street_graph->edges_.size());
       targets.reserve(street_graph->edges_.size());
 
-      /*
-        B18TrafficSP::filterODByHour(all_od_pairs_,
+    B18TrafficSP::filterODByHour(all_od_pairs_,
                                         dep_times,
                                         startSimulationH * 3600,
                                         newEndTimeH,
                                         filtered_od_pairs_,
                                         filtered_dep_times_);
-      */
 
 
-      for (int x = 0; x < filtered_od_pairs.size(); x++) {
+      for (int x = 0; x < filtered_od_pairs_.size(); x++) {
         sources.emplace_back(filtered_od_pairs_[x][0]);
         targets.emplace_back(filtered_od_pairs_[x][1]);
         //std::cout << "origin = " << sources[x] << " \n";
@@ -137,9 +137,10 @@ void B18CommandLineVersion::runB18Simulation() {
       //get the edge lengths
       std::vector<double> edge_weights_inside_vec;
       for (auto const& x : street_graph->edges_) {
-        double metersLength = std::get<1>(x)->second[0];
-        edge_weights_inside_vec.emplace_back(metersLength);
-        //std::cout << "edge length = " << metersLength << " \n";
+        double edge_impedance = std::get<1>(x)->second[0];
+        //TODO(pavan, juli): also retrieve the speed limit of the edge and then we can divide to get time
+        edge_weights_inside_vec.emplace_back(edge_impedance);
+        //std::cout << "edge length = " << edge_impedance << " \n";
 
         std::vector<long> edge_nodes = {std::get<0>(x.first), std::get<1>(x.first)};
         edge_vals.emplace_back(edge_nodes);
