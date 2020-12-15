@@ -126,6 +126,24 @@ std::vector<float> B18TrafficSP::read_dep_times(const std::string& filename) {
   return dep_time_vec;
 }
 
+void B18TrafficSP::filterODByHour(std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs, std::vector<float> dep_times, float start_time, float end_time, std::vector<std::array<abm::graph::vertex_t, 2>> &filtered_od_pairs_, std::vector<float> &filtered_dep_times_) {
+    filtered_od_pairs_.clear();
+    filtered_dep_times_.clear();
+    int filt_size = 0;
+    for (int x = 0; x < od_pairs.size(); x++) {
+        //printf("dep time = %f\n", dep_times[x]);
+        //printf("od_pair v1 = %u\n, od_pair v2 = %u\n", od_pairs[x][0], od_pairs[x][1]);
+        if ((dep_times[x] >= start_time) && (dep_times[x] < end_time)) {
+            //printf("dep time = %f\n", dep_times[x]);
+            std::array<abm::graph::vertex_t, 2> od = {od_pairs[x][0], od_pairs[x][1]};
+            filtered_od_pairs_.emplace_back(od);
+            //printf("od_pairs v1 = %d, od_pairs v2 = %d\n", filtered_od_pairs_[filt_size][0], filtered_od_pairs_[filt_size][1]);
+            filtered_dep_times_.emplace_back(dep_times[x]);
+            filt_size++;
+        }
+    }
+}
+
 
 void B18TrafficSP::convertVector(std::vector<abm::graph::edge_id_t> paths_SP, std::vector<uint>& indexPathVec,  std::vector<uint> &edgeIdToLaneMapNum, const std::shared_ptr<abm::Graph>& graph_) {
     for (abm::graph::edge_id_t& edge_in_path: paths_SP) {

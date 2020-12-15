@@ -73,7 +73,7 @@ class B18TrafficSimulator {
   
   void simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
     bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_,
-    std::vector<abm::graph::edge_id_t> paths_SP, const parameters & simParameters);
+    std::vector<abm::graph::edge_id_t> paths_SP, const parameters & simParameters, int increment, std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs, std::vector<float> dep_times);
 
   // Lanes
   std::vector<uint> edgeIdToLaneMapNum;

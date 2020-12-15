@@ -110,7 +110,7 @@ void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
 //////////////////////////////////////////////////
 void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
     bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_,
-    std::vector<abm::graph::edge_id_t> paths_SP, const parameters & simParameters) {
+    std::vector<abm::graph::edge_id_t> paths_SP, const parameters & simParameters, int increment, std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs, std::vector<float> dep_times) {
   Benchmarker passesBench("Simulation passes");
   Benchmarker finishCudaBench("Cuda finish");
   Benchmarker laneMapCreation("Lane_Map_creation", true);
@@ -295,12 +295,10 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       }
 
 
-      if (count % iter_printout != 0) {
+      if (count % increment != 0) {
         b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
                              intersections.size(), deltaTime, simParameters, numBlocks, threadsPerBlock);
       } else {
-        b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
-                             intersections.size(), deltaTime, simParameters, numBlocks, threadsPerBlock);
         Benchmarker getDataCudatrafficPersonAndEdgesData("Get data trafficPersonVec and edgesData (first time)");
         b18GetDataCUDA(trafficPersonVec, edgesData);
         getDataCudatrafficPersonAndEdgesData.startMeasuring();
@@ -313,6 +311,10 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         for (auto const& x : graph_->edges_) {
           ind = edgeDescToLaneMapNumSP[x.second];
           avg_edge_vel[index] = edgesData[ind].curr_cum_vel / edgesData[ind].curr_iter_num_cars;// * 2.23694;
+          float new_duration = edgesData[ind].length / avg_edge_vel[index];
+          
+          graph_->update_edge(std::get<0>(std::get<0>(x)), std::get<1>(std::get<0>(x)), edgesData[ind].duration);
+
           index++;
         }
         
@@ -326,6 +328,97 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         iter_printout_index++;
 
         timerLoop.restart();
+
+        //filter the next set of od pair/departures in the next increment
+        float startTime = startTimeH + (count_iters * deltaTime) / 3600;
+        printf("iteration # = %d\n", count_iters);
+        newEndTimeH = startTime + (increment * deltaTime) / 3600;
+        printf("filtered start time = %f, filtered end time = %f\n", startTime, newEndTimeH);
+
+        B18TrafficSP::filterODByHour(all_od_pairs,
+                                        dep_times,
+                                        startTime,
+                                        newEndTimeH,
+                                        filtered_od_pairs_,
+                                        filtered_dep_times_);
+        printf("filtered od pairs size = %d\n", filtered_od_pairs_.size());
+
+
+
+        //re-compute the routes
+        vector<vector<int>> all_paths_ch;
+        std::vector<std::vector<long>> edge_vals;
+
+        std::vector<std::vector<double>> edge_weights;
+        edge_weights.reserve(graph_->edges_.size());
+
+        std::vector<long> sources;
+        std::vector<long> targets;
+        sources.reserve(graph_->edges_.size());
+        targets.reserve(graph_->edges_.size());
+
+
+        for (int x = 0; x < filtered_od_pairs.size(); x++) {
+            sources.emplace_back(filtered_od_pairs_[x][0]);
+            targets.emplace_back(filtered_od_pairs_[x][1]);
+        //std::cout << "origin = " << sources[x] << " \n";
+        //std::cout << "dest = " << targets[x] << " \n";
+        }
+
+        //get the edge lengths
+        std::vector<double> edge_weights_inside_vec;
+        for (auto const& x : graph_->edges_) {
+            double metersLength = std::get<1>(x)->second[0];
+            edge_weights_inside_vec.emplace_back(metersLength);
+            //std::cout << "edge length = " << metersLength << " \n";
+
+            std::vector<long> edge_nodes = {std::get<0>(x.first), std::get<1>(x.first)};
+            edge_vals.emplace_back(edge_nodes);
+            //std::cout << "origin = " << sources[x] << " \n";
+            //std::cout << "Start node id = " << edge_nodes[0] << " End node id = " << edge_nodes[1] << "\n";
+        }
+        edge_weights.emplace_back(edge_weights_inside_vec);
+        std::cout << "# nodes = " << graph_->vertices_data_.size() << "\n";
+
+        routingCH.startMeasuring();
+        MTC::accessibility::Accessibility *graph_ch = new MTC::accessibility::Accessibility((int) graph_->vertices_data_.size(), edge_vals, edge_weights, false);
+
+        all_paths_ch = graph_ch->Routes(sources, targets, 0);
+        routingCH.stopAndEndBenchmark();
+        std::cout << "# of paths = " << all_paths_ch.size() << " \n";
+
+        CHoutputNodesToEdgesConversion.startMeasuring();
+        //convert from nodes to edges
+        for (int i=0; i < all_paths_ch.size(); i++) {
+            for (int j=0; j < all_paths_ch[i].size()-1; j++) {
+                auto vertex_from = all_paths_ch[i][j];
+                auto vertex_to = all_paths_ch[i][j+1];
+                auto one_edge = graph_->edge_ids_[vertex_from][vertex_to];
+                paths_SP.emplace_back(one_edge);
+            }
+            paths_SP.emplace_back(-1);
+        }
+        CHoutputNodesToEdgesConversion.stopAndEndBenchmark();
+
+        
+        //clear the current indexPathVec and refill it with the new paths up until endTimeH
+        indexPathVec.clear();
+        B18TrafficSP::convertVector(paths_SP, indexPathVec, edgeDescToLaneMapNumSP, graph_);
+        
+        // re-init cuda with new data structures
+        /*TODO(pavan, juli): there's a problem here. we don't want it to re-init trafficPersonVec. Really, we just want it to re-init edgesData
+        QTime timer_init_cuda;
+        timer_init_cuda.start();
+        b18InitCUDA(firstInit, trafficPersonVec,
+                  indexPathVec, edgesData, laneMap, trafficLights, intersections, startTimeH, endTimeH,
+                  accSpeedPerLinePerTimeInterval,
+                  numVehPerLinePerTimeInterval, deltaTime);
+        printf("[TIME] Init cuda = %d ms\n", timer_init_cuda.elapsed());
+
+        //simulate again
+        b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
+                             intersections.size(), deltaTime, simParameters, numBlocks, threadsPerBlock);
+
       }
 
       #ifdef B18_RUN_WITH_GUI
@@ -2872,5 +2965,6 @@ void B18TrafficLightRender::getInterpolated(uchar newTrafficLight,
 }//
 
 }
+
 
 
