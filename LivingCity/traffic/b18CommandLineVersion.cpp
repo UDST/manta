@@ -39,11 +39,13 @@ void B18CommandLineVersion::runB18Simulation() {
   const float startDemandH = settings.value("START_HR", 5).toFloat();
   const float endDemandH = settings.value("END_HR", 12).toFloat();
   const bool showBenchmarks = settings.value("SHOW_BENCHMARKS", false).toBool();
+  int increment = settings.value("REROUTE_INCREMENT", 15).toInt(); //in minutes
   const parameters simParameters {
       settings.value("a",0.557040909258405).toDouble(),
       settings.value("b",2.9020578588167).toDouble(),
       settings.value("T",0.5433027817144876).toDouble(),
       settings.value("s_0",1.3807498735425845).toDouble()};
+
 
   std::string odDemandPath = settings.value("OD_DEMAND_FILENAME", "od_demand_5to12.csv").toString().toStdString();
 
@@ -74,6 +76,7 @@ void B18CommandLineVersion::runB18Simulation() {
   std::vector<abm::graph::edge_id_t> all_paths;
   vector<vector<int>> all_paths_ch;
   const bool directed = true;
+  float newEndTimeH = ( startSimulationH + (increment / 60)) * 3600; 
   auto street_graph = std::make_shared<abm::Graph>(directed, networkPathSP);
   if (useSP) {
 	  //make the graph from edges file and load the OD demand from od file
@@ -114,10 +117,19 @@ void B18CommandLineVersion::runB18Simulation() {
       sources.reserve(street_graph->edges_.size());
       targets.reserve(street_graph->edges_.size());
 
+      /*
+        B18TrafficSP::filterODByHour(all_od_pairs_,
+                                        dep_times,
+                                        startSimulationH * 3600,
+                                        newEndTimeH,
+                                        filtered_od_pairs_,
+                                        filtered_dep_times_);
+      */
 
-      for (int x = 0; x < all_od_pairs_.size(); x++) {
-        sources.emplace_back(all_od_pairs_[x][0]);
-        targets.emplace_back(all_od_pairs_[x][1]);
+
+      for (int x = 0; x < filtered_od_pairs.size(); x++) {
+        sources.emplace_back(filtered_od_pairs_[x][0]);
+        targets.emplace_back(filtered_od_pairs_[x][1]);
         //std::cout << "origin = " << sources[x] << " \n";
         //std::cout << "dest = " << targets[x] << " \n";
       }
@@ -198,7 +210,7 @@ void B18CommandLineVersion::runB18Simulation() {
   } else {
 	  //if useSP, convert all_paths to indexPathVec format and run simulation
     b18TrafficSimulator.simulateInGPU(numOfPasses, startSimulationH, endSimulationH,
-        useJohnsonRouting, useSP, street_graph, all_paths, simParameters);
+        useJohnsonRouting, useSP, street_graph, all_paths, simParameters, increment, all_od_pairs_, dep_times);
   }
 
 }

@@ -46,6 +46,8 @@ class B18TrafficSP {
   
   static std::vector<float> read_dep_times(const std::string& filename);
 
+  void B18TrafficSP::filterODByHour(std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs, std::vector<float> dep_times, float start_time, float end_time, std::vector<std::array<abm::graph::vertex_t, 2>> &filtered_od_pairs_, std::vector<float> &filtered_dep_times_);
+
   static void convertVector(std::vector<abm::graph::edge_id_t> paths_SP, std::vector<uint>& indexPathVec, std::vector<uint> &edgeIdToLaneMapNum, const std::shared_ptr<abm::Graph>& graph_);
 
   explicit B18TrafficSP(const std::shared_ptr<abm::Graph>& graph) : graph_{graph} {};
