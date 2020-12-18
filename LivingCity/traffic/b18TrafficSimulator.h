@@ -2,7 +2,7 @@
 *		@desc Class that contains the traffic simulator b2018.
 *		@author igaciad
 ************************************************************************************************/
-
+#pragma once
 #ifndef LC_B18_TRAFFIC_SIMULATOR_H
 #define LC_B18_TRAFFIC_SIMULATOR_H
 
@@ -17,6 +17,7 @@
 #endif
 
 #include "b18GridPollution.h"
+#include "accessibility.h"
 
 
 namespace LC {
@@ -71,17 +72,14 @@ class B18TrafficSimulator {
   //void simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
   //                   bool useJohnsonRouting, bool useSP);
   
-  void simulateInGPU(int numOfPasses, 
-                    float startTimeH,
-                    float endTimeH,
-                    bool useJohnsonRouting,
-                    bool useSP,
-                    const std::shared_ptr<abm::Graph>& graph_,
-                    std::vector<abm::graph::edge_id_t> paths_SP,
-                    const parameters & simParameters,
-                    int increment,
-                    std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs,
-                    std::vector<float> dep_times);
+  void simulateInGPU(int numOfPasses,
+    float startTimeH,
+    float endTimeH,
+    bool useJohnsonRouting,
+    bool useSP, const std::shared_ptr<abm::Graph>& graph_,
+    std::vector<abm::graph::edge_id_t> paths_SP, const parameters & simParameters,
+    int increment, std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs,
+    std::vector<float> dep_times);
 
   // Lanes
   std::vector<uint> edgeIdToLaneMapNum;
@@ -107,7 +105,9 @@ class B18TrafficSimulator {
 #endif
   void createB2018People(float startTime, float endTime, int limitNumPeople, bool addRandomPeople, bool useSP);
   
-  void createB2018PeopleSP(float startTime, float endTime, int limitNumPeople, bool addRandomPeople, const std::shared_ptr<abm::Graph>& graph_, std::vector<float> dep_times);
+  void createB2018PeopleSP(
+    float startTime, float endTime, int limitNumPeople, bool addRandomPeople,
+    const std::shared_ptr<abm::Graph>& graph_, std::vector<float> dep_times);
 
   void resetPeopleJobANDintersections();
   void saveODToFile() {}; // TODO

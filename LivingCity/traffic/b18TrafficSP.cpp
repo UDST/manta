@@ -126,7 +126,11 @@ std::vector<float> B18TrafficSP::read_dep_times(const std::string& filename) {
   return dep_time_vec;
 }
 
-void B18TrafficSP::filterODByHour(std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs, std::vector<float> dep_times, float start_time, float end_time, std::vector<std::array<abm::graph::vertex_t, 2>> &filtered_od_pairs_, std::vector<float> &filtered_dep_times_) {
+void B18TrafficSP::filterODByHour(
+  std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs,
+  std::vector<float> dep_times, float start_time, float end_time,
+  std::vector<std::array<abm::graph::vertex_t, 2>> & filtered_od_pairs_,
+  std::vector<float> &filtered_dep_times_) {
     filtered_od_pairs_.clear();
     filtered_dep_times_.clear();
     int filt_size = 0;
@@ -145,7 +149,9 @@ void B18TrafficSP::filterODByHour(std::vector<std::array<abm::graph::vertex_t, 2
 }
 
 
-void B18TrafficSP::convertVector(std::vector<abm::graph::edge_id_t> paths_SP, std::vector<uint>& indexPathVec,  std::vector<uint> &edgeIdToLaneMapNum, const std::shared_ptr<abm::Graph>& graph_) {
+void B18TrafficSP::convertVector(std::vector<abm::graph::edge_id_t> paths_SP,
+  std::vector<uint>& indexPathVec,  std::vector<uint> &edgeIdToLaneMapNum,
+  const std::shared_ptr<abm::Graph>& graph_) {
     for (abm::graph::edge_id_t& edge_in_path: paths_SP) {
         if (edge_in_path != -1) {
             indexPathVec.emplace_back(edgeIdToLaneMapNum[edge_in_path]);
