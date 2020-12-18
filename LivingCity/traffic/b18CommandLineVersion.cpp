@@ -1,3 +1,4 @@
+#pragma once
 #include <QString>
 #include <string>
 
@@ -9,9 +10,9 @@
 #include "qcoreapplication.h"
 
 #include "sp/graph.h"
-#include "accessibility.h"
 #include "traffic/b18TrafficSP.h"
 #include "../roadGraphB2018Loader.h"
+#include "accessibility.h"
 
 #ifdef B18_RUN_WITH_GUI
 #include "b18TestSimpleRoadAndOD.h"
@@ -30,7 +31,7 @@ void B18CommandLineVersion::runB18Simulation() {
   bool usePrevPaths = settings.value("USE_PREV_PATHS", false).toBool();
 
   QString networkPath = settings.value("NETWORK_PATH").toString();
-  std::string networkPathSP = networkPath.toStdString();
+  const std::string networkPathSP = networkPath.toStdString();
 
   bool addRandomPeople = settings.value("ADD_RANDOM_PEOPLE", true).toBool();
   int limitNumPeople = settings.value("LIMIT_NUM_PEOPLE", -1).toInt(); // -1
@@ -74,9 +75,9 @@ void B18CommandLineVersion::runB18Simulation() {
   B18TrafficSimulator b18TrafficSimulator(deltaTime, &cg.roadGraph, simParameters);
   
   const bool directed = true;
-  auto street_graph = std::make_shared<abm::Graph>(directed, networkPathSP);
+  const std::shared_ptr<abm::Graph>& street_graph = std::make_shared<abm::Graph>(directed, networkPathSP);
   std::vector<abm::graph::edge_id_t> all_paths;
-  vector<vector<int>> all_paths_ch;
+  std::vector<std::vector<int>> all_paths_ch;
   std::string odFileName = RoadGraphB2018::loadABMGraph(networkPathSP, odDemandPath, street_graph, (int) startDemandH, (int) endDemandH);
   const auto all_od_pairs_ = B18TrafficSP::read_od_pairs(odFileName, std::numeric_limits<int>::max());
   const auto dep_times = B18TrafficSP::read_dep_times(odFileName);
@@ -119,13 +120,12 @@ void B18CommandLineVersion::runB18Simulation() {
       sources.reserve(street_graph->edges_.size());
       targets.reserve(street_graph->edges_.size());
 
-    B18TrafficSP::filterODByHour(all_od_pairs_,
-                                        dep_times,
-                                        startSimulationH * 3600,
-                                        newEndTimeH,
-                                        filtered_od_pairs_,
-                                        filtered_dep_times_);
-
+      B18TrafficSP::filterODByHour(all_od_pairs_,
+                                  dep_times,
+                                  startSimulationH * 3600,
+                                  newEndTimeH,
+                                  filtered_od_pairs_,
+                                  filtered_dep_times_);
 
       for (int x = 0; x < filtered_od_pairs_.size(); x++) {
         sources.emplace_back(filtered_od_pairs_[x][0]);

@@ -7,7 +7,6 @@ inline void abm::Graph::add_edge(
     std::vector<float> edge_vals, abm::graph::vertex_t edgeid = std::numeric_limits<abm::graph::vertex_t>::max()) {
     abm::graph::weight_t weight = edge_vals[0] / edge_vals[2];
 	//abm::graph::weight_t weight = edge_vals[0];
-
 	/*
     abm::graph::weight_t weight = 1,
     abm::graph::vertex_t edgeid =

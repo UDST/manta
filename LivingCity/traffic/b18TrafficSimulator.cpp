@@ -1,3 +1,4 @@
+#pragma once
 #include "b18TrafficSimulator.h"
 
 #include "src/benchmarker.h"
@@ -16,6 +17,7 @@
 #include "roadGraphB2018Loader.h"
 #include <thread>
 #include "accessibility.h"
+
 
 #define DEBUG_TRAFFIC 0
 #define DEBUG_SIMULATOR 0
@@ -111,7 +113,9 @@ void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
 //////////////////////////////////////////////////
 void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
     bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_,
-    std::vector<abm::graph::edge_id_t> paths_SP, const parameters & simParameters, int increment, std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs, std::vector<float> dep_times) {
+    std::vector<abm::graph::edge_id_t> paths_SP, const parameters & simParameters,
+    int increment, std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs,
+    std::vector<float> dep_times) {
   Benchmarker passesBench("Simulation passes");
   Benchmarker finishCudaBench("Cuda finish");
   Benchmarker laneMapCreation("Lane_Map_creation", true);
@@ -272,8 +276,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
               << ">  Number of threads per block: " << threadsPerBlock
               << std::endl;
 
-    int iter_printout = 7200;
-    int iter_printout_index = 0;
+    int increment = 7200;
+    int increment_index = 0;
     int ind = 0;
     std::cerr
       << "Running main loop from " << (startTime / 3600.0f)
@@ -305,7 +309,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         getDataCudatrafficPersonAndEdgesData.startMeasuring();
         getDataCudatrafficPersonAndEdgesData.stopAndEndBenchmark();
 
-        Benchmarker allEdgesVelBenchmark("all_edges_vel_" + std::to_string(iter_printout_index), true);
+        Benchmarker allEdgesVelBenchmark("all_edges_vel_" + std::to_string(increment_index), true);
         allEdgesVelBenchmark.startMeasuring();
         int index = 0;
         std::vector<float> avg_edge_vel(graph_->edges_.size());
@@ -315,30 +319,30 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
           if (edgesData[ind].curr_cum_vel != 0) {
             avg_edge_vel[index] = edgesData[ind].curr_cum_vel / edgesData[ind].curr_iter_num_cars;// * 2.23694;
             float new_duration = edgesData[ind].length / avg_edge_vel[index];
-          
-          graph_->update_edge(std::get<0>(std::get<0>(x)), std::get<1>(std::get<0>(x)), edgesData[ind].duration);
+            // graph_->update_edge(std::get<0>(std::get<0>(x)), std::get<1>(std::get<0>(x)), edgesData[ind].duration);
           }
-
           index++;
         }
         
         //save avg_edge_vel vector to file
-        std::string name = "./all_edges_vel_" + std::to_string(iter_printout_index) + ".txt";
+        std::string name = "./all_edges_vel_" + std::to_string(increment_index) + ".txt";
         std::ofstream output_file(name);
         std::ostream_iterator<float> output_iterator(output_file, "\n");
         std::copy(avg_edge_vel.begin(), avg_edge_vel.end(), output_iterator);
         allEdgesVelBenchmark.stopAndEndBenchmark();
 
-        iter_printout_index++;
+        increment_index++;
 
         timerLoop.restart();
-
+          
         //filter the next set of od pair/departures in the next increment
-        float startTime = startTimeH + (count_iters * deltaTime) / 3600;
-        printf("iteration # = %d\n", count_iters);
-        newEndTimeH = startTime + (increment * deltaTime) / 3600;
+        float startTime = startTimeH + (increment_index * deltaTime) / 3600;
+        printf("iteration # = %d\n", increment_index);
+        float newEndTimeH = startTime + (increment_index * deltaTime) / 3600;
         printf("filtered start time = %f, filtered end time = %f\n", startTime, newEndTimeH);
 
+        std::vector<std::array<abm::graph::vertex_t, 2>> filtered_od_pairs_;
+        std::vector<float> filtered_dep_times_;
         B18TrafficSP::filterODByHour(all_od_pairs,
                                         dep_times,
                                         startTime,
@@ -347,10 +351,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
                                         filtered_dep_times_);
         printf("filtered od pairs size = %d\n", filtered_od_pairs_.size());
 
-
-
         //re-compute the routes
-        vector<vector<int>> all_paths_ch;
+        std::vector<std::vector<int>> all_paths_ch;
         std::vector<std::vector<long>> edge_vals;
 
         std::vector<std::vector<double>> edge_weights;
@@ -360,7 +362,6 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         std::vector<long> targets;
         sources.reserve(graph_->edges_.size());
         targets.reserve(graph_->edges_.size());
-
 
         for (int x = 0; x < filtered_od_pairs_.size(); x++) {
             sources.emplace_back(filtered_od_pairs_[x][0]);
@@ -381,16 +382,19 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
             //std::cout << "origin = " << sources[x] << " \n";
             //std::cout << "Start node id = " << edge_nodes[0] << " End node id = " << edge_nodes[1] << "\n";
         }
+
         edge_weights.emplace_back(edge_weights_inside_vec);
         std::cout << "# nodes = " << graph_->vertices_data_.size() << "\n";
 
+        Benchmarker routingCH("Routing_CH", true);
+        Benchmarker CHoutputNodesToEdgesConversion("CH_output_nodes_to_edges_conversion", true);
         routingCH.startMeasuring();
         MTC::accessibility::Accessibility *graph_ch = new MTC::accessibility::Accessibility((int) graph_->vertices_data_.size(), edge_vals, edge_weights, false);
-
+        
         all_paths_ch = graph_ch->Routes(sources, targets, 0);
         routingCH.stopAndEndBenchmark();
         std::cout << "# of paths = " << all_paths_ch.size() << " \n";
-
+        
         CHoutputNodesToEdgesConversion.startMeasuring();
         //convert from nodes to edges
         for (int i=0; i < all_paths_ch.size(); i++) {
@@ -403,16 +407,15 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
             paths_SP.emplace_back(-1);
         }
         CHoutputNodesToEdgesConversion.stopAndEndBenchmark();
-
-        
         //clear the current indexPathVec and refill it with the new paths up until endTimeH
         //indexPathVec.clear();
-        B18TrafficSP::convertVector(paths_SP, indexPathVec, edgeDescToLaneMapNumSP, graph_);
-        
+        B18TrafficSP::convertVector(paths_SP, indexPathVec, edgeIdToLaneMapNum, graph_);
+
         // re-init cuda with new data structures
-        /*TODO(pavan, juli): there's a problem here. we don't want it to re-init trafficPersonVec. Really, we just want it to re-init edgesData*/
+        //TODO(pavan, juli): there's a problem here. we don't want it to re-init trafficPersonVec. Really, we just want it to re-init edgesData
         QTime timer_init_cuda;
         timer_init_cuda.start();
+        bool firstInit = true; // TODO: properly define this boolean's value
         b18InitCUDA(firstInit, trafficPersonVec,
                   indexPathVec, edgesData, laneMap, trafficLights, intersections, startTimeH, endTimeH,
                   accSpeedPerLinePerTimeInterval,

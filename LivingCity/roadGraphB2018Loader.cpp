@@ -2,7 +2,7 @@
 *		@desc Class to load the B2018 road graph
 *		@author igarciad
 ************************************************************************************************/
-
+#pragma once
 #include <QHash>
 #include <QVector2D>
 #include <stdexcept>
