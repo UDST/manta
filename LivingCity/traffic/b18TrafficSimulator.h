@@ -78,7 +78,7 @@ class B18TrafficSimulator {
     bool useJohnsonRouting,
     bool useSP, const std::shared_ptr<abm::Graph>& graph_,
     std::vector<abm::graph::edge_id_t> paths_SP, const parameters & simParameters,
-    int increment, std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs,
+    const int rerouteIncrementMins, std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs,
     std::vector<float> dep_times);
 
   // Lanes

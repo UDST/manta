@@ -46,12 +46,25 @@ class B18TrafficSP {
   
   static std::vector<float> read_dep_times(const std::string& filename);
 
-  static void filterODByHour(
-    std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs,
-    std::vector<float> dep_times,
-    float start_time, float end_time,
-    std::vector<std::array<abm::graph::vertex_t, 2>> & filtered_od_pairs_,
-    std::vector<float> & filtered_dep_times_);
+  static std::vector<abm::graph::edge_id_t> RoutingWrapper(
+  const std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_,
+  const std::shared_ptr<abm::Graph>& street_graph,
+  const std::vector<float>& dep_times,
+  const float start_time_mins,
+  const float end_time_mins);
+
+  static void initialize_person_to_init_edge(
+    std::vector<abm::graph::edge_id_t>& all_paths,
+    const std::shared_ptr<abm::Graph>& street_graph);
+
+  static void filterODByTimeRange(
+    const std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs,
+    const std::vector<float> dep_times,
+    const float start_time_mins,
+    const float end_time_mins,
+    std::vector<abm::graph::vertex_t>& filtered_od_pairs_sources_,
+    std::vector<abm::graph::vertex_t>& filtered_od_pairs_targets_,
+    std::vector<float>& filtered_dep_times_);
 
   static void convertVector(std::vector<abm::graph::edge_id_t> paths_SP, std::vector<uint>& indexPathVec, std::vector<uint> &edgeIdToLaneMapNum, const std::shared_ptr<abm::Graph>& graph_);
 
