@@ -4,8 +4,8 @@
 namespace abm {
 namespace graph {
 //! Vertex id type
-using vertex_t = long long;
-using edge_id_t = long long;
+using vertex_t = long;
+using edge_id_t = int;
 //! Weight type, that can be added with +
 using weight_t = double;
 }  // namespace graph
