@@ -139,7 +139,24 @@ void b18InitCUDA(
     gpuErrchk(cudaMemset(&numVehPerLinePerTimeInterval_d[0], 0, sizeAcc));
   }
   printMemoryUsage();
-}//
+}
+
+void b18updateStructuresCUDA(
+  std::vector<uint> &indexPathVec, 
+  std::vector<LC::B18EdgeData>& edgesData) {
+  std::cout<< ">> b18updateStructuresCUDA" << std::endl;
+
+  //indexPathVec
+  size_t sizeIn = indexPathVec.size() * sizeof(uint);
+  cudaFree(indexPathVec_d);
+  gpuErrchk(cudaMalloc((void **) &indexPathVec_d, sizeIn));
+  gpuErrchk(cudaMemcpy(indexPathVec_d, indexPathVec.data(), sizeIn, cudaMemcpyHostToDevice));
+  /*{//edgeData
+    size_t sizeD = edgesData.size() * sizeof(LC::B18EdgeData);
+    gpuErrchk(cudaMemcpy(edgesData_d, edgesData.data(), sizeD, cudaMemcpyHostToDevice));
+  }*/
+  printMemoryUsage();
+}
 
 void b18FinishCUDA(void){
   //////////////////////////////

@@ -156,9 +156,9 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
   const float end_time_mins) {
 
   // --------------------------- preprocessing ---------------------------
-  std::vector<abm::graph::vertex_t> filtered_od_pairs_sources_(street_graph->edges_.size());
-  std::vector<abm::graph::vertex_t> filtered_od_pairs_targets_(street_graph->edges_.size());
-  std::vector<float> filtered_dep_times_(street_graph->edges_.size());
+  std::vector<abm::graph::vertex_t> filtered_od_pairs_sources_;
+  std::vector<abm::graph::vertex_t> filtered_od_pairs_targets_;
+  std::vector<float> filtered_dep_times_;
 
   //filter the next set of od pair/departures in the next increment
   B18TrafficSP::filterODByTimeRange(all_od_pairs_,
@@ -168,18 +168,20 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
                                     filtered_od_pairs_sources_,
                                     filtered_od_pairs_targets_,
                                     filtered_dep_times_);
-  std::cout << "Simulating trips with dep_time between " << start_time_mins << " and " << end_time_mins << endl;
-  std::cout << "Trips: " << filtered_od_pairs_sources_.size() << std::endl;
+
+  std::cout << "Simulating trips with dep_time between " << start_time_mins << " and " << end_time_mins << std::flush;
+  std::cout << ". Trips in this time range: " << filtered_od_pairs_sources_.size() << "/" << dep_times.size() << std::endl;
 
   std::vector<std::vector<long>> edge_vals;
-  std::vector<std::vector<double>> edge_weights(street_graph->edges_.size());
+  std::vector<std::vector<double>> edge_weights;
+  edge_vals.reserve(street_graph->edges_.size());
+  edge_weights.reserve(street_graph->edges_.size());
   //get the edge lengths
   std::vector<double> edge_weights_inside_vec;
   for (auto const& x : street_graph->edges_) {
-    double edge_impedance = std::get<1>(x)->second[0];
-    //TODO(pavan, juli): also retrieve the speed limit of the edge and then we can divide to get time
-    edge_weights_inside_vec.emplace_back(edge_impedance);
-    //std::cout << "edge length = " << edge_impedance << " \n";
+    double metersLength = std::get<1>(x)->second[0];
+    edge_weights_inside_vec.emplace_back(metersLength);
+    //std::cout << "edge length = " << metersLength << " \n";
 
     std::vector<long> edge_nodes = {std::get<0>(x.first), std::get<1>(x.first)};
     edge_vals.emplace_back(edge_nodes);
@@ -187,7 +189,7 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
     //std::cout << "Start node id = " << edge_nodes[0] << " End node id = " << edge_nodes[1] << "\n";
   }
   edge_weights.emplace_back(edge_weights_inside_vec);
-  std::cout << "# nodes = " << street_graph->vertices_data_.size() << "\n";
+  std::cout << "# nodes = " << street_graph->vertices_data_.size() << std::endl;
 
   // --------------------------- routing ---------------------------
 
@@ -196,7 +198,7 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
   MTC::accessibility::Accessibility *graph_ch = new MTC::accessibility::Accessibility((int) street_graph->vertices_data_.size(), edge_vals, edge_weights, false);
   std::vector<std::vector<abm::graph::edge_id_t> > all_paths_ch = graph_ch->Routes(filtered_od_pairs_sources_, filtered_od_pairs_targets_, 0);
   routingCH.stopAndEndBenchmark();
-  std::cout << "# of paths = " << all_paths_ch.size() << " \n";
+  std::cout << "# of paths = " << all_paths_ch.size() << std::endl;
 
   // --------------------------- postprocessing ---------------------------
 

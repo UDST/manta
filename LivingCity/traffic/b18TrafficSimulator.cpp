@@ -232,8 +232,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     initCudaBench.stopAndEndBenchmark();
 
     simulateBench.startMeasuring();
-    float startTime = startTimeH * 3600.0f; //7.0f
-    float endTime = endTimeH * 3600.0f; //8.0f//10.0f
+    float startTimeSecs = startTimeH * 3600.0f; //7.0f
+    float endTimeSecs = endTimeH * 3600.0f; //8.0f//10.0f
 
     float currentTime = 23.99f * 3600.0f;
 
@@ -251,11 +251,11 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     int numInt = currentTime / deltaTime;//floor
     currentTime = numInt * deltaTime;
     uint steps = 0;
-    steps = (currentTime - startTime) / deltaTime;
+    steps = (currentTime - startTimeSecs) / deltaTime;
 
     // start as early as starting time
-    if (currentTime < startTime) { //as early as the starting time
-      currentTime = startTime;
+    if (currentTime < startTimeSecs) { //as early as the starting time
+      currentTime = startTimeSecs;
     }
 
     QTime timer;
@@ -279,30 +279,26 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     int increment_index = 0;
     int ind = 0;
     std::cerr
-      << "Running main loop from " << (startTime / 3600.0f)
-      << " to " << (endTime / 3600.0f)
+      << "Running main loop from " << (startTimeSecs / 3600.0f)
+      << " to " << (endTimeSecs / 3600.0f)
       << " with " << trafficPersonVec.size() << " person..."
       << std::endl;
       
 
-    while (currentTime < endTime) {
+    while (currentTime < endTimeSecs) {
       //std::cout << "Current Time " << currentTime << "\n";
       //std::cout << "count " << count << "\n";
       count++;
       if (count % 1800 == 0) {
         std::cerr << std::fixed << std::setprecision(2) 
           << "Current time: " << (currentTime / 3600.0f)
-          << " (" << (100.0f - (100.0f * (endTime - currentTime) / (endTime - startTime))) << "%)"
+          << " (" << (100.0f - (100.0f * (endTimeSecs - currentTime) / (endTimeSecs - startTimeSecs))) << "%)"
           << " with " << (timerLoop.elapsed() / 1800.0f) << " ms per simulation step (average over 1800)"
           << "\r";
         timerLoop.restart();
       }
 
-
-      if (count % increment != 0) {
-        b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
-                             intersections.size(), deltaTime, simParameters, numBlocks, threadsPerBlock);
-      } else {
+      if (count % increment == 0) {
         Benchmarker getDataCudatrafficPersonAndEdgesData("Get data trafficPersonVec and edgesData (first time)");
         b18GetDataCUDA(trafficPersonVec, edgesData);
         getDataCudatrafficPersonAndEdgesData.startMeasuring();
@@ -337,35 +333,26 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         std::copy(avg_edge_vel.begin(), avg_edge_vel.end(), output_iterator);
         allEdgesVelBenchmark.stopAndEndBenchmark();
 
-        increment_index++;
-        timerLoop.restart();
           
         // routingwrapper for the next batch of trips
-        const float startTimeMins = startTimeH * 3600 + (increment_index + 1) * rerouteIncrementMins;
+        const float startTimeMins = startTimeH * 60 + (increment_index + 1) * rerouteIncrementMins;
         const float endTimeMins = startTimeMins  + rerouteIncrementMins;
         paths_SP = B18TrafficSP::RoutingWrapper(all_od_pairs, graph_, dep_times, startTimeMins, endTimeMins);
 
-
-        //clear the current indexPathVec and refill it with the new paths up until endTimeH
-        //indexPathVec.clear();
         B18TrafficSP::convertVector(paths_SP, indexPathVec, edgeIdToLaneMapNum, graph_);
 
-        // re-init cuda with new data structures
-        //TODO(pavan, juli): there's a problem here. we don't want it to re-init trafficPersonVec. Really, we just want it to re-init edgesData
-        QTime timer_init_cuda;
-        timer_init_cuda.start();
-        bool firstInit = true; // TODO: properly define this boolean's value
-        b18InitCUDA(firstInit, trafficPersonVec,
-                  indexPathVec, edgesData, laneMap, trafficLights, intersections, startTimeH, endTimeH,
-                  accSpeedPerLinePerTimeInterval,
-                  numVehPerLinePerTimeInterval, deltaTime);
-        printf("[TIME] Init cuda = %d ms\n", timer_init_cuda.elapsed());
+        Benchmarker benchmarkb18updateStructuresCUDA("b18updateStructuresCUDA");
+        benchmarkb18updateStructuresCUDA.startMeasuring();
+        b18updateStructuresCUDA(indexPathVec, edgesData);
+        benchmarkb18updateStructuresCUDA.stopAndEndBenchmark();
 
-        //simulate again
-        b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
-                             intersections.size(), deltaTime, simParameters, numBlocks, threadsPerBlock);
 
+        increment_index++;
+        timerLoop.restart();
       }
+
+      b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
+                            intersections.size(), deltaTime, simParameters, numBlocks, threadsPerBlock);
 
       #ifdef B18_RUN_WITH_GUI
 
