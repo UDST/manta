@@ -186,9 +186,8 @@ cd LivingCity
 ```
 and then run 
 ```bash
-pytest -s -x tests/systemTestSuite.py
+sh runAllTests.sh
 ```
-Because of the tests' long duration, we recommend using the flag `-s` to show the whole output of the simulation and `-x` to stop at the first failure.
 
 ### Benchmarking / profiling
 In order to obtain a profiling of each component of the simulation, you should run
