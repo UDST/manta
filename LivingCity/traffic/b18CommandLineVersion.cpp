@@ -108,7 +108,6 @@ void B18CommandLineVersion::runB18Simulation() {
     } else {
       const float startTimeMins = startSimulationH * 60;
       const float endTimeMins = startTimeMins + rerouteIncrementMins;
-      cout << "startTime: " << startTimeMins << ", endTime: " << endTimeMins << endl;
       all_paths = B18TrafficSP::RoutingWrapper(all_od_pairs_, street_graph, dep_times, startTimeMins, endTimeMins);
     }
 

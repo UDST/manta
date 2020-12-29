@@ -24,6 +24,8 @@ extern void b18InitCUDA(bool fistInitialization, // crate buffers
                         std::vector<float>& accSpeedPerLinePerTimeInterval,
                         std::vector<float>& numVehPerLinePerTimeInterval,
                         float deltaTime);
+extern void b18updateStructuresCUDA(std::vector<uint> &indexPathVec, 
+                                    std::vector<LC::B18EdgeData>& edgesData);
 extern void b18GetDataCUDA(std::vector<LC::B18TrafficPerson> &trafficPersonVec, std::vector<LC::B18EdgeData> &edgesData);
 extern void b18GetSampleTrafficCUDA(std::vector<float>& accSpeedPerLinePerTimeInterval, 
                                 std::vector<float>& numVehPerLinePerTimeInterval);
