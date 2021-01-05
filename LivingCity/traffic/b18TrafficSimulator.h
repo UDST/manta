@@ -125,7 +125,6 @@ class B18TrafficSimulator {
   void savePeopleAndRoutes(int numOfPass);
   void savePeopleAndRoutesSP(int numOfPass,
     const std::shared_ptr<abm::Graph>& graph_,
-    const std::vector<abm::graph::edge_id_t>& paths_SP,
     int start_time, int end_time);
     
 #ifdef B18_RUN_WITH_GUI

@@ -250,13 +250,13 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
 void B18TrafficSP::convertVector(std::vector<abm::graph::edge_id_t> paths_SP,
   std::vector<uint>& indexPathVec,  std::vector<uint> &edgeIdToLaneMapNum,
   const std::shared_ptr<abm::Graph>& graph_) {
-    for (abm::graph::edge_id_t& edge_in_path: paths_SP) {
-        if (edge_in_path != -1) {
-            indexPathVec.emplace_back(edgeIdToLaneMapNum[edge_in_path]);
-        } else {
-            indexPathVec.emplace_back(-1);
-        }
+  for (abm::graph::edge_id_t& edge_in_path: paths_SP) {
+    if (edge_in_path != -1) {
+      indexPathVec.emplace_back(edgeIdToLaneMapNum[edge_in_path]);
+    } else {
+      indexPathVec.emplace_back(END_OF_PATH);
     }
+  }
 	//std::cout << "indexPathVec size = " << indexPathVec.size() << "\n";
 }
 
