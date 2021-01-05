@@ -13,6 +13,7 @@
 #include "traffic/b18TrafficSP.h"
 #include "../roadGraphB2018Loader.h"
 #include "accessibility.h"
+#include <stdexcept>
 
 #ifdef B18_RUN_WITH_GUI
 #include "b18TestSimpleRoadAndOD.h"
@@ -41,6 +42,11 @@ void B18CommandLineVersion::runB18Simulation() {
   const float endSimulationH = settings.value("END_HR", 12).toFloat();
   const bool showBenchmarks = settings.value("SHOW_BENCHMARKS", false).toBool();
   int rerouteIncrementMins = settings.value("REROUTE_INCREMENT", 60).toInt(); //in minutes
+
+  if (rerouteIncrementMins <= 0){
+    throw std::invalid_argument("Invalid reroute increment value.");
+  }
+    
   const parameters simParameters {
       settings.value("a",0.557040909258405).toDouble(),
       settings.value("b",2.9020578588167).toDouble(),
@@ -91,7 +97,7 @@ void B18CommandLineVersion::runB18Simulation() {
 	  int mpi_rank = 0;
 	  int mpi_size = 1;
     if (usePrevPaths) {
-      // to do: what should prev_paths=true do with reroute increment?
+      throw std::invalid_argument("prev_paths with reroute increment currently disabled.");
       // open file    
       const std::string& pathsFileName = networkPathSP + "all_paths_ch.txt";
       std::cout << "Loading " << pathsFileName << " as paths file\n";
@@ -108,7 +114,9 @@ void B18CommandLineVersion::runB18Simulation() {
     } else {
       const float startTimeMins = startSimulationH * 60;
       const float endTimeMins = startTimeMins + rerouteIncrementMins;
+      cout << "startTime: " << startTimeMins << ", endTime: " << endTimeMins << endl;
       all_paths = B18TrafficSP::RoutingWrapper(all_od_pairs_, street_graph, dep_times, startTimeMins, endTimeMins);
+      std::cout << "paths size for batch #0: " << all_paths.size() << std::endl;
     }
 
     //std::cout << "person_to_init_edge size " << street_graph->person_to_init_edge_.size() << "\n";
