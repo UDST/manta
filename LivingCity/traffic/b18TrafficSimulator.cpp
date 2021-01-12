@@ -161,7 +161,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
           indexPathVec, edgeDescToLaneMapNum, weigthMode, peoplePathSampling[nP]);
       shortestPathBench.stopAndEndBenchmark();
     } else if (useSP) {
-      Benchmarker routesConversionIntoGPUformat("Convert_routes_into_GPU_data_structure_format", true);
+      Benchmarker routesConversionIntoGPUformat("Convert_routes_into_GPU_data_structure_format_batch_0", true);
       routesConversionIntoGPUformat.startMeasuring();
       B18TrafficSP::convertVector(paths_SP, indexPathVec, edgeIdToLaneMapNum, graph_);
       std::cout << "indexPathVec size for batch #0:" << indexPathVec.size() << std::endl;
@@ -337,11 +337,16 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         // routingwrapper for the next batch of trips
         const float startTimeMins = startTimeH * 60 + (increment_index + 1) * rerouteIncrementMins;
         const float endTimeMins = startTimeMins  + rerouteIncrementMins;
-        paths_SP = B18TrafficSP::RoutingWrapper(all_od_pairs, graph_, dep_times, startTimeMins, endTimeMins);
+        paths_SP = B18TrafficSP::RoutingWrapper(all_od_pairs, graph_, dep_times,
+                                                startTimeMins, endTimeMins, increment_index + 1);
 
+        Benchmarker routesConversionIntoGPUformat("Convert_routes_into_GPU_data_structure_format_batch_" +
+                                                  to_string(increment_index+1), true);
+        routesConversionIntoGPUformat.startMeasuring();
         B18TrafficSP::convertVector(paths_SP, indexPathVec, edgeIdToLaneMapNum, graph_);
+        routesConversionIntoGPUformat.stopAndEndBenchmark();
         std::cout << "paths size for batch #" << increment_index + 1 << ": " << paths_SP.size() << std::endl;
-        std::cout << "indexPathVec size for batch #" << indexPathVec.size() << ": " << std::endl;
+        std::cout << "indexPathVec size for batch #" << increment_index + 1 << ": " << indexPathVec.size() << std::endl;
 
         Benchmarker benchmarkb18updateStructuresCUDA("b18updateStructuresCUDA");
         benchmarkb18updateStructuresCUDA.startMeasuring();

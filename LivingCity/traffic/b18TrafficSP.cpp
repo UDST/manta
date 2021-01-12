@@ -153,7 +153,8 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
   const std::shared_ptr<abm::Graph>& street_graph,
   const std::vector<float>& dep_times,
   const float start_time_mins,
-  const float end_time_mins) {
+  const float end_time_mins,
+  int reroute_batch_number) {
 
   // --------------------------- preprocessing ---------------------------
   std::vector<abm::graph::vertex_t> filtered_od_pairs_sources_;
@@ -193,7 +194,7 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
 
   // --------------------------- routing ---------------------------
 
-  Benchmarker routingCH("Routing_CH", true);
+  Benchmarker routingCH("Routing_CH_batch_" + std::to_string(reroute_batch_number), true);
   routingCH.startMeasuring();
   MTC::accessibility::Accessibility *graph_ch = new MTC::accessibility::Accessibility((int) street_graph->vertices_data_.size(), edge_vals, edge_weights, false);
   std::vector<std::vector<abm::graph::edge_id_t> > all_paths_ch = graph_ch->Routes(filtered_od_pairs_sources_, filtered_od_pairs_targets_, 0);
@@ -202,7 +203,8 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
 
   // --------------------------- postprocessing ---------------------------
 
-  Benchmarker CHoutputNodesToEdgesConversion("CH_output_nodes_to_edges_conversion", true);
+  Benchmarker CHoutputNodesToEdgesConversion("CH_output_nodes_to_edges_conversion_batch_" +
+                                              std::to_string(reroute_batch_number), true);
   CHoutputNodesToEdgesConversion.startMeasuring();
   //convert from nodes to edges
   std::vector<abm::graph::edge_id_t> all_paths;

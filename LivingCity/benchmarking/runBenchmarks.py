@@ -40,6 +40,7 @@ def write_options_file(params = None):
                             "END_HR=12",\
                             "SHOW_BENCHMARKS=true",\
                             "OD_DEMAND_FILENAME=od_demand_5to12.csv", \
+                            ""
                             " "])
 
     if params is not None:
@@ -67,16 +68,31 @@ def time_since_epoch_miliseconds():
 def convertMiBtoMB(value):
     return value * 1.049
 
-# ================= Components and resources =================
+def all_values_are_equal(a_dictionary):
+    return all(one_value == list(a_dictionary.values())[0] for one_value in a_dictionary.values())
 
-all_component_names  =  ["Load_network", \
-                "Load_OD_demand_data", \
-                "Routing_CH", \
-                "CH_output_nodes_to_edges_conversion", \
-                "Convert_routes_into_GPU_data_structure_format", \
-                "File_output", \
-                "Lane_Map_creation", \
-                "Microsimulation_in_GPU"]
+def all_elems_in_list_are_equal(a_list):
+    return all(elem == a_list[0] for elem in a_list)
+
+def count_number_of_reroute_increments_in_full_output(full_output_lines):
+    repeated_components_count = {"Routing_CH": 0,
+        "CH_output_nodes_to_edges_conversion": 0,
+        "Convert_routes_into_GPU_data_structure_format": 0}
+
+    for output_line in full_output_lines:
+        for component_name in repeated_components_count.keys():
+            if re.search('<{}'.format(component_name), output_line, flags=0):
+                if re.search('Started', output_line, flags=0):
+                    repeated_components_count[component_name] += 1
+
+    assert all_values_are_equal(repeated_components_count), "Discrepancy in number of repetitions between components"
+    
+    return list(repeated_components_count.values())[0]
+
+def merge_dictionaries(a, b):
+    return {**a, **b}
+
+# ================= Components and resources =================
 
 all_resource_names = ["cpu_used", "mem_used", "gpu_memory_used", "Elapsed_time_(ms)"]
 
@@ -124,13 +140,26 @@ def benchmark_one_run(number_of_run, benchmark_name, network_path):
     
     # ============== Parse the simulation benchmarks =================
     log("Parsing the simulation benchmarks...")
-    all_components = { "Load_network":{}, "Load_OD_demand_data":{}, "Routing_CH":{}, "CH_output_nodes_to_edges_conversion":{}, "Convert_routes_into_GPU_data_structure_format":{}, "File_output":{}, "Lane_Map_creation":{}, "Microsimulation_in_GPU":{}}
+    
+    full_output_lines = full_output[2:].split("\\n")
+    number_of_reroute_increments = count_number_of_reroute_increments_in_full_output(full_output_lines)
 
-    log("Showing full output...")
-    full_output_printable = full_output.replace("\\n", "\n")
-    print(full_output_printable)
-    for output_line in full_output[2:].split("\\n"):
-        for component_name,component_timestamp in all_components.items():
+    repeated_components = {"{}{}".format(component, i): {}
+        for i in range(number_of_reroute_increments)
+        for component in ["Routing_CH_batch_",
+                          "CH_output_nodes_to_edges_conversion_batch_",
+                          "Convert_routes_into_GPU_data_structure_format_batch_"] }
+
+    not_repeated_components = {"Load_network":{},
+                                "Load_OD_demand_data":{},
+                                "File_output":{},
+                                "Lane_Map_creation":{},
+                                "Microsimulation_in_GPU":{}}
+
+    all_components = merge_dictionaries(repeated_components, not_repeated_components)
+    
+    for output_line in full_output_lines:
+        for component_name, component_timestamp in all_components.items():
             if re.search('<{}>'.format(component_name), output_line, flags=0):
                 time_since_epoch = int(output_line.split()[-1]) # the last word is the time since epoch
                 if re.search('Started', output_line, flags=0):
@@ -138,8 +167,12 @@ def benchmark_one_run(number_of_run, benchmark_name, network_path):
                 if re.search('Ended', output_line, flags=0):
                     component_timestamp["Ended"] = time_since_epoch
 
-    # ================= Combine and process resource polls and parsed benchmarks =================
-    log("Combining and parsing proces resource polls and parsed benchmarks...")
+    log("Showing full output...")
+    full_output_printable = full_output.replace("\\n", "\n")
+    print(full_output_printable)
+
+    # ================= Combine resource polling and parsed benchmarks =================
+    log("Combining process resource polling and parsed benchmarks...")
     for component_name, component_resources in all_components.items():
         component_resources["cpu_used"] = []
         component_resources["mem_used"] = []
@@ -164,7 +197,7 @@ def benchmark_one_run(number_of_run, benchmark_name, network_path):
     # ================= Write it down to a csv =================
     log("(CPU data is in %, memory is in GB, GPU memory is in MB, elapsed time in ms)")
     with open("benchmarking/{}.csv".format(benchmark_name),"a") as benchmarks_file:
-        for component_name in all_component_names:
+        for component_name in all_components:
             line_to_write = [str(number_of_run), component_name]
             for one_resource in all_resource_names:
                 if one_resource == "Elapsed_time_(ms)":
@@ -183,7 +216,6 @@ def benchmark_one_run(number_of_run, benchmark_name, network_path):
         line_to_write_idle += [str(resources_timestamps_idle[resource]) for resource in all_resource_names]
         idle_line_to_write_string = ','.join(line_to_write_idle)
         benchmarks_file.write(idle_line_to_write_string + "\n")
-
     # ================ Metadata ================
     log("Saving metadata...")
     metadata = {'elapsed_time_simulation': elapsed_time_simulation}
@@ -227,6 +259,34 @@ def load_csv_and_generate_benchmark_report(benchmark_name = "benchmarks", all_in
 
     # ======================= Plot benchmarks =======================
     log("Plotting benchmarks")
+
+    df = pd.read_csv('benchmarking/{}.csv'.format(benchmark_name))
+    repeated_components =   ["Routing_CH",
+                            "CH_output_nodes_to_edges_conversion",
+                            "Convert_routes_into_GPU_data_structure_format"]
+
+    def get_rows_with_component_prefix(df, prefix):
+        return df[df['Component'].str[:len(prefix)].str.contains(prefix)]
+    
+
+    repeated_components_count = [len(get_rows_with_component_prefix(df, prefix))
+                            for prefix in repeated_components]
+
+    
+    assert all_elems_in_list_are_equal(repeated_components_count), \
+        "Discrepancy between repeated components in benchmark file."
+
+    for component in repeated_components:
+        for batch_number in range(repeated_components_count[0]):
+            replace_dictionary = {'Component':'{}_batch_{}'.format(component, batch_number)}
+            df = df.replace(replace_dictionary, component)
+
+    df = df.groupby(['number_of_run', 'Component']).agg({'cpu_used': ['mean'],'mem_used': ['mean'],'gpu_memory_used': ['mean'],'Elapsed_time_(ms)': ['mean']})
+
+    df = df.reset_index()
+    df.columns = ['number_of_run', 'Component', 'cpu_used', 'mem_used', 'gpu_memory_used', 'Elapsed_time_(ms)']
+    
+
     readable_components = { \
             "Load_network":"Load network", \
             "Load_OD_demand_data":"Load OD demand", \
@@ -240,14 +300,12 @@ def load_csv_and_generate_benchmark_report(benchmark_name = "benchmarks", all_in
 
     sns.set_theme(style="whitegrid")
 
-    df = pd.read_csv('benchmarking/{}.csv'.format(benchmark_name))
 
     if all_in_one_plot:
         fig_benchmarks = plt.figure(figsize=(18,9))
 
     # change from ms to secs
     df["Elapsed_time_(ms)"] = df["Elapsed_time_(ms)"].apply(lambda x: x / 1000)
-
     resources = [("RAM usage (GB)", "mem_used", "GB"), ("CPU usage (%)", "cpu_used", "%"), \
         ("GPU memory usage (MB)", "gpu_memory_used", "MB"), ("Elapsed time (secs)", "Elapsed_time_(ms)", "secs")]
     for i, (title, resource_name, resource_axis) in enumerate(resources):
@@ -441,4 +499,4 @@ if __name__ == "__main__":
     benchmark_multiple_runs_and_save_csv(argument_values['number_of_runs'],
                                         benchmark_name = argument_values['benchmark_name'])
     load_csv_and_generate_benchmark_report(benchmark_name = argument_values['benchmark_name'],
-                                            all_in_one_plot = True)
+                                            all_in_one_plot = False)
