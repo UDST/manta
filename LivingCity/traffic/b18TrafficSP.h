@@ -51,7 +51,8 @@ class B18TrafficSP {
     const std::shared_ptr<abm::Graph>& street_graph,
     const std::vector<float>& dep_times,
     const float start_time_mins,
-    const float end_time_mins);
+    const float end_time_mins,
+    int reroute_batch_number);
 
   static void initialize_person_to_init_edge(
     std::vector<abm::graph::edge_id_t>& all_paths,

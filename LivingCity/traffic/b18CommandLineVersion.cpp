@@ -79,18 +79,18 @@ void B18CommandLineVersion::runB18Simulation() {
   const std::shared_ptr<abm::Graph>& street_graph = std::make_shared<abm::Graph>(directed, networkPathSP);
   std::vector<abm::graph::edge_id_t> all_paths;
   std::vector<std::vector<int>> all_paths_ch;
+  loadNetwork.startMeasuring();
   std::string odFileName = RoadGraphB2018::loadABMGraph(networkPathSP, odDemandPath, street_graph, (int) startSimulationH, (int) endSimulationH);
+  loadNetwork.stopAndEndBenchmark();
+
+  loadODDemandData.startMeasuring();
   const std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_ = B18TrafficSP::read_od_pairs(odFileName, std::numeric_limits<int>::max());
   const std::vector<float> dep_times = B18TrafficSP::read_dep_times(odFileName);
+  loadODDemandData.stopAndEndBenchmark();
   std::vector<std::array<abm::graph::vertex_t, 2>> filtered_od_pairs_;
   std::vector<float> filtered_dep_times_;
   if (useSP) {
 	  //make the graph from edges file and load the OD demand from od file
-    loadNetwork.startMeasuring();
-    loadNetwork.stopAndEndBenchmark();
-    loadODDemandData.startMeasuring();
-    loadODDemandData.stopAndEndBenchmark();
-
 	  printf("# of OD pairs = %d\n", all_od_pairs_.size());
 
 	  //compute the routes for every OD pair
@@ -115,7 +115,8 @@ void B18CommandLineVersion::runB18Simulation() {
       const float startTimeMins = startSimulationH * 60;
       const float endTimeMins = startTimeMins + rerouteIncrementMins;
       cout << "startTime: " << startTimeMins << ", endTime: " << endTimeMins << endl;
-      all_paths = B18TrafficSP::RoutingWrapper(all_od_pairs_, street_graph, dep_times, startTimeMins, endTimeMins);
+      const int initialBatchNumber = 0;
+      all_paths = B18TrafficSP::RoutingWrapper(all_od_pairs_, street_graph, dep_times, startTimeMins, endTimeMins, initialBatchNumber);
       std::cout << "paths size for batch #0: " << all_paths.size() << std::endl;
     }
 
