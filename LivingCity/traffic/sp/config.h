@@ -3,6 +3,7 @@
 #ifndef _ABM_CONFIG_H_
 #define _ABM_CONFIG_H_
 #define END_OF_PATH UINT_MAX
+#define FLOAT_COMPARISON_EPSILON 0.0001
 
 namespace abm {
 namespace graph {

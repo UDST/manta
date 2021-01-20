@@ -83,7 +83,7 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
   int numBins = 31 / binLength;//maxlength is 26km
   std::vector<int> bins(numBins, 0);
   for (auto const& x : graph_->edges_) {
-	  const float metersLength = std::get<1>(x)->second[0];
+	  const float metersLength = std::get<1>(x)->second.length;
 	  const int binN = (metersLength / 1000.0f) / binLength;
 	  assert(0 <= binN && binN < numBins && "Edge over max length");
 	  bins[binN]++;
@@ -98,12 +98,12 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
   float maxLength = 0;
   int maxNumLanes = 0;
   for (auto const& x : graph_->edges_) {
-	  const int numLanes = std::get<1>(x)->second[1];
+	  const int numLanes = std::get<1>(x)->second.lanes;
 
     if (numLanes == 0) { continue; }
 
-    edgesData[tNumMapWidth].length = std::get<1>(x)->second[0];
-    edgesData[tNumMapWidth].maxSpeedMperSec = std::get<1>(x)->second[2];
+    edgesData[tNumMapWidth].length = std::get<1>(x)->second.length;
+    edgesData[tNumMapWidth].maxSpeedMperSec = std::get<1>(x)->second.max_speed_limit_mps;
 
     if (maxLength < edgesData[tNumMapWidth].length) { maxLength = edgesData[tNumMapWidth].length; }
     if (maxNumLanes < numLanes) { maxNumLanes = numLanes; }
@@ -197,7 +197,7 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
 
     for (const auto& edge : graph_->vertex_out_edges_[std::get<0>(vertex)]) {
       //if (inRoadGraph.myRoadGraph_BI[*Oei].numberOfLanes == 0) { continue; }
-      if (edge->second[1] == 0) { continue; }
+      if (edge->second.lanes == 0) { continue; }
 
       p0 = graph_->vertices_data_[edge->first.first];
       p1 = graph_->vertices_data_[edge->first.second];
@@ -223,7 +223,7 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
     int numInEdges = 0;
 
     for (const auto& edge : graph_->vertex_in_edges_[std::get<0>(vertex)]) {
-      if (edge->second[1] == 0) { continue; }
+      if (edge->second.lanes == 0) { continue; }
 
       p0 = graph_->vertices_data_[edge->first.first];
       p1 = graph_->vertices_data_[edge->first.second];

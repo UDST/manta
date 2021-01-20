@@ -123,7 +123,9 @@ class B18TrafficSimulator {
 
   void calculateAndDisplayTrafficDensity(int numOfPass);
   void savePeopleAndRoutes(int numOfPass);
-  void savePeopleAndRoutesSP(int numOfPass,
+  void savePeopleAndRoutesSP(
+    std::vector<abm::graph::edge_id_t> cumulative_paths_SP,
+    int numOfPass,
     const std::shared_ptr<abm::Graph>& graph_,
     int start_time, int end_time);
     

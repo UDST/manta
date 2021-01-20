@@ -26,10 +26,6 @@ DistanceProperty;
 typedef DistanceProperty::matrix_type DistanceMatrix;
 typedef DistanceProperty::matrix_map_type DistanceMatrixMap;
 
-bool myfunction (std::array<abm::graph::vertex_t, 2> i, std::array<abm::graph::vertex_t, 2> j) {
-  return (i==j);
-}
-
 // Convert OD pairs to SP graph format
 std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::make_od_pairs(std::vector<B18TrafficPerson> trafficPersonVec, 
 									     int nagents) {
@@ -155,12 +151,14 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
   const float start_time_mins,
   const float end_time_mins,
   int reroute_batch_number) {
+  std::cout << "at routing function" << std::endl;
 
   // --------------------------- preprocessing ---------------------------
   std::vector<abm::graph::vertex_t> filtered_od_pairs_sources_;
   std::vector<abm::graph::vertex_t> filtered_od_pairs_targets_;
   std::vector<float> filtered_dep_times_;
 
+  std::cout << "filtering..." << std::endl;
   //filter the next set of od pair/departures in the next increment
   B18TrafficSP::filterODByTimeRange(all_od_pairs_,
                                     dep_times,
@@ -170,35 +168,46 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
                                     filtered_od_pairs_targets_,
                                     filtered_dep_times_);
 
+  std::cout << "done filtering." << std::endl;
+  
+
   std::cout << "Simulating trips with dep_time between " << start_time_mins << " and " << end_time_mins << std::flush;
   std::cout << ". Trips in this time range: " << filtered_od_pairs_sources_.size() << "/" << dep_times.size() << std::endl;
 
-  std::vector<std::vector<long>> edge_vals;
-  std::vector<std::vector<double>> edge_weights;
-  edge_vals.reserve(street_graph->edges_.size());
-  edge_weights.reserve(street_graph->edges_.size());
-  //get the edge lengths
-  std::vector<double> edge_weights_inside_vec;
+  std::vector<std::vector<long>> edges_routing;
+  std::vector<std::vector<double>> edge_weights_routing;
+  edges_routing.reserve(street_graph->edges_.size());
+  edge_weights_routing.reserve(street_graph->edges_.size());
+  std::vector<double> edge_weights_routing_inside_vec;
   for (auto const& x : street_graph->edges_) {
-    double metersLength = std::get<1>(x)->second[0];
-    edge_weights_inside_vec.emplace_back(metersLength);
-    //std::cout << "edge length = " << metersLength << " \n";
+    // build node routes vector
+    auto nodes = x.first;
+    auto nodeFrom = std::get<0>(nodes);
+    auto nodeTo = std::get<1>(nodes);;
+    std::vector<long> edge_nodes = {nodeFrom, nodeTo};
+    edges_routing.emplace_back(edge_nodes);
 
-    std::vector<long> edge_nodes = {std::get<0>(x.first), std::get<1>(x.first)};
-    edge_vals.emplace_back(edge_nodes);
-    //std::cout << "origin = " << sources[x] << " \n";
-    //std::cout << "Start node id = " << edge_nodes[0] << " End node id = " << edge_nodes[1] << "\n";
+    // build weight vector
+    std::shared_ptr<abm::Graph::Edge> edge = x.second;
+    abm::Edge_vals edge_vals = edge->second;
+    double edge_weight = edge_vals.weight;
+    assert(edge_weight > 0);
+    edge_weights_routing_inside_vec.emplace_back(edge_weight);
   }
-  edge_weights.emplace_back(edge_weights_inside_vec);
+  edge_weights_routing.emplace_back(edge_weights_routing_inside_vec);
   std::cout << "# nodes = " << street_graph->vertices_data_.size() << std::endl;
 
   // --------------------------- routing ---------------------------
 
   Benchmarker routingCH("Routing_CH_batch_" + std::to_string(reroute_batch_number), true);
   routingCH.startMeasuring();
-  MTC::accessibility::Accessibility *graph_ch = new MTC::accessibility::Accessibility((int) street_graph->vertices_data_.size(), edge_vals, edge_weights, false);
+  std::cout << "initializing accesibility ..." << std::endl;
+  MTC::accessibility::Accessibility *graph_ch = new MTC::accessibility::Accessibility((int) street_graph->vertices_data_.size(), edges_routing, edge_weights_routing, false);
+  std::cout << "running routes ..." << std::endl;
   std::vector<std::vector<abm::graph::edge_id_t> > all_paths_ch = graph_ch->Routes(filtered_od_pairs_sources_, filtered_od_pairs_targets_, 0);
+  std::cout << "routed" << std::endl;
   routingCH.stopAndEndBenchmark();
+
   std::cout << "# of paths = " << all_paths_ch.size() << std::endl;
 
   // --------------------------- postprocessing ---------------------------
