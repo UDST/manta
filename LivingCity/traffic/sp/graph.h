@@ -27,14 +27,20 @@
 #include "config.h"
 
 namespace abm {
+  struct Edge_vals {
+    float length;
+    float lanes;
+    float max_speed_limit_mps; // meters per second
+    abm::graph::weight_t weight;
+  };
 
 //! \brief Graph class to store vertices and edge and compute shortest path
 //! \details Graph class has Priority Queue Dijkstra algorithm for SSSP
 class Graph {
- public:
+  public:
   //! Edge {{v1, v2}, weight}
   using Edge =
-      std::pair<std::pair<graph::vertex_t, graph::vertex_t>, std::vector<float>>;
+      std::pair<std::pair<graph::vertex_t, graph::vertex_t>, abm::Edge_vals>;
 
   //! Construct directed / undirected graph
   //! \param[in] directed Defines if the graph is directed or not
@@ -70,7 +76,7 @@ class Graph {
   //! \param[in] edge_id ID of edge
   //void add_edge(graph::vertex_t vertex1, graph::vertex_t vertex2,
   //              graph::weight_t weight, graph::vertex_t edgeid, int lanes, int speed_mph);
-  void add_edge(graph::vertex_t vertex1, graph::vertex_t vertex2, std::vector<float> edge_vals, graph::vertex_t edgeid);
+  void add_edge(graph::vertex_t vertex1, graph::vertex_t vertex2, Edge_vals edge_vals, graph::vertex_t edgeid);
   //! Update edge of a graph
   //! \param[in] vertex1 ID of vertex1
   //! \param[in] vertex2 ID of vertex2

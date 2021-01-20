@@ -1,18 +1,15 @@
 #include "graph.h"
 #include <string>
+#include <cassert>
 
 // Add edge
 inline void abm::Graph::add_edge(
-    abm::graph::vertex_t vertex1, abm::graph::vertex_t vertex2,
-    std::vector<float> edge_vals, abm::graph::vertex_t edgeid = std::numeric_limits<abm::graph::vertex_t>::max()) {
-    abm::graph::weight_t weight = edge_vals[0]; // todo dynamic paths: delete this line 
-    //abm::graph::weight_t weight = edge_vals[0] / edge_vals[2]; // todo dynamic paths: uncomment this line
-	//abm::graph::weight_t weight = edge_vals[0];
-	/*
-    abm::graph::weight_t weight = 1,
-    abm::graph::vertex_t edgeid =
-        std::numeric_limits<abm::graph::vertex_t>::max(), int lanes = 2, int speed_mph = 30) {
-	*/
+  abm::graph::vertex_t vertex1, abm::graph::vertex_t vertex2,
+  abm::Edge_vals edge_vals,
+  abm::graph::vertex_t edgeid = std::numeric_limits<abm::graph::vertex_t>::max()) {
+
+  edge_vals.weight = edge_vals.length / edge_vals.max_speed_limit_mps;
+
   // Create a map of vertices
   if (vertices_.find(vertex1) == vertices_.end())
     vertices_[vertex1] = vertices_.size();
@@ -23,59 +20,51 @@ inline void abm::Graph::add_edge(
     if (vertex1 > vertex2) std::swap(vertex1, vertex2);
 
   // Create an edge
-  auto edge = std::make_shared<Graph::Edge>(
-      //std::make_pair(std::make_pair(std::make_pair(std::make_pair(vertex1, vertex2), weight), lanes), speed_mph));
-      std::make_pair(std::make_pair(vertex1, vertex2), edge_vals));
-  //printf("edge vertex 1 = %lld, vertex 2 = %lld, weight = %f\n", edge->first.first, edge->first.second, edge->second);
-	//std::cout << "weight = " << edge->second[0] << "lane_num = " << edge->second[1] << "speed = " << edge->second[2] << "\n";
+  auto edge = std::make_shared<Graph::Edge>(std::make_pair(std::make_pair(vertex1, vertex2), edge_vals));
   edges_[std::make_tuple(vertex1, vertex2)] = edge;
   edge_pointer_to_vertices_[edge] = std::make_tuple(vertex1, vertex2);
 
   // Add edge id
   if (edgeid == std::numeric_limits<abm::graph::vertex_t>::max()) {
     edge_ids_[vertex1][vertex2] = this->edgeid_;
-    // Add edge cost
-    edge_costs_[this->edgeid_] = weight;
+    edge_costs_[this->edgeid_] = edge_vals.weight;
     this->edgeid_ += 1;
   } else {
     edge_ids_[vertex1][vertex2] = edgeid;
     edge_ids_to_vertices[edgeid] = std::make_tuple(vertex1, vertex2);
-    // Add edge cost
-    edge_costs_[edgeid] = weight;
+    edge_costs_[edgeid] = edge_vals.weight;
   }
 
   // Vertex 1
   auto vertex1_edges = vertex_edges_[vertex1];
   vertex1_edges.emplace_back(edge);
-  vertex_edges_[vertex1] =
-      std::vector<std::shared_ptr<Graph::Edge>>(vertex1_edges);
+  vertex_edges_[vertex1] = std::vector<std::shared_ptr<Graph::Edge>>(vertex1_edges);
+
   //out edges vertex 1
   auto vertex1_out_edges = vertex_out_edges_[vertex1];
   vertex1_out_edges.emplace_back(edge);
-  vertex_out_edges_[vertex1] =
-      std::vector<std::shared_ptr<Graph::Edge>>(vertex1_out_edges);
+  vertex_out_edges_[vertex1] = std::vector<std::shared_ptr<Graph::Edge>>(vertex1_out_edges);
+
   //in edges vertex 2
   auto vertex2_in_edges = vertex_in_edges_[vertex2];
   vertex2_in_edges.emplace_back(edge);
-  vertex_in_edges_[vertex2] =
-      std::vector<std::shared_ptr<Graph::Edge>>(vertex2_in_edges);
+  vertex_in_edges_[vertex2] = std::vector<std::shared_ptr<Graph::Edge>>(vertex2_in_edges);
+
   if (!this->directed_) {
     // Vertex 2
     auto vertex2_edges = vertex_edges_[vertex2];
     vertex2_edges.emplace_back(edge);
-    vertex_edges_[vertex2] =
-        std::vector<std::shared_ptr<Graph::Edge>>(vertex2_edges);
+    vertex_edges_[vertex2] = std::vector<std::shared_ptr<Graph::Edge>>(vertex2_edges);
 
-  //out edges vertex 2
-  auto vertex2_out_edges = vertex_out_edges_[vertex2];
-  vertex2_out_edges.emplace_back(edge);
-  vertex_out_edges_[vertex2] =
-      std::vector<std::shared_ptr<Graph::Edge>>(vertex2_out_edges);
-  //in edges vertex 1
-  auto vertex1_in_edges = vertex_in_edges_[vertex1];
-  vertex1_in_edges.emplace_back(edge);
-  vertex_in_edges_[vertex1] =
-      std::vector<std::shared_ptr<Graph::Edge>>(vertex1_in_edges);
+    //out edges vertex 2
+    auto vertex2_out_edges = vertex_out_edges_[vertex2];
+    vertex2_out_edges.emplace_back(edge);
+    vertex_out_edges_[vertex2] = std::vector<std::shared_ptr<Graph::Edge>>(vertex2_out_edges);
+
+    //in edges vertex 1
+    auto vertex1_in_edges = vertex_in_edges_[vertex1];
+    vertex1_in_edges.emplace_back(edge);
+    vertex_in_edges_[vertex1] = std::vector<std::shared_ptr<Graph::Edge>>(vertex1_in_edges);
   }
 }
 
@@ -85,9 +74,7 @@ void abm::Graph::update_edge(abm::graph::vertex_t vertex1,
                              abm::graph::weight_t weight) {
   // Get pointer to specified edge connecting vertex 1 and 2
   auto edge = edges_.at(std::make_tuple(vertex1, vertex2));
-  // Update edge weight
-  edge->second[0] = weight;
-  //std::cout << "weight = " << std::get<1>(x) << "\n";
+  edge->second.weight = weight;
 }
 
 // Remove edge
@@ -158,7 +145,7 @@ bool abm::Graph::read_graph_osm(const std::string& filename) {
   try {
     csvio::CSVReader<8> in(filename);
     in.read_header(csvio::ignore_extra_column, "uniqueid", "osmid_u", "osmid_v", "length", "lanes", "speed_mph", "u", "v");
-    std::vector<float> edge_vals(3);
+    abm::Edge_vals edge_vals;
     abm::graph::vertex_t nvertices = 0;
     float length, lanes, speed_mph;
     //int lanes, speed_mph;
@@ -169,9 +156,9 @@ bool abm::Graph::read_graph_osm(const std::string& filename) {
     abm::graph::vertex_t osmid_v1, osmid_v2, v1, v2;
     while (in.read_row(edgeid, osmid_v1, osmid_v2, length, lanes, speed_mph, v1, v2)) {
 	    
-      edge_vals[0] = length;
-	    edge_vals[1] = lanes;
-	    edge_vals[2] = ( speed_mph / 3600 ) * 1609.34; //convert from mph to meters/second
+      edge_vals.length = length;
+	    edge_vals.lanes = lanes;
+	    edge_vals.max_speed_limit_mps = ( speed_mph / 3600 ) * 1609.34; //convert from mph to meters/second
 
       //Don't add if there is already an edge with the same vertices
       if (edges_.find(std::make_pair(v1, v2)) == edges_.end()) {
@@ -284,7 +271,7 @@ std::vector<abm::graph::vertex_t> abm::Graph::dijkstra(
     for (const auto& edge : vertex_edges_[u]) {
       // Get vertex label and weight of neighbours of u.
       const abm::graph::vertex_t neighbour = edge->first.second;
-      const abm::graph::weight_t weight = edge->second[0];
+      const abm::graph::weight_t weight = edge->second.length;
 
       // Distance from source to neighbour
       // distance_u = distance to current node + weight of edge u to
@@ -383,7 +370,7 @@ abm::graph::weight_t abm::Graph::path_cost(
     const std::vector<std::array<abm::graph::vertex_t, 2>>& path) {
   abm::graph::weight_t cost = 0.;
   for (const auto& vertices : path)
-    cost += (edges_.at(std::make_tuple(vertices[0], vertices[1])))->second[0];
+    cost += (edges_.at(std::make_tuple(vertices[0], vertices[1])))->second.length;
   return cost;
 }
 

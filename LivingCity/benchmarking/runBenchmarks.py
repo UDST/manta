@@ -499,4 +499,4 @@ if __name__ == "__main__":
     benchmark_multiple_runs_and_save_csv(argument_values['number_of_runs'],
                                         benchmark_name = argument_values['benchmark_name'])
     load_csv_and_generate_benchmark_report(benchmark_name = argument_values['benchmark_name'],
-                                            all_in_one_plot = False)
+                                            all_in_one_plot = True)

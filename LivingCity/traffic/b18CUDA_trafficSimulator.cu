@@ -142,19 +142,26 @@ void b18InitCUDA(
 }
 
 void b18updateStructuresCUDA(
+  std::vector<LC::B18TrafficPerson>& trafficPersonVec, 
   std::vector<uint> &indexPathVec, 
   std::vector<LC::B18EdgeData>& edgesData) {
   std::cout<< ">> b18updateStructuresCUDA" << std::endl;
 
   //indexPathVec
-  size_t sizeIn = indexPathVec.size() * sizeof(uint);
   cudaFree(indexPathVec_d);
+  size_t sizeIn = indexPathVec.size() * sizeof(uint);
   gpuErrchk(cudaMalloc((void **) &indexPathVec_d, sizeIn));
   gpuErrchk(cudaMemcpy(indexPathVec_d, indexPathVec.data(), sizeIn, cudaMemcpyHostToDevice));
-  /*{//edgeData
-    size_t sizeD = edgesData.size() * sizeof(LC::B18EdgeData);
-    gpuErrchk(cudaMemcpy(edgesData_d, edgesData.data(), sizeD, cudaMemcpyHostToDevice));
-  }*/
+
+  cudaFree(edgesData_d);
+  size_t sizeD = edgesData.size() * sizeof(LC::B18EdgeData);
+  gpuErrchk(cudaMalloc((void **) &edgesData_d, sizeD));
+  gpuErrchk(cudaMemcpy(edgesData_d, edgesData.data(), sizeD, cudaMemcpyHostToDevice));
+
+  cudaFree(trafficPersonVec_d);
+  size_t size = trafficPersonVec.size() * sizeof(LC::B18TrafficPerson);
+  gpuErrchk(cudaMalloc((void **) &trafficPersonVec_d, size));
+  gpuErrchk(cudaMemcpy(trafficPersonVec_d, trafficPersonVec.data(), size, cudaMemcpyHostToDevice));
   printMemoryUsage();
 }
 
