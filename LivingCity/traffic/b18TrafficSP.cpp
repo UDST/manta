@@ -130,16 +130,18 @@ void B18TrafficSP::filterODByTimeRange(
     const float end_time_mins,
     std::vector<abm::graph::vertex_t>& filtered_od_pairs_sources_,
     std::vector<abm::graph::vertex_t>& filtered_od_pairs_targets_,
-    std::vector<float>& filtered_dep_times_) {
+    std::vector<float>& filtered_dep_times_,
+    std::vector<uint>& indexPathVecOrder) {
 
   filtered_od_pairs_sources_.clear();
   filtered_od_pairs_targets_.clear();
   filtered_dep_times_.clear();
-  for (int x = 0; x < od_pairs.size(); x++) {
-    if ((dep_times_in_seconds[x] >= start_time_mins * 60) && (dep_times_in_seconds[x] < end_time_mins * 60)) {
-      filtered_od_pairs_sources_.push_back(od_pairs[x][0]);
-      filtered_od_pairs_targets_.push_back(od_pairs[x][1]);
-      filtered_dep_times_.push_back(dep_times_in_seconds[x]);
+  for (uint person_id = 0; person_id < od_pairs.size(); person_id++) {
+    if ((dep_times_in_seconds[person_id] >= start_time_mins * 60) && (dep_times_in_seconds[person_id] < end_time_mins * 60)) {
+      filtered_od_pairs_sources_.push_back(od_pairs[person_id][0]);
+      filtered_od_pairs_targets_.push_back(od_pairs[person_id][1]);
+      filtered_dep_times_.push_back(dep_times_in_seconds[person_id]);
+      indexPathVecOrder.push_back(person_id);
     }
   }
 }
@@ -150,15 +152,16 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
   const std::vector<float>& dep_times,
   const float start_time_mins,
   const float end_time_mins,
-  int reroute_batch_number) {
-  std::cout << "at routing function" << std::endl;
+  int reroute_batch_number,
+  std::vector<uint>& indexPathVecOrder,
+  const bool usePrevPaths,
+  const std::string networkPathSP) {
 
   // --------------------------- preprocessing ---------------------------
   std::vector<abm::graph::vertex_t> filtered_od_pairs_sources_;
   std::vector<abm::graph::vertex_t> filtered_od_pairs_targets_;
   std::vector<float> filtered_dep_times_;
 
-  std::cout << "filtering..." << std::endl;
   //filter the next set of od pair/departures in the next increment
   B18TrafficSP::filterODByTimeRange(all_od_pairs_,
                                     dep_times,
@@ -166,12 +169,15 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
                                     end_time_mins,
                                     filtered_od_pairs_sources_,
                                     filtered_od_pairs_targets_,
-                                    filtered_dep_times_);
-
-  std::cout << "done filtering." << std::endl;
+                                    filtered_dep_times_,
+                                    indexPathVecOrder);
   
 
-  std::cout << "Simulating trips with dep_time between " << start_time_mins << " and " << end_time_mins << std::flush;
+  std::cout << "Simulating trips with dep_time between "
+    << int(start_time_mins/60) << ":" << int(start_time_mins) % 60
+    << "(" << start_time_mins << " in minutes)"
+    << " and " << int(end_time_mins/60) << ":" << int(end_time_mins) % 60
+    << "(" << end_time_mins << " in minutes)" << std::flush;
   std::cout << ". Trips in this time range: " << filtered_od_pairs_sources_.size() << "/" << dep_times.size() << std::endl;
 
   std::vector<std::vector<long>> edges_routing;
@@ -201,11 +207,8 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
 
   Benchmarker routingCH("Routing_CH_batch_" + std::to_string(reroute_batch_number), true);
   routingCH.startMeasuring();
-  std::cout << "initializing accesibility ..." << std::endl;
   MTC::accessibility::Accessibility *graph_ch = new MTC::accessibility::Accessibility((int) street_graph->vertices_data_.size(), edges_routing, edge_weights_routing, false);
-  std::cout << "running routes ..." << std::endl;
   std::vector<std::vector<abm::graph::edge_id_t> > all_paths_ch = graph_ch->Routes(filtered_od_pairs_sources_, filtered_od_pairs_targets_, 0);
-  std::cout << "routed" << std::endl;
   routingCH.stopAndEndBenchmark();
 
   std::cout << "# of paths = " << all_paths_ch.size() << std::endl;
@@ -228,15 +231,14 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
   }
   CHoutputNodesToEdgesConversion.stopAndEndBenchmark();
 
-  //todo: what should prev_paths do with a reroute increment?
-  //write paths to file so that we can just load them instead
-  /*const std::string& pathsFileName = networkPathSP + "all_paths_ch.txt";
-  std::cout << "Save " << pathsFileName << " as paths file\n";
-  std::ofstream output_file(pathsFileName);
-  std::ostream_iterator<abm::graph::vertex_t> output_iterator(output_file, "\n");
-  std::copy(all_paths.begin(), all_paths.end(), output_iterator);*/
+  if (usePrevPaths) {
+    const std::string& pathsFileName = networkPathSP + "all_paths_ch.txt";
+    std::cout << "Save " << pathsFileName << " as paths file\n";
+    std::ofstream output_file(pathsFileName);
+    std::ostream_iterator<abm::graph::vertex_t> output_iterator(output_file, "\n");
+    std::copy(all_paths.begin(), all_paths.end(), output_iterator);
+  }
 
-  // todo: should we do this mapping for everyone at the beggining of the simulation or on each increment iteration?
   // map person to their initial edge
   int person_id = 0;
   for (int i = 0; i < all_paths.size(); i++) {

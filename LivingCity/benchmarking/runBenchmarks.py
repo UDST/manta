@@ -40,7 +40,7 @@ def write_options_file(params = None):
                             "END_HR=12",\
                             "SHOW_BENCHMARKS=true",\
                             "OD_DEMAND_FILENAME=od_demand_5to12.csv", \
-                            ""
+                            "REROUTE_INCREMENT=30"
                             " "])
 
     if params is not None:
@@ -117,59 +117,61 @@ def benchmark_one_run(number_of_run, benchmark_name, network_path):
 
     write_options_file({"NETWORK_PATH": network_path})
 
-    args = "./LivingCity &".format(number_of_run).split()
-    start_time_simulation = time.time()
-    process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    
-    # While the simulation is running we check the resources and write them down per second
-    resources_timestamps = []
-    while process.poll() is None:
-        resources_timestamps.append({ \
-            "time_since_epoch_ms": int(time_since_epoch_miliseconds()), \
-            "cpu_used": psutil.cpu_percent(), \
-            "mem_used": int(psutil.virtual_memory()._asdict()["used"]) >> 30, \
-            "gpu_memory_used": convertMiBtoMB(obtain_gpu_memory_used())
-        })
-        time.sleep(.5)
-    
-    full_output = str(process.stdout.read())
+    with open('LivingCity.out', 'w') as outputFile:
+        args = "./LivingCity &".split()
+        start_time_simulation = time.time()
+        process = subprocess.Popen(args, stdout=outputFile, stderr=outputFile, shell=True)
+        
+        # While the simulation is running we check the resources every half second
+        full_output = ""
+        resources_timestamps = []
+        while process.poll() is None:
+            resources_timestamps.append({ \
+                "time_since_epoch_ms": int(time_since_epoch_miliseconds()), \
+                "cpu_used": psutil.cpu_percent(), \
+                "mem_used": int(psutil.virtual_memory()._asdict()["used"]) >> 30, \
+                "gpu_memory_used": convertMiBtoMB(obtain_gpu_memory_used())
+            })
+            time.sleep(.5)
+
     elapsed_time_simulation = time.time() - start_time_simulation
     log("Total simulation duration: {} secs")
-
     assert process.returncode == 0
-    
+
+    with open('LivingCity.out', 'r') as outputFile:
+        full_output = outputFile.read()
+        print(full_output)
+
     # ============== Parse the simulation benchmarks =================
     log("Parsing the simulation benchmarks...")
     
-    full_output_lines = full_output[2:].split("\\n")
+    full_output_lines = full_output.split("\n")
     number_of_reroute_increments = count_number_of_reroute_increments_in_full_output(full_output_lines)
 
-    repeated_components = {"{}{}".format(component, i): {}
+    all_components_keys = ["{}{}".format(component, i)
         for i in range(number_of_reroute_increments)
         for component in ["Routing_CH_batch_",
                           "CH_output_nodes_to_edges_conversion_batch_",
-                          "Convert_routes_into_GPU_data_structure_format_batch_"] }
+                          "Convert_routes_into_GPU_data_structure_format_batch_",
+                          "Microsimulation_in_GPU_batch_"]
+        ] + ["Load_network",
+            "Load_OD_demand_data",
+            "File_output",
+            "Lane_Map_creation"]
 
-    not_repeated_components = {"Load_network":{},
-                                "Load_OD_demand_data":{},
-                                "File_output":{},
-                                "Lane_Map_creation":{},
-                                "Microsimulation_in_GPU":{}}
-
-    all_components = merge_dictionaries(repeated_components, not_repeated_components)
+    all_components = {one_component_key:{} for one_component_key in all_components_keys}
     
     for output_line in full_output_lines:
         for component_name, component_timestamp in all_components.items():
             if re.search('<{}>'.format(component_name), output_line, flags=0):
                 time_since_epoch = int(output_line.split()[-1]) # the last word is the time since epoch
-                if re.search('Started', output_line, flags=0):
-                    component_timestamp["Started"] = time_since_epoch
-                if re.search('Ended', output_line, flags=0):
-                    component_timestamp["Ended"] = time_since_epoch
-
-    log("Showing full output...")
-    full_output_printable = full_output.replace("\\n", "\n")
-    print(full_output_printable)
+                try:
+                    if re.search('Started', output_line, flags=0):
+                        component_timestamp["Started"] = time_since_epoch
+                    if re.search('Ended', output_line, flags=0):
+                        component_timestamp["Ended"] = time_since_epoch
+                except:
+                    st()
 
     # ================= Combine resource polling and parsed benchmarks =================
     log("Combining process resource polling and parsed benchmarks...")
@@ -178,21 +180,26 @@ def benchmark_one_run(number_of_run, benchmark_name, network_path):
         component_resources["mem_used"] = []
         component_resources["gpu_memory_used"] = []
         for one_resource_timestamp in resources_timestamps:
-            if one_resource_timestamp["time_since_epoch_ms"] > component_resources["Started"] and \
-                one_resource_timestamp["time_since_epoch_ms"] < component_resources["Ended"]:
+            try:
+                if one_resource_timestamp["time_since_epoch_ms"] > component_resources["Started"] and \
+                    one_resource_timestamp["time_since_epoch_ms"] < component_resources["Ended"]:
 
-                component_resources["cpu_used"].append(one_resource_timestamp["cpu_used"])
-                component_resources["mem_used"].append(one_resource_timestamp["mem_used"])
-                component_resources["gpu_memory_used"].append(one_resource_timestamp["gpu_memory_used"])
+                    component_resources["cpu_used"].append(one_resource_timestamp["cpu_used"])
+                    component_resources["mem_used"].append(one_resource_timestamp["mem_used"])
+                    component_resources["gpu_memory_used"].append(one_resource_timestamp["gpu_memory_used"])
+            except:
+                st()
 
-    for component_name, component_resources in all_components.items():
-        component_resources["Elapsed_time_(ms)"] = component_resources["Ended"] - \
-                                                    component_resources["Started"]
-        assert "Started" in component_resources.keys() and \
-                "Ended" in component_resources.keys()
+    try:
+        for component_name, component_resources in all_components.items():
+            component_resources["Elapsed_time_(ms)"] = component_resources["Ended"] - \
+                                                        component_resources["Started"]
+            assert "Started" in component_resources.keys() and \
+                    "Ended" in component_resources.keys()
+    except:
+        st()
+    st()
 
-        del component_resources["Ended"]
-        del component_resources["Started"]
 
     # ================= Write it down to a csv =================
     log("(CPU data is in %, memory is in GB, GPU memory is in MB, elapsed time in ms)")
@@ -237,7 +244,9 @@ def benchmark_one_run(number_of_run, benchmark_name, network_path):
     log("Done")
 
 
-def benchmark_multiple_runs_and_save_csv(number_of_runs, benchmark_name = "benchmarks", network_path = "berkeley_2018/new_full_network/"):
+def benchmark_multiple_runs_and_save_csv(number_of_runs,
+                                        benchmark_name,
+                                        network_path):
     log("Running system benchmarks for network {}. Benchmark name: {}. Number of runs: {}".format(network_path, benchmark_name, number_of_runs))
     log("Please do not run anything else on this PC until it is finished, since that may alter the benchmarking results.")
 
@@ -309,6 +318,8 @@ def load_csv_and_generate_benchmark_report(benchmark_name = "benchmarks", all_in
     resources = [("RAM usage (GB)", "mem_used", "GB"), ("CPU usage (%)", "cpu_used", "%"), \
         ("GPU memory usage (MB)", "gpu_memory_used", "MB"), ("Elapsed time (secs)", "Elapsed_time_(ms)", "secs")]
     for i, (title, resource_name, resource_axis) in enumerate(resources):
+        df_current_resource = df.copy()
+        st()
         plt.subplots_adjust(wspace=0.8, hspace=0.8)
         if all_in_one_plot:
             ax_benchmarks = fig_benchmarks.add_subplot(2, 2, i+1)
@@ -327,15 +338,16 @@ def load_csv_and_generate_benchmark_report(benchmark_name = "benchmarks", all_in
                             "File_output"]
 
         ticks = [readable_components[comp] for comp in components_in_order]
+        df_current_resource = df_current_resource.drop(df_current_resource[df_current_resource[resource_name] == 0].index)
         if resource_name == "Elapsed_time_(ms)":
-            df = df.drop(df[df["Component"] == "idle"].index)
+            df_current_resource = df_current_resource.drop(df_current_resource[df_current_resource["Component"] == "idle"].index)
             current_components = components_in_order
         else:
             ticks += ["idle"]
             current_components = components_in_order + ["idle"]
-        
+
         ax_benchmarks = sns.barplot(
-            data=df,
+            data=df_current_resource,
             x=resource_name, y="Component",
             order=components_in_order,
             capsize=.2
@@ -348,7 +360,7 @@ def load_csv_and_generate_benchmark_report(benchmark_name = "benchmarks", all_in
             plt.title(title)
         else:
             plt.title("MANTA benchmarking  |  {}".format(title))
-        component_label_values = [df[df["Component"] == component_name][resource_name].mean() for component_name in current_components]
+        component_label_values = [df_current_resource[df_current_resource["Component"] == component_name][resource_name].mean() for component_name in current_components]
 
 
         def add_custom_legend(ax, txt, fontsize = 12, loc = 1, *args, **kwargs):
@@ -361,14 +373,17 @@ def load_csv_and_generate_benchmark_report(benchmark_name = "benchmarks", all_in
             return at
 
         for i, value in enumerate(component_label_values):
-            plt.text(value + 0.05*max(component_label_values), i, str(round(value, 3)))
+            if resource_name == "Elapsed_time_(ms)":
+                plt.text(value + 0.05*max(component_label_values), i, format_seconds_to_mins_and_seconds(value))
+            else:
+                plt.text(value + 0.05*max(component_label_values), i, str(round(value, 3)))
     
         if not all_in_one_plot:
             add_custom_legend(ax_benchmarks, "# Nodes: {}\n# Edges: {}\n# Trips: {}".format(
                 metadata["number_of_nodes"], metadata["number_of_edges"], len(df_people)))
             if resource_name == "Elapsed_time_(ms)":
                 plt.text(0.73, 0.02, 'Total: {} secs ({} mins)'.format(
-                        round(sum(component_label_values),2), round(sum(component_label_values)/60,2)),
+                        round(metadata['elapsed_time_simulation'],2), round(metadata['elapsed_time_simulation']/60,2)),
                         fontsize=14, transform=plt.gcf().transFigure, weight = 'bold')
             output_filepath = "benchmarking/{}_{}.png".format(benchmark_name, resource_name)
             log("Saving figure at {}".format(output_filepath))
@@ -378,7 +393,7 @@ def load_csv_and_generate_benchmark_report(benchmark_name = "benchmarks", all_in
             plt.close()
         elif resource_name == "Elapsed_time_(ms)":
             plt.text(0.80, 0.055, 'Total: {} secs ({} mins)'.format(
-                    round(sum(component_label_values),2), round(sum(component_label_values)/60,2)),
+                    round(metadata['elapsed_time_simulation'],2), round(metadata['elapsed_time_simulation']/60,2)),
                     fontsize=12, transform=plt.gcf().transFigure, weight = 'bold')
 
     number_of_runs = df['number_of_run'].nunique()
@@ -470,33 +485,102 @@ def load_csv_and_generate_benchmark_report(benchmark_name = "benchmarks", all_in
     book.save(os.path.join("benchmarking", "{}.xls".format(benchmark_name)))
 
 
+def benchmark_runtime_varying_reroute_increment_and_save_csv(network_path = "berkeley_2018/new_full_network/"):
+    for increment in [5, 10] + list(range(15, 181, 15)):
+        log("Running the simulation with increment {}".format(increment))
+        write_options_file({"NETWORK_PATH": network_path, "REROUTE_INCREMENT": str(increment)})
+        start_time_simulation = time.time()
+        os.system("./LivingCity")
+        #process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        elapsed_time_simulation = time.time() - start_time_simulation
+        log("Finished. Elapsed time: {}".format(elapsed_time_simulation))
+
+        with open("benchmarking/routingTimes.csv","a") as reroute_runtime_file:
+            line_to_write = ["dynamic_routing_{}_mins".format(increment), str(elapsed_time_simulation)]
+            line_to_write_string = ','.join(line_to_write)
+            reroute_runtime_file.write(line_to_write_string + "\n")
+
+def format_seconds_to_mins_and_seconds(total_seconds):
+    total_seconds = int(total_seconds)
+    
+    seconds = int(total_seconds % 60)
+    minutes = int(total_seconds / 60)
+
+    if minutes == 0:
+        return "{}s".format(seconds)
+    else:
+        return "{}m{}s".format(minutes, seconds)
+
+def load_routing_times_csv_and_plot():
+    df = pd.read_csv("benchmarking/routingTimes.csv")
+    sns.color_palette("pastel", 8)
+    fig, ax = matplotlib.pyplot.subplots(figsize=(12,8))
+
+    plt.title("Runtime varying dynamic routing increment")
+
+    ax = sns.barplot(
+        data=df,
+        x='runtime_in_secs',y="experiment",
+        order=['dynamic_routing_{}_mins'.format(mins) for mins in [5, 10] + list(range(15, 181, 15))] + ['static'],
+        palette='Blues_d'
+    )
+    plt.xlabel("")
+    plt.ylabel("")
+
+    for bar in ax.patches: 
+        ax.annotate(format_seconds_to_mins_and_seconds(bar.get_width()),
+                   (bar.get_width() + 50, bar.get_y() + bar.get_height() / 2),
+                   ha='center', va='center', 
+                   size=12, xytext=(0, 8), 
+                   textcoords='offset points') 
+  
+    plt.subplots_adjust(left=0.2, bottom=0.01, right=0.92, top=0.9)
+
+    fig.savefig("benchmarking/rerouting_times.png")
+
+
 def parse_input_arguments():
     argument_values = {}
 
     parser = argparse.ArgumentParser(description='Runs multiple benchmarks over simulation and outputs a csv, a plot'\
                                                 ' and a xls file with the results.')
     parser.add_argument('-i', "--runs", type=int, help='Number of runs to run (min: 1).')
-    parser.add_argument('-n', "--name", type=str, help='Name of the benchmark for the output files')
+    parser.add_argument('-name', "--name", type=str, help='Name of the benchmark for the output files.')
+    parser.add_argument('-network', "--networkpath", type=str, help='Relative address of network path folder.')
+    parser.add_argument('-p', "--justplot", action="store_true", help='Just plots from the csv without running it previously.')
 
     args = parser.parse_args()
 
-    if not args.runs:
+    if args.runs:
+        argument_values['number_of_runs'] = args.runs
+    else:
         log("Setting number of runs by default to: 1")
         argument_values['number_of_runs'] = 1
-    else:
-        argument_values['number_of_runs'] = args.runs
     
-    if not args.name:
+    if args.name:
+        argument_values['benchmark_name'] = args.name
+    else:
         log('Setting benchmark name by default to: "benchmark"')
         argument_values['benchmark_name'] = "benchmark"
+
+    if args.justplot:
+        argument_values['just_plot'] = args.justplot
     else:
-        argument_values['benchmark_name'] = args.name
-    
+        argument_values['just_plot'] = False
+
+    if args.networkpath:
+        argument_values['network_path'] = args.networkpath
+    else:
+        argument_values['network_path'] = "berkeley_2018/new_full_network/"
     return argument_values
 
 if __name__ == "__main__":
     argument_values = parse_input_arguments()
-    benchmark_multiple_runs_and_save_csv(argument_values['number_of_runs'],
-                                        benchmark_name = argument_values['benchmark_name'])
+
+    if not argument_values['just_plot']:
+        benchmark_multiple_runs_and_save_csv(argument_values['number_of_runs'],
+                                            benchmark_name = argument_values['benchmark_name'],
+                                            network_path = argument_values['network_path'])
+
     load_csv_and_generate_benchmark_report(benchmark_name = argument_values['benchmark_name'],
                                             all_in_one_plot = True)

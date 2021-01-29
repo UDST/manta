@@ -1,81 +1,35 @@
 """ This file contains system tests that consider LivingCity as a black box,
     where inputs are given and outputs are validated.
-
     Requirements under linux:
     - Python 3.6.5
     - pytest 6.1.1
     - pytest-cov 2.10.1
     - pytest-remotedata 0.3.2
 """
-import os
-import subprocess
-import random
-import filecmp
-import re
-import pytest
-import pandas as pd
-from termcolor import colored
-import csv
-from tqdm import tqdm
-from pdb import set_trace as st  # used for debugging
 
+from utils import *
 
-# ========================== Aux ==========================
-def write_options_file(params):
-    filedata = "\n".join(["[General]",\
-                        "GUI=false",\
-                        "USE_CPU=false",\
-                        "NETWORK_PATH=berkeley_2018/new_full_network/",\
-                        "USE_JOHNSON_ROUTING=false",\
-                        "USE_SP_ROUTING=true",\
-                        "USE_PREV_PATHS=false",\
-                        "LIMIT_NUM_PEOPLE=256000",\
-                        "ADD_RANDOM_PEOPLE=false",\
-                        "NUM_PASSES=1",\
-                        "TIME_STEP=0.5",\
-                        "START_HR=5",\
-                        "END_HR=12",\
-                        "SHOW_BENCHMARKS=false"])
-
-    for (parameter_name, parameter_value) in params.items():
-        filedata = re.sub('{}=(-|(0-9)|.)*\n'.format(parameter_name),
-                          "{}={}\n".format(parameter_name, parameter_value),
-                          filedata)
-
-    with open('command_line_options.ini', 'w') as file:
-        file.write(filedata)
-
-
-def log(text):
-    print(colored(text, 'cyan'))
-
-
-def length_of_csv(csv_file, delimiter):
-    with open(csv_file) as file_object:
-        return sum(1 for row in file_object)
-
-
-# ========================== Tests ==========================
 # Global variables across tests
-pytest.network_setup_has_run = False
+pytest.default_network_setup_has_run = False
 pytest.network_path = "berkeley_2018/new_full_network/"
 pytest.number_of_people = 3441952
 pytest.distance_margin_between_route_and_people_file = 100
 pytest.edges_path = "berkeley_2018/new_full_network/edges.csv"
 
 """
-network_setup runs automatically before the tests that take network_setup as a parameter
+default_network_setup runs automatically before the tests that take default_network_setup as a parameter
 For each network specified it does the following:
     * Runs LivingCity with prev_paths = false and then with prev_paths = true
     * Produces 0_people5to12_first_run.csv, 0_indexPathVec5to12_first_run.csv, 0_route5to12_first_run.csv on the first run
     * Produces 0_people5to12_second_run.csv, 0_indexPathVec5to12_second_run.csv, 0_route5to12_second_run.csv on the second run
 """
 @pytest.fixture(params=["berkeley_2018/new_full_network/"], ids=["new_full_network"])
-def network_setup(request):
+def default_network_setup(request):
+    log("Running default network setup...")
     network_path = pytest.network_path
-    if pytest.network_setup_has_run:
+    if pytest.default_network_setup_has_run:
         return network_path
-    pytest.network_setup_has_run = True
+    pytest.default_network_setup_has_run = True
 
     log("Running system test setup on output files for network {}".format(network_path))
     output_files = ["route", "people", "indexPathVec"]
@@ -90,7 +44,7 @@ def network_setup(request):
 
     log("Running first simulation with use_prev_paths=false...")
     write_options_file({"NETWORK_PATH": "{}".format(
-        network_path), "USE_PREV_PATHS": "false"})
+        network_path), "USE_PREV_PATHS": "false", "REROUTE_INCREMENT": 0})
     subprocess.run(["./LivingCity", "&"], check=True)
 
     for output_file_name in output_files:
@@ -98,7 +52,7 @@ def network_setup(request):
 
     log("Running second simulation with use_prev_paths=true...")
     write_options_file({"NETWORK_PATH": "{}".format(
-        network_path), "USE_PREV_PATHS": "true"})
+        network_path), "USE_PREV_PATHS": "true", "REROUTE_INCREMENT": 0})
     subprocess.run(["./LivingCity", "&"], check=True)
     for output_file_name in output_files:
         os.rename("./0_{}5to12.csv".format(output_file_name), "./0_{}5to12_second_run.csv".format(output_file_name))
@@ -108,7 +62,7 @@ def network_setup(request):
     return network_path
 
 
-def test01_all_output_files_should_have_the_same_length(network_setup):
+def test01_all_output_files_should_have_the_same_length(default_network_setup):
     lengths = []
     log("Checking that the length of people and route files are the same...")
     for output_file in ["route", "people"]:
@@ -121,14 +75,14 @@ def test01_all_output_files_should_have_the_same_length(network_setup):
 
 
 @pytest.mark.parametrize("file_to_preserve", ["route", "indexPathVec"])
-def test02_prev_paths_should_preserve_route_and_indexPathVec_files(network_setup, file_to_preserve):
+def test02_prev_paths_should_preserve_route_and_indexPathVec_files(default_network_setup, file_to_preserve):
     log("Comparing {} files between the two runs...".format(file_to_preserve))
     assert filecmp.cmp("0_{0}5to12_first_run.csv".format(file_to_preserve), "0_{0}5to12_second_run.csv".format(
         file_to_preserve), shallow=False), "{} file are not equal between runs".format(file_to_preserve)
     log("Passed")
 
 
-def test03_prev_paths_should_have_consistent_people_files(network_setup):
+def test03_prev_paths_should_have_consistent_people_files(default_network_setup):
     log("Comparing people files between the two runs...")
 
     df_first_run = pd.read_csv("0_people5to12_first_run.csv")
@@ -145,7 +99,7 @@ def test03_prev_paths_should_have_consistent_people_files(network_setup):
     log("Passed")
 
 
-def test_04_distance_in_people_file_should_match_the_sum_of_the_edges_in_the_route_file(network_setup):
+def test_04_distance_in_people_file_should_match_the_sum_of_the_edges_in_the_route_file(default_network_setup):
     log("Comparing that the distance in the people file matches the sum of the edges in the route file with a margin of {}...".format(
         pytest.distance_margin_between_route_and_people_file))
     log("(Since testing for > 2 million people takes several hours, it is tested on 1.000 random people).")
@@ -181,5 +135,4 @@ def test_04_distance_in_people_file_should_match_the_sum_of_the_edges_in_the_rou
                                    distance_sum_of_edges)
             assert abs(distance_people_info -
                        distance_sum_of_edges) < pytest.distance_margin_between_route_and_people_file, error_message
-
     log("Passed")

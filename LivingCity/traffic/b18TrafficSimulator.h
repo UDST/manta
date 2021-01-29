@@ -68,9 +68,6 @@ class B18TrafficSimulator {
   void simulateInCPU_Onepass(float startTimeH, float endTimeH,
                              bool useJohnsonRouting);
   void simulateInCPU(float startTimeH, float endTimeH);
-
-  //void simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
-  //                   bool useJohnsonRouting, bool useSP);
   
   void simulateInGPU(int numOfPasses,
     float startTimeH,
@@ -79,7 +76,8 @@ class B18TrafficSimulator {
     bool useSP, const std::shared_ptr<abm::Graph>& graph_,
     std::vector<abm::graph::edge_id_t> paths_SP, const parameters & simParameters,
     const int rerouteIncrementMins, std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs,
-    std::vector<float> dep_times);
+    std::vector<float> dep_times, std::vector<uint> inputIndexPathVecOrder,
+    const std::string networkPathSP);
 
   // Lanes
   std::vector<uint> edgeIdToLaneMapNum;
@@ -98,6 +96,7 @@ class B18TrafficSimulator {
   // People
   std::vector<B18TrafficPerson> trafficPersonVec;
   std::vector<uint> indexPathVec;
+  std::vector<uint> indexPathVecOrder;
 
 #ifdef B18_RUN_WITH_GUI
   void createRandomPeople(float startTime, float endTime, int numberPeople,
@@ -124,7 +123,7 @@ class B18TrafficSimulator {
   void calculateAndDisplayTrafficDensity(int numOfPass);
   void savePeopleAndRoutes(int numOfPass);
   void savePeopleAndRoutesSP(
-    std::vector<abm::graph::edge_id_t> cumulative_paths_SP,
+    std::vector<abm::graph::edge_id_t>& cumulative_paths_SP,
     int numOfPass,
     const std::shared_ptr<abm::Graph>& graph_,
     int start_time, int end_time);
