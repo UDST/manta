@@ -41,20 +41,51 @@ void B18CommandLineVersion::runB18Simulation() {
   const float startSimulationH = settings.value("START_HR", 5).toFloat();
   const float endSimulationH = settings.value("END_HR", 12).toFloat();
   const bool showBenchmarks = settings.value("SHOW_BENCHMARKS", false).toBool();
-  int rerouteIncrementMins = settings.value("REROUTE_INCREMENT", 60).toInt(); //in minutes
+  int rerouteIncrementMins = settings.value("REROUTE_INCREMENT", 30).toInt(); //in minutes
+  std::string odDemandPath = settings.value("OD_DEMAND_FILENAME", "od_demand_5to12.csv").toString().toStdString();
 
-  if (rerouteIncrementMins <= 0){
+  std::vector<std::string> allParameters = {"GUI", "USE_CPU", "USE_JOHNSON_ROUTING",
+                                            "USE_SP_ROUTING", "USE_PREV_PATHS",
+                                            "NETWORK_PATH", "ADD_RANDOM_PEOPLE",
+                                            "LIMIT_NUM_PEOPLE", "NUM_PASSES",
+                                            "TIME_STEP", "START_HR", "END_HR",
+                                            "SHOW_BENCHMARKS", "REROUTE_INCREMENT",
+                                            "OD_DEMAND_FILENAME"};
+
+  for (const auto inputedParameter: settings.childKeys()) {
+    if (inputedParameter.at(0) != QChar('#') // it's a comment
+      && std::find(allParameters.begin(), allParameters.end(), inputedParameter.toStdString()) == allParameters.end()) {
+      throw std::invalid_argument("Argument " + inputedParameter.toStdString() + " is invalid.");
+    }
+  }
+
+  for (const auto parameter: allParameters) {
+    if (!settings.childKeys().contains(QString::fromUtf8(parameter.c_str()))) {
+      std::cout << "Argument " << parameter << " is missing from command_line_options. Setting it to its default value." << std::endl;
+    }
+  }
+
+  if (rerouteIncrementMins < 0){
     throw std::invalid_argument("Invalid reroute increment value.");
+  } else if (rerouteIncrementMins == 0) {
+    // rerouteIncrementMins of 0 means static routing.
+    // We set the rerouteIncrement as the maximum possible, so it only routes once
+    float totalMinsSimulation = (endSimulationH - startSimulationH) * 60;
+    rerouteIncrementMins = int(totalMinsSimulation) + 100;
+    std::cout << "Since the reroute increment is 0, static routing will be used." << std::endl;
+  }
+
+  if (usePrevPaths && rerouteIncrementMins != 0) {
   }
     
+  std::cout << "Rerouting every " << rerouteIncrementMins << " minutes" << std::endl;
+
   const parameters simParameters {
       settings.value("a",0.557040909258405).toDouble(),
       settings.value("b",2.9020578588167).toDouble(),
       settings.value("T",0.5433027817144876).toDouble(),
       settings.value("s_0",1.3807498735425845).toDouble()};
 
-
-  std::string odDemandPath = settings.value("OD_DEMAND_FILENAME", "od_demand_5to12.csv").toString().toStdString();
 
   std::cout << "b18CommandLineVersion received the parameters "
             << "[a: " << simParameters.a 
@@ -63,15 +94,13 @@ void B18CommandLineVersion::runB18Simulation() {
             << ", s_0: " << simParameters.s_0
             << "]" << std::endl;
 
-  // new benchmarks
-  if (showBenchmarks){ Benchmarker::enableShowBenchmarks(); }
+  if (showBenchmarks){
+    Benchmarker::enableShowBenchmarks();
+  }
+
   Benchmarker loadNetwork("Load_network", true);
   Benchmarker loadODDemandData("Load_OD_demand_data", true);
-  Benchmarker initBench("Initialize traffic simulator task");
-  Benchmarker peopleBench("People creation task");
-  Benchmarker simulationBench("Simulation task");
-
-
+  
   ClientGeometry cg;
   B18TrafficSimulator b18TrafficSimulator(deltaTime, &cg.roadGraph, simParameters);
   
@@ -89,6 +118,8 @@ void B18CommandLineVersion::runB18Simulation() {
   loadODDemandData.stopAndEndBenchmark();
   std::vector<std::array<abm::graph::vertex_t, 2>> filtered_od_pairs_;
   std::vector<float> filtered_dep_times_;
+  std::vector<uint> indexPathVecOrder = std::vector<uint>();
+  std::cout << "indexPathVecOrder initialization size " << indexPathVecOrder.size() << std::endl;
   if (useSP) {
 	  //make the graph from edges file and load the OD demand from od file
 	  printf("# of OD pairs = %d\n", all_od_pairs_.size());
@@ -97,7 +128,6 @@ void B18CommandLineVersion::runB18Simulation() {
 	  int mpi_rank = 0;
 	  int mpi_size = 1;
     if (usePrevPaths) {
-      throw std::invalid_argument("prev_paths with reroute increment currently disabled.");
       // open file    
       const std::string& pathsFileName = networkPathSP + "all_paths_ch.txt";
       std::cout << "Loading " << pathsFileName << " as paths file\n";
@@ -110,21 +140,19 @@ void B18CommandLineVersion::runB18Simulation() {
           all_paths.push_back(value);
         }
       }
-
-    } else {
-      const float startTimeMins = startSimulationH * 60;
-      const float endTimeMins = startTimeMins + rerouteIncrementMins;
-      cout << "startTime: " << startTimeMins << ", endTime: " << endTimeMins << endl;
-      const int initialBatchNumber = 0;
-      all_paths = B18TrafficSP::RoutingWrapper(all_od_pairs_, street_graph, dep_times, startTimeMins, endTimeMins, initialBatchNumber);
-      std::cout << "paths size for batch #0: " << all_paths.size() << std::endl;
     }
 
-    //std::cout << "person_to_init_edge size " << street_graph->person_to_init_edge_.size() << "\n";
-    //std::cout << "# of paths = " << all_paths.size() << "\n";
-    //std::cout << "Shortest path time = " << duration.count() << " ms \n";
+    const float startTimeMins = startSimulationH * 60;
+    const float endTimeMins = startTimeMins + rerouteIncrementMins;
+    cout << "startTime: " << startTimeMins << ", endTime: " << endTimeMins << endl;
+    const int initialBatchNumber = 0;
+    all_paths = B18TrafficSP::RoutingWrapper(
+      all_od_pairs_, street_graph, dep_times, startTimeMins,
+      endTimeMins, initialBatchNumber,
+      indexPathVecOrder, usePrevPaths, networkPathSP);
+    std::cout << "indexPathVecOrder size " << indexPathVecOrder.size() << std::endl;
+    std::cout << "paths size for batch #0: " << all_paths.size() << std::endl;
 
-    //create a set of people for simulation (trafficPersonVec)
     b18TrafficSimulator.createB2018PeopleSP(startSimulationH, endSimulationH, limitNumPeople, addRandomPeople, street_graph, dep_times);
   } else {
     RoadGraphB2018::loadB2018RoadGraph(cg.roadGraph, networkPath);
@@ -138,7 +166,9 @@ void B18CommandLineVersion::runB18Simulation() {
   } else {
 	  //if useSP, convert all_paths to indexPathVec format and run simulation
     b18TrafficSimulator.simulateInGPU(numOfPasses, startSimulationH, endSimulationH,
-        useJohnsonRouting, useSP, street_graph, all_paths, simParameters, rerouteIncrementMins, all_od_pairs_, dep_times);
+        useJohnsonRouting, useSP, street_graph, all_paths, simParameters,
+        rerouteIncrementMins, all_od_pairs_, dep_times,
+        indexPathVecOrder, networkPathSP);
   }
 
 }

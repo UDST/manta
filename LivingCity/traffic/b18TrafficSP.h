@@ -46,13 +46,16 @@ class B18TrafficSP {
   
   static std::vector<float> read_dep_times(const std::string& filename);
 
-  static std::vector<abm::graph::edge_id_t> RoutingWrapper(
+  static std::vector<abm::graph::edge_id_t> RoutingWrapper (
     const std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_,
     const std::shared_ptr<abm::Graph>& street_graph,
     const std::vector<float>& dep_times,
     const float start_time_mins,
     const float end_time_mins,
-    int reroute_batch_number);
+    int reroute_batch_number,
+    std::vector<uint>& indexPathVecOrder,
+    const bool usePrevPaths,
+    const std::string networkPathSP);
 
   static void initialize_person_to_init_edge(
     std::vector<abm::graph::edge_id_t>& all_paths,
@@ -65,7 +68,8 @@ class B18TrafficSP {
     const float end_time_mins,
     std::vector<abm::graph::vertex_t>& filtered_od_pairs_sources_,
     std::vector<abm::graph::vertex_t>& filtered_od_pairs_targets_,
-    std::vector<float>& filtered_dep_times_);
+    std::vector<float>& filtered_dep_times_,
+    std::vector<uint>& indexPathVecOrder);
 
   static void convertVector(
     std::vector<abm::graph::edge_id_t> paths_SP,
