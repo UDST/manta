@@ -29,7 +29,8 @@ void B18CommandLineVersion::runB18Simulation() {
   bool useCPU = settings.value("USE_CPU", false).toBool();
   bool useJohnsonRouting = settings.value("USE_JOHNSON_ROUTING", false).toBool();
   bool useSP = settings.value("USE_SP_ROUTING", false).toBool();
-  bool usePrevPaths = settings.value("USE_PREV_PATHS", false).toBool();
+  bool loadPrevPaths = settings.value("LOAD_PREV_PATHS", false).toBool();
+  bool savePrevPaths = settings.value("SAVE_PREV_PATHS", false).toBool();
 
   QString networkPath = settings.value("NETWORK_PATH").toString();
   const std::string networkPathSP = networkPath.toStdString();
@@ -71,14 +72,16 @@ void B18CommandLineVersion::runB18Simulation() {
     // rerouteIncrementMins of 0 means static routing.
     // We set the rerouteIncrement as the maximum possible, so it only routes once
     float totalMinsSimulation = (endSimulationH - startSimulationH) * 60;
-    rerouteIncrementMins = int(totalMinsSimulation) + 100;
+    rerouteIncrementMins = int(totalMinsSimulation);
     std::cout << "Since the reroute increment is 0, static routing will be used." << std::endl;
+  } else {
+    std::cout << "Rerouting every " << rerouteIncrementMins << " minutes" << std::endl;
   }
 
-  if (usePrevPaths && rerouteIncrementMins != 0) {
+  if ((loadPrevPaths || savePrevPaths) && rerouteIncrementMins != 0) {
+    throw std::invalid_argument("USE_PREV_PATHS is only allowed with static routing. Please set REROUTE_INCREMENT to 0 or REROUTE_INCREMENT to False.");
   }
     
-  std::cout << "Rerouting every " << rerouteIncrementMins << " minutes" << std::endl;
 
   const parameters simParameters {
       settings.value("a",0.557040909258405).toDouble(),
@@ -87,7 +90,7 @@ void B18CommandLineVersion::runB18Simulation() {
       settings.value("s_0",1.3807498735425845).toDouble()};
 
 
-  std::cout << "b18CommandLineVersion received the parameters "
+  std::cout << "Simulation parameters: "
             << "[a: " << simParameters.a 
             << ", b: " << simParameters.b
             << ", T: " << simParameters.T
@@ -97,6 +100,7 @@ void B18CommandLineVersion::runB18Simulation() {
   if (showBenchmarks){
     Benchmarker::enableShowBenchmarks();
   }
+  std::cout << "end of path " << END_OF_PATH << std::endl;
 
   Benchmarker loadNetwork("Load_network", true);
   Benchmarker loadODDemandData("Load_OD_demand_data", true);
@@ -123,36 +127,9 @@ void B18CommandLineVersion::runB18Simulation() {
   if (useSP) {
 	  //make the graph from edges file and load the OD demand from od file
 	  printf("# of OD pairs = %d\n", all_od_pairs_.size());
-
-	  //compute the routes for every OD pair
-	  int mpi_rank = 0;
-	  int mpi_size = 1;
-    if (usePrevPaths) {
-      // open file    
-      const std::string& pathsFileName = networkPathSP + "all_paths_ch.txt";
-      std::cout << "Loading " << pathsFileName << " as paths file\n";
-      std::ifstream inputFile(pathsFileName);
-      // test file open   
-      if (inputFile) {        
-        abm::graph::vertex_t value;
-        // read the elements in the file into a vector  
-        while (inputFile >> value) {
-          all_paths.push_back(value);
-        }
-      }
-    }
-
     const float startTimeMins = startSimulationH * 60;
     const float endTimeMins = startTimeMins + rerouteIncrementMins;
     cout << "startTime: " << startTimeMins << ", endTime: " << endTimeMins << endl;
-    const int initialBatchNumber = 0;
-    all_paths = B18TrafficSP::RoutingWrapper(
-      all_od_pairs_, street_graph, dep_times, startTimeMins,
-      endTimeMins, initialBatchNumber,
-      indexPathVecOrder, usePrevPaths, networkPathSP);
-    std::cout << "indexPathVecOrder size " << indexPathVecOrder.size() << std::endl;
-    std::cout << "paths size for batch #0: " << all_paths.size() << std::endl;
-
     b18TrafficSimulator.createB2018PeopleSP(startSimulationH, endSimulationH, limitNumPeople, addRandomPeople, street_graph, dep_times);
   } else {
     RoadGraphB2018::loadB2018RoadGraph(cg.roadGraph, networkPath);
@@ -168,7 +145,7 @@ void B18CommandLineVersion::runB18Simulation() {
     b18TrafficSimulator.simulateInGPU(numOfPasses, startSimulationH, endSimulationH,
         useJohnsonRouting, useSP, street_graph, all_paths, simParameters,
         rerouteIncrementMins, all_od_pairs_, dep_times,
-        indexPathVecOrder, networkPathSP);
+        indexPathVecOrder, networkPathSP, loadPrevPaths, savePrevPaths);
   }
 
 }

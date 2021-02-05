@@ -187,7 +187,7 @@ class Graph {
   std::vector<tsl::robin_map<graph::vertex_t, graph::edge_id_t>> edge_ids_;
 
   //person to their initial edge
-  std::map<graph::vertex_t, graph::edge_id_t> person_to_init_edge_;
+  std::vector<graph::edge_id_t> person_to_init_edge_;
 
   std::map<graph::edge_id_t, std::tuple<graph::vertex_t, graph::vertex_t>>
       edge_ids_to_vertices;

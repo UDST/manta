@@ -19,7 +19,7 @@ import xlwt
 import argparse
 from pdb import set_trace as st
 import numpy as np
-from datetime import date
+from datetime import datetime
 from mpl_toolkits.axes_grid.anchored_artists import AnchoredText
 
 # ================= Aux =================
@@ -40,7 +40,7 @@ def write_options_file(params = None):
                             "END_HR=12",\
                             "SHOW_BENCHMARKS=true",\
                             "OD_DEMAND_FILENAME=od_demand_5to12.csv", \
-                            "REROUTE_INCREMENT=30"
+                            "REROUTE_INCREMENT=5", \
                             " "])
 
     if params is not None:
@@ -198,7 +198,6 @@ def benchmark_one_run(number_of_run, benchmark_name, network_path):
                     "Ended" in component_resources.keys()
     except:
         st()
-    st()
 
 
     # ================= Write it down to a csv =================
@@ -485,17 +484,17 @@ def load_csv_and_generate_benchmark_report(benchmark_name = "benchmarks", all_in
     book.save(os.path.join("benchmarking", "{}.xls".format(benchmark_name)))
 
 
-def benchmark_runtime_varying_reroute_increment_and_save_csv(network_path = "berkeley_2018/new_full_network/"):
-    for increment in [5, 10] + list(range(15, 181, 15)):
-        log("Running the simulation with increment {}".format(increment))
-        write_options_file({"NETWORK_PATH": network_path, "REROUTE_INCREMENT": str(increment)})
-        start_time_simulation = time.time()
-        os.system("./LivingCity")
-        #process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        elapsed_time_simulation = time.time() - start_time_simulation
-        log("Finished. Elapsed time: {}".format(elapsed_time_simulation))
-
-        with open("benchmarking/routingTimes.csv","a") as reroute_runtime_file:
+def benchmark_runtime_varying_reroute_increment_and_save_csv(csv_name, network_path = "berkeley_2018/new_full_network/"):
+    with open("benchmarking/{}.csv".format(csv_name),"w") as reroute_runtime_file:
+        reroute_runtime_file.write('experiment,runtime_in_secs\n')
+        for increment in [5, 10] + list(range(15, 181, 15)):
+            log("Running the simulation with increment {}".format(increment))
+            write_options_file({"NETWORK_PATH": network_path, "REROUTE_INCREMENT": str(increment)})
+            start_time_simulation = time.time()
+            os.system("./LivingCity")
+            #process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            elapsed_time_simulation = time.time() - start_time_simulation
+            log("Finished. Elapsed time: {}".format(elapsed_time_simulation))
             line_to_write = ["dynamic_routing_{}_mins".format(increment), str(elapsed_time_simulation)]
             line_to_write_string = ','.join(line_to_write)
             reroute_runtime_file.write(line_to_write_string + "\n")
@@ -511,8 +510,11 @@ def format_seconds_to_mins_and_seconds(total_seconds):
     else:
         return "{}m{}s".format(minutes, seconds)
 
-def load_routing_times_csv_and_plot():
-    df = pd.read_csv("benchmarking/routingTimes.csv")
+def get_datetime_as_string():    
+    return datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+
+def load_routing_times_csv_and_plot(filename):
+    df = pd.read_csv("benchmarking/{}.csv".format(filename))
     sns.color_palette("pastel", 8)
     fig, ax = matplotlib.pyplot.subplots(figsize=(12,8))
 
@@ -520,8 +522,8 @@ def load_routing_times_csv_and_plot():
 
     ax = sns.barplot(
         data=df,
-        x='runtime_in_secs',y="experiment",
-        order=['dynamic_routing_{}_mins'.format(mins) for mins in [5, 10] + list(range(15, 181, 15))] + ['static'],
+        x=',,runtime_in_secsy="experiment",
+        #order=['dynamic_routing_{}_mins'.format(mins) for mins in [5, 10] + list(range(15, 181, 15))] + ['static'],
         palette='Blues_d'
     )
     plt.xlabel("")
@@ -575,6 +577,11 @@ def parse_input_arguments():
     return argument_values
 
 if __name__ == "__main__":
+    now = get_datetime_as_string()
+    benchmark_runtime_varying_reroute_increment_and_save_csv(now)
+    load_routing_times_csv_and_plot(now)
+    sys.exit()
+
     argument_values = parse_input_arguments()
 
     if not argument_values['just_plot']:
@@ -584,3 +591,5 @@ if __name__ == "__main__":
 
     load_csv_and_generate_benchmark_report(benchmark_name = argument_values['benchmark_name'],
                                             all_in_one_plot = True)
+
+    sys.exit()
