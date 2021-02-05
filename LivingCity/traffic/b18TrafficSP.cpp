@@ -83,24 +83,19 @@ std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::make_od_pairs(std
 std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::read_od_pairs(const std::string& filename, int nagents) {
   bool status = true;
   std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs;
-  try {
-    csvio::CSVReader<2> in(filename);
-    in.read_header(csvio::ignore_extra_column, "origin", "destination");
-    abm::graph::vertex_t v1, v2;
-    abm::graph::weight_t weight;
-    while (in.read_row(v1, v2)) {
-      //std::array<abm::graph::vertex_t, 2> od = {v1, v2};
-      std::array<abm::graph::vertex_t, 2> od = {v1, v2};
-      od_pairs.emplace_back(od);
-      RoadGraphB2018::demandB2018.push_back(DemandB2018(1, v1, v2)); //there is only one person for each OD pair
-    }
-    RoadGraphB2018::totalNumPeople = RoadGraphB2018::demandB2018.size();
-    if (nagents != std::numeric_limits<int>::max())
-      od_pairs.resize(nagents);
-  } catch (std::exception& exception) {
-    std::cout << "Read OD file: " << exception.what() << "\n";
-    status = false;
+  csvio::CSVReader<2> in(filename);
+  in.read_header(csvio::ignore_extra_column, "origin", "destination");
+  abm::graph::vertex_t v1, v2;
+  abm::graph::weight_t weight;
+  while (in.read_row(v1, v2)) {
+    //std::array<abm::graph::vertex_t, 2> od = {v1, v2};
+    std::array<abm::graph::vertex_t, 2> od = {v1, v2};
+    od_pairs.emplace_back(od);
+    RoadGraphB2018::demandB2018.push_back(DemandB2018(1, v1, v2)); //there is only one person for each OD pair
   }
+  RoadGraphB2018::totalNumPeople = RoadGraphB2018::demandB2018.size();
+  if (nagents != std::numeric_limits<int>::max())
+    od_pairs.resize(nagents);
   return od_pairs;
 }
 
@@ -146,6 +141,28 @@ void B18TrafficSP::filterODByTimeRange(
   }
 }
 
+std::vector<abm::graph::edge_id_t> B18TrafficSP::loadPrevPathsFromFile(
+  const std::string networkPathSP){
+
+  std::vector<abm::graph::edge_id_t> paths_SP;
+  // open file    
+  const std::string& pathsFileName = networkPathSP + "all_paths_ch.txt";
+  std::cout << "Loading " << pathsFileName << " as paths file" << std::endl;
+  std::ifstream inputFile(pathsFileName);
+  // test file open   
+  if (inputFile) {        
+    abm::graph::vertex_t value;
+    // read the elements in the file into a vector  
+    while (inputFile >> value) {
+      paths_SP.push_back(value);
+    }
+  } else {
+    throw std::runtime_error("Could not load previous paths file.");
+  }
+
+  return paths_SP;
+}
+
 std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
   const std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_,
   const std::shared_ptr<abm::Graph>& street_graph,
@@ -154,7 +171,7 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
   const float end_time_mins,
   int reroute_batch_number,
   std::vector<uint>& indexPathVecOrder,
-  const bool usePrevPaths,
+  const bool savePaths,
   const std::string networkPathSP) {
 
   // --------------------------- preprocessing ---------------------------
@@ -231,7 +248,7 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
   }
   CHoutputNodesToEdgesConversion.stopAndEndBenchmark();
 
-  if (usePrevPaths) {
+  if (savePaths) {
     const std::string& pathsFileName = networkPathSP + "all_paths_ch.txt";
     std::cout << "Save " << pathsFileName << " as paths file\n";
     std::ofstream output_file(pathsFileName);
@@ -240,22 +257,17 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
   }
 
   // map person to their initial edge
-  int person_id = 0;
+  bool next_edge_is_init_edge = true;
   for (int i = 0; i < all_paths.size(); i++) {
-    if (i == 0) { //first one that doesn't contain a -1 for logic
-      street_graph->person_to_init_edge_[person_id] = i; 
-      person_id++;
-    } else if ((all_paths[i] == -1) && (all_paths[i+1] == -1)) { //if current is -1 and next is -1, increment (will result in nan)
-      street_graph->person_to_init_edge_[person_id] = i;
-      person_id++;
-    } else if ((all_paths[i] != -1) && (all_paths[i-1] == -1)) { //if previous is -1, use this as first edge for p
-      street_graph->person_to_init_edge_[person_id] = i;
-      person_id++;
-    } else if ((all_paths[i] == -1) && (i == (all_paths.size() - 1))) { //reach the end
-      break;
+    if (next_edge_is_init_edge) {
+      street_graph->person_to_init_edge_.push_back(all_paths[i]);
+      next_edge_is_init_edge = false;
+    }
+    if (all_paths[i] == -1){
+      next_edge_is_init_edge = true;
     }
   }
-
+  std::cout << "person_to_init_edge_ size " << street_graph->person_to_init_edge_.size() << std::endl;
   return all_paths;
 }
 
@@ -267,7 +279,7 @@ void B18TrafficSP::convertVector(std::vector<abm::graph::edge_id_t> paths_SP,
     if (edge_in_path != -1) {
       indexPathVec.emplace_back(edgeIdToLaneMapNum[edge_in_path]);
     } else {
-      indexPathVec.emplace_back(END_OF_PATH);
+      indexPathVec.emplace_back(-1);
     }
   }
 	//std::cout << "indexPathVec size = " << indexPathVec.size() << "\n";

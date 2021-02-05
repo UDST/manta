@@ -162,6 +162,7 @@ void b18updateStructuresCUDA(
   size_t size = trafficPersonVec.size() * sizeof(LC::B18TrafficPerson);
   gpuErrchk(cudaMalloc((void **) &trafficPersonVec_d, size));
   gpuErrchk(cudaMemcpy(trafficPersonVec_d, trafficPersonVec.data(), size, cudaMemcpyHostToDevice));
+
   printMemoryUsage();
 }
 
@@ -179,13 +180,13 @@ void b18FinishCUDA(void){
   cudaFree(numVehPerLinePerTimeInterval_d);
 }//
 
- void b18GetDataCUDA(std::vector<LC::B18TrafficPerson>& trafficPersonVec, std::vector<LC::B18EdgeData> &edgesData){
-   // copy back people
-   size_t size = trafficPersonVec.size() * sizeof(LC::B18TrafficPerson);
-   size_t size_edges = edgesData.size() * sizeof(LC::B18EdgeData);
-   cudaMemcpy(trafficPersonVec.data(),trafficPersonVec_d,size,cudaMemcpyDeviceToHost);//cudaMemcpyHostToDevice
-   cudaMemcpy(edgesData.data(),edgesData_d,size_edges,cudaMemcpyDeviceToHost);//cudaMemcpyHostToDevice
- }
+void b18GetDataCUDA(std::vector<LC::B18TrafficPerson>& trafficPersonVec, std::vector<LC::B18EdgeData> &edgesData){
+  // copy back people
+  size_t size = trafficPersonVec.size() * sizeof(LC::B18TrafficPerson);
+  size_t size_edges = edgesData.size() * sizeof(LC::B18EdgeData);
+  cudaMemcpy(trafficPersonVec.data(),trafficPersonVec_d,size,cudaMemcpyDeviceToHost);//cudaMemcpyHostToDevice
+  cudaMemcpy(edgesData.data(),edgesData_d,size_edges,cudaMemcpyDeviceToHost);//cudaMemcpyHostToDevice
+}
 
 
  __device__ void calculateGapsLC(
@@ -480,7 +481,7 @@ __global__ void kernel_trafficSimulation(
   const parameters simParameters)
   {
   int p = blockIdx.x * blockDim.x + threadIdx.x;
-  //printf("p %d Numpe %d\n",p,numPeople);
+  //printf(*"p %d Numpe %d\n",p,numPeople);
   if (p < numPeople) {//CUDA check (inside margins)
     if (trafficPersonVec[p].active == 2) {
       return;
@@ -1131,10 +1132,8 @@ __global__ void kernel_trafficSimulation(
     //2.2 check if change intersection
     //!!!ALWAYS CHANGE
     //2.2.1 find next edge
-    /*ushort curr_intersection=trafficPersonVec[p].edgeNextInters;
-    ushort end_intersection=trafficPersonVec[p].end_intersection;
     //2.1 check if end*/
-    if (nextEdge == -1) { //if(curr_intersection==end_intersection)
+    if (nextEdge == -1) {
       trafficPersonVec[p].active = 2; //finished
       return;
     }

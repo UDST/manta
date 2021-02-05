@@ -2,7 +2,7 @@
 
 #ifndef _ABM_CONFIG_H_
 #define _ABM_CONFIG_H_
-#define END_OF_PATH UINT_MAX
+#define END_OF_PATH -1 // max int value
 #define FLOAT_COMPARISON_EPSILON 0.0001
 
 namespace abm {

@@ -77,7 +77,7 @@ class B18TrafficSimulator {
     std::vector<abm::graph::edge_id_t> paths_SP, const parameters & simParameters,
     const int rerouteIncrementMins, std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs,
     std::vector<float> dep_times, std::vector<uint> inputIndexPathVecOrder,
-    const std::string networkPathSP);
+    const std::string networkPathSP, const bool loadPrevPaths, const bool savePaths);
 
   // Lanes
   std::vector<uint> edgeIdToLaneMapNum;
