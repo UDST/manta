@@ -103,6 +103,7 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
     if (numLanes == 0) { continue; }
 
     edgesData[tNumMapWidth].length = std::get<1>(x)->second.length;
+    std::cout << "edges data at " << tNumMapWidth << " is " << edgesData[tNumMapWidth].length << std::endl;
     edgesData[tNumMapWidth].maxSpeedMperSec = std::get<1>(x)->second.max_speed_limit_mps;
 
     if (maxLength < edgesData[tNumMapWidth].length) { maxLength = edgesData[tNumMapWidth].length; }

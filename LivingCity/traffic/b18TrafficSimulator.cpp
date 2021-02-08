@@ -438,7 +438,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     fileOutput.stopAndEndBenchmark();
   }
 
-  //b18FinishCUDA();
+  b18FinishCUDA();
   G::global()["cuda_render_displaylist_staticRoadsBuildings"] = 3;//kill display list
 
 #ifdef B18_RUN_WITH_GUI
@@ -2540,30 +2540,30 @@ void writePersonToInitEdgeFile(int numOfPass,
   int start_time, int end_time,
   const std::vector<uint>& indexPathVecOrder,
   std::vector<abm::graph::edge_id_t> person_to_init_edge) {
-  // QFile personToInitEdgeFile(QString::number(numOfPass) + "_personToInitEdge" + QString::number(start_time) + "to" + QString::number(end_time) + ".csv");
-  // if (personToInitEdgeFile.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
-  //   std::cout << "> Saving personToInitEdge (size " << person_to_init_edge.size() << ")..." << std::endl;
-  //   QTextStream personToInitEdgeStream(&personToInitEdgeFile);
-  //   personToInitEdgeStream << "personToInitEdge\n";
+  QFile personToInitEdgeFile(QString::number(numOfPass) + "_personToInitEdge" + QString::number(start_time) + "to" + QString::number(end_time) + ".csv");
+  if (personToInitEdgeFile.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
+    std::cout << "> Saving personToInitEdge (size " << person_to_init_edge.size() << ")..." << std::endl;
+    QTextStream personToInitEdgeStream(&personToInitEdgeFile);
+    personToInitEdgeStream << "p,initEdge\n";
 
-  //   for (int i = 0; i < person_to_init_edge.size(); ++i){
-  //     /*try {
-  //       personToInitEdgeStream << indexPathVecOrder[i];
-  //     } catch (const std::exception& e) {
-  //       throw "tried to access indexPathVecOrder on position " + to_string(i) +
-  //             " but its size is " + to_string(indexPathVecOrder.size());
-  //     }*/
-  //     try {
-  //       personToInitEdgeStream << person_to_init_edge[i] << "\n";
-  //     } catch (const std::exception& e) {
-  //       throw "tried to access person_to_init_edge on position " + to_string(i) +
-  //             " but its size is " + to_string(person_to_init_edge.size());
-  //     }
-  //   }
+    for (int i = 0; i < person_to_init_edge.size(); ++i){
+      try {
+        personToInitEdgeStream << indexPathVecOrder[i] << ",";
+      } catch (const std::exception& e) {
+        throw "tried to access indexPathVecOrder on position " + to_string(i) +
+              " but its size is " + to_string(indexPathVecOrder.size());
+      }
+      try {
+        personToInitEdgeStream << person_to_init_edge[i] << "\n";
+      } catch (const std::exception& e) {
+        throw "tried to access person_to_init_edge on position " + to_string(i) +
+              " but its size is " + to_string(person_to_init_edge.size());
+      }
+    }
 
-  //   personToInitEdgeFile.close();
-  // }
-  // std::cout << "> Finished saving personToInitEdge." << std::endl;
+    personToInitEdgeFile.close();
+  }
+  std::cout << "> Finished saving personToInitEdge." << std::endl;
 }
 
 void B18TrafficSimulator::savePeopleAndRoutesSP(
@@ -2588,6 +2588,7 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(
     threadWritePeopleFile.join();
     threadWriteRouteFile.join();
     threadWriteIndexPathVecFile.join();
+    threadWritePersonToInitEdgeFile.join();
     std::cout << "Finished saving output files." << std::endl;
   } else {
     writePeopleFile(numOfPass, graph_, start_time, end_time, trafficPersonVec, deltaTime);

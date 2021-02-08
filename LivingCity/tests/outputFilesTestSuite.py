@@ -15,7 +15,7 @@ pytest.network_path = "berkeley_2018/new_full_network/"
 pytest.distance_margin_between_route_and_people_file = 100
 pytest.edges_path = "berkeley_2018/new_full_network/edges.csv"
 pytest.number_of_people_to_test = 1000
-pytest.test_all_people = False
+pytest.test_all_people = True
 pytest.people_to_test = None
 pytest.run_simulation = False
 
@@ -37,7 +37,7 @@ def default_network_setup(request):
 
     if pytest.run_simulation:
         log("Running system test setup on output files for network {}".format(pytest.network_path))
-        output_files = ["route", "people", "indexPathVec"]
+        output_files = ["route", "people", "indexPathVec", 'personToInitEdge']
 
         log("Removing previous run files...")
         for output_file_name in output_files:
@@ -57,6 +57,7 @@ def default_network_setup(request):
     log("Loading output csv files for testing...")
     pytest.pd_people = pd.read_csv("0_people5to12.csv")
     pytest.pd_edges = pd.read_csv(pytest.edges_path)
+    pytest.pd_personToInitEdge = pd.read_csv("0_personToInitEdge5to12.csv")
     pytest.pd_route = pd.read_csv("0_route5to12.csv", delimiter=':')
 
     if (pytest.test_all_people):
@@ -84,13 +85,15 @@ def test01_all_output_files_should_have_the_same_length(default_network_setup):
     log("Passed")
 
 def test02_first_edge_of_trip_should_come_from_init_intersection(default_network_setup):
-    log("Testing if the first edge of each trip comes from the int intersection")
+    log("Testing if the first edge of each trip comes from the init intersection")
     for person_id in pytest.people_to_test:
         init_intersection_according_to_people_file = int(pytest.pd_people.iloc[person_id]['init_intersection'])
         route_list = route_csv_string_to_list(str(pytest.pd_route.iloc[person_id][1]))
+        number_of_empty_routes = 0
         if route_list == []:
-            log("Skipping empty route for person {}".format(person_id))
+            number_of_empty_routes += 1
             continue
+        log("Number of empty routes skipped: {}".format(number_of_empty_routes))
         first_edge = int(route_list[0])
         init_intersection_according_to_route_and_edges_csv = int(pytest.pd_edges.iloc[first_edge]['osmid_u'])
 
@@ -107,9 +110,11 @@ def test03_last_edge_of_trip_should_go_to_end_intersection(default_network_setup
     for person_id in pytest.people_to_test:
         end_intersection_according_to_people_file = int(pytest.pd_people.iloc[person_id]['end_intersection'])
         route_list = route_csv_string_to_list(str(pytest.pd_route.iloc[person_id][1]))
+        number_of_empty_routes = 0
         if route_list == []:
-            log("Skipping empty route for person {}".format(person_id))
+            number_of_empty_routes += 1
             continue
+        log("Number of empty routes skipped: {}".format(number_of_empty_routes))
 
         last_edge = int(route_list[-1])
         end_intersection_according_to_route_and_edges_csv = int(pytest.pd_edges.iloc[last_edge]['osmid_v'])
@@ -125,9 +130,11 @@ def test_04_each_edge_of_trip_should_connect_to_the_following_edge(default_netwo
     log("Testing if each edge of each trip connects to the following edge")
     for person_id in pytest.people_to_test:
         route_list = route_csv_string_to_list(str(pytest.pd_route.iloc[person_id][1]))
+        number_of_empty_routes = 0
         if route_list == []:
-            log("Skipping empty route for person {}".format(person_id))
+            number_of_empty_routes += 1
             continue
+        log("Number of empty routes skipped: {}".format(number_of_empty_routes))
 
         for first_edge_index in range(len(route_list)-1):
             first_edge = int(route_list[first_edge_index])
@@ -144,7 +151,28 @@ def test_04_each_edge_of_trip_should_connect_to_the_following_edge(default_netwo
                 
     log("Passed")
 
-def test_05_distance_in_people_file_should_match_the_sum_of_the_edges_in_the_route_file(default_network_setup):
+def test_05_first_edge_of_trip_should_be_the_correct_initial_edge(default_network_setup):
+    log("Testing if the first edge of each trip is the correct initial edge...")
+    for person_id in pytest.people_to_test:
+        route_list = route_csv_string_to_list(str(pytest.pd_route.iloc[person_id][1]))
+        number_of_empty_routes = 0
+        if route_list == []:
+            number_of_empty_routes += 1
+            continue
+        log("Number of empty routes skipped: {}".format(number_of_empty_routes))
+        init_edge_according_to_route_file = int(route_list[0])
+
+        init_edge_according_to_person_to_init_edge = int(pytest.pd_personToInitEdge.loc[pytest.pd_personToInitEdge['p' == person_id]['initEdge']])        
+
+        assert init_edge_according_to_route_file == init_edge_according_to_person_to_init_edge, \
+            "Initial edges do not match! For person " + person_id + ", according to the routes' file, init edge is " + \
+            init_edge_according_to_route_file + \
+            " but according to the person to init file, the init edge is " + \
+            init_edge_according_to_person_to_init_edge
+
+    log("Passed")
+
+def test_06_distance_in_people_file_should_match_the_sum_of_the_edges_in_the_route_file(default_network_setup):
     log("Comparing that the distance in the people file matches the sum of the edges in the route file with a margin of {}...".format(
         pytest.distance_margin_between_route_and_people_file))
     pd_people = pd.read_csv("0_people5to12.csv")
