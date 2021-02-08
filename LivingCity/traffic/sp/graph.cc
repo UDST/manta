@@ -8,7 +8,8 @@ inline void abm::Graph::add_edge(
   abm::Edge_vals edge_vals,
   abm::graph::vertex_t edgeid = std::numeric_limits<abm::graph::vertex_t>::max()) {
 
-  edge_vals.weight = edge_vals.length / edge_vals.max_speed_limit_mps;
+  //edge_vals.weight = edge_vals.length / edge_vals.max_speed_limit_mps;
+  edge_vals.weight = edge_vals.length;
 
   // Create a map of vertices
   if (vertices_.find(vertex1) == vertices_.end())

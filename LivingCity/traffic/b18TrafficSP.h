@@ -57,7 +57,8 @@ class B18TrafficSP {
     int reroute_batch_number,
     std::vector<uint>& indexPathVecOrder,
     const bool savePaths,
-    const std::string networkPathSP);
+    const std::string networkPathSP,
+    std::vector<LC::B18TrafficPerson>& trafficPersonVec);
 
   static void initialize_person_to_init_edge(
     std::vector<abm::graph::edge_id_t>& all_paths,
