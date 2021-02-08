@@ -313,7 +313,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       } else {
         paths_SP = B18TrafficSP::RoutingWrapper(all_od_pairs, graph_, dep_times,
                                               startTimeMins, endTimeMins, increment_index,
-                                              indexPathVecOrder, savePaths, networkPathSP);
+                                              indexPathVecOrder, savePaths, networkPathSP,
+                                              trafficPersonVec);
       }
       
       cumulative_paths_SP.insert(std::end(cumulative_paths_SP), std::begin(paths_SP), std::end(paths_SP));
@@ -2480,7 +2481,8 @@ bool isLastEdgeOfPath(abm::graph::edge_id_t edgeInPath){
 void writeRouteFile(int numOfPass,
   std::vector<abm::graph::edge_id_t> cumulative_paths_SP,
   int start_time, int end_time,
-  std::vector<uint> indexPathVecOrder) {
+  std::vector<uint> indexPathVecOrder,
+  const std::vector<B18TrafficPerson> &trafficPersonVec) {
   QFile routeFile(QString::number(numOfPass) + "_route" + QString::number(start_time) + "to" + QString::number(end_time) + ".csv");
   if (routeFile.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
     std::cout << "> Saving Route file..." << std::endl;
@@ -2491,6 +2493,11 @@ void writeRouteFile(int numOfPass,
     int peopleIndex = 0;
     streamR << lineIndex << ":[";
     for (int i = 0; i < cumulative_paths_SP.size(); ++i) {
+      if (i == 0){
+        // assert that indexPathInit is the same as the first edge of the route
+        assert(trafficPersonVec[peopleIndex].indexPathInit == indexPathVecOrder[lineIndex]);
+      }
+
       const uint edgeInPath = cumulative_paths_SP[i];
       if (isLastEdgeOfPath(edgeInPath)) {
         streamR << "]\n";
@@ -2581,7 +2588,7 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(
   if (enableMultiThreading){
     std::cout << "Saving output files..." << std::endl;
     std::thread threadWritePeopleFile(writePeopleFile, numOfPass, graph_, start_time, end_time, trafficPersonVec, deltaTime);
-    std::thread threadWriteRouteFile(writeRouteFile, numOfPass, cumulative_paths_SP, start_time, end_time, indexPathVecOrder);
+    std::thread threadWriteRouteFile(writeRouteFile, numOfPass, cumulative_paths_SP, start_time, end_time, indexPathVecOrder, trafficPersonVec);
     std::thread threadWriteIndexPathVecFile(writeIndexPathVecFile, numOfPass, start_time, end_time, indexPathVec, indexPathVecOrder);
     std::thread threadWritePersonToInitEdgeFile(writePersonToInitEdgeFile, numOfPass, start_time, end_time, indexPathVecOrder, graph_->person_to_init_edge_);
 
@@ -2592,7 +2599,7 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(
     std::cout << "Finished saving output files." << std::endl;
   } else {
     writePeopleFile(numOfPass, graph_, start_time, end_time, trafficPersonVec, deltaTime);
-    writeRouteFile(numOfPass, cumulative_paths_SP, start_time, end_time, indexPathVecOrder);
+    writeRouteFile(numOfPass, cumulative_paths_SP, start_time, end_time, indexPathVecOrder, trafficPersonVec);
     writeIndexPathVecFile(numOfPass, start_time, end_time, indexPathVec, indexPathVecOrder);
     writePersonToInitEdgeFile(numOfPass, start_time, end_time, indexPathVecOrder, graph_->person_to_init_edge_);
   }

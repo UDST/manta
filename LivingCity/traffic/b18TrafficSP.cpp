@@ -172,7 +172,8 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
   int reroute_batch_number,
   std::vector<uint>& indexPathVecOrder,
   const bool savePaths,
-  const std::string networkPathSP) {
+  const std::string networkPathSP,
+  std::vector<LC::B18TrafficPerson>& trafficPersonVec) {
 
   // --------------------------- preprocessing ---------------------------
   std::vector<abm::graph::vertex_t> filtered_od_pairs_sources_;
@@ -258,16 +259,19 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
 
   // map person to their initial edge
   bool next_edge_is_init_edge = true;
+  int person_id = 0;
   for (int i = 0; i < all_paths.size(); i++) {
     if (next_edge_is_init_edge) {
-      street_graph->person_to_init_edge_.push_back(all_paths[i]);
+      trafficPersonVec[indexPathVecOrder[person_id]].indexPathInit = all_paths[i];
+      person_id++;
       next_edge_is_init_edge = false;
     }
     if (all_paths[i] == -1){
       next_edge_is_init_edge = true;
     }
   }
-  std::cout << "person_to_init_edge_ size " << street_graph->person_to_init_edge_.size() << std::endl;
+  std::cout << "Set indexPathInit for " << person_id << " people." << std::endl;
+  assert(person_id == trafficPersonVec.size());
   return all_paths;
 }
 
