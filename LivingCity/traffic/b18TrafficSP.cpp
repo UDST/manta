@@ -206,7 +206,7 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
     // build node routes vector
     auto nodes = x.first;
     auto nodeFrom = std::get<0>(nodes);
-    auto nodeTo = std::get<1>(nodes);;
+    auto nodeTo = std::get<1>(nodes);
     std::vector<long> edge_nodes = {nodeFrom, nodeTo};
     edges_routing.emplace_back(edge_nodes);
 
