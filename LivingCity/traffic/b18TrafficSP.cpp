@@ -262,7 +262,7 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
   int person_id = 0;
   for (int i = 0; i < all_paths.size(); i++) {
     if (next_edge_is_init_edge) {
-      trafficPersonVec[indexPathVecOrder[person_id]].indexPathInit = all_paths[i];
+      trafficPersonVec[indexPathVecOrder[person_id]].indexPathInit = i;
       person_id++;
       next_edge_is_init_edge = false;
     }
