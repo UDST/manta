@@ -21,7 +21,7 @@ sudo apt install git
 
 ## Dependencies
 
- - Boost 1.59 (```bash wget http://sourceforge.net/projects/boost/files/boost/1.59.0/boost_1_59_0.tar.gz```)
+ - Boost 1.59 (```wget http://sourceforge.net/projects/boost/files/boost/1.59.0/boost_1_59_0.tar.gz```)
  - CUDA (used versions: 9.0 in Ubuntu)
  - g++ (used versions: 6.4.0 in Ubuntu)
  - Qt5 (used versions: 5.9.5 in Ubuntu)
