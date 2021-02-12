@@ -62,7 +62,7 @@ Clone the [Pandana repository](https://github.com/UDST/pandana) to your home dir
 
 Create `Makefile` and compile with:
 ```bash
-sudo qmake LivingCity/LivingCity.pro && sudo make -j
+sudo qmake LivingCity/LivingCity.pro
 ```
 
 Importantly, because MANTA uses a shared library from Pandana, a Pandana makefile must be created (to create a shared object file) and the MANTA makefile must be modified.
