@@ -4,10 +4,24 @@ Microsimulation Analysis for Network Traffic Assignment. MANTA employs a highly 
 
 ![](https://github.com/UDST/manta/blob/main/bay_bridge_trips.png)
 
+## Initial checks
+
+```bash
+sudo apt update
+sudo apt install qtchooser
+sudo apt-get install qt5-default
+sudo apt-get install libglew-dev
+sudo apt-get install build-essential
+sudo apt-get install libfontconfig1
+sudo apt-get install mesa-common-dev
+sudo apt-get install wget
+sudo apt-get install pciutils
+sudo apt install git
+```
+
 ## Dependencies
 
- - Boost 1.59
- - OpenCV (used versions: 3.2.0 in Ubuntu)
+ - Boost 1.59 (```bash wget http://sourceforge.net/projects/boost/files/boost/1.59.0/boost_1_59_0.tar.gz```)
  - CUDA (used versions: 9.0 in Ubuntu)
  - g++ (used versions: 6.4.0 in Ubuntu)
  - Qt5 (used versions: 5.9.5 in Ubuntu)
