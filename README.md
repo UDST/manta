@@ -21,8 +21,13 @@ sudo apt install git
 
 ## Dependencies
 
- - Boost 1.59 (```wget http://sourceforge.net/projects/boost/files/boost/1.59.0/boost_1_59_0.tar.gz```)
- - CUDA (used versions: 9.0 in Ubuntu)
+ - Boost 1.59 
+ ```bash 
+ wget http://sourceforge.net/projects/boost/files/boost/1.59.0/boost_1_59_0.tar.gz
+ sudo tar xf boost_1_59_0.tar.gz -C /usr/local
+ ```
+ 
+ - CUDA (used versions: 9.0 in Ubuntu) (If you are using Google Cloud Platform, please follow these [instructions](https://cloud.google.com/compute/docs/gpus/install-drivers-gpu#ubuntu-driver-steps))
  - g++ (used versions: 6.4.0 in Ubuntu)
  - Qt5 (used versions: 5.9.5 in Ubuntu)
  - qmake (used versions: 3.1 in Ubuntu)
@@ -53,7 +58,7 @@ Clone the repo in your home directory with:
 git clone git@github.com:udst/manta.git ~/manta && cd ~/manta
 ```
 
-Clone the [Pandana repository](https://github.com/UDST/pandana) to your home directory and switch to the `vectorized-paths` branch. This is necessary since MANTA now uses a fast contraction hierarchies framework for shortest path routing. Previously implemented shortest path frameworks include Johnson's all pairs shortest path and a parallelized Dijkstra's priority queue.
+Clone the [Pandana repository](https://github.com/UDST/pandana) to your home directory stay on the `main` branch, since MANTA now uses a fast contraction hierarchies framework for shortest path routing. Previously implemented shortest path frameworks include Johnson's all pairs shortest path and a parallelized Dijkstra's priority queue.
 
 Create `Makefile` and compile with:
 ```bash
