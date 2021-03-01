@@ -9,6 +9,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # libraries
 RUN apt-get update
+RUN apt update
 RUN apt-get install qtchooser -y
 RUN apt-get install qt5-default -y
 RUN apt-get install libglew-dev -y
@@ -125,6 +126,11 @@ ENV LD_LIBRARY_PATH="/usr/local/cuda-11.2/lib64:${LD_LIBRARY_PATH}"
 # Pandana path - modify it in case Pandana is not in your home directory
 #RUN export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/include/pandana/src
 ENV LD_LIBRARY_PATH="/usr/include/pandana/src:${LD_LIBRARY_PATH}"
+
+# Python libraries
+RUN apt install python3-pip
+
+RUN pip3 install -r requirements.txt
 
 # Check if CUDA is properly installed
 CMD nvidia-smi
