@@ -1,0 +1,14 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - "-t"
+      - "gcr.io/blissful-jet-303616/manta:$TAG_NAME"
+      - "."
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - "gcr.io/blissful-jet-303616/manta:$TAG_NAME"
+timeout: 1200s
+images:
+  - "gcr.io/blissful-jet-303616/manta:$TAG_NAME"

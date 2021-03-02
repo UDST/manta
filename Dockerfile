@@ -25,7 +25,7 @@ RUN apt-get install vim -y
 # Python libraries
 RUN apt install python3-pip -y
 
-COPY ./requirements.txt ./
+ADD . ./
 
 RUN pip3 install -r requirements.txt
 
