@@ -5,6 +5,7 @@ FROM  nvidia/cuda:11.2.0-devel-ubuntu18.04
 
 # Workarond so the setup doesnt get stuck
 ENV TZ=Asia/Dubai
+
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # libraries
@@ -20,6 +21,14 @@ RUN apt-get install wget -y
 RUN apt-get install pciutils -y
 RUN apt-get install git -y
 RUN apt-get install vim -y
+
+# Python libraries
+RUN apt install python3-pip -y
+
+COPY ./requirements.txt ./
+
+RUN pip3 install -r requirements.txt
+
 
 # boost
 RUN apt-get install wget
@@ -78,11 +87,15 @@ RUN apt -y install unzip
 
 
 # OpenCV installation
-RUN git clone https://github.com/opencv/opencv.git && \
-    cd opencv && \
-    mkdir build && \
-    cd build && \
-    cmake  \
+RUN git clone https://github.com/opencv/opencv.git
+
+WORKDIR opencv
+
+RUN mkdir build
+
+WORKDIR build
+
+RUN cmake  \
     -D BUILD_TIFF=ON  \
     -D WITH_CUDA=OFF \
     -D ENABLE_AVX=OFF \
@@ -127,10 +140,14 @@ ENV LD_LIBRARY_PATH="/usr/local/cuda-11.2/lib64:${LD_LIBRARY_PATH}"
 #RUN export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/include/pandana/src
 ENV LD_LIBRARY_PATH="/usr/include/pandana/src:${LD_LIBRARY_PATH}"
 
-# Python libraries
-RUN apt install python3-pip
+#WORKDIR /
 
-RUN pip3 install -r requirements.txt
+#COPY requirements.txt /tmp/
+#RUN pip3 install --requirement /tmp/requirements.txt
+#COPY . /tmp/
+
+#ADD requirements.txt .
+
 
 # Check if CUDA is properly installed
 CMD nvidia-smi
