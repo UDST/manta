@@ -81,6 +81,13 @@ RUN make
 FROM nvidia/cuda:11.2.0-devel-ubuntu18.04 as mantabuilder
 
 COPY --from=opencvbuilder /usr/include/opencv4/ /usr/include/opencv4/
+
+#COPY --from=opencvbuilder /opt/local/lib/ /opt/local/lib/
+
+COPY --from=opencvbuilder /usr/lib/x86_64-linux-gnu/libopencv_core.* /usr/lib/x86_64-linux-gnu/
+COPY --from=opencvbuilder /usr/lib/x86_64-linux-gnu/libopencv_imgproc.* /usr/lib/x86_64-linux-gnu/
+COPY --from=opencvbuilder /usr/lib/x86_64-linux-gnu/libopencv_imgcodecs.* /usr/lib/x86_64-linux-gnu/
+
 COPY --from=pandanabuilder /usr/include/pandana/ /usr/include/pandana/
 
 # libraries
@@ -105,6 +112,14 @@ ENV LD_LIBRARY_PATH="/usr/local/cuda-11.2/lib64:${LD_LIBRARY_PATH}"
 
 # Pandana path - modify it in case Pandana is not in your home directory
 ENV LD_LIBRARY_PATH="/usr/include/pandana/src:${LD_LIBRARY_PATH}"
+
+# Python libraries
+RUN apt install python3-pip -y
+
+ADD . ./
+
+RUN pip3 install -r requirements.txt
+
 
 # Check if CUDA is properly installed
 CMD nvidia-smi
