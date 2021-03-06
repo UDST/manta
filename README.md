@@ -38,8 +38,9 @@ sudo apt install git
  - psutil (used versions: 5.7.2 in Ubuntu) 
  - xlwt (used versions: 1.3.0 in Ubuntu)
 
-
 ## Installation & Compilation
+
+### Manual installation
 
 Once the necessary dependencies are installed, you can use the following lines to make sure the
 correct versions of each one are used:
@@ -102,6 +103,34 @@ MANTA `Makefile`:
 2. Add `-L/home/{YOUR_USERNAME}/pandana/src -lchrouting` to `LIBS`.
 3. Run `sudo make -j`.
 
+
+### Run with Docker
+
+1.  Make sure that you have Docker, its NVidia container toolkit and the necessary permissions:
+```bash
+sudo apt install docker.io
+sudo groupadd docker
+sudo usermod -aG docker {YOUR_USERNAME}
+sudo apt-get install -y nvidia-container-toolkit
+```
+
+2. Build the Docker container
+```bash
+docker build -t manta:latest .
+```
+
+3. Run the container
+```bash
+docker run -it --rm --gpus all -v "$PWD":/manta -w /manta manta:latest bash
+```
+
+4. Once inside the container, compile and run
+```bash
+qmake LivingCity/LivingCity.pro
+make
+cd LivingCity
+./LivingCity
+```
 
 ## Data
 
