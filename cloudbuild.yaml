@@ -15,7 +15,7 @@ steps:
     args:
       - push
       - "gcr.io/blissful-jet-303616/manta:latest"
-timeout: 4000s
+timeout: 7200s
 images:
   - "gcr.io/blissful-jet-303616/manta:$TAG_NAME"
   - "gcr.io/blissful-jet-303616/manta:latest"
