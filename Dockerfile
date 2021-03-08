@@ -49,7 +49,7 @@ RUN git clone https://github.com/opencv/opencv.git && \
     -D OPENCV_GENERATE_PKGCONFIG=ON \
     -D CMAKE_BUILD_TYPE=RELEASE \
     -D CMAKE_INSTALL_PREFIX=/usr .. && \
-     make -j 12 && \
+     make && \
      make install
 
 
