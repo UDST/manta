@@ -36,10 +36,10 @@ def write_options_file(params = None):
                             "ADD_RANDOM_PEOPLE=false",\
                             "NUM_PASSES=1",\
                             "TIME_STEP=0.5",\
-                            "START_HR=5",\
-                            "END_HR=12",\
+                            "START_HR=0",\
+                            "END_HR=24",\
                             "SHOW_BENCHMARKS=true",\
-                            "OD_DEMAND_FILENAME=od_demand_5to12.csv", \
+                            "OD_DEMAND_FILENAME=activity_od_demand_0to24_new.csv", \
                             " "])
 
     if params is not None:
@@ -90,7 +90,8 @@ all_resource_names = ["cpu_used", "mem_used", "gpu_memory_used", "Elapsed_time_(
     3. Combine the components' timestamps with the resources' poll
     4. Save these combinations at benchmarks.csv
 """
-def benchmark_one_run(number_of_run, benchmark_name, network_path):
+def benchmark_one_run(number_of_run, benchmark_name, params):
+    network_path = params['NETWORK_PATH']
     # ============== Run the simulation while polling the resources
     resources_timestamps_idle = { \
         "cpu_used": psutil.cpu_percent(), \
@@ -99,7 +100,7 @@ def benchmark_one_run(number_of_run, benchmark_name, network_path):
         "Elapsed_time_(ms)": "NaN"
         }
 
-    write_options_file({"NETWORK_PATH": network_path})
+    write_options_file(params)
 
     args = "./LivingCity &".format(number_of_run).split()
     start_time_simulation = time.time()
@@ -205,8 +206,8 @@ def benchmark_one_run(number_of_run, benchmark_name, network_path):
     log("Done")
 
 
-def benchmark_multiple_runs_and_save_csv(number_of_runs, benchmark_name = "benchmarks", network_path = "berkeley_2018/new_full_network/"):
-    log("Running system benchmarks for network {}. Benchmark name: {}. Number of runs: {}".format(network_path, benchmark_name, number_of_runs))
+def benchmark_multiple_runs_and_save_csv(number_of_runs, benchmark_name = "benchmarks", params = None):
+    log("Running system benchmarks. Benchmark name: {}. Number of runs: {}. Custom parameters: {}".format(benchmark_name, number_of_runs, params))
     log("Please do not run anything else on this PC until it is finished, since that may alter the benchmarking results.")
 
     with open("benchmarking/{}.csv".format(benchmark_name),"w") as benchmarks_file:
@@ -215,7 +216,7 @@ def benchmark_multiple_runs_and_save_csv(number_of_runs, benchmark_name = "bench
 
     for i in range(number_of_runs):
         log("Running benchmark for run {}...".format(i))
-        benchmark_one_run(i, benchmark_name, network_path)
+        benchmark_one_run(i, benchmark_name, params)
 
 
 def load_csv_and_generate_benchmark_report(benchmark_name = "benchmarks", all_in_one_plot = True):
@@ -435,6 +436,23 @@ def parse_input_arguments():
         argument_values['benchmark_name'] = args.name
     
     return argument_values
+
+def experiment_increasing_demand_trips():
+    runs = 1
+
+    # create all csvs from the 0to24 one
+    full_trips = pd.read_csv("../berkeley_2018/new_full_network/activity_od_demand_0to24_new.csv")
+    for end in [3, 9, 15, 21]:
+        print("running for {} ...".format(end))
+        full_trips[full_trips["dep_time"] < end * 3600].to_csv("activity_od_demand_0to{}_new.csv".format(end))
+
+    # run the simulations
+    for end in range(6, 24, 3):
+        od_demand = "activity_od_demand_0to{}_new.csv".format(end)
+        name = "benchmarking_mainbranch_3090_0to{}".format(end)
+        benchmark_multiple_runs_and_save_csv(runs, name, {"NETWORK_PATH":"berkeley_2018/new_full_network/", "OD_DEMAND_FILENAME": od_demand, "START_HR":"0", "END_HR": str(end)})
+        load_csv_and_generate_benchmark_report(name, all_in_one_plot = True)
+
 
 if __name__ == "__main__":
     argument_values = parse_input_arguments()
