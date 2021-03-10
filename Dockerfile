@@ -56,7 +56,7 @@ ENV PATH="/usr/local/cuda-11.2/bin:${PATH}"
 ENV LIBRARY_PATH="/usr/local/cuda-11.2/lib64:${LIBRARY_PATH}"
 ENV LD_LIBRARY_PATH="/usr/local/cuda-11.2/lib64:${LD_LIBRARY_PATH}"
 
-# Pandana path - modify it in case Pandana is not in your home directory
+# Pandana path
 ENV LD_LIBRARY_PATH="/usr/include/pandana/src:${LD_LIBRARY_PATH}"
 
 # Python libraries
