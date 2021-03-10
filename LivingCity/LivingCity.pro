@@ -188,7 +188,6 @@ unix {
     CUDA_DIR = /usr/local/cuda-9.0
     message("CUDA 11.2 not found, defaulting to 9.0 instead.")
   }
-  #CUDA_DIR = /usr/local/cuda-11.2
   INCLUDEPATH += $$CUDA_DIR/include
   QMAKE_LIBDIR += $$CUDA_DIR/lib64
   # GPU architecture

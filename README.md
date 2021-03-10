@@ -114,17 +114,18 @@ sudo usermod -aG docker {YOUR_USERNAME}
 sudo apt-get install -y nvidia-container-toolkit
 ```
 
-2. Build the Docker container
+2. You can either pull and run our built image
+```bash
+docker pull gcr.io/blissful-jet-303616/manta:latest
+docker run -it --rm --gpus all -v "$PWD":/manta -w /manta gcr.io/blissful-jet-303616/manta:latest  bash
+```
+Or build it yourself
 ```bash
 docker build -t manta:latest .
-```
-
-3. Run the container
-```bash
 docker run -it --rm --gpus all -v "$PWD":/manta -w /manta manta:latest bash
 ```
 
-4. Once inside the container, compile and run
+3. Once inside the container, compile and run
 ```bash
 qmake LivingCity/LivingCity.pro
 make
