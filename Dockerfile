@@ -30,8 +30,6 @@ FROM nvidia/cuda:11.2.0-devel-ubuntu18.04 as mantabuilder
 
 COPY --from=opencvbuilder /usr/include/opencv4/ /usr/include/opencv4/
 
-#COPY --from=opencvbuilder /opt/local/lib/ /opt/local/lib/
-
 COPY --from=opencvbuilder /usr/lib/x86_64-linux-gnu/libopencv_core.* /usr/lib/x86_64-linux-gnu/
 COPY --from=opencvbuilder /usr/lib/x86_64-linux-gnu/libopencv_imgproc.* /usr/lib/x86_64-linux-gnu/
 COPY --from=opencvbuilder /usr/lib/x86_64-linux-gnu/libopencv_imgcodecs.* /usr/lib/x86_64-linux-gnu/
