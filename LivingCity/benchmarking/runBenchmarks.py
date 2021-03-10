@@ -36,10 +36,10 @@ def write_options_file(params = None):
                             "ADD_RANDOM_PEOPLE=false",\
                             "NUM_PASSES=1",\
                             "TIME_STEP=0.5",\
-                            "START_HR=0",\
-                            "END_HR=24",\
+                            "START_HR=5",\
+                            "END_HR=12",\
                             "SHOW_BENCHMARKS=true",\
-                            "OD_DEMAND_FILENAME=activity_od_demand_0to24_new.csv", \
+                            "OD_DEMAND_FILENAME=od_demand_5to12.csv", \
                             " "])
 
     if params is not None:
