@@ -14,6 +14,7 @@
 #include "../roadGraphB2018Loader.h"
 #include "accessibility.h"
 #include <stdexcept>
+#include "../tests/unitTestSuite.cpp"
 
 #ifdef B18_RUN_WITH_GUI
 #include "b18TestSimpleRoadAndOD.h"
@@ -44,6 +45,12 @@ void B18CommandLineVersion::runB18Simulation() {
   const bool showBenchmarks = settings.value("SHOW_BENCHMARKS", false).toBool();
   int rerouteIncrementMins = settings.value("REROUTE_INCREMENT", 30).toInt(); //in minutes
   std::string odDemandPath = settings.value("OD_DEMAND_FILENAME", "od_demand_5to12.csv").toString().toStdString();
+  const bool runUnitTests = settings.value("RUN_UNIT_TESTS", false).toBool();
+
+  if (runUnitTests){
+    UnitTestSuite::runAllUnitTests();
+    return;
+  }
 
   std::vector<std::string> allParameters = {"GUI", "USE_CPU", "USE_JOHNSON_ROUTING",
                                             "USE_SP_ROUTING", "USE_PREV_PATHS",
@@ -51,7 +58,7 @@ void B18CommandLineVersion::runB18Simulation() {
                                             "LIMIT_NUM_PEOPLE", "NUM_PASSES",
                                             "TIME_STEP", "START_HR", "END_HR",
                                             "SHOW_BENCHMARKS", "REROUTE_INCREMENT",
-                                            "OD_DEMAND_FILENAME"};
+                                            "OD_DEMAND_FILENAME", "RUN_UNIT_TESTS"};
 
   for (const auto inputedParameter: settings.childKeys()) {
     if (inputedParameter.at(0) != QChar('#') // it's a comment
@@ -117,8 +124,8 @@ void B18CommandLineVersion::runB18Simulation() {
   loadNetwork.stopAndEndBenchmark();
 
   loadODDemandData.startMeasuring();
-  const std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_ = B18TrafficSP::read_od_pairs(odFileName, std::numeric_limits<int>::max());
-  const std::vector<float> dep_times = B18TrafficSP::read_dep_times(odFileName);
+  const std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_ = B18TrafficSP::read_od_pairs(odFileName, std::numeric_limits<int>::max(), startSimulationH, endSimulationH);
+  const std::vector<float> dep_times = B18TrafficSP::read_dep_times(odFileName, startSimulationH, endSimulationH);
   loadODDemandData.stopAndEndBenchmark();
   std::vector<std::array<abm::graph::vertex_t, 2>> filtered_od_pairs_;
   std::vector<float> filtered_dep_times_;

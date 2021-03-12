@@ -80,15 +80,22 @@ std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::make_od_pairs(std
 }
 
 // Read OD pairs file format
-std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::read_od_pairs(const std::string& filename, int nagents) {
+std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::read_od_pairs(
+  const std::string& filename, int nagents,
+  const float startSimulationH,
+  const float endSimulationH) {
   bool status = true;
   std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs;
-  csvio::CSVReader<2> in(filename);
-  in.read_header(csvio::ignore_extra_column, "origin", "destination");
+  csvio::CSVReader<3> in(filename);
+  in.read_header(csvio::ignore_extra_column, "dep_time", "origin", "destination");
   abm::graph::vertex_t v1, v2;
   abm::graph::weight_t weight;
-  while (in.read_row(v1, v2)) {
+  float dep_time;
+  while (in.read_row(dep_time, v1, v2)) {
     //std::array<abm::graph::vertex_t, 2> od = {v1, v2};
+    if (dep_time < startSimulationH * 3600 || dep_time >= endSimulationH * 3600){
+      throw "Departure time out of range at the input demands file.";
+    }
     std::array<abm::graph::vertex_t, 2> od = {v1, v2};
     od_pairs.emplace_back(od);
     RoadGraphB2018::demandB2018.push_back(DemandB2018(1, v1, v2)); //there is only one person for each OD pair
@@ -100,20 +107,20 @@ std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::read_od_pairs(con
 }
 
 // Read OD pairs file format
-std::vector<float> B18TrafficSP::read_dep_times(const std::string& filename) {
-  bool status = true;
+std::vector<float> B18TrafficSP::read_dep_times(
+  const std::string& filename,
+  const float startSimulationH,
+  const float endSimulationH) {
   std::vector<float> dep_time_vec;
-  try {
-    csvio::CSVReader<1> in(filename);
-    in.read_header(csvio::ignore_extra_column, "dep_time");
-    float dep_time;
-    while (in.read_row(dep_time)) {
-      //printf("dep time %f\n", dep_time);
-      dep_time_vec.emplace_back(dep_time);
+  csvio::CSVReader<1> in(filename);
+  in.read_header(csvio::ignore_extra_column, "dep_time");
+  float dep_time;
+  while (in.read_row(dep_time)) {
+    //printf("dep time %f\n", dep_time);
+    if (dep_time < startSimulationH * 3600 || dep_time >= endSimulationH * 3600){
+      throw "Departure time out of range at the input demands file.";
     }
-  } catch (std::exception& exception) {
-    std::cout << "Read OD file: " << exception.what() << "\n";
-    status = false;
+    dep_time_vec.emplace_back(dep_time);
   }
   return dep_time_vec;
 }
@@ -127,6 +134,10 @@ void B18TrafficSP::filterODByTimeRange(
     std::vector<abm::graph::vertex_t>& filtered_od_pairs_targets_,
     std::vector<float>& filtered_dep_times_,
     std::vector<uint>& indexPathVecOrder) {
+  
+  if (od_pairs.size() != dep_times_in_seconds.size()){
+    throw std::runtime_error("Input from trips should match in size.");
+  }
 
   filtered_od_pairs_sources_.clear();
   filtered_od_pairs_targets_.clear();
@@ -271,6 +282,7 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
     }
   }
   std::cout << "Set indexPathInit for " << person_id << " people." << std::endl;
+  std::cout << "trafficpersonvec is " << trafficPersonVec.size();
   assert(person_id == trafficPersonVec.size());
   return all_paths;
 }
