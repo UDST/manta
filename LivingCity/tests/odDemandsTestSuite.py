@@ -1,12 +1,11 @@
 import math
 from utils import *
 
+pytest.network_path = "berkeley_2018/new_full_network/"
+pytest.start_hr = 5
+pytest.end_hr = 12
 
-
-""" We create a random od_demand file where each trip has 1 edge that uniquely connects two nodes.
-    Then corroborate that both the people and route files follow the generated demands.
-    The filename has a 3 digit random number appended to it, to check if the parametrization works properly.
-"""
+# ===================================== Aux functions =====================================
 def randomly_obtain_edges_that_uniquely_connect_two_nodes(df_edges, number_of_edges):
     result_edges = []
     iteration_order = list(range(len(df_edges)))
@@ -24,13 +23,12 @@ def randomly_obtain_edges_that_uniquely_connect_two_nodes(df_edges, number_of_ed
             break
     return result_edges
 
-def test_01_randomly_generated_demands_of_one_edge_trips_corresponds_to_people_and_route_files():
-    min_dep_time = 16000
-    max_dep_time = 20000
+def generate_demands_of_one_edge_trips(start_hr, end_hr, include_trips_outside_the_range):
+    start_minute = 5*3600
+    end_minute = 12*3600
     number_of_trips = 20
 
-    network_path = "berkeley_2018/new_full_network/"
-    log("Running system test setup on output files for network {}...".format(network_path))
+    log("Running system test setup on output files for network {}...".format(pytest.network_path))
     output_files = ["route", "people", "indexPathVec"]
 
     log("Removing previous run files...")
@@ -43,7 +41,7 @@ def test_01_randomly_generated_demands_of_one_edge_trips_corresponds_to_people_a
 
     # Create the od_demand file
     od_demand_test_list = ['SAMPN,PERNO,origin_osmid,destination_osmid,dep_time,origin,destination']
-    df_edges = pd.read_csv(os.path.join(network_path, 'edges.csv'))
+    df_edges = pd.read_csv(os.path.join(pytest.network_path, 'edges.csv'))
     log("Randomly generating demands...")
     edges_for_trips = randomly_obtain_edges_that_uniquely_connect_two_nodes(df_edges, number_of_trips)
     for SAMPN, current_trip_edge in enumerate(edges_for_trips):
@@ -51,7 +49,11 @@ def test_01_randomly_generated_demands_of_one_edge_trips_corresponds_to_people_a
         origin_osmid = current_trip_edge['osmid_u']
         destination_osmid = current_trip_edge['osmid_v']
 
-        dep_time = random.randint(min_dep_time, max_dep_time)
+        if include_trips_outside_the_range and random.choice([True, False]):
+            dep_time = random.choice([random.randint(start_minute - 3600, start_minute - 1), \
+                                        random.randint(end_minute, end_minute + 3600)])
+        else:
+            dep_time = random.randint(start_minute, end_minute - 1)
 
         origin = current_trip_edge['u']
         destination = current_trip_edge['v']
@@ -62,14 +64,42 @@ def test_01_randomly_generated_demands_of_one_edge_trips_corresponds_to_people_a
     od_demand_test = '\n'.join(od_demand_test_list)
 
     od_demand_test_filename = 'od_demand_test_{}.csv'.format(random.randint(100, 999))
-    with open(os.path.join(network_path, od_demand_test_filename), 'w') as od_demand_file:
+    with open(os.path.join(pytest.network_path, od_demand_test_filename), 'w') as od_demand_file:
         od_demand_file.write(od_demand_test)
 
     log("Generated the following random demands:")
     log(od_demand_test, color='green')
 
-    log("Running simulation with od_demand_test as the od_demand_file...")
-    write_options_file({"NETWORK_PATH": "{}".format(network_path), \
+    return (od_demand_test_filename, edges_for_trips)
+
+# ===================================== Tests =====================================
+
+def test_01_invalid_set_of_demands_should_raise_an_exception():
+    log("Testing that an invalid set of demands raises an exception...")
+    (od_demand_test_filename, _) = generate_demands_of_one_edge_trips(pytest.start_hr, pytest.end_hr, include_trips_outside_the_range = False)
+
+    write_options_file({"NETWORK_PATH": "{}".format(pytest.network_path), \
+                        "OD_DEMAND_FILENAME": od_demand_test_filename, \
+                        "REROUTE_INCREMENT": 0})
+    
+    return_code = subprocess.check_output("./LivingCity" + "&", shell=True)
+    
+    assert return_code != 0, "Invalid OD demands should raise an exception."
+    
+    log("Removing {}...".format(od_demand_test_filename))
+    os.remove(os.path.join(pytest.network_path, od_demand_test_filename))
+    log("Passed.")
+
+
+""" We create a random od_demand file where each trip has 1 edge that uniquely connects two nodes.
+    Then corroborate that both the people and route files follow the generated demands.
+    The filename has a 3 digit random number appended to it, to check if the parametrization works properly.
+"""
+def test_02_valid_set_of_demands_of_one_edge_trips_is_routed_properly():
+    log("Testing a valid set of demands of one edge trips...")
+    (od_demand_test_filename, edges_for_trips) = generate_demands_of_one_edge_trips(pytest.start_hr, pytest.end_hr, include_trips_outside_the_range = True)
+
+    write_options_file({"NETWORK_PATH": "{}".format(pytest.network_path), \
                         "OD_DEMAND_FILENAME": od_demand_test_filename, \
                         "REROUTE_INCREMENT": 0})
     subprocess.run(["./LivingCity", "&"], check=True)
@@ -89,21 +119,30 @@ def test_01_randomly_generated_demands_of_one_edge_trips_corresponds_to_people_a
 
         assert all(edge['osmid_v'] == int(a_person['end_intersection'])), \
             'Destination for person {} does not match the inputted od_demand file. '.format(a_person_index) + \
-            'od_demand file saved at {}.'.format(os.path.join(network_path, od_demand_test_filename))
+            'od_demand file saved at {}.'.format(os.path.join(pytest.network_path, od_demand_test_filename))
 
         a_person_id = int(a_person['p'])
-        route_according_to_route_file = df_route.loc[df_route['p'] == a_person_id]['route'].iloc[0]
+        try:
+            route_according_to_route_file = df_route.loc[df_route['p'] == a_person_id]['route'].iloc[0]
+        except:
+            st()
         route_according_to_input_od_demands = '[{},]'.format(int(edge['uniqueid'].iloc[0]))
-        assert route_according_to_route_file == route_according_to_input_od_demands, \
-            'For person {} input od_demands specify a trip of {} while the route has a trip of {}.'.format( \
-            a_person_id, route_according_to_input_od_demands, route_according_to_route_file)
+        try:
+            assert route_according_to_route_file == route_according_to_input_od_demands, \
+                'For person {} input od_demands specify a trip of {} while the route has a trip of {}.'.format( \
+             a_person_id, route_according_to_input_od_demands, route_according_to_route_file)
+        except:
+            st()
 
-        assert math.isclose(a_person['distance'],edge['length']), \
-            'Distance for person {} does not match the inputted od_demand file. '.format(a_person_index) + \
-            'od_demand file saved at {}.'.format(os.path.join(network_path, od_demand_test_filename))
+        try:
+            assert math.isclose(a_person['distance'],edge['length'], abs_tol=1), \
+                'Distance for person {} does not match the inputted od_demand file. '.format(a_person_index) + \
+                'od_demand file saved at {}.'.format(os.path.join(pytest.network_path, od_demand_test_filename))
+        except:
+            st()
 
     log("Removing {}...".format(od_demand_test_filename))
-    os.remove(os.path.join(network_path, od_demand_test_filename))
+    os.remove(os.path.join(pytest.network_path, od_demand_test_filename))
     log("Passed.")
 
-    return network_path
+    return pytest.network_path

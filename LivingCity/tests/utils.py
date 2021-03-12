@@ -7,6 +7,7 @@ import pytest
 import pandas as pd
 from termcolor import colored
 import csv
+import numpy as np
 from tqdm import tqdm
 from pdb import set_trace as st  # used for debugging
 

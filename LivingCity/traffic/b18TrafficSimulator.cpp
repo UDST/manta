@@ -326,9 +326,17 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       routesConversionIntoGPUformat.stopAndEndBenchmark();
 
       std::cout << "paths size for batch #" << increment_index << ": " << paths_SP.size() << std::endl;
-      std::cout << "indexPathVec size for batch #" << increment_index << ": " << indexPathVec.size() << std::endl;
-      std::cout << "indexPathVecOrder size for batch #" << increment_index << ": " << indexPathVecOrder.size() << std::endl;
-      std::cout << "trafficPersonVec size for batch #" << increment_index << ": " << trafficPersonVec.size() << std::endl;
+      ASSERT_EQUAL(indexPathVecOrder.size(), trafficPersonVec.size());
+
+      // int number_of_minus_one_in_paths_SP = 0;
+      // for (int i = 0; i < paths_SP; ++i){
+      //   if (paths_SP[i] == -1){
+      //     number_of_minus_one_in_paths_SP++;
+      //   }
+      // }
+      // ASSERT_EQUAL(paths_SP.size(), indexPathVecOrder.size());
+      // ASSERT_EQUAL(cumulative_paths_SP.size(), indexPathVecOrder.size());
+
 
       Benchmarker benchmarkb18updateStructuresCUDA("b18updateStructuresCUDA");
       benchmarkb18updateStructuresCUDA.startMeasuring();
@@ -349,21 +357,25 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
                 << " mins to " << startTimeSecs / 60 + (increment_index + 1) * rerouteIncrementMins
                 << " mins." << std::endl;
 
-      while(currentTime < startTimeSecs + (increment_index + 1) * rerouteIncrementMins * 60) {
-        /*count++;
-        if (count % 1800 == 0) {
-          std::cerr << std::fixed << "\r" << std::setprecision(2) 
-            << "Current time: " << (currentTime / 3600.0f)
-            << " (" << (100.0f - (100.0f * (endTimeSecs - currentTime) / (endTimeSecs - startTimeSecs))) << "%)"
-            << " with " << (timerLoop.elapsed() / 1800.0f) << " ms per simulation step (average over 1800)";
-          timerLoop.restart();
-        }*/
-        b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
-                            intersections.size(), deltaTime, simParameters, numBlocks, threadsPerBlock);
-        currentTime += deltaTime;
-        //std::cout << "int(currentTime - startTimeSecs) " << int(currentTime - startTimeSecs) << std::endl;
-        //std::cout << "(rerouteIncrementMins * 60) " << (rerouteIncrementMins * 60) << std::endl;
-        //std::cout << "currentTime < endTimeSecs " << (currentTime < endTimeSecs) << std::endl;
+      float progress = 0;
+      while (currentTime < startTimeSecs + (increment_index + 1) * rerouteIncrementMins * 60) {
+        while(currentTime < (progress + 0.02) * (startTimeSecs + (increment_index + 1) * rerouteIncrementMins * 60)) {
+          int barWidth = 70;
+          std::cout << "[";
+          int pos = barWidth * progress;
+          for (int i = 0; i < barWidth; ++i) {
+              if (i < pos) std::cout << "=";
+              else if (i == pos) std::cout << ">";
+              else std::cout << " ";
+          }
+          std::cout << "] " << int(progress * 100.0) << " %\r";
+          std::cout.flush();
+
+          b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
+                              intersections.size(), deltaTime, simParameters, numBlocks, threadsPerBlock);
+          currentTime += deltaTime;
+        }
+        progress += 0.1;
       }
       microsimulationInGPU.stopAndEndBenchmark();
       increment_index++;

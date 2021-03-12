@@ -42,9 +42,14 @@ class B18TrafficSP {
   static std::vector<std::array<abm::graph::vertex_t, 2>> make_od_pairs(std::vector<B18TrafficPerson> trafficPersonVec,
                                                                         int nagents);
 
-  static std::vector<std::array<abm::graph::vertex_t, 2>> read_od_pairs(const std::string& filename, int nagents);
+  static std::vector<std::array<abm::graph::vertex_t, 2>> read_od_pairs(const std::string& filename,
+                                                                        int nagents,
+                                                                        const float startSimulationH,
+                                                                        const float endSimulationH);
   
-  static std::vector<float> read_dep_times(const std::string& filename);
+  static std::vector<float> read_dep_times(const std::string& filename,
+                                          const float startSimulationH,
+                                          const float endSimulationH);
 
   static std::vector<abm::graph::edge_id_t> loadPrevPathsFromFile(const std::string networkPathSP);
 
