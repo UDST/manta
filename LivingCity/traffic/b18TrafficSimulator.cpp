@@ -122,6 +122,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
   
   std::vector<abm::graph::edge_id_t> cumulative_paths_SP(paths_SP);
   indexPathVecOrder = std::vector<uint>(inputIndexPathVecOrder);
+  std::cout << " =================================== " << indexPathVecOrder.size() << "===================" << std::endl;
       
   Benchmarker laneMapCreation("Lane_Map_creation", true);
    
@@ -250,7 +251,6 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     b18ResetPeopleLanesCUDA(trafficPersonVec.size());
     // 2. Execute
     printf("First time_departure %f\n", currentTime);
-    QTime timerLoop;
 
     int numBlocks = ceil(trafficPersonVec.size() / 384.0f);
     int threadsPerBlock = 384;
@@ -273,7 +273,9 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       
     std::cerr << "Starting simulation ..." << std::endl;
     while (currentTime < endTimeSecs) {
-      Benchmarker allEdgesVelBenchmark("all_edges_vel_" + std::to_string(increment_index), true);
+
+      // ===== Edge impedances update
+      /*Benchmarker allEdgesVelBenchmark("all_edges_vel_" + std::to_string(increment_index), true);
       allEdgesVelBenchmark.startMeasuring();
       int index = 0;
       int avg_edge_vel_size = graph_->edges_.size();
@@ -303,7 +305,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       std::ofstream output_file(name);
       std::ostream_iterator<float> output_iterator(output_file, "\n");
       std::copy(avg_edge_vel.begin(), avg_edge_vel.end(), output_iterator);
-      allEdgesVelBenchmark.stopAndEndBenchmark();
+      allEdgesVelBenchmark.stopAndEndBenchmark();*/
 
       // routingwrapper for the next batch of trips
       const float startTimeMins = startTimeH * 60 + (increment_index) * rerouteIncrementMins;
@@ -314,7 +316,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         paths_SP = B18TrafficSP::RoutingWrapper(all_od_pairs, graph_, dep_times,
                                               startTimeMins, endTimeMins, increment_index,
                                               indexPathVecOrder, savePaths, networkPathSP,
-                                              trafficPersonVec);
+                                              trafficPersonVec, indexPathVec);
       }
       
       cumulative_paths_SP.insert(std::end(cumulative_paths_SP), std::begin(paths_SP), std::end(paths_SP));
@@ -326,14 +328,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       routesConversionIntoGPUformat.stopAndEndBenchmark();
 
       std::cout << "paths size for batch #" << increment_index << ": " << paths_SP.size() << std::endl;
-      ASSERT_EQUAL(indexPathVecOrder.size(), trafficPersonVec.size());
-
-      // int number_of_minus_one_in_paths_SP = 0;
-      // for (int i = 0; i < paths_SP; ++i){
-      //   if (paths_SP[i] == -1){
-      //     number_of_minus_one_in_paths_SP++;
-      //   }
-      // }
+      // ASSERT_EQUAL(indexPathVecOrder.size(), trafficPersonVec.size());
       // ASSERT_EQUAL(paths_SP.size(), indexPathVecOrder.size());
       // ASSERT_EQUAL(cumulative_paths_SP.size(), indexPathVecOrder.size());
 
@@ -342,7 +337,6 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       benchmarkb18updateStructuresCUDA.startMeasuring();
       b18updateStructuresCUDA(trafficPersonVec, indexPathVec, edgesData);
       benchmarkb18updateStructuresCUDA.stopAndEndBenchmark();
-      timerLoop.restart();
 
       assert(cumulative_paths_SP.size() == indexPathVec.size());
 
@@ -357,26 +351,32 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
                 << " mins to " << startTimeSecs / 60 + (increment_index + 1) * rerouteIncrementMins
                 << " mins." << std::endl;
 
+      int barWidth = 70;
       float progress = 0;
       while (currentTime < startTimeSecs + (increment_index + 1) * rerouteIncrementMins * 60) {
-        while(currentTime < (progress + 0.02) * (startTimeSecs + (increment_index + 1) * rerouteIncrementMins * 60)) {
-          int barWidth = 70;
-          std::cout << "[";
-          int pos = barWidth * progress;
-          for (int i = 0; i < barWidth; ++i) {
-              if (i < pos) std::cout << "=";
-              else if (i == pos) std::cout << ">";
-              else std::cout << " ";
-          }
-          std::cout << "] " << int(progress * 100.0) << " %\r";
-          std::cout.flush();
-
+        std::cout << "[";
+        int pos = barWidth * progress;
+        for (int i = 0; i < barWidth; ++i) {
+            if (i < pos) std::cout << "=";
+            else if (i == pos) std::cout << ">";
+            else std::cout << " ";
+        }
+        std::cout << "] " << int(progress * 100.0) << "%\r";
+        std::cout.flush();
+        while(currentTime < (progress + 0.1) * (startTimeSecs + (increment_index + 1) * rerouteIncrementMins * 60)) {
           b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
                               intersections.size(), deltaTime, simParameters, numBlocks, threadsPerBlock);
           currentTime += deltaTime;
         }
         progress += 0.1;
       }
+      std::cout << "[";
+      for (int i = 0; i < barWidth; ++i) {
+        std::cout << "=";
+      }
+      std::cout << "] 100%" << std::endl;
+
+
       microsimulationInGPU.stopAndEndBenchmark();
       increment_index++;
 
@@ -2452,6 +2452,25 @@ void B18TrafficSimulator::render(VBORenderManager &rendManager) {
 }//
 #endif
 
+void writeIndexPathInitFile(
+  int numOfPass,
+  int start_time, int end_time,
+  const std::vector<B18TrafficPerson> &trafficPersonVec){
+  QFile indexPathInitFile(QString::number(numOfPass) + "_indexPathInit" + QString::number(start_time) + "to" + QString::number(end_time) + ".csv");
+  if (indexPathInitFile.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
+    std::cout << "> Saving indexPathInit file... (size " << trafficPersonVec.size() << ")" << std::endl;
+    QTextStream streamP(&indexPathInitFile);
+    streamP << "p,indexPathInit\n";
+    for (int p = 0; p < trafficPersonVec.size(); p++) {
+      streamP << p;
+      streamP << "," << trafficPersonVec[p].indexPathInit;
+      streamP << "\n";
+    }
+    indexPathInitFile.close();
+    std::cout << "> Finished saving indexPathInit file." << std::endl;
+  }
+}
+
 void writePeopleFile(
   int numOfPass,
   const std::shared_ptr<abm::Graph> & graph_,
@@ -2505,11 +2524,6 @@ void writeRouteFile(int numOfPass,
     int peopleIndex = 0;
     streamR << lineIndex << ":[";
     for (int i = 0; i < cumulative_paths_SP.size(); ++i) {
-      if (i == 0){
-        // assert that indexPathInit is the same as the first edge of the route
-        assert(trafficPersonVec[peopleIndex].indexPathInit == indexPathVecOrder[lineIndex]);
-      }
-
       const uint edgeInPath = cumulative_paths_SP[i];
       if (isLastEdgeOfPath(edgeInPath)) {
         streamR << "]\n";
@@ -2555,36 +2569,6 @@ void writeIndexPathVecFile(int numOfPass,
   std::cout << "> Finished saving indexPathVec." << std::endl;
 }
 
-void writePersonToInitEdgeFile(int numOfPass,
-  int start_time, int end_time,
-  const std::vector<uint>& indexPathVecOrder,
-  std::vector<abm::graph::edge_id_t> person_to_init_edge) {
-  QFile personToInitEdgeFile(QString::number(numOfPass) + "_personToInitEdge" + QString::number(start_time) + "to" + QString::number(end_time) + ".csv");
-  if (personToInitEdgeFile.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
-    std::cout << "> Saving personToInitEdge (size " << person_to_init_edge.size() << ")..." << std::endl;
-    QTextStream personToInitEdgeStream(&personToInitEdgeFile);
-    personToInitEdgeStream << "p,initEdge\n";
-
-    for (int i = 0; i < person_to_init_edge.size(); ++i){
-      try {
-        personToInitEdgeStream << indexPathVecOrder[i] << ",";
-      } catch (const std::exception& e) {
-        throw "tried to access indexPathVecOrder on position " + to_string(i) +
-              " but its size is " + to_string(indexPathVecOrder.size());
-      }
-      try {
-        personToInitEdgeStream << person_to_init_edge[i] << "\n";
-      } catch (const std::exception& e) {
-        throw "tried to access person_to_init_edge on position " + to_string(i) +
-              " but its size is " + to_string(person_to_init_edge.size());
-      }
-    }
-
-    personToInitEdgeFile.close();
-  }
-  std::cout << "> Finished saving personToInitEdge." << std::endl;
-}
-
 void B18TrafficSimulator::savePeopleAndRoutesSP(
   std::vector<abm::graph::edge_id_t>& cumulative_paths_SP,
   int numOfPass,
@@ -2602,18 +2586,18 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(
     std::thread threadWritePeopleFile(writePeopleFile, numOfPass, graph_, start_time, end_time, trafficPersonVec, deltaTime);
     std::thread threadWriteRouteFile(writeRouteFile, numOfPass, cumulative_paths_SP, start_time, end_time, indexPathVecOrder, trafficPersonVec);
     std::thread threadWriteIndexPathVecFile(writeIndexPathVecFile, numOfPass, start_time, end_time, indexPathVec, indexPathVecOrder);
-    std::thread threadWritePersonToInitEdgeFile(writePersonToInitEdgeFile, numOfPass, start_time, end_time, indexPathVecOrder, graph_->person_to_init_edge_);
+    std::thread threadWriteIndexPathInitFile(writeIndexPathInitFile, numOfPass, start_time, end_time, trafficPersonVec);
 
     threadWritePeopleFile.join();
     threadWriteRouteFile.join();
     threadWriteIndexPathVecFile.join();
-    threadWritePersonToInitEdgeFile.join();
+    threadWriteIndexPathInitFile.join();
     std::cout << "Finished saving output files." << std::endl;
   } else {
     writePeopleFile(numOfPass, graph_, start_time, end_time, trafficPersonVec, deltaTime);
     writeRouteFile(numOfPass, cumulative_paths_SP, start_time, end_time, indexPathVecOrder, trafficPersonVec);
     writeIndexPathVecFile(numOfPass, start_time, end_time, indexPathVec, indexPathVecOrder);
-    writePersonToInitEdgeFile(numOfPass, start_time, end_time, indexPathVecOrder, graph_->person_to_init_edge_);
+    writeIndexPathInitFile(numOfPass, start_time, end_time, trafficPersonVec);
   }
 }
 

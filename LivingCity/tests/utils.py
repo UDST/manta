@@ -46,3 +46,9 @@ def log(text, color = 'cyan'):
 def length_of_csv(csv_file, delimiter):
     with open(csv_file) as file_object:
         return sum(1 for row in file_object)
+
+def route_csv_string_to_list(route_csv_string):
+    route_csv_string = route_csv_string.replace("[", "").replace("]", "")
+    route_list = route_csv_string.split(",")
+    route_list = route_list[:-1]  # delete last extra comma
+    return route_list

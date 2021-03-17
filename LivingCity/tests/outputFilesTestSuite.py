@@ -7,152 +7,181 @@
     - pytest-remotedata 0.3.2
 """
 from utils import *
+from utils import route_csv_string_to_list
 
-# Global variables across tests
-pytest.default_network_setup_has_run = False
-pytest.network_path = "berkeley_2018/new_full_network/"
-pytest.distance_margin_between_route_and_people_file = 100
-pytest.edges_path = "berkeley_2018/new_full_network/edges.csv"
-pytest.people_to_test = 1000
-pytest.run_simulation = True
 
-def route_csv_string_to_list(route_csv_string):
-    route_csv_string = route_csv_string.replace("[", "").replace("]", "")
-    route_list = route_csv_string.split(",")
-    route_list = route_list[:-1]  # delete last extra comma
-    return route_list
+class TestSetup:
+    def __init__(self, name, parameters = {}, edges_path="berkeley_2018/new_full_network/edges.csv",
+                 network_path="berkeley_2018/new_full_network/", distance_epsilon = 100,
+                 people_to_test = 1000, run_simulation = True):
+        self.name = name
+        self.parameters = parameters
+        self.edges_path = edges_path
+        self.network_path = network_path
+        self.distance_epsilon = distance_epsilon
+        self.people_to_test = people_to_test
+        self.run_simulation = run_simulation
+        self.has_run = False
+        self.pd_route = None
+        self.pd_people = None
+        self.pd_edges = None
+        self.pd_indexPathInit = None
+        self.pd_indexPathVec = None
+        self.start_hr=parameters["START_HR"]
+        self.end_hr=parameters["END_HR"]
 
-"""
-default_network_setup runs automatically before the tests that take default_network_setup as a parameter
-"""
-@pytest.fixture(params=["berkeley_2018/new_full_network/"], ids=["new_full_network"])
-def default_network_setup(request):
-    log("Running default network setup...")
-    if pytest.default_network_setup_has_run:
-        return pytest.network_path
-    pytest.default_network_setup_has_run = True
+# ============= All setups on which the tests will run =============
 
-    if pytest.run_simulation:
-        log("Running system test setup on output files for network {}".format(pytest.network_path))
-        output_files = ["route", "people", "indexPathVec", 'personToInitEdge']
+pytest.test_setups = [
+    TestSetup("reroute_60m", parameters={"REROUTE_INCREMENT": 0, "PREV_PATHS": "False", "START_HR": 5, "END_HR":7},
+            run_simulation=True, people_to_test=[0,1,2,3,4])#,
+    #TestSetup("static", parameters={"REROUTE_INCREMENT": 60, "PREV_PATHS": "False"})
+]
 
-        log("Removing previous run files...")
-        for output_file_name in output_files:
-            for run in ["", "_first_run", "_second_run"]:
-                filename = "./0_{}5to12{}.csv".format(output_file_name, run)
+# to do: assert all names and all configurations are differnet
+
+# ======================================
+
+@pytest.fixture()
+def run_all_test_setups(request):
+    for current_test_setup in pytest.test_setups:
+        if current_test_setup.has_run:
+            continue
+        log("Running setup {}...".format(current_test_setup.name))
+        current_test_setup.has_run = True
+
+        if current_test_setup.run_simulation:
+            log("Running system test setup on output files for network {}".format(current_test_setup.network_path))
+
+            log("Removing previous run files...")
+            for output_file_name in ["route", "people", "indexPathVec", 'indexPathInit']:
+                filename = "./0_{}{}to{}_{}.csv".format(output_file_name, current_test_setup.start_hr, \
+                                                        current_test_setup.end_hr, current_test_setup.name)
                 if os.path.exists(filename):
                     log("Removing old {}...".format(filename))
                     os.remove(filename)
 
-        log("Running simulation...")
-        write_options_file({"NETWORK_PATH": "{}".format(
-            pytest.network_path), "USE_PREV_PATHS": "false", "REROUTE_INCREMENT": 0})
-        subprocess.run(["./LivingCity", "&"], check=True)
-    else:
-        log("Not running the simulation")
+            log("Running simulation...")
+            write_options_file(current_test_setup.parameters)
+            subprocess.run(["./LivingCity", "&"], check=True)
 
-    log("Loading output csv files for testing...")
-    pytest.pd_people = pd.read_csv("0_people5to12.csv")
-    pytest.pd_edges = pd.read_csv(pytest.edges_path)
-    pytest.pd_personToInitEdge = pd.read_csv("0_personToInitEdge5to12.csv")
-    pytest.pd_route = pd.read_csv("0_route5to12.csv", delimiter=':')
+            for output_file_name in ["route", "people", "indexPathVec", 'indexPathInit']:
+                filename = "./0_{}{}to{}_{}.csv".format(output_file_name, current_test_setup.start_hr, \
+                                                        current_test_setup.end_hr, current_test_setup.name)
+                os.rename("./0_{}{}to{}.csv".format(output_file_name, current_test_setup.start_hr, \
+                                                    current_test_setup.end_hr), filename)
+        else:
+            log("Skipping the simulation")
 
-    if pytest.people_to_test == 'all':
-        log("Testing all people...")
-        pytest.people_to_test = list(range(1, len(pytest.pd_people)))
-    elif type(pytest.people_to_test) == int:
-        log("(Since testing for > 2 million people takes several hours, it is tested on {} random people).".format(pytest.people_to_test))
-        pytest.people_to_test = random.sample(range(1, len(pytest.pd_people)), pytest.people_to_test)
-    else:
-        assert type(pytest.people_to_test) == list, "pytest.people_to_test should either be 'all', a number or a list."
+        log("Loading output csv files for testing...")
+        current_test_setup.pd_people = pd.read_csv("0_people{}to{}_{}.csv". \
+            format(current_test_setup.start_hr, current_test_setup.end_hr, current_test_setup.name))
 
-    log("Finished setup.")
+        current_test_setup.pd_edges = pd.read_csv(current_test_setup.edges_path)
+        current_test_setup.pd_indexPathVec = pd.read_csv("0_indexPathVec{}to{}_{}.csv". \
+            format(current_test_setup.start_hr, current_test_setup.end_hr, current_test_setup.name))
 
-    return pytest.network_path
+        current_test_setup.pd_route = pd.read_csv("0_route{}to{}_{}.csv". \
+            format(current_test_setup.start_hr, current_test_setup.end_hr, current_test_setup.name), delimiter=':')
 
-def test01_all_output_files_should_have_the_same_length(default_network_setup):
-    lengths = []
-    log("Checking that the length of people and route files are the same...")
-    for output_file in ["route", "people"]:
-        delimiter = ":" if output_file == "route" else ","
-        lengths.append(length_of_csv(
-            '0_{}5to12.csv'.format(output_file), delimiter))
-    try:
-        assert all([lengths[0] == elem for elem in lengths])
-    except:
-        st()
-    log("Passed")
+        current_test_setup.pd_indexPathInit = pd.read_csv("0_indexPathInit{}to{}_{}.csv". \
+            format(current_test_setup.start_hr, current_test_setup.end_hr, current_test_setup.name))
 
-def test_02_distance_in_people_file_should_match_the_sum_of_the_edges_in_the_route_file(default_network_setup):
-    log("Comparing that the distance in the people file matches the sum of the edges in the route file with a margin of {}...".format(
-        pytest.distance_margin_between_route_and_people_file))
-    pd_people = pd.read_csv("0_people5to12.csv")
-    pd_edges = pd.read_csv(pytest.edges_path)
+        if current_test_setup.people_to_test == 'all':
+            log("Testing all people...")
+            current_test_setup.people_to_test = list(range(1, len(current_test_setup.pd_people)))
+        elif type(current_test_setup.people_to_test) == int:
+            log("(Since testing for > 2 million people takes several hours, it is tested on {} random people).".\
+                format(current_test_setup.people_to_test))
+            current_test_setup.people_to_test = random.sample(range(1, len(current_test_setup.pd_people)),
+                                                                current_test_setup.people_to_test)
+        else:
+            assert type(current_test_setup.people_to_test) == list, "people_to_test should either be 'all', a number or a list."
 
-    for chunk_route in pd.read_csv("0_route5to12.csv", sep=":", chunksize=1000):
-        for _, row in chunk_route.iterrows():
-            person_id = str(row["p"])
+    log("Finished all setups")
 
-            if not person_id in pytest.people_to_test:
-                continue
+    return
 
-            route = str(row["route"])
-            route = route.replace("[", "").replace("]", "")
-            route = route.split(",")
-            route = route[:-1]  # delete last extra comma
+@pytest.mark.parametrize("test_setup", pytest.test_setups)
+def test01_all_output_files_should_have_the_same_length(run_all_test_setups, test_setup):
+    log("Test 01: All output files should have the same length for setup {}".format(test_setup.name))
+    assert len(test_setup.pd_people) == len(test_setup.pd_route)
+    log("Passed test 01")
 
-            distance_sum_of_edges = 0
-            for edge_id in route:
-                distance_sum_of_edges += pd_edges.loc[int(edge_id)]["length"]
+@pytest.mark.parametrize("test_setup", pytest.test_setups)
+def no_test_02_distance_in_people_file_should_match_the_sum_of_the_edges_in_the_route_file(run_all_test_setups, test_setup):
+    log("Test 02: The distance in the people file should match the sum of the edges" + \
+        " in the route file with a certain margin for setup {}".format(test_setup.name))
+    df_people_to_test = pd.DataFrame(test_setup.people_to_test)
+    df_people_to_test.columns = ['p']
+    for _, row in tqdm(pd.merge(test_setup.pd_route, df_people_to_test).iterrows()):
+        person_id = str(row["p"])
 
-            distance_people_info = pd_people.loc[int(person_id)]['distance']
+        if not int(person_id) in test_setup.people_to_test:
+            continue
 
-            error_message = "Discrepancy has been found for person {}. \
-                            Distance according to people info: {}. \
-                            Distance according to sum of edges: {}.\n Stopping.". \
-                            format(person_id, distance_people_info,
-                                   distance_sum_of_edges)
-            
-            try:
-                assert abs(distance_people_info - distance_sum_of_edges) < pytest.distance_margin_between_route_and_people_file, error_message
-            except:
-                st()
+        route = str(row["route"])
+        route = route.replace("[", "").replace("]", "")
+        route = route.split(",")
+        route = route[:-1]  # delete last extra comma
 
-    log("Passed")
+        distance_sum_of_edges = 0
+        for edge_id in route:
+            distance_sum_of_edges += test_setup.pd_edges.loc[int(edge_id)]["length"]
 
-def test03_first_edge_of_trip_should_come_from_init_intersection(default_network_setup):
-    log("Testing if the first edge of each trip comes from the init intersection")
+        distance_people_info = test_setup.pd_people.loc[int(person_id)]['distance']
+
+        print("distance_sum_of_edges: {}, distance_people_info: {}".format(distance_sum_of_edges, distance_people_info))
+
+        error_message = "Discrepancy has been found for person {}. \
+                        Distance according to people info: {}. \
+                        Distance according to sum of edges: {}.\n Stopping.". \
+                        format(person_id, distance_people_info,
+                            distance_sum_of_edges)
+        
+        try:
+            assert abs(distance_people_info - distance_sum_of_edges) < test_setup.distance_epsilon, error_message
+        except:
+            st()
+    log("Passed test 02")
+
+@pytest.mark.parametrize("test_setup", pytest.test_setups)
+def test03_first_edge_of_trip_should_come_from_init_intersection(run_all_test_setups, test_setup):
+    log("Test 03: The first edge of each trip should come from the init intersection for setup {}".format(test_setup.name))
     number_of_empty_routes = 0
-    for person_id in pytest.people_to_test:
-        init_intersection_according_to_people_file = int(pytest.pd_people.iloc[person_id]['init_intersection'])
-        route_list = route_csv_string_to_list(str(pytest.pd_route.iloc[person_id][1]))
+    for person_id in test_setup.people_to_test:
+        init_intersection_according_to_people_file = int(test_setup.pd_people.iloc[person_id]['init_intersection'])
+        route_list = route_csv_string_to_list(str(test_setup.pd_route.iloc[person_id][1]))
         if route_list == []:
             number_of_empty_routes += 1
             continue
         first_edge = int(route_list[0])
-        init_intersection_according_to_route_and_edges_csv = int(pytest.pd_edges.iloc[first_edge]['osmid_u'])
+        init_intersection_according_to_route_and_edges_csv = int(test_setup.pd_edges.iloc[first_edge]['osmid_u'])
 
         assert init_intersection_according_to_people_file == init_intersection_according_to_route_and_edges_csv, \
             "Initial intersections do not match! According to the peoples' file, init intersection is " + \
-            init_intersection_according_to_people_file + \
+            str(init_intersection_according_to_people_file) + \
             " but according to the routes' and edges files, the init intersection is " + \
-            init_intersection_according_to_route_and_edges_csv
+            str(init_intersection_according_to_route_and_edges_csv) + \
+            " for person " + str(person_id)
+
     log("Number of empty routes skipped: {}".format(number_of_empty_routes))
 
-    log("Passed")
+    log("Passed test 03")
 
-def test04_last_edge_of_trip_should_go_to_end_intersection(default_network_setup):
-    log("Testing if the last edge of each trip goes to the end intersection")
+@pytest.mark.parametrize("test_setup", pytest.test_setups)
+def test04_last_edge_of_trip_should_go_to_end_intersection(run_all_test_setups, test_setup):
+    log("Test 04: The last edge of each trip should end at the end intersection for setup {}".format(test_setup))
     number_of_empty_routes = 0
-    for person_id in pytest.people_to_test:
-        end_intersection_according_to_people_file = int(pytest.pd_people.iloc[person_id]['end_intersection'])
-        route_list = route_csv_string_to_list(str(pytest.pd_route.iloc[person_id][1]))
+    for person_id in test_setup.people_to_test:
+        end_intersection_according_to_people_file = int(test_setup.pd_people.iloc[person_id]['end_intersection'])
+        route_list = route_csv_string_to_list(str(test_setup.pd_route.iloc[person_id][1]))
         if route_list == []:
             number_of_empty_routes += 1
             continue
 
         last_edge = int(route_list[-1])
-        end_intersection_according_to_route_and_edges_csv = int(pytest.pd_edges.iloc[last_edge]['osmid_v'])
+        end_intersection_according_to_route_and_edges_csv = int(test_setup.pd_edges.iloc[last_edge]['osmid_v'])
 
         assert end_intersection_according_to_people_file == end_intersection_according_to_route_and_edges_csv, \
             "End intersections do not match! According to the peoples' file, end intersection is " + \
@@ -160,23 +189,24 @@ def test04_last_edge_of_trip_should_go_to_end_intersection(default_network_setup
             " but according to the routes' and edges files, the end intersection is " + \
             end_intersection_according_to_route_and_edges_csv
     log("Number of empty routes skipped: {}".format(number_of_empty_routes))
-    log("Passed")
+    log("Passed test 04")
 
-def test_05_each_edge_of_trip_should_connect_to_the_following_edge(default_network_setup):
-    log("Testing if each edge of each trip connects to the following edge")
+@pytest.mark.parametrize("test_setup", pytest.test_setups)
+def test_05_each_edge_of_trip_should_connect_to_the_following_edge(run_all_test_setups, test_setup):
+    log("Test 05: Each edge of each trip should connect to the following edge for setup {}".format(test_setup.name))
     number_of_empty_routes = 0
-    for person_id in tqdm(pytest.people_to_test):
-        route_list = route_csv_string_to_list(str(pytest.pd_route.iloc[person_id][1]))
+    for person_id in tqdm(test_setup.people_to_test):
+        route_list = route_csv_string_to_list(str(test_setup.pd_route.iloc[person_id][1]))
         if route_list == []:
             number_of_empty_routes += 1
             continue
 
         for first_edge_index in range(len(route_list)-1):
             first_edge = int(route_list[first_edge_index])
-            first_edge_end_intersection = int(pytest.pd_edges.loc[pytest.pd_edges['uniqueid'] == first_edge]['osmid_v'])
+            first_edge_end_intersection = int(test_setup.pd_edges.loc[test_setup.pd_edges['uniqueid'] == first_edge]['osmid_v'])
 
             second_edge = int(route_list[first_edge_index + 1])
-            second_edge_init_intersection = int(pytest.pd_edges.loc[pytest.pd_edges['uniqueid'] == second_edge]['osmid_u'])
+            second_edge_init_intersection = int(test_setup.pd_edges.loc[test_setup.pd_edges['uniqueid'] == second_edge]['osmid_u'])
             
             error_message = "route for person {} does is not a valid path. Route is {} but edge {} and {} are not" + \
                 "connected in the network. Edge {} finishes at intersection {} but edge {} starts at intersection {}" \
@@ -184,38 +214,16 @@ def test_05_each_edge_of_trip_should_connect_to_the_following_edge(default_netwo
                 first_edge_end_intersection, second_edge, second_edge_init_intersection)
             assert first_edge_end_intersection == second_edge_init_intersection, error_message
     log("Number of empty routes skipped: {}".format(number_of_empty_routes))
-    log("Passed")
+    log("Passed test 05")
 
-def deprecated_first_edge_of_trip_should_be_the_correct_initial_edge(default_network_setup):
-    log("Testing if the first edge of each trip is the correct initial edge...")
-    number_of_empty_routes = 0
-    for person_id in pytest.people_to_test:
-        route_list = route_csv_string_to_list(str(pytest.pd_route.iloc[person_id][1]))
-        if route_list == []:
-            number_of_empty_routes += 1
-            continue
-        
-        init_edge_according_to_route_file = int(route_list[0])
-
-        init_edge_according_to_person_to_init_edge = int(pytest.pd_personToInitEdge.loc[pytest.pd_personToInitEdge['p' == person_id]['initEdge']])        
-
-        assert init_edge_according_to_route_file == init_edge_according_to_person_to_init_edge, \
-            "Initial edges do not match! For person " + person_id + ", according to the routes' file, init edge is " + \
-            init_edge_according_to_route_file + \
-            " but according to the person to init file, the init edge is " + \
-            init_edge_according_to_person_to_init_edge
-    log("Number of empty routes skipped: {}".format(number_of_empty_routes))
-
-    log("Passed")
-
-def test_06_empty_routes_should_match_nan_avg_speed(default_network_setup):
-    # An empty route at the route file and a nan avg speed at the people file both mean that the trip has not finished
-    log("Testing if the people with empty routes have NaN avg_v(mph)")
-
-    people_with_empty_routes = pytest.pd_route[pytest.pd_route['route'] == '[]']['p']
+# An empty route at the route file and a nan avg speed at the people file both mean that the trip has not finished
+@pytest.mark.parametrize("test_setup", pytest.test_setups)
+def test_06_empty_routes_should_match_nan_avg_speed(run_all_test_setups, test_setup):
+    log("Test 06: People with empty routes should have nan avg speed for test setup {}".format(test_setup))
+    people_with_empty_routes = test_setup.pd_route[test_setup.pd_route['route'] == '[]']['p']
     log("Found {} people with empty routes".format(len(people_with_empty_routes)))
 
-    people_with_nan_avg_speed = pytest.pd_people[np.isnan(pytest.pd_people['avg_v(mph)'])]['p']
+    people_with_nan_avg_speed = test_setup.pd_people[np.isnan(test_setup.pd_people['avg_v(mph)'])]['p']
     log("Found {} people with NaN avg speed".format(len(people_with_nan_avg_speed)))
 
     try:
@@ -224,5 +232,39 @@ def test_06_empty_routes_should_match_nan_avg_speed(default_network_setup):
     except:
         st()
     log("They match.")
+
+    log("Passed")
+
+@pytest.mark.parametrize("test_setup", pytest.test_setups)
+def deprecated_test_07_first_edge_of_trip_should_be_the_correct_initial_edge(run_all_test_setups, test_setup):
+    log("Testing if the first edge of each trip is the correct initial edge...")
+    number_of_empty_routes = 0
+    for person_id in test_setup.people_to_test:
+        if person_id == 0:
+            continue
+        route_list = route_csv_string_to_list(str(test_setup.pd_route.iloc[person_id][1]))
+        if route_list == []:
+            number_of_empty_routes += 1
+            continue
+        
+        init_edge_according_to_route_file = int(route_list[0])
+
+        init_edge_according_to_person_to_init_edge = int(test_setup.pd_indexPathInit[test_setup.pd_indexPathInit['p'] == person_id]['indexPathInit'].iloc[0])
+
+        assert init_edge_according_to_route_file == init_edge_according_to_person_to_init_edge, \
+            "Initial edges do not match! For person " + str(person_id) + ", according to the routes' file, init edge is " + \
+            str(init_edge_according_to_route_file) + \
+            " but according to the person to init file, the init edge is " + \
+            str(init_edge_according_to_person_to_init_edge)
+    log("Number of empty routes skipped: {}".format(number_of_empty_routes))
+
+    log("Passed")
+
+@pytest.mark.parametrize("test_setup", pytest.test_setups)
+def test_08_indexPathVec_should_have_all_different_values(run_all_test_setups, test_setup):
+    log("Testing if indexPathInit has all different values...")
+
+    assert not test_setup.pd_indexPathInit['indexPathInit'].duplicated().any(), \
+        "All indexPathVec values should be different"
 
     log("Passed")
