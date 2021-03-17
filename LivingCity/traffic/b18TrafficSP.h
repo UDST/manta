@@ -31,8 +31,8 @@
 
 namespace LC {
 class B18TrafficSP {
-
  public:
+  static uint numberOfPeopleRouted;
 	 
   static std::vector<abm::graph::vertex_t> compute_routes(int mpi_rank,
                                                           int mpi_size,
@@ -63,7 +63,8 @@ class B18TrafficSP {
     std::vector<uint>& indexPathVecOrder,
     const bool savePaths,
     const std::string networkPathSP,
-    std::vector<LC::B18TrafficPerson>& trafficPersonVec);
+    std::vector<LC::B18TrafficPerson>& trafficPersonVec,
+    std::vector<uint>& indexPathVec);
 
   static void initialize_person_to_init_edge(
     std::vector<abm::graph::edge_id_t>& all_paths,
@@ -71,13 +72,14 @@ class B18TrafficSP {
 
   static void filterODByTimeRange(
     const std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs,
-    const std::vector<float> dep_times,
+    const std::vector<float> dep_times_in_seconds,
     const float start_time_mins,
     const float end_time_mins,
     std::vector<abm::graph::vertex_t>& filtered_od_pairs_sources_,
     std::vector<abm::graph::vertex_t>& filtered_od_pairs_targets_,
     std::vector<float>& filtered_dep_times_,
-    std::vector<uint>& indexPathVecOrder);
+    std::vector<uint>& indexPathVecOrder,
+    std::vector<uint>& currentBatchIndexPathVecOrder);
 
   static void convertVector(
     std::vector<abm::graph::edge_id_t> paths_SP,
@@ -98,6 +100,7 @@ class B18TrafficSP {
 
   //all paths
   std::vector<abm::graph::vertex_t> all_paths_;
+
 };
 } //namespace LC
 

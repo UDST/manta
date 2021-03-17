@@ -91,20 +91,29 @@ std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::read_od_pairs(
   abm::graph::vertex_t v1, v2;
   abm::graph::weight_t weight;
   float dep_time;
+  int count_outside_filter = 0;
   while (in.read_row(dep_time, v1, v2)) {
     //std::array<abm::graph::vertex_t, 2> od = {v1, v2};
-    if (dep_time < startSimulationH * 3600 || dep_time >= endSimulationH * 3600){
-      throw "Departure time out of range at the input demands file.";
+    if (dep_time >= startSimulationH * 3600 && dep_time < endSimulationH * 3600){
+      std::array<abm::graph::vertex_t, 2> od = {v1, v2};
+      od_pairs.emplace_back(od);
+      RoadGraphB2018::demandB2018.push_back(DemandB2018(1, v1, v2)); //there is only one person for each OD pair
+    } else {
+      count_outside_filter++;
     }
-    std::array<abm::graph::vertex_t, 2> od = {v1, v2};
-    od_pairs.emplace_back(od);
-    RoadGraphB2018::demandB2018.push_back(DemandB2018(1, v1, v2)); //there is only one person for each OD pair
+  }
+  if (count_outside_filter > 0){
+    std::cout << "WARNING: Filtering " << count_outside_filter << " trips outside the input time range." << std::endl;
   }
   RoadGraphB2018::totalNumPeople = RoadGraphB2018::demandB2018.size();
   if (nagents != std::numeric_limits<int>::max())
     od_pairs.resize(nagents);
+
+  B18TrafficSP::numberOfPeopleRouted = 0;
   return od_pairs;
 }
+
+uint B18TrafficSP::numberOfPeopleRouted = 0;
 
 // Read OD pairs file format
 std::vector<float> B18TrafficSP::read_dep_times(
@@ -115,12 +124,17 @@ std::vector<float> B18TrafficSP::read_dep_times(
   csvio::CSVReader<1> in(filename);
   in.read_header(csvio::ignore_extra_column, "dep_time");
   float dep_time;
+  int count_outside_filter = 0;
   while (in.read_row(dep_time)) {
     //printf("dep time %f\n", dep_time);
-    if (dep_time < startSimulationH * 3600 || dep_time >= endSimulationH * 3600){
-      throw "Departure time out of range at the input demands file.";
+    if (dep_time >= startSimulationH * 3600 && dep_time < endSimulationH * 3600){
+      dep_time_vec.emplace_back(dep_time);
+    } else {
+      count_outside_filter++;
     }
-    dep_time_vec.emplace_back(dep_time);
+  }
+  if (count_outside_filter > 0) {
+    std::cout << "WARNING: Filtering " << count_outside_filter << " trips outside the input time range.";
   }
   return dep_time_vec;
 }
@@ -133,7 +147,8 @@ void B18TrafficSP::filterODByTimeRange(
     std::vector<abm::graph::vertex_t>& filtered_od_pairs_sources_,
     std::vector<abm::graph::vertex_t>& filtered_od_pairs_targets_,
     std::vector<float>& filtered_dep_times_,
-    std::vector<uint>& indexPathVecOrder) {
+    std::vector<uint>& indexPathVecOrder,
+    std::vector<uint>& currentBatchIndexPathVecOrder) {
   
   if (od_pairs.size() != dep_times_in_seconds.size()){
     throw std::runtime_error("Input from trips should match in size.");
@@ -141,6 +156,8 @@ void B18TrafficSP::filterODByTimeRange(
 
   filtered_od_pairs_sources_.clear();
   filtered_od_pairs_targets_.clear();
+  currentBatchIndexPathVecOrder.clear();
+
   filtered_dep_times_.clear();
   for (uint person_id = 0; person_id < od_pairs.size(); person_id++) {
     if ((dep_times_in_seconds[person_id] >= start_time_mins * 60) && (dep_times_in_seconds[person_id] < end_time_mins * 60)) {
@@ -148,6 +165,7 @@ void B18TrafficSP::filterODByTimeRange(
       filtered_od_pairs_targets_.push_back(od_pairs[person_id][1]);
       filtered_dep_times_.push_back(dep_times_in_seconds[person_id]);
       indexPathVecOrder.push_back(person_id);
+      currentBatchIndexPathVecOrder.push_back(person_id);
     }
   }
 }
@@ -174,6 +192,17 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::loadPrevPathsFromFile(
   return paths_SP;
 }
 
+template<typename T>
+bool allValuesAreDifferent(std::vector<T> v){
+  std::sort(v.begin(), v.end());
+  for (int i = 0; i < v.size()-1; i++){
+    if (v[i] == v[i+1]){
+      return false;
+    }
+  }
+  return true;
+}
+
 std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
   const std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_,
   const std::shared_ptr<abm::Graph>& street_graph,
@@ -184,12 +213,16 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
   std::vector<uint>& indexPathVecOrder,
   const bool savePaths,
   const std::string networkPathSP,
-  std::vector<LC::B18TrafficPerson>& trafficPersonVec) {
+  std::vector<LC::B18TrafficPerson>& trafficPersonVec,
+  std::vector<uint> &indexPathVec) {
+
+  std::cout << "numberOfPeopleRouted " << B18TrafficSP::numberOfPeopleRouted << std::endl;
 
   // --------------------------- preprocessing ---------------------------
   std::vector<abm::graph::vertex_t> filtered_od_pairs_sources_;
   std::vector<abm::graph::vertex_t> filtered_od_pairs_targets_;
   std::vector<float> filtered_dep_times_;
+  std::vector<uint> currentBatchIndexPathVecOrder;
 
   //filter the next set of od pair/departures in the next increment
   B18TrafficSP::filterODByTimeRange(all_od_pairs_,
@@ -199,7 +232,8 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
                                     filtered_od_pairs_sources_,
                                     filtered_od_pairs_targets_,
                                     filtered_dep_times_,
-                                    indexPathVecOrder);
+                                    indexPathVecOrder,
+                                    currentBatchIndexPathVecOrder);
   
 
   std::cout << "Simulating trips with dep_time between "
@@ -268,22 +302,42 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
     std::copy(all_paths.begin(), all_paths.end(), output_iterator);
   }
 
+  std::cout
+    << "currentBatchIndexPathVecOrder.size() " << currentBatchIndexPathVecOrder.size()
+    << " | all_paths_ch.size() " << all_paths_ch.size() << std::endl;
+  assert(currentBatchIndexPathVecOrder.size() == all_paths_ch.size());
+
+
+  std::cout << "B18TrafficSP::numberOfPeopleRouted  " << B18TrafficSP::numberOfPeopleRouted << std::endl;
   // map person to their initial edge
   bool next_edge_is_init_edge = true;
-  int person_id = 0;
+  int person_index_in_all_paths = 0;
+  int count = 0;
   for (int i = 0; i < all_paths.size(); i++) {
     if (next_edge_is_init_edge) {
-      trafficPersonVec[indexPathVecOrder[person_id]].indexPathInit = i;
-      person_id++;
+      uint converted_person_id = currentBatchIndexPathVecOrder[person_index_in_all_paths];
+      if (converted_person_id == 1060 || converted_person_id == 1899 || converted_person_id == 3898 ||
+          converted_person_id == 3978 || converted_person_id == 1014384 || converted_person_id == 1020327 ||
+          converted_person_id == 1023659 || converted_person_id == 1024049 || converted_person_id == 1024868) {
+
+        std::cout << "person_index_in_all_paths " << person_index_in_all_paths << std::endl;
+        std::cout << "currentBatchIndexPathVecOrder[person_index_in_all_paths] " << currentBatchIndexPathVecOrder[person_index_in_all_paths] << std::endl;
+        std::cout << "i " << i << std::endl;
+        std::cout << "i + indexPathVec.size() " << i + indexPathVec.size() << std::endl;
+      }
+      trafficPersonVec[currentBatchIndexPathVecOrder[person_index_in_all_paths]].indexPathInit = i + indexPathVec.size();
+      person_index_in_all_paths++;
       next_edge_is_init_edge = false;
     }
     if (all_paths[i] == -1){
       next_edge_is_init_edge = true;
     }
   }
-  std::cout << "Set indexPathInit for " << person_id << " people." << std::endl;
-  std::cout << "trafficpersonvec is " << trafficPersonVec.size();
-  assert(person_id == trafficPersonVec.size());
+  assert(all_paths_ch.size() == person_index_in_all_paths);
+  std::cout << "person_index_in_all_paths is " << person_index_in_all_paths << std::endl;
+  std::cout << "all_paths_ch has size " << all_paths_ch.size();
+  B18TrafficSP::numberOfPeopleRouted += all_paths_ch.size();
+
   return all_paths;
 }
 
