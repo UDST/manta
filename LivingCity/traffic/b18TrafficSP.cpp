@@ -4,6 +4,7 @@
 #include "src/linux_host_memory_logger.h"
 #include "roadGraphB2018Loader.h"
 #include "accessibility.h"
+#include <math.h>
 
 #define ROUTE_DEBUG 0
 //#define DEBUG_JOHNSON 0
@@ -142,13 +143,12 @@ std::vector<float> B18TrafficSP::read_dep_times(
 void B18TrafficSP::filterODByTimeRange(
     const std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs,
     const std::vector<float> dep_times_in_seconds,
-    const float start_time_mins,
-    const float end_time_mins,
+    const float currentBatchStartTimeSecs,
+    const float currentBatchEndTimeSecs,
     std::vector<abm::graph::vertex_t>& filtered_od_pairs_sources_,
     std::vector<abm::graph::vertex_t>& filtered_od_pairs_targets_,
     std::vector<float>& filtered_dep_times_,
-    std::vector<uint>& indexPathVecOrder,
-    std::vector<uint>& currentBatchIndexPathVecOrder) {
+    std::vector<uint>& pathsOrder) {
   
   if (od_pairs.size() != dep_times_in_seconds.size()){
     throw std::runtime_error("Input from trips should match in size.");
@@ -156,16 +156,20 @@ void B18TrafficSP::filterODByTimeRange(
 
   filtered_od_pairs_sources_.clear();
   filtered_od_pairs_targets_.clear();
-  currentBatchIndexPathVecOrder.clear();
+  pathsOrder.clear();
+  
+  std::cout << "Filtering in the range ["
+            << currentBatchStartTimeSecs << ", "
+            << currentBatchEndTimeSecs << ")." << std::endl;
 
   filtered_dep_times_.clear();
   for (uint person_id = 0; person_id < od_pairs.size(); person_id++) {
-    if ((dep_times_in_seconds[person_id] >= start_time_mins * 60) && (dep_times_in_seconds[person_id] < end_time_mins * 60)) {
+    if (isgreaterequal(dep_times_in_seconds[person_id], currentBatchStartTimeSecs)
+        && isless(dep_times_in_seconds[person_id], currentBatchEndTimeSecs)) {
       filtered_od_pairs_sources_.push_back(od_pairs[person_id][0]);
       filtered_od_pairs_targets_.push_back(od_pairs[person_id][1]);
       filtered_dep_times_.push_back(dep_times_in_seconds[person_id]);
-      indexPathVecOrder.push_back(person_id);
-      currentBatchIndexPathVecOrder.push_back(person_id);
+      pathsOrder.push_back(person_id);
     }
   }
 }
@@ -203,18 +207,15 @@ bool allValuesAreDifferent(std::vector<T> v){
   return true;
 }
 
-std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
+std::vector<personPath> B18TrafficSP::RoutingWrapper (
   const std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_,
   const std::shared_ptr<abm::Graph>& street_graph,
   const std::vector<float>& dep_times,
-  const float start_time_mins,
-  const float end_time_mins,
+  const float currentBatchStartTimeSecs,
+  const float currentBatchEndTimeSecs,
   int reroute_batch_number,
-  std::vector<uint>& indexPathVecOrder,
-  const bool savePaths,
   const std::string networkPathSP,
-  std::vector<LC::B18TrafficPerson>& trafficPersonVec,
-  std::vector<uint> &indexPathVec) {
+  std::vector<LC::B18TrafficPerson>& trafficPersonVec) {
 
   std::cout << "numberOfPeopleRouted " << B18TrafficSP::numberOfPeopleRouted << std::endl;
 
@@ -222,25 +223,30 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
   std::vector<abm::graph::vertex_t> filtered_od_pairs_sources_;
   std::vector<abm::graph::vertex_t> filtered_od_pairs_targets_;
   std::vector<float> filtered_dep_times_;
-  std::vector<uint> currentBatchIndexPathVecOrder;
 
   //filter the next set of od pair/departures in the next increment
+  std::vector<uint> pathsOrder;
   B18TrafficSP::filterODByTimeRange(all_od_pairs_,
                                     dep_times,
-                                    start_time_mins,
-                                    end_time_mins,
+                                    currentBatchStartTimeSecs,
+                                    currentBatchEndTimeSecs,
                                     filtered_od_pairs_sources_,
                                     filtered_od_pairs_targets_,
                                     filtered_dep_times_,
-                                    indexPathVecOrder,
-                                    currentBatchIndexPathVecOrder);
+                                    pathsOrder);
+  
+  for (int i = 0; i < pathsOrder.size(); i++) {
+    if (pathsOrder[i] == 3){
+      std::cout << "at pathsOrder[" << i << "] == " << 3 << std::endl;
+    }
+  }
   
 
   std::cout << "Simulating trips with dep_time between "
-    << int(start_time_mins/60) << ":" << int(start_time_mins) % 60
-    << "(" << start_time_mins << " in minutes)"
-    << " and " << int(end_time_mins/60) << ":" << int(end_time_mins) % 60
-    << "(" << end_time_mins << " in minutes)" << std::flush;
+    << int(currentBatchStartTimeSecs/3600) << ":" << int(currentBatchStartTimeSecs) % 3600
+    << "(" << currentBatchStartTimeSecs / 60 << " in minutes)"
+    << " and " << int(currentBatchEndTimeSecs/3600) << ":" << int(currentBatchEndTimeSecs) % 3600
+    << "(" << currentBatchEndTimeSecs / 60 << " in minutes)" << std::flush;
   std::cout << ". Trips in this time range: " << filtered_od_pairs_sources_.size() << "/" << dep_times.size() << std::endl;
 
   std::vector<std::vector<long>> edges_routing;
@@ -271,74 +277,21 @@ std::vector<abm::graph::edge_id_t> B18TrafficSP::RoutingWrapper (
   Benchmarker routingCH("Routing_CH_batch_" + std::to_string(reroute_batch_number), true);
   routingCH.startMeasuring();
   MTC::accessibility::Accessibility *graph_ch = new MTC::accessibility::Accessibility((int) street_graph->vertices_data_.size(), edges_routing, edge_weights_routing, false);
-  std::vector<std::vector<abm::graph::edge_id_t> > all_paths_ch = graph_ch->Routes(filtered_od_pairs_sources_, filtered_od_pairs_targets_, 0);
+  std::vector<std::vector<abm::graph::edge_id_t> > paths_ch = graph_ch->Routes(filtered_od_pairs_sources_, filtered_od_pairs_targets_, 0);
   routingCH.stopAndEndBenchmark();
 
-  std::cout << "# of paths = " << all_paths_ch.size() << std::endl;
+  std::cout << "# of paths = " << paths_ch.size() << std::endl;
 
-  // --------------------------- postprocessing ---------------------------
-
-  Benchmarker CHoutputNodesToEdgesConversion("CH_output_nodes_to_edges_conversion_batch_" +
-                                              std::to_string(reroute_batch_number), true);
-  CHoutputNodesToEdgesConversion.startMeasuring();
-  //convert from nodes to edges
-  std::vector<abm::graph::edge_id_t> all_paths;
-  for (int i=0; i < all_paths_ch.size(); i++) {
-    for (int j=0; j < all_paths_ch[i].size()-1; j++) {
-      auto vertex_from = all_paths_ch[i][j];
-      auto vertex_to = all_paths_ch[i][j+1];
-      auto one_edge = street_graph->edge_ids_[vertex_from][vertex_to];
-      all_paths.emplace_back(one_edge);
-    }
-    all_paths.emplace_back(-1);
-  }
-  CHoutputNodesToEdgesConversion.stopAndEndBenchmark();
-
-  if (savePaths) {
-    const std::string& pathsFileName = networkPathSP + "all_paths_ch.txt";
-    std::cout << "Save " << pathsFileName << " as paths file\n";
-    std::ofstream output_file(pathsFileName);
-    std::ostream_iterator<abm::graph::vertex_t> output_iterator(output_file, "\n");
-    std::copy(all_paths.begin(), all_paths.end(), output_iterator);
+  std::vector<personPath> currentBatchPaths;
+  currentBatchPaths.reserve(paths_ch.size());
+  for (int i = 0; i < paths_ch.size(); i++){
+    personPath aPersonPath;
+    aPersonPath.person_id = pathsOrder[i];
+    aPersonPath.pathInVertexes = paths_ch[i];
+    currentBatchPaths.push_back(aPersonPath);
   }
 
-  std::cout
-    << "currentBatchIndexPathVecOrder.size() " << currentBatchIndexPathVecOrder.size()
-    << " | all_paths_ch.size() " << all_paths_ch.size() << std::endl;
-  assert(currentBatchIndexPathVecOrder.size() == all_paths_ch.size());
-
-
-  std::cout << "B18TrafficSP::numberOfPeopleRouted  " << B18TrafficSP::numberOfPeopleRouted << std::endl;
-  // map person to their initial edge
-  bool next_edge_is_init_edge = true;
-  int person_index_in_all_paths = 0;
-  int count = 0;
-  for (int i = 0; i < all_paths.size(); i++) {
-    if (next_edge_is_init_edge) {
-      uint converted_person_id = currentBatchIndexPathVecOrder[person_index_in_all_paths];
-      if (converted_person_id == 1060 || converted_person_id == 1899 || converted_person_id == 3898 ||
-          converted_person_id == 3978 || converted_person_id == 1014384 || converted_person_id == 1020327 ||
-          converted_person_id == 1023659 || converted_person_id == 1024049 || converted_person_id == 1024868) {
-
-        std::cout << "person_index_in_all_paths " << person_index_in_all_paths << std::endl;
-        std::cout << "currentBatchIndexPathVecOrder[person_index_in_all_paths] " << currentBatchIndexPathVecOrder[person_index_in_all_paths] << std::endl;
-        std::cout << "i " << i << std::endl;
-        std::cout << "i + indexPathVec.size() " << i + indexPathVec.size() << std::endl;
-      }
-      trafficPersonVec[currentBatchIndexPathVecOrder[person_index_in_all_paths]].indexPathInit = i + indexPathVec.size();
-      person_index_in_all_paths++;
-      next_edge_is_init_edge = false;
-    }
-    if (all_paths[i] == -1){
-      next_edge_is_init_edge = true;
-    }
-  }
-  assert(all_paths_ch.size() == person_index_in_all_paths);
-  std::cout << "person_index_in_all_paths is " << person_index_in_all_paths << std::endl;
-  std::cout << "all_paths_ch has size " << all_paths_ch.size();
-  B18TrafficSP::numberOfPeopleRouted += all_paths_ch.size();
-
-  return all_paths;
+  return currentBatchPaths;
 }
 
 

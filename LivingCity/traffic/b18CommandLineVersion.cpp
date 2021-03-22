@@ -149,9 +149,9 @@ void B18CommandLineVersion::runB18Simulation() {
   } else {
 	  //if useSP, convert all_paths to indexPathVec format and run simulation
     b18TrafficSimulator.simulateInGPU(numOfPasses, startSimulationH, endSimulationH,
-        useJohnsonRouting, useSP, street_graph, all_paths, simParameters,
+        useJohnsonRouting, useSP, street_graph, simParameters,
         rerouteIncrementMins, all_od_pairs_, dep_times,
-        indexPathVecOrder, networkPathSP, loadPrevPaths, savePrevPaths);
+        networkPathSP);
   }
 
 }

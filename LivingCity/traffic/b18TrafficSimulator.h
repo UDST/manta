@@ -63,21 +63,22 @@ class B18TrafficSimulator {
   B18TrafficOD b18TrafficOD;
   B18TrafficLaneMap b18TrafficLaneMap;
 
+  void printFullProgressBar();
+
+  void printProgressBar(float progress);
+
   void simulateInCPU_MultiPass(int numOfPasses,
                                float startTimeH, float endTimeH, bool useJohnsonRouting);
   void simulateInCPU_Onepass(float startTimeH, float endTimeH,
                              bool useJohnsonRouting);
   void simulateInCPU(float startTimeH, float endTimeH);
+
+  void updateEdgeImpedances(const std::shared_ptr<abm::Graph>& graph_, int increment_index);
   
-  void simulateInGPU(int numOfPasses,
-    float startTimeH,
-    float endTimeH,
-    bool useJohnsonRouting,
-    bool useSP, const std::shared_ptr<abm::Graph>& graph_,
-    std::vector<abm::graph::edge_id_t> paths_SP, const parameters & simParameters,
+  void simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
+    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_, const parameters & simParameters,
     const int rerouteIncrementMins, std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs,
-    std::vector<float> dep_times, std::vector<uint> inputIndexPathVecOrder,
-    const std::string networkPathSP, const bool loadPrevPaths, const bool savePaths);
+    std::vector<float> dep_times, const std::string networkPathSP);
 
   // Lanes
   std::vector<uint> edgeIdToLaneMapNum;
@@ -112,6 +113,7 @@ class B18TrafficSimulator {
   void saveODToFile() {}; // TODO
   void loadODFromFile() {};
 
+
   // Traffic lights
   std::vector<uchar> trafficLights;
   std::vector<B18IntersectionData> intersections;
@@ -123,7 +125,9 @@ class B18TrafficSimulator {
   void calculateAndDisplayTrafficDensity(int numOfPass);
   void savePeopleAndRoutes(int numOfPass);
   void savePeopleAndRoutesSP(
-    std::vector<abm::graph::edge_id_t>& cumulative_paths_SP,
+    const std::vector<personPath>& allPaths,
+    const std::vector<uint>& allPathsInEdgesCUDAFormat,
+    const std::vector<uint>& edgeIdToLaneMapNum,
     int numOfPass,
     const std::shared_ptr<abm::Graph>& graph_,
     int start_time, int end_time);
