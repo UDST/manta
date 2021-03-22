@@ -18,6 +18,7 @@
 #include "roadGraphB2018Loader.h"
 #include <thread>
 #include "accessibility.h"
+#include <math.h>
 
 
 #define DEBUG_TRAFFIC 0
@@ -107,22 +108,82 @@ void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
 
 }//
 
+void B18TrafficSimulator::printFullProgressBar() {
+  float progress = 1;
+  int barWidth = 70;
+  std::cout << "[";
+  int pos = barWidth * progress;
+  for (int i = 0; i < barWidth; ++i) {
+    std::cout << "=";
+  }
+  std::cout << "] 100%" << std::endl;
+}
 
+void B18TrafficSimulator::printProgressBar(float progress) {
+  int barWidth = 70;
+  std::cout << "[";
+  int pos = barWidth * progress;
+  for (int i = 0; i < barWidth; ++i) {
+      if (i < pos) std::cout << "=";
+      else if (i == pos) std::cout << ">";
+      else std::cout << " ";
+  }
+  std::cout << "] " << int(progress * 100.0);
+  if (fabs(progress - 1) < FLOAT_EPSILON){
+    std::cout << std::endl;
+  } else {
+    std::cout << "%\r";
+    std::cout.flush();
+  }
+}
+
+void B18TrafficSimulator::updateEdgeImpedances(
+  const std::shared_ptr<abm::Graph>& graph_,
+  int increment_index) {
+
+  int index = 0;
+  int avg_edge_vel_size = graph_->edges_.size();
+  std::vector<float> avg_edge_vel(avg_edge_vel_size);
+  for (auto const& x : graph_->edges_) {
+    int ind = edgeDescToLaneMapNumSP[x.second];
+    float new_impedance;
+    if (edgesData[ind].curr_cum_vel != 0) {
+      avg_edge_vel[index] = edgesData[ind].curr_cum_vel / edgesData[ind].curr_iter_num_cars;// * 2.23694;
+      new_impedance = edgesData[ind].length / avg_edge_vel[index];
+      auto cum_vel = edgesData[ind].curr_cum_vel;
+      auto num_cars = edgesData[ind].curr_iter_num_cars;
+      auto avg_edge_vel_index = avg_edge_vel[index];
+    } else {
+      abm::Edge_vals edge_vals = x.second->second;
+      new_impedance = edgesData[ind].length / edge_vals.max_speed_limit_mps; // no one transited - default impedance
+    }
+    auto vertex_from = std::get<0>(std::get<0>(x));
+    auto vertex_to = std::get<1>(std::get<0>(x));
+    assert(new_impedance > 0);
+    graph_->update_edge(vertex_from, vertex_to, new_impedance);
+
+    index++;
+  }
+
+  //save avg_edge_vel vector to file
+  Benchmarker allEdgesVelBenchmark("all_edges_vel_" + std::to_string(increment_index), true);
+  allEdgesVelBenchmark.startMeasuring();
+  std::string name = "./all_edges_vel_" + std::to_string(increment_index) + ".txt";
+  std::ofstream output_file(name);
+  std::ostream_iterator<float> output_iterator(output_file, "\n");
+  std::copy(avg_edge_vel.begin(), avg_edge_vel.end(), output_iterator);
+  allEdgesVelBenchmark.stopAndEndBenchmark();
+}
 
 //////////////////////////////////////////////////
 // GPU
 //////////////////////////////////////////////////
 void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
-    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_,
-    std::vector<abm::graph::edge_id_t> paths_SP, const parameters & simParameters,
+    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_, const parameters & simParameters,
     const int rerouteIncrementMins, std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs,
-    std::vector<float> dep_times, std::vector<uint> inputIndexPathVecOrder, const std::string networkPathSP,
-    const bool loadPrevPaths, const bool savePaths) {
+    std::vector<float> dep_times, const std::string networkPathSP) {
     
-  
-  std::vector<abm::graph::edge_id_t> cumulative_paths_SP(paths_SP);
-  indexPathVecOrder = std::vector<uint>(inputIndexPathVecOrder);
-  std::cout << " =================================== " << indexPathVecOrder.size() << "===================" << std::endl;
+  std::vector<personPath> allPathsInVertexes;
       
   Benchmarker laneMapCreation("Lane_Map_creation", true);
    
@@ -213,9 +274,6 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         laneMap, trafficLights, intersections, startTimeH, endTimeH,
         accSpeedPerLinePerTimeInterval, numVehPerLinePerTimeInterval, deltaTime);
 
-    //for (int x = 0; x < 30; x++) {
-    //    printf("index %d edgesData length %f\n", x, edgesData[x].length);
-    //}
     initCudaBench.stopAndEndBenchmark();
 
     float startTimeSecs = startTimeH * 3600.0f; //7.0f
@@ -260,122 +318,119 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
               << ">  Number of threads per block: " << threadsPerBlock
               << std::endl;
 
-    graph_->person_to_init_edge_.reserve(trafficPersonVec.size());
-
     int increment = 7200;
     int increment_index = 0;
-    int ind = 0;
     std::cerr
       << "Running main loop from " << (startTimeSecs / 3600.0f)
       << " to " << (endTimeSecs / 3600.0f)
       << " with " << trafficPersonVec.size() << " person..."
       << std::endl;
+
+    for (int i = 0; i < trafficPersonVec.size(); ++i){
+      trafficPersonVec[i].indexPathInit = INIT_EDGE_INDEX_NOT_SET;
+    }
       
     std::cerr << "Starting simulation ..." << std::endl;
+    std::vector<uint> allPathsInEdgesCUDAFormat;
     while (currentTime < endTimeSecs) {
-
-      // ===== Edge impedances update
-      /*Benchmarker allEdgesVelBenchmark("all_edges_vel_" + std::to_string(increment_index), true);
-      allEdgesVelBenchmark.startMeasuring();
-      int index = 0;
-      int avg_edge_vel_size = graph_->edges_.size();
-      std::vector<float> avg_edge_vel(avg_edge_vel_size);
-      for (auto const& x : graph_->edges_) {
-        ind = edgeDescToLaneMapNumSP[x.second];
-        float new_impedance;
-        if (edgesData[ind].curr_cum_vel != 0) {
-          avg_edge_vel[index] = edgesData[ind].curr_cum_vel / edgesData[ind].curr_iter_num_cars;// * 2.23694;
-          new_impedance = edgesData[ind].length / avg_edge_vel[index];
-          auto cum_vel = edgesData[ind].curr_cum_vel;
-          auto num_cars = edgesData[ind].curr_iter_num_cars;
-          auto avg_edge_vel_index = avg_edge_vel[index];
-        } else {
-          abm::Edge_vals edge_vals = x.second->second;
-          new_impedance = edgesData[ind].length / edge_vals.max_speed_limit_mps; // no one transited - default impedance
-        }
-        auto vertex_from = std::get<0>(std::get<0>(x));
-        auto vertex_to = std::get<1>(std::get<0>(x));
-        assert(new_impedance > 0);
-        graph_->update_edge(vertex_from, vertex_to, new_impedance);
-
-        index++;
-      }
-      //save avg_edge_vel vector to file
-      std::string name = "./all_edges_vel_" + std::to_string(increment_index) + ".txt";
-      std::ofstream output_file(name);
-      std::ostream_iterator<float> output_iterator(output_file, "\n");
-      std::copy(avg_edge_vel.begin(), avg_edge_vel.end(), output_iterator);
-      allEdgesVelBenchmark.stopAndEndBenchmark();*/
-
-      // routingwrapper for the next batch of trips
-      const float startTimeMins = startTimeH * 60 + (increment_index) * rerouteIncrementMins;
-      const float endTimeMins = startTimeMins  + rerouteIncrementMins;
-      if (loadPrevPaths) {
-        paths_SP = B18TrafficSP::loadPrevPathsFromFile(networkPathSP);
-      } else {
-        paths_SP = B18TrafficSP::RoutingWrapper(all_od_pairs, graph_, dep_times,
-                                              startTimeMins, endTimeMins, increment_index,
-                                              indexPathVecOrder, savePaths, networkPathSP,
-                                              trafficPersonVec, indexPathVec);
-      }
+      updateEdgeImpedances(graph_, increment_index);
       
-      cumulative_paths_SP.insert(std::end(cumulative_paths_SP), std::begin(paths_SP), std::end(paths_SP));
+      // routingwrapper for the next batch of trips
+      float currentBatchStartTimeSecs = startTimeSecs + increment_index * rerouteIncrementMins * 60;
+      float currentBatchEndTimeSecs = startTimeSecs + (increment_index + 1) * rerouteIncrementMins * 60;
 
-      Benchmarker routesConversionIntoGPUformat("Convert_routes_into_GPU_data_structure_format_batch_" +
-                                                to_string(increment_index), true);
-      routesConversionIntoGPUformat.startMeasuring();
-      B18TrafficSP::convertVector(paths_SP, indexPathVec, edgeIdToLaneMapNum, graph_);
-      routesConversionIntoGPUformat.stopAndEndBenchmark();
+      auto currentBatchPathsInVertexes = B18TrafficSP::RoutingWrapper(all_od_pairs, graph_, dep_times,
+                                            currentBatchStartTimeSecs, currentBatchEndTimeSecs,
+                                            increment_index, networkPathSP, trafficPersonVec);
 
-      std::cout << "paths size for batch #" << increment_index << ": " << paths_SP.size() << std::endl;
-      // ASSERT_EQUAL(indexPathVecOrder.size(), trafficPersonVec.size());
-      // ASSERT_EQUAL(paths_SP.size(), indexPathVecOrder.size());
-      // ASSERT_EQUAL(cumulative_paths_SP.size(), indexPathVecOrder.size());
+      allPathsInVertexes.insert(std::end(allPathsInVertexes), std::begin(currentBatchPathsInVertexes), std::end(currentBatchPathsInVertexes));
 
+      std::cout << "People routed at batch " << increment_index << ": " << currentBatchPathsInVertexes.size()
+                << ". Total people routed so far: " << allPathsInVertexes.size() << std::endl;
+
+      // ================= convert to CUDA format =================
+      
+      allPathsInEdgesCUDAFormat.clear();
+      uint allPathsInEdgesCUDAFormatIndex = 0;
+      int routeLengthForPerson2 = 0;
+      for (int i = 0; i < allPathsInVertexes.size(); i++) {
+        personPath aPersonPath = allPathsInVertexes[i];
+        assert(aPersonPath.person_id < trafficPersonVec.size());
+        int personPathLength = 0;
+        for (int j=0; j < aPersonPath.pathInVertexes.size()-1; j++) {
+          if (trafficPersonVec[aPersonPath.person_id].indexPathInit != INIT_EDGE_INDEX_NOT_SET &&
+                trafficPersonVec[aPersonPath.person_id].indexPathInit != allPathsInEdgesCUDAFormatIndex) {
+            std::cout << "Error! person_id " << aPersonPath.person_id
+            << " has indexPathInit " << trafficPersonVec[aPersonPath.person_id].indexPathInit
+            << " while we're trying to set it as " << allPathsInEdgesCUDAFormatIndex << std::endl;
+          }
+          trafficPersonVec[aPersonPath.person_id].indexPathInit = allPathsInEdgesCUDAFormatIndex;
+          assert(j < aPersonPath.pathInVertexes.size());
+          assert(j+1 < aPersonPath.pathInVertexes.size());
+
+          auto vertexFrom = aPersonPath.pathInVertexes[j];
+          auto vertexTo = aPersonPath.pathInVertexes[j+1];
+          auto oneEdgeInCPUFormat = graph_->edge_ids_[vertexFrom][vertexTo];
+
+          assert(oneEdgeInCPUFormat < edgeIdToLaneMapNum.size());
+          allPathsInEdgesCUDAFormat.emplace_back(edgeIdToLaneMapNum[oneEdgeInCPUFormat]);
+          if (aPersonPath.person_id == 2) {
+            std::cout << "  ================================= Printing person_id "
+              << aPersonPath.person_id << ". Vertex from " << vertexFrom << " vertex to " << vertexTo
+              << std::endl;
+              routeLengthForPerson2 += edgesData[edgeIdToLaneMapNum[oneEdgeInCPUFormat]].length;
+              //At allPathsInVertexes[" << i << "]. Their edge in CPU format is:"
+              //<< oneEdgeInCPUFormat << ". In GPU format is " << edgeIdToLaneMapNum[oneEdgeInCPUFormat] << std::endl;
+          }
+          personPathLength++;
+        }
+        if (aPersonPath.person_id == -1) {
+          std::cout << "  ================================= Printing person_id "
+            << aPersonPath.person_id << ". At allPaths[" << i << "]." << std::endl;
+
+          std::cout << std::endl
+            << " their init intersection is " << trafficPersonVec[aPersonPath.person_id].init_intersection
+            << " and their end intersection is " << trafficPersonVec[aPersonPath.person_id].end_intersection
+            << ". Their time of departure is " << trafficPersonVec[aPersonPath.person_id].time_departure
+            << ". Their indexPathInit is " << trafficPersonVec[aPersonPath.person_id].indexPathInit
+            << ". "
+            << std::endl;
+        }
+        allPathsInEdgesCUDAFormat.emplace_back(END_OF_PATH);
+        allPathsInEdgesCUDAFormatIndex += personPathLength + 1;
+      }
+      std::cout << "routeLengthForPerson2 " << routeLengthForPerson2 << std::endl;
+      std::cout << "allPathsInEdgesCUDAFormat.size() " << allPathsInEdgesCUDAFormat.size() << std::endl;
+      std::cout << "Converted to CUDA format" << std::endl;
 
       Benchmarker benchmarkb18updateStructuresCUDA("b18updateStructuresCUDA");
       benchmarkb18updateStructuresCUDA.startMeasuring();
-      b18updateStructuresCUDA(trafficPersonVec, indexPathVec, edgesData);
+      b18updateStructuresCUDA(trafficPersonVec, allPathsInEdgesCUDAFormat, edgesData);
       benchmarkb18updateStructuresCUDA.stopAndEndBenchmark();
-
-      assert(cumulative_paths_SP.size() == indexPathVec.size());
 
       Benchmarker microsimulationInGPU("Microsimulation_in_GPU_batch_" + to_string(increment_index), true);
       microsimulationInGPU.startMeasuring();
-      std::cout << "startTimeSecs " << startTimeSecs << std::endl;
-      std::cout << "currentTime " << currentTime << std::endl;
-      std::cout << "endTimeSecs " << endTimeSecs << std::endl;
-      std::cout << "deltaTime " << deltaTime << std::endl;
 
-      std::cout << "simulating from " << currentTime/60
-                << " mins to " << startTimeSecs / 60 + (increment_index + 1) * rerouteIncrementMins
+      currentTime = currentBatchStartTimeSecs;
+      std::cout << ">> startTimeSecs " << currentBatchStartTimeSecs << std::endl
+                << ">> currentTime " << currentTime << std::endl
+                << ">> endTimeSecs " << currentBatchEndTimeSecs << std::endl
+                << ">> deltaTime " << deltaTime << std::endl
+                << "simulating from " << currentTime/60
+                << " mins to " << currentBatchEndTimeSecs/60
                 << " mins." << std::endl;
 
-      int barWidth = 70;
       float progress = 0;
-      while (currentTime < startTimeSecs + (increment_index + 1) * rerouteIncrementMins * 60) {
-        std::cout << "[";
-        int pos = barWidth * progress;
-        for (int i = 0; i < barWidth; ++i) {
-            if (i < pos) std::cout << "=";
-            else if (i == pos) std::cout << ">";
-            else std::cout << " ";
-        }
-        std::cout << "] " << int(progress * 100.0) << "%\r";
-        std::cout.flush();
-        while(currentTime < (progress + 0.1) * (startTimeSecs + (increment_index + 1) * rerouteIncrementMins * 60)) {
+      while (currentTime < currentBatchEndTimeSecs) {
+        printProgressBar(progress);
+        while(currentTime < (progress + 0.1) * currentBatchEndTimeSecs) {
           b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
                               intersections.size(), deltaTime, simParameters, numBlocks, threadsPerBlock);
           currentTime += deltaTime;
         }
         progress += 0.1;
       }
-      std::cout << "[";
-      for (int i = 0; i < barWidth; ++i) {
-        std::cout << "=";
-      }
-      std::cout << "] 100%" << std::endl;
-
+      printFullProgressBar();
 
       microsimulationInGPU.stopAndEndBenchmark();
       increment_index++;
@@ -433,10 +488,28 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 
 
     int count_host = 0;
+    int numberOfPeopleSetToNotFinished = 0;
+    int numberOfPeopleSetToFinished = 0;
     for (int i = 0; i < trafficPersonVec.size(); ++i){
+      if (trafficPersonVec[i].active != 2 && trafficPersonVec[i].indexPathCurr == END_OF_PATH) {
+        trafficPersonVec[i].active = 2;
+        numberOfPeopleSetToFinished++;
+      }
+      if (trafficPersonVec[i].active != 1 && trafficPersonVec[i].indexPathCurr != END_OF_PATH) {
+        trafficPersonVec[i].active = 1;
+        numberOfPeopleSetToNotFinished++;
+      }
       if (abs(trafficPersonVec[i].dist_traveled - 2660) < 20){
         count_host++;
       }
+    }
+    if (numberOfPeopleSetToNotFinished > 0) {
+      std::cout << "Corrected the active state for " << numberOfPeopleSetToNotFinished
+                << " people, from 2 to 1 (not finished)." << std::endl;
+    }
+    if (numberOfPeopleSetToFinished > 0) {
+      std::cout << "Corrected the active state for " << numberOfPeopleSetToFinished
+                << " people, from 1 to 2 (finished)." << std::endl;
     }
     std::cout << "Count host " << count_host << std::endl;
 
@@ -447,7 +520,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 
     Benchmarker fileOutput("File_output", true);
     fileOutput.startMeasuring();
-    savePeopleAndRoutesSP(cumulative_paths_SP, nP, graph_, (int) startTimeH, (int) endTimeH);
+    savePeopleAndRoutesSP(allPathsInVertexes, allPathsInEdgesCUDAFormat, edgeIdToLaneMapNum, nP, graph_,
+                        (int) startTimeH, (int) endTimeH);
     fileOutput.stopAndEndBenchmark();
   }
 
@@ -2510,95 +2584,83 @@ bool isLastEdgeOfPath(abm::graph::edge_id_t edgeInPath){
 }
 
 void writeRouteFile(int numOfPass,
-  std::vector<abm::graph::edge_id_t> cumulative_paths_SP,
+  const std::vector<personPath> allPathsInVertexes,
   int start_time, int end_time,
-  std::vector<uint> indexPathVecOrder,
-  const std::vector<B18TrafficPerson> &trafficPersonVec) {
+  const std::vector<B18TrafficPerson> &trafficPersonVec,
+  const std::shared_ptr<abm::Graph> & graph_,
+  const std::vector<uint>& allPathsInEdgesCUDAFormat,
+  const std::vector<uint>& edgeIdToLaneMapNum) { 
   QFile routeFile(QString::number(numOfPass) + "_route" + QString::number(start_time) + "to" + QString::number(end_time) + ".csv");
   if (routeFile.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
     std::cout << "> Saving Route file..." << std::endl;
-    QHash<uint, uint> laneMapNumCount;
     QTextStream streamR(&routeFile);
     streamR << "p:route\n";
-    int lineIndex = 0;
-    int peopleIndex = 0;
-    streamR << lineIndex << ":[";
-    for (int i = 0; i < cumulative_paths_SP.size(); ++i) {
-      const uint edgeInPath = cumulative_paths_SP[i];
-      if (isLastEdgeOfPath(edgeInPath)) {
-        streamR << "]\n";
-        lineIndex++;
-        if (peopleIndex < cumulative_paths_SP.size() - 1) {
-          try{
-            streamR << indexPathVecOrder[lineIndex] << ":[";
-          } catch (const std::exception& e) {
-            throw "tried to access indexPathVecOrder on position " + to_string(lineIndex) +
-                  " but its size is " + to_string(indexPathVecOrder.size());
+
+    for (const personPath& aPersonPath: allPathsInVertexes){
+      streamR << aPersonPath.person_id << ":[";
+      for (int j = 0; j < aPersonPath.pathInVertexes.size()-1; j++){
+        auto vertexFrom = aPersonPath.pathInVertexes[j];
+        auto vertexTo = aPersonPath.pathInVertexes[j+1];
+        auto oneEdgeInCPUFormat = graph_->edge_ids_[vertexFrom][vertexTo];
+        streamR << oneEdgeInCPUFormat << ",";
+
+        // Check that indexPathInit matches the first edge for that person
+        if (j == 0) {
+          assert(oneEdgeInCPUFormat < edgeIdToLaneMapNum.size());
+          if (allPathsInEdgesCUDAFormat[trafficPersonVec[aPersonPath.person_id].indexPathInit] != edgeIdToLaneMapNum[oneEdgeInCPUFormat]){
+            std::cout << "For person " << aPersonPath.person_id
+                      << ", indexPathInit is " << trafficPersonVec[aPersonPath.person_id].indexPathInit
+                      << ", which means the first edge in CUDA format is " << allPathsInEdgesCUDAFormat[trafficPersonVec[aPersonPath.person_id].indexPathInit]
+                      << ". However. edgeIdToLaneMapNum[oneEdgeInCPUFormat] is " << edgeIdToLaneMapNum[oneEdgeInCPUFormat]
+                      << std::endl;
+            throw runtime_error("Initial edges do not match.");
           }
         }
-      } else {
-        streamR << edgeInPath << ",";
       }
-      peopleIndex++;
+      streamR << "]\n";
     }
     routeFile.close();
   }
   std::cout << "> Finished saving Route file." << std::endl;
 }
 
-void writeIndexPathVecFile(int numOfPass,
+void writeAllPathsInEdgesCUDAFormatFile(int numOfPass,
   int start_time, int end_time,
-  const std::vector<uint>& indexPathVec,
-  const std::vector<uint>& indexPathVecOrder) {
-  QFile indexPathVecFile(QString::number(numOfPass) + "_indexPathVec" + QString::number(start_time) + "to" + QString::number(end_time) + ".csv");
-  if (indexPathVecFile.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
-    std::cout << "> Saving indexPathVec (size " << indexPathVec.size() << ")..." << std::endl;
-    QTextStream indexPathVecStream(&indexPathVecFile);
-    indexPathVecStream << "p,indexPathVec\n";
+  const std::vector<uint>& allPathsInEdgesCUDAFormat) {
+  QFile allPathsInEdgesCUDAFormatFile(QString::number(numOfPass) + "_allPathsInEdgesCUDAFormat" + QString::number(start_time) + "to" + QString::number(end_time) + ".csv");
+  if (allPathsInEdgesCUDAFormatFile.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
+    std::cout << "> Saving allPathsInEdgesCUDAFormat (size " << allPathsInEdgesCUDAFormat.size() << ")..." << std::endl;
+    QTextStream allPathsInEdgesCUDAFormatStream(&allPathsInEdgesCUDAFormatFile);
+    allPathsInEdgesCUDAFormatStream << "i,allPathsInEdgesCUDAFormat\n";
 
-    int person = 0;
-    for (int i = 0; i < indexPathVec.size(); ++i){
-      indexPathVecStream << indexPathVecOrder[person] << "," << indexPathVec[i] << "\n";
-      if (indexPathVec[i] == -1){
-        person++;
-      }
+    for (int i = 0; i < allPathsInEdgesCUDAFormat.size(); ++i){
+      allPathsInEdgesCUDAFormatStream << i << "," << allPathsInEdgesCUDAFormat[i] << "\n";
     }
 
-    indexPathVecFile.close();
+    allPathsInEdgesCUDAFormatFile.close();
   }
-  std::cout << "> Finished saving indexPathVec." << std::endl;
+  std::cout << "> Finished saving AllPathsInEdgesCUDAFormat." << std::endl;
 }
 
 void B18TrafficSimulator::savePeopleAndRoutesSP(
-  std::vector<abm::graph::edge_id_t>& cumulative_paths_SP,
+  const std::vector<personPath>& allPathsInVertexes,
+  const std::vector<uint>& allPathsInEdgesCUDAFormat,
+  const std::vector<uint>& edgeIdToLaneMapNum,
   int numOfPass,
   const std::shared_ptr<abm::Graph>& graph_,
   int start_time, int end_time) {
-  bool enableMultiThreading = true;
-  const bool saveToFile = true;
 
-  if (!saveToFile){
-    return;
-  }
+  std::cout << "Saving output files..." << std::endl; 
+  std::thread threadWritePeopleFile(writePeopleFile, numOfPass, graph_, start_time, end_time, trafficPersonVec, deltaTime);
+  std::thread threadWriteRouteFile(writeRouteFile, numOfPass, allPathsInVertexes, start_time, end_time, trafficPersonVec, graph_, allPathsInEdgesCUDAFormat, edgeIdToLaneMapNum);
+  std::thread threadWriteIndexPathInitFile(writeIndexPathInitFile, numOfPass, start_time, end_time, trafficPersonVec);
+  std::thread threadWriteAllPathsInEdgesCUDAFormatFile(writeAllPathsInEdgesCUDAFormatFile, numOfPass, start_time, end_time, allPathsInEdgesCUDAFormat);
 
-  if (enableMultiThreading){
-    std::cout << "Saving output files..." << std::endl;
-    std::thread threadWritePeopleFile(writePeopleFile, numOfPass, graph_, start_time, end_time, trafficPersonVec, deltaTime);
-    std::thread threadWriteRouteFile(writeRouteFile, numOfPass, cumulative_paths_SP, start_time, end_time, indexPathVecOrder, trafficPersonVec);
-    std::thread threadWriteIndexPathVecFile(writeIndexPathVecFile, numOfPass, start_time, end_time, indexPathVec, indexPathVecOrder);
-    std::thread threadWriteIndexPathInitFile(writeIndexPathInitFile, numOfPass, start_time, end_time, trafficPersonVec);
-
-    threadWritePeopleFile.join();
-    threadWriteRouteFile.join();
-    threadWriteIndexPathVecFile.join();
-    threadWriteIndexPathInitFile.join();
-    std::cout << "Finished saving output files." << std::endl;
-  } else {
-    writePeopleFile(numOfPass, graph_, start_time, end_time, trafficPersonVec, deltaTime);
-    writeRouteFile(numOfPass, cumulative_paths_SP, start_time, end_time, indexPathVecOrder, trafficPersonVec);
-    writeIndexPathVecFile(numOfPass, start_time, end_time, indexPathVec, indexPathVecOrder);
-    writeIndexPathInitFile(numOfPass, start_time, end_time, trafficPersonVec);
-  }
+  threadWritePeopleFile.join();
+  threadWriteRouteFile.join();
+  threadWriteAllPathsInEdgesCUDAFormatFile.join();
+  threadWriteIndexPathInitFile.join();
+  std::cout << "Finished saving output files." << std::endl;
 }
 
 void B18TrafficSimulator::savePeopleAndRoutes(int numOfPass) {
@@ -2951,6 +3013,4 @@ void B18TrafficLightRender::getInterpolated(uchar newTrafficLight,
 }//
 
 }
-
-
 

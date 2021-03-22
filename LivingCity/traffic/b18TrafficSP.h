@@ -53,18 +53,15 @@ class B18TrafficSP {
 
   static std::vector<abm::graph::edge_id_t> loadPrevPathsFromFile(const std::string networkPathSP);
 
-  static std::vector<abm::graph::edge_id_t> RoutingWrapper (
+  static std::vector<personPath> RoutingWrapper (
     const std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_,
     const std::shared_ptr<abm::Graph>& street_graph,
     const std::vector<float>& dep_times,
-    const float start_time_mins,
-    const float end_time_mins,
+    const float currentBatchStartTimeSecs,
+    const float currentBatchEndTimeSecs,
     int reroute_batch_number,
-    std::vector<uint>& indexPathVecOrder,
-    const bool savePaths,
     const std::string networkPathSP,
-    std::vector<LC::B18TrafficPerson>& trafficPersonVec,
-    std::vector<uint>& indexPathVec);
+    std::vector<LC::B18TrafficPerson>& trafficPersonVec);
 
   static void initialize_person_to_init_edge(
     std::vector<abm::graph::edge_id_t>& all_paths,
@@ -73,13 +70,12 @@ class B18TrafficSP {
   static void filterODByTimeRange(
     const std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs,
     const std::vector<float> dep_times_in_seconds,
-    const float start_time_mins,
-    const float end_time_mins,
+    const float currentBatchStartTimeSecs,
+    const float currentBatchEndTimeSecs,
     std::vector<abm::graph::vertex_t>& filtered_od_pairs_sources_,
     std::vector<abm::graph::vertex_t>& filtered_od_pairs_targets_,
     std::vector<float>& filtered_dep_times_,
-    std::vector<uint>& indexPathVecOrder,
-    std::vector<uint>& currentBatchIndexPathVecOrder);
+    std::vector<uint>& pathsOrder);
 
   static void convertVector(
     std::vector<abm::graph::edge_id_t> paths_SP,

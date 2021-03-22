@@ -101,7 +101,7 @@ void b18InitCUDA(
     if (fistInitialization) gpuErrchk(cudaMalloc((void **) &trafficPersonVec_d, size));   // Allocate array on device
     gpuErrchk(cudaMemcpy(trafficPersonVec_d, trafficPersonVec.data(), size, cudaMemcpyHostToDevice));
   }
-  
+  //@todo
   { // indexPathVec
     size_t sizeIn = indexPathVec.size() * sizeof(uint);
     indexPathVec_d_size = indexPathVec.size();
@@ -155,7 +155,7 @@ void b18updateStructuresCUDA(
   indexPathVec_d_size = indexPathVec.size();
   gpuErrchk(cudaMalloc((void **) &indexPathVec_d, sizeIn));
   gpuErrchk(cudaMemcpy(indexPathVec_d, indexPathVec.data(), sizeIn, cudaMemcpyHostToDevice));
-
+  //@todo
   cudaFree(edgesData_d);
   size_t sizeD = edgesData.size() * sizeof(LC::B18EdgeData);
   gpuErrchk(cudaMalloc((void **) &edgesData_d, sizeD));
@@ -502,19 +502,15 @@ __global__ void kernel_trafficSimulation(
       //printf("  1. Person: %d active==0\n",p);
       if (trafficPersonVec[p].time_departure > currentTime) { //wait
         //1.1 just continue waiting
-        //printf("   1.1 Person: %d wait\n",p);
         return;
       } else { //start
-        //printf("p %d edge = %u\n", p, trafficPersonVec[p].indexPathInit);
         //1.2 find first edge
         trafficPersonVec[p].indexPathCurr = trafficPersonVec[p].indexPathInit; // reset index.
         int indexFirstEdge = trafficPersonVec[p].indexPathCurr;
         assert(indexFirstEdge < indexPathVec_d_size);
-        uint firstEdge = indexPathVec[indexFirstEdge];
-        //printf("indexPathVec %d = %u nextEdge = %u\n", p, indexPathVec[trafficPersonVec[p].indexPathCurr], indexPathVec[trafficPersonVec[p].indexPathCurr + 1]);
-      
+        uint firstEdge = indexPathVec[indexFirstEdge];    
 
-        if (firstEdge == -1) {
+        if (firstEdge == END_OF_PATH) {
           trafficPersonVec[p].active = 2;
           return;
         }
@@ -574,7 +570,7 @@ __global__ void kernel_trafficSimulation(
         trafficPersonVec[p].co = 0.0f;
         trafficPersonVec[p].gas = 0.0f;
         
-        if (nextEdge != -1) {
+        if (nextEdge != END_OF_PATH) {
           trafficPersonVec[p].nextEdgemaxSpeedMperSec = edgesData[nextEdge].maxSpeedMperSec;
           trafficPersonVec[p].nextEdgeNumLanes = edgesData[nextEdge].numLines;
           trafficPersonVec[p].nextEdgeNextInters = edgesData[nextEdge].nextIntersMapped;
@@ -709,7 +705,7 @@ __global__ void kernel_trafficSimulation(
     // NEXT LINE
   // e) MOVING ALONG IN THE NEXT EDGE
     if (found == false && numCellsCheck > 0) { //check if in next line
-      if ((nextEdge != -1) &&
+      if ((nextEdge != END_OF_PATH) &&
         (trafficPersonVec[p].edgeNextInters != trafficPersonVec[p].end_intersection)) { // we haven't arrived to destination (check next line)
         ushort nextEdgeLaneToBe = trafficPersonVec[p].numOfLaneInEdge; //same lane
 
@@ -846,7 +842,7 @@ __global__ void kernel_trafficSimulation(
         // skip if there is one lane (avoid to do this)
         // skip if it is the last edge
         if (nextVehicleIsATrafficLight == false &&
-          trafficPersonVec[p].edgeNumLanes > 1 && nextEdge != -1) {
+          trafficPersonVec[p].edgeNumLanes > 1 && nextEdge != END_OF_PATH) {
           //printf("second pass\n");
 
           ////////////////////////////////////////////////////
@@ -1108,7 +1104,7 @@ __global__ void kernel_trafficSimulation(
     //!!!ALWAYS CHANGE
     //2.2.1 find next edge
     //2.1 check if end*/
-    if (nextEdge == -1) {
+    if (nextEdge == END_OF_PATH) {
       trafficPersonVec[p].active = 2; //finished
       return;
     }
@@ -1140,7 +1136,7 @@ __global__ void kernel_trafficSimulation(
     uint nextNEdge = indexPathVec[indexNEdge];
 
     //trafficPersonVec[p].nextEdge=nextEdge;
-    if (nextNEdge != -1) {
+    if (nextNEdge != END_OF_PATH) {
       //trafficPersonVec[p].nextPathEdge++;
       trafficPersonVec[p].LC_initOKLanes = 0xFF;
       trafficPersonVec[p].LC_endOKLanes = 0xFF;
