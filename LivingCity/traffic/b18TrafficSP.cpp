@@ -80,12 +80,25 @@ std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::make_od_pairs(std
   return od_pairs;
 }
 
-// Read OD pairs file format
-std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::read_od_pairs(
-  const std::string& filename, int nagents,
+void B18TrafficSP::read_od_pairs_from_structure(
+  const std::vector<std::array<abm::graph::vertex_t, 2>>& od_pairs,
   const float startSimulationH,
-  const float endSimulationH) {
-  bool status = true;
+  const float endSimulationH,
+  int nagents) {
+
+  for (int i = 0; i < od_pairs.size(); i++) {
+    auto v1 = od_pairs[i][0];
+    auto v2 = od_pairs[i][1];
+    RoadGraphB2018::demandB2018.push_back(DemandB2018(1, v1, v2));
+  }
+}
+
+// Read OD pairs file format
+std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::read_od_pairs_from_file(
+  const std::string& filename,
+  const float startSimulationH,
+  const float endSimulationH,
+  int nagents) {
   std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs;
   csvio::CSVReader<3> in(filename);
   in.read_header(csvio::ignore_extra_column, "dep_time", "origin", "destination");
@@ -214,8 +227,11 @@ std::vector<personPath> B18TrafficSP::RoutingWrapper (
   const float currentBatchStartTimeSecs,
   const float currentBatchEndTimeSecs,
   int reroute_batch_number,
-  const std::string networkPathSP,
   std::vector<LC::B18TrafficPerson>& trafficPersonVec) {
+
+  if (all_od_pairs_.size() != dep_times.size())
+    throw std::runtime_error("RoutingWrapper received od_pairs and dep_times with different sizes.");
+  
 
   std::cout << "numberOfPeopleRouted " << B18TrafficSP::numberOfPeopleRouted << std::endl;
 
@@ -235,13 +251,6 @@ std::vector<personPath> B18TrafficSP::RoutingWrapper (
                                     filtered_dep_times_,
                                     pathsOrder);
   
-  for (int i = 0; i < pathsOrder.size(); i++) {
-    if (pathsOrder[i] == 3){
-      std::cout << "at pathsOrder[" << i << "] == " << 3 << std::endl;
-    }
-  }
-  
-
   std::cout << "Simulating trips with dep_time between "
     << int(currentBatchStartTimeSecs/3600) << ":" << int(currentBatchStartTimeSecs) % 3600
     << "(" << currentBatchStartTimeSecs / 60 << " in minutes)"
@@ -295,17 +304,43 @@ std::vector<personPath> B18TrafficSP::RoutingWrapper (
 }
 
 
-void B18TrafficSP::convertVector(std::vector<abm::graph::edge_id_t> paths_SP,
-  std::vector<uint>& indexPathVec,  std::vector<uint> &edgeIdToLaneMapNum,
-  const std::shared_ptr<abm::Graph>& graph_) {
-  for (abm::graph::edge_id_t& edge_in_path: paths_SP) {
-    if (edge_in_path != -1) {
-      indexPathVec.emplace_back(edgeIdToLaneMapNum[edge_in_path]);
-    } else {
-      indexPathVec.emplace_back(-1);
+std::vector<uint> B18TrafficSP::convertPathsToCUDAFormat(std::vector<personPath> pathsInVertexes,
+  std::vector<uint> &edgeIdToLaneMapNum,
+  const std::shared_ptr<abm::Graph>& graph_,
+  std::vector<B18TrafficPerson>& trafficPersonVec) {
+
+  std::vector<uint> allPathsInEdgesCUDAFormat;
+  uint allPathsInEdgesCUDAFormatIndex = 0;
+  int routeLengthForPerson2 = 0;
+  for (const personPath & aPersonPath: pathsInVertexes) {
+    assert(aPersonPath.person_id < trafficPersonVec.size());
+    int personPathLength = 0;
+    for (int j=0; j < aPersonPath.pathInVertexes.size()-1; j++) {
+      if (trafficPersonVec[aPersonPath.person_id].indexPathInit != INIT_EDGE_INDEX_NOT_SET &&
+            trafficPersonVec[aPersonPath.person_id].indexPathInit != allPathsInEdgesCUDAFormatIndex) {
+        std::string errorMessage = "Error! person_id " + std::to_string(aPersonPath.person_id)
+        + " has indexPathInit " + std::to_string(trafficPersonVec[aPersonPath.person_id].indexPathInit)
+        + " while we're trying to set it as " + std::to_string(allPathsInEdgesCUDAFormatIndex);
+        throw std::runtime_error(errorMessage);
+      }
+      trafficPersonVec[aPersonPath.person_id].indexPathInit = allPathsInEdgesCUDAFormatIndex;
+
+      auto vertexFrom = aPersonPath.pathInVertexes[j];
+      auto vertexTo = aPersonPath.pathInVertexes[j+1];
+      auto oneEdgeInCPUFormat = graph_->edge_ids_[vertexFrom][vertexTo];
+
+      assert(oneEdgeInCPUFormat < edgeIdToLaneMapNum.size());
+      allPathsInEdgesCUDAFormat.emplace_back(edgeIdToLaneMapNum[oneEdgeInCPUFormat]);
+      personPathLength++;
     }
+  
+    allPathsInEdgesCUDAFormat.emplace_back(END_OF_PATH);
+    allPathsInEdgesCUDAFormatIndex += personPathLength + 1;
   }
-	//std::cout << "indexPathVec size = " << indexPathVec.size() << "\n";
+
+  std::cout << "Converted to CUDA format" << std::endl;
+
+  return allPathsInEdgesCUDAFormat;
 }
 
 
