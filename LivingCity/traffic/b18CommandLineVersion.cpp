@@ -47,10 +47,11 @@ void B18CommandLineVersion::runB18Simulation() {
   std::string odDemandPath = settings.value("OD_DEMAND_FILENAME", "od_demand_5to12.csv").toString().toStdString();
   const bool runUnitTests = settings.value("RUN_UNIT_TESTS", false).toBool();
 
-  /*if (runUnitTests){
-    UnitTestSuite::runAllUnitTests();
+  ClientGeometry cg;
+  if (runUnitTests){
+    UnitTestSuite::runAllUnitTests(networkPathSP, &cg.roadGraph);
     return;
-  }*/
+  }
 
   std::vector<std::string> allParameters = {"GUI", "USE_CPU", "USE_JOHNSON_ROUTING",
                                             "USE_SP_ROUTING", "USE_PREV_PATHS",
@@ -112,7 +113,6 @@ void B18CommandLineVersion::runB18Simulation() {
   Benchmarker loadNetwork("Load_network", true);
   Benchmarker loadODDemandData("Load_OD_demand_data", true);
   
-  ClientGeometry cg;
   B18TrafficSimulator b18TrafficSimulator(deltaTime, &cg.roadGraph, simParameters);
   
   const bool directed = true;
@@ -120,11 +120,14 @@ void B18CommandLineVersion::runB18Simulation() {
   std::vector<abm::graph::edge_id_t> all_paths;
   std::vector<std::vector<int>> all_paths_ch;
   loadNetwork.startMeasuring();
-  std::string odFileName = RoadGraphB2018::loadABMGraph(networkPathSP, odDemandPath, street_graph, (int) startSimulationH, (int) endSimulationH);
+
+  const std::string& odFileName = networkPathSP + odDemandPath;
+  std::cout << odFileName << " as OD file\n";
+  RoadGraphB2018::loadABMGraph(networkPathSP, street_graph, (int) startSimulationH, (int) endSimulationH);
   loadNetwork.stopAndEndBenchmark();
 
   loadODDemandData.startMeasuring();
-  const std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_ = B18TrafficSP::read_od_pairs(odFileName, std::numeric_limits<int>::max(), startSimulationH, endSimulationH);
+  const std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_ = B18TrafficSP::read_od_pairs_from_file(odFileName, startSimulationH, endSimulationH);
   const std::vector<float> dep_times = B18TrafficSP::read_dep_times(odFileName, startSimulationH, endSimulationH);
   loadODDemandData.stopAndEndBenchmark();
   std::vector<float> filtered_dep_times_;

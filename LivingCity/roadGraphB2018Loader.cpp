@@ -366,9 +366,8 @@ void RoadGraphB2018::loadB2018RoadGraph(RoadGraph &inRoadGraph, QString networkP
 
 }
 
-std::string RoadGraphB2018::loadABMGraph(
+void RoadGraphB2018::loadABMGraph(
   const std::string& networkPath,
-  const std::string& odDemandPath,
   const std::shared_ptr<abm::Graph>& graph_,
   int start_time, int end_time) {
   
@@ -377,9 +376,6 @@ std::string RoadGraphB2018::loadABMGraph(
 
   const std::string& nodeFileName = networkPath + "nodes.csv";
   std::cout << nodeFileName << " as nodes file\n";
-
-  const std::string& odFileName = networkPath + odDemandPath;
-  std::cout << odFileName << " as OD file\n";
 
   auto start = high_resolution_clock::now();
   //EDGES
@@ -391,8 +387,6 @@ std::string RoadGraphB2018::loadABMGraph(
   
   auto stop = high_resolution_clock::now();
   auto duration = duration_cast<milliseconds>(stop - start);
-  ///////////////////////////////
-  return odFileName;
 }
 
 

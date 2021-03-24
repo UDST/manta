@@ -42,10 +42,15 @@ class B18TrafficSP {
   static std::vector<std::array<abm::graph::vertex_t, 2>> make_od_pairs(std::vector<B18TrafficPerson> trafficPersonVec,
                                                                         int nagents);
 
-  static std::vector<std::array<abm::graph::vertex_t, 2>> read_od_pairs(const std::string& filename,
-                                                                        int nagents,
-                                                                        const float startSimulationH,
-                                                                        const float endSimulationH);
+  static std::vector<std::array<abm::graph::vertex_t, 2>> read_od_pairs_from_file(
+    const std::string& filename,
+    const float startSimulationH, const float endSimulationH,
+    int nagents = std::numeric_limits<int>::max());
+
+  static void read_od_pairs_from_structure(
+    const std::vector<std::array<abm::graph::vertex_t, 2>>& od_pairs,
+    const float startSimulationH, const float endSimulationH,
+    int nagents = std::numeric_limits<int>::max());
   
   static std::vector<float> read_dep_times(const std::string& filename,
                                           const float startSimulationH,
@@ -60,7 +65,6 @@ class B18TrafficSP {
     const float currentBatchStartTimeSecs,
     const float currentBatchEndTimeSecs,
     int reroute_batch_number,
-    const std::string networkPathSP,
     std::vector<LC::B18TrafficPerson>& trafficPersonVec);
 
   static void initialize_person_to_init_edge(
@@ -77,11 +81,10 @@ class B18TrafficSP {
     std::vector<float>& filtered_dep_times_,
     std::vector<uint>& pathsOrder);
 
-  static void convertVector(
-    std::vector<abm::graph::edge_id_t> paths_SP,
-    std::vector<uint>& indexPathVec,
+  static std::vector<uint> convertPathsToCUDAFormat(std::vector<personPath> pathsInVertexes,
     std::vector<uint> &edgeIdToLaneMapNum,
-    const std::shared_ptr<abm::Graph>& graph_);
+    const std::shared_ptr<abm::Graph>& graph_,
+    std::vector<B18TrafficPerson>& trafficPersonVec);
 
   explicit B18TrafficSP(const std::shared_ptr<abm::Graph>& graph) : graph_{graph} {};
  private:

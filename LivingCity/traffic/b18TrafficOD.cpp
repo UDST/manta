@@ -349,7 +349,7 @@ void B18TrafficOD::loadB18TrafficPeople(
   timer.start();
 
   if (RoadGraphB2018::demandB2018.size() == 0) {
-    printf("ERROR: Imposible to generate b2018 without loading b2018 demmand first\n");
+    printf("ERROR at loadB18TrafficPeople: Imposible to generate b2018 without loading b2018 demmand first\n");
     return;
   }
 
@@ -492,7 +492,7 @@ void B18TrafficOD::loadB18TrafficPeopleSP(
 
   //printf("demandB2018 size = %d\n", RoadGraphB2018::demandB2018.size());
   if (RoadGraphB2018::demandB2018.size() == 0) {
-    printf("ERROR: Imposible to generate b2018 without loading b2018 demmand first\n");
+    printf("ERROR at loadB18TrafficPeopleSP: Imposible to generate b2018 without loading b2018 demmand first\n");
     return;
   }
 

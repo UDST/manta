@@ -182,7 +182,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_, const parameters & simParameters,
     const int rerouteIncrementMins, std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs,
     std::vector<float> dep_times, const std::string networkPathSP) {
-    
+  
+  std::cout << " ============================================ trafficPersonVec size " << trafficPersonVec.size() << std::endl;
   std::vector<personPath> allPathsInVertexes;
       
   Benchmarker laneMapCreation("Lane_Map_creation", true);
@@ -335,73 +336,30 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     while (currentTime < endTimeSecs) {
       updateEdgeImpedances(graph_, increment_index);
       
-      // routingwrapper for the next batch of trips
       float currentBatchStartTimeSecs = startTimeSecs + increment_index * rerouteIncrementMins * 60;
       float currentBatchEndTimeSecs = startTimeSecs + (increment_index + 1) * rerouteIncrementMins * 60;
 
       auto currentBatchPathsInVertexes = B18TrafficSP::RoutingWrapper(all_od_pairs, graph_, dep_times,
                                             currentBatchStartTimeSecs, currentBatchEndTimeSecs,
-                                            increment_index, networkPathSP, trafficPersonVec);
+                                            increment_index, trafficPersonVec);
 
+      float min_dep_time = 99999999999;
+      float max_dep_time = 0;
+      for (int i = 0; i < currentBatchPathsInVertexes.size(); i++) {
+        max_dep_time = std::max(max_dep_time, trafficPersonVec[currentBatchPathsInVertexes[i].person_id].time_departure);
+        min_dep_time = std::min(min_dep_time, trafficPersonVec[currentBatchPathsInVertexes[i].person_id].time_departure);
+      }
+    
       allPathsInVertexes.insert(std::end(allPathsInVertexes), std::begin(currentBatchPathsInVertexes), std::end(currentBatchPathsInVertexes));
 
       std::cout << "People routed at batch " << increment_index << ": " << currentBatchPathsInVertexes.size()
                 << ". Total people routed so far: " << allPathsInVertexes.size() << std::endl;
 
-      // ================= convert to CUDA format =================
-      
-      allPathsInEdgesCUDAFormat.clear();
-      uint allPathsInEdgesCUDAFormatIndex = 0;
-      int routeLengthForPerson2 = 0;
-      for (int i = 0; i < allPathsInVertexes.size(); i++) {
-        personPath aPersonPath = allPathsInVertexes[i];
-        assert(aPersonPath.person_id < trafficPersonVec.size());
-        int personPathLength = 0;
-        for (int j=0; j < aPersonPath.pathInVertexes.size()-1; j++) {
-          if (trafficPersonVec[aPersonPath.person_id].indexPathInit != INIT_EDGE_INDEX_NOT_SET &&
-                trafficPersonVec[aPersonPath.person_id].indexPathInit != allPathsInEdgesCUDAFormatIndex) {
-            std::cout << "Error! person_id " << aPersonPath.person_id
-            << " has indexPathInit " << trafficPersonVec[aPersonPath.person_id].indexPathInit
-            << " while we're trying to set it as " << allPathsInEdgesCUDAFormatIndex << std::endl;
-          }
-          trafficPersonVec[aPersonPath.person_id].indexPathInit = allPathsInEdgesCUDAFormatIndex;
-          assert(j < aPersonPath.pathInVertexes.size());
-          assert(j+1 < aPersonPath.pathInVertexes.size());
+      std::cout << "Min dep_time in this batch: " << min_dep_time
+                << ". Max dep_time in this batch: " << max_dep_time << std::endl;
 
-          auto vertexFrom = aPersonPath.pathInVertexes[j];
-          auto vertexTo = aPersonPath.pathInVertexes[j+1];
-          auto oneEdgeInCPUFormat = graph_->edge_ids_[vertexFrom][vertexTo];
-
-          assert(oneEdgeInCPUFormat < edgeIdToLaneMapNum.size());
-          allPathsInEdgesCUDAFormat.emplace_back(edgeIdToLaneMapNum[oneEdgeInCPUFormat]);
-          if (aPersonPath.person_id == 2) {
-            std::cout << "  ================================= Printing person_id "
-              << aPersonPath.person_id << ". Vertex from " << vertexFrom << " vertex to " << vertexTo
-              << std::endl;
-              routeLengthForPerson2 += edgesData[edgeIdToLaneMapNum[oneEdgeInCPUFormat]].length;
-              //At allPathsInVertexes[" << i << "]. Their edge in CPU format is:"
-              //<< oneEdgeInCPUFormat << ". In GPU format is " << edgeIdToLaneMapNum[oneEdgeInCPUFormat] << std::endl;
-          }
-          personPathLength++;
-        }
-        if (aPersonPath.person_id == -1) {
-          std::cout << "  ================================= Printing person_id "
-            << aPersonPath.person_id << ". At allPaths[" << i << "]." << std::endl;
-
-          std::cout << std::endl
-            << " their init intersection is " << trafficPersonVec[aPersonPath.person_id].init_intersection
-            << " and their end intersection is " << trafficPersonVec[aPersonPath.person_id].end_intersection
-            << ". Their time of departure is " << trafficPersonVec[aPersonPath.person_id].time_departure
-            << ". Their indexPathInit is " << trafficPersonVec[aPersonPath.person_id].indexPathInit
-            << ". "
-            << std::endl;
-        }
-        allPathsInEdgesCUDAFormat.emplace_back(END_OF_PATH);
-        allPathsInEdgesCUDAFormatIndex += personPathLength + 1;
-      }
-      std::cout << "routeLengthForPerson2 " << routeLengthForPerson2 << std::endl;
-      std::cout << "allPathsInEdgesCUDAFormat.size() " << allPathsInEdgesCUDAFormat.size() << std::endl;
-      std::cout << "Converted to CUDA format" << std::endl;
+      allPathsInEdgesCUDAFormat = B18TrafficSP::convertPathsToCUDAFormat(
+          allPathsInVertexes, edgeIdToLaneMapNum, graph_, trafficPersonVec);
 
       Benchmarker benchmarkb18updateStructuresCUDA("b18updateStructuresCUDA");
       benchmarkb18updateStructuresCUDA.startMeasuring();
@@ -423,11 +381,13 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       float progress = 0;
       while (currentTime < currentBatchEndTimeSecs) {
         printProgressBar(progress);
+        std::cout << "============================ starting the simulation at " << currentTime << std::endl;
         while(currentTime < (progress + 0.1) * currentBatchEndTimeSecs) {
           b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
                               intersections.size(), deltaTime, simParameters, numBlocks, threadsPerBlock);
           currentTime += deltaTime;
         }
+        std::cout << "============================ ending the simulation at " << currentTime << std::endl;
         progress += 0.1;
       }
       printFullProgressBar();
