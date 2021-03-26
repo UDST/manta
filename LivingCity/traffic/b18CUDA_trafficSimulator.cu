@@ -505,10 +505,13 @@ __global__ void kernel_trafficSimulation(
         return;
       } else { //start
         //1.2 find first edge
+        assert(trafficPersonVec[p].indexPathInit != INIT_EDGE_INDEX_NOT_SET);
         trafficPersonVec[p].indexPathCurr = trafficPersonVec[p].indexPathInit; // reset index.
         int indexFirstEdge = trafficPersonVec[p].indexPathCurr;
         assert(indexFirstEdge < indexPathVec_d_size);
-        uint firstEdge = indexPathVec[indexFirstEdge];    
+        uint firstEdge = indexPathVec[indexFirstEdge];
+
+        trafficPersonVec[p].lastTimeSimulated = fmaxf(currentTime, trafficPersonVec[p].lastTimeSimulated);
 
         if (firstEdge == END_OF_PATH) {
           trafficPersonVec[p].active = 2;
@@ -586,6 +589,8 @@ __global__ void kernel_trafficSimulation(
     ///////////////////////////////
     //2. it is moving
     trafficPersonVec[p].num_steps++;
+
+    trafficPersonVec[p].lastTimeSimulated = fmaxf(currentTime, trafficPersonVec[p].lastTimeSimulated);
 
     //2.1 try to move
     float numMToMove;
