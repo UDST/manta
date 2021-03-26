@@ -288,11 +288,6 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       }
     }
       
-    /*
-    for (int i = 0; i < edgesData.size(); i++) {
-        std::cout << "i = " << i << "speed = " << edgesData[i].maxSpeedMperSec << "\n";
-    }
-    */
     int numInt = currentTime / deltaTime;//floor
     currentTime = numInt * deltaTime;
     uint steps = 0;
@@ -342,21 +337,11 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
       auto currentBatchPathsInVertexes = B18TrafficSP::RoutingWrapper(all_od_pairs, graph_, dep_times,
                                             currentBatchStartTimeSecs, currentBatchEndTimeSecs,
                                             increment_index, trafficPersonVec);
-
-      float min_dep_time = 99999999999;
-      float max_dep_time = 0;
-      for (int i = 0; i < currentBatchPathsInVertexes.size(); i++) {
-        max_dep_time = std::max(max_dep_time, trafficPersonVec[currentBatchPathsInVertexes[i].person_id].time_departure);
-        min_dep_time = std::min(min_dep_time, trafficPersonVec[currentBatchPathsInVertexes[i].person_id].time_departure);
-      }
     
       allPathsInVertexes.insert(std::end(allPathsInVertexes), std::begin(currentBatchPathsInVertexes), std::end(currentBatchPathsInVertexes));
 
       std::cout << "People routed at batch " << increment_index << ": " << currentBatchPathsInVertexes.size()
                 << ". Total people routed so far: " << allPathsInVertexes.size() << std::endl;
-
-      std::cout << "Min dep_time in this batch: " << min_dep_time
-                << ". Max dep_time in this batch: " << max_dep_time << std::endl;
 
       allPathsInEdgesCUDAFormat = B18TrafficSP::convertPathsToCUDAFormat(
           allPathsInVertexes, edgeIdToLaneMapNum, graph_, trafficPersonVec);
@@ -374,28 +359,38 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
                 << ">> currentTime " << currentTime << std::endl
                 << ">> endTimeSecs " << currentBatchEndTimeSecs << std::endl
                 << ">> deltaTime " << deltaTime << std::endl
-                << "simulating from " << currentTime/60
-                << " mins to " << currentBatchEndTimeSecs/60
-                << " mins." << std::endl;
+                << "simulating from " << currentTime
+                << " secs to " << currentBatchEndTimeSecs
+                << " secs." << std::endl;
 
       float progress = 0;
       while (currentTime < currentBatchEndTimeSecs) {
         printProgressBar(progress);
-        std::cout << "============================ starting the simulation at " << currentTime << std::endl;
-        while(currentTime < (progress + 0.1) * currentBatchEndTimeSecs) {
+        float nextMilestone = currentBatchStartTimeSecs + (progress + 0.1) * (currentBatchEndTimeSecs - currentBatchStartTimeSecs);
+        while(currentTime < nextMilestone) {
           b18SimulateTrafficCUDA(currentTime, trafficPersonVec.size(),
                               intersections.size(), deltaTime, simParameters, numBlocks, threadsPerBlock);
           currentTime += deltaTime;
         }
-        std::cout << "============================ ending the simulation at " << currentTime << std::endl;
         progress += 0.1;
       }
+      b18GetDataCUDA(trafficPersonVec, edgesData);
+
+      for (int i = 0; i < trafficPersonVec.size(); i++) {
+        if ((trafficPersonVec[i].time_departure < currentBatchEndTimeSecs && trafficPersonVec[i].active == 0) ||
+            (isgreaterequal(trafficPersonVec[i].time_departure, currentBatchEndTimeSecs) && trafficPersonVec[i].active != 0)) {
+          std::string errorMessage =
+              "Person " + std::to_string(i) + " has active state " +
+              std::to_string(trafficPersonVec[i].active) + " and dep time " +
+              std::to_string(trafficPersonVec[i].time_departure);
+          throw std::runtime_error(errorMessage);
+        }
+      }
+
       printFullProgressBar();
 
       microsimulationInGPU.stopAndEndBenchmark();
       increment_index++;
-
-      b18GetDataCUDA(trafficPersonVec, edgesData);
 
       #ifdef B18_RUN_WITH_GUI
 
@@ -448,14 +443,14 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 
 
     int count_host = 0;
-    int numberOfPeopleSetToNotFinished = 0;
+    /*int numberOfPeopleSetToNotFinished = 0;
     int numberOfPeopleSetToFinished = 0;
     for (int i = 0; i < trafficPersonVec.size(); ++i){
-      if (trafficPersonVec[i].active != 2 && trafficPersonVec[i].indexPathCurr == END_OF_PATH) {
+      if (trafficPersonVec[i].active != 2 && allPathsInEdgesCUDAFormat[trafficPersonVec[i].indexPathCurr] == END_OF_PATH) {
         trafficPersonVec[i].active = 2;
         numberOfPeopleSetToFinished++;
       }
-      if (trafficPersonVec[i].active != 1 && trafficPersonVec[i].indexPathCurr != END_OF_PATH) {
+      if (trafficPersonVec[i].active == 2 && allPathsInEdgesCUDAFormat[trafficPersonVec[i].indexPathCurr+1] != END_OF_PATH) {
         trafficPersonVec[i].active = 1;
         numberOfPeopleSetToNotFinished++;
       }
@@ -470,7 +465,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     if (numberOfPeopleSetToFinished > 0) {
       std::cout << "Corrected the active state for " << numberOfPeopleSetToFinished
                 << " people, from 1 to 2 (finished)." << std::endl;
-    }
+    }*/
     std::cout << "Count host " << count_host << std::endl;
 
     avgTravelTime = (totalNumSteps * deltaTime) / (trafficPersonVec.size() * 60.0f); //in min
@@ -2515,7 +2510,7 @@ void writePeopleFile(
   if (peopleFile.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
     std::cout << "> Saving People file... (size " << trafficPersonVec.size() << ")" << std::endl;
     QTextStream streamP(&peopleFile);
-    streamP << "p,init_intersection,end_intersection,time_departure,num_steps,co,gas,distance,a,b,T,avg_v(mph),active\n";
+    streamP << "p,init_intersection,end_intersection,time_departure,num_steps,co,gas,distance,a,b,T,avg_v(mph),active,lastTimeSimulated\n";
 
     for (int p = 0; p < trafficPersonVec.size(); p++) {
       streamP << p;
@@ -2531,6 +2526,7 @@ void writePeopleFile(
       streamP << "," << trafficPersonVec[p].T;
       streamP << "," << (trafficPersonVec[p].cum_v / trafficPersonVec[p].num_steps) * 3600 / 1609.34;
       streamP << "," << trafficPersonVec[p].active;
+      streamP << "," << trafficPersonVec[p].lastTimeSimulated;
       streamP << "\n";
     }
 

@@ -308,34 +308,37 @@ std::vector<uint> B18TrafficSP::convertPathsToCUDAFormat(std::vector<personPath>
   std::vector<uint> &edgeIdToLaneMapNum,
   const std::shared_ptr<abm::Graph>& graph_,
   std::vector<B18TrafficPerson>& trafficPersonVec) {
-
   std::vector<uint> allPathsInEdgesCUDAFormat;
-  uint allPathsInEdgesCUDAFormatIndex = 0;
-  int routeLengthForPerson2 = 0;
+
   for (const personPath & aPersonPath: pathsInVertexes) {
     assert(aPersonPath.person_id < trafficPersonVec.size());
     int personPathLength = 0;
-    for (int j=0; j < aPersonPath.pathInVertexes.size()-1; j++) {
-      if (trafficPersonVec[aPersonPath.person_id].indexPathInit != INIT_EDGE_INDEX_NOT_SET &&
-            trafficPersonVec[aPersonPath.person_id].indexPathInit != allPathsInEdgesCUDAFormatIndex) {
-        std::string errorMessage = "Error! person_id " + std::to_string(aPersonPath.person_id)
-        + " has indexPathInit " + std::to_string(trafficPersonVec[aPersonPath.person_id].indexPathInit)
-        + " while we're trying to set it as " + std::to_string(allPathsInEdgesCUDAFormatIndex);
-        throw std::runtime_error(errorMessage);
-      }
-      trafficPersonVec[aPersonPath.person_id].indexPathInit = allPathsInEdgesCUDAFormatIndex;
 
+    // assign current indexPathInit and assert there are no reassignments
+    if (trafficPersonVec[aPersonPath.person_id].indexPathInit != INIT_EDGE_INDEX_NOT_SET &&
+          trafficPersonVec[aPersonPath.person_id].indexPathInit != allPathsInEdgesCUDAFormat.size()) {
+      std::string errorMessage = "Error! person_id " + std::to_string(aPersonPath.person_id)
+      + " has indexPathInit " + std::to_string(trafficPersonVec[aPersonPath.person_id].indexPathInit)
+      + " while we're trying to set it as " + std::to_string(allPathsInEdgesCUDAFormat.size());
+      throw std::runtime_error(errorMessage);
+    }
+    trafficPersonVec[aPersonPath.person_id].indexPathInit = allPathsInEdgesCUDAFormat.size();
+
+    // convert the path from vertexes to edges in CUDA format (laneMapNum)
+    for (int j=0; j < aPersonPath.pathInVertexes.size()-1; j++) {
       auto vertexFrom = aPersonPath.pathInVertexes[j];
       auto vertexTo = aPersonPath.pathInVertexes[j+1];
       auto oneEdgeInCPUFormat = graph_->edge_ids_[vertexFrom][vertexTo];
-
       assert(oneEdgeInCPUFormat < edgeIdToLaneMapNum.size());
       allPathsInEdgesCUDAFormat.emplace_back(edgeIdToLaneMapNum[oneEdgeInCPUFormat]);
       personPathLength++;
     }
-  
     allPathsInEdgesCUDAFormat.emplace_back(END_OF_PATH);
-    allPathsInEdgesCUDAFormatIndex += personPathLength + 1;
+
+    if(aPersonPath.pathInVertexes.size() == 1) {
+      assert(allPathsInEdgesCUDAFormat[trafficPersonVec[aPersonPath.person_id].indexPathInit] == END_OF_PATH);
+    }
+    assert(trafficPersonVec[aPersonPath.person_id].indexPathInit != INIT_EDGE_INDEX_NOT_SET);
   }
 
   std::cout << "Converted to CUDA format" << std::endl;
