@@ -5,14 +5,23 @@ DESTDIR     = $$PWD
 OBJECTS_DIR = $$DESTDIR/obj
 
 unix {
-    LIBS += -L/opt/local/lib -lopencv_imgcodecs -lopencv_core -lopencv_imgproc
+    LIBS += -L/opt/local/lib -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lm -ldl
 	# -L/Developer/NVIDIA/CUDA-7.5/lib -lcudart -lcublas -lgomp
     INCLUDEPATH += \
-      /usr/include/opencv2/ \
+      /usr/include/opencv4/ \
       /opt/local/include/ \ 
       /usr/local/boost_1_59_0/ \
       $$PWD/glew/include/
 
+    exists("/usr/include/pandana/src") {
+      INCLUDEPATH += /usr/include/pandana/src
+      LIBS += -L/usr/include/pandana/src -lchrouting
+      message("Found Pandana insallation at /usr/include.")
+    } else {
+      message("Pandana not found at /usr/include. Please manually include it in the produced Makefile.")
+    }
+    
+    
     CONFIG += debug
 }
 win32{
@@ -104,7 +113,8 @@ SOURCES += \
     traffic/b18TrafficSimulator.cpp \
     src/benchmarker.cpp \
     src/linux_host_memory_logger.cpp \
-    traffic/sp/graph.cc
+    traffic/sp/graph.cc \
+    tests/unitTestSuite.cpp
 
 OTHER_FILES += \
         traffic/b18CUDA_trafficSimulator.cu \
@@ -172,7 +182,19 @@ unix {
   # Cuda sources
   CUDA_SOURCES += traffic/b18CUDA_trafficSimulator.cu
   # Path to cuda toolkit install
-  CUDA_DIR = /usr/local/cuda-9.0
+  exists("/usr/local/cuda-11.2") {
+    CUDA_DIR = /usr/local/cuda-11.2
+    message("Found CUDA 11.2 installation, using CUDA 11.2.")
+  } else {
+    exists("/usr/local/cuda-10.1") {
+      CUDA_DIR = /usr/local/cuda-10.1
+      message("Found CUDA 10.1 installation, using CUDA 10.1.")
+    } else {
+      CUDA_DIR = /usr/local/cuda-9.0
+      message("CUDA 11.2 or 10.1 not found, defaulting to 9.0 instead.")
+    }
+  }
+  #CUDA_DIR = /usr/local/cuda-11.2
   INCLUDEPATH += $$CUDA_DIR/include
   QMAKE_LIBDIR += $$CUDA_DIR/lib64
   # GPU architecture
@@ -181,7 +203,7 @@ unix {
   NVCCFLAGS = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-options=-v -Xcompiler -fopenmp
   # Path to libraries
   LIBS += -lcudart -lcuda -lgomp
-  QMAKE_CXXFLAGS += -fopenmp
+  QMAKE_CXXFLAGS += -fopenmp -w
   #LIBS += -fopenmp
   # join the includes in a line
   CUDA_INC = $$join(INCLUDEPATH,' -I','-I',' ')
