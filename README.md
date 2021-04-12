@@ -145,7 +145,9 @@ git checkout edge_speeds_over_time
 ```
 
 ### Debugging
-For debugging we recommend `cuda-gdb`. In order to use it, `manta/Makefile` must be modified by adding the flag `-G` to enable debugging and changing `-O3` to `-O` to avoid optimizations that restrict the use of the debugger.
+For debugging we recommend `cuda-memcheck ./LivingCity` for out-of-bounds memory bugs in the CUDA section and `cuda-gdb` for more advanced features such as breakpoints.
+
+In order to use `cuda-gdb`, `manta/Makefile` must be modified by adding the flag `-G` to enable debugging and changing `-O3` to `-O` to avoid optimizations that restrict the use of the debugger.
 
 For example, to enable debugging at `LivingCity/traffic/b18CUDA_trafficSimulator.cu`,  its compilation at the line `manta/Makefile:1756`:
 <pre>
@@ -174,15 +176,14 @@ After this modification, `sudo make clean` and `sudo make -j` must be run.
 Please keep in mind that this alteration slows the program down. For more information about `cuda-gdb`, please refer to the official [Website](https://docs.nvidia.com/cuda/cuda-gdb/index.html) and [Documentation](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwiBgbqg9fzrAhUMIrkGHby9Db8QFjADegQIAxAB&url=https%3A%2F%2Fdeveloper.download.nvidia.com%2Fcompute%2FDevZone%2Fdocs%2Fhtml%2FC%2Fdoc%2Fcuda-gdb.pdf&usg=AOvVaw3J9Il2vHkkxtcX83EHC3-z).
 
 ### Testing
-In order to run the system tests you should first move to `manta/LivingCity`
+In order to run all tests you should first move to `manta/LivingCity`
 ```bash
 cd LivingCity
 ```
 and then run 
 ```bash
-pytest -s -x tests/systemTestSuite.py
+sh runAllTests.sh
 ```
-Because of the tests' long duration, we recommend using the flag `-s` to show the whole output of the simulation and `-x` to stop at the first failure.
 
 ### Benchmarking / profiling
 In order to obtain a profiling of each component of the simulation, you should run

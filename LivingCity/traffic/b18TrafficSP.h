@@ -31,9 +31,7 @@
 
 namespace LC {
 class B18TrafficSP {
- public:
-  static uint numberOfPeopleRouted;
-	 
+ public:	 
   static std::vector<abm::graph::vertex_t> compute_routes(int mpi_rank,
                                                           int mpi_size,
                                                           const std::shared_ptr<abm::Graph>& graph_,

@@ -45,13 +45,6 @@ void B18TrafficLaneMap::createLaneMapSP(const std::shared_ptr<abm::Graph>& graph
       std::map<uint, std::shared_ptr<abm::Graph::Edge>> &laneMapNumToEdgeDescSP,
       std::map<std::shared_ptr<abm::Graph::Edge>, uint> &edgeDescToLaneMapNumSP,
       std::vector<uint> &edgeIdToLaneMapNum){
-	/* FOR DATA ACCESS SANITY
-	for (auto const& x : graph_->edges_) {
-		//std::cout << "vertex = " << std::get<1>(std::get<0>(x)) << "\n"; //gets the second vertex value of edge
-		//std::cout << "weight = " << std::get<1>(x)->second[0]<< "\n"; //gets weight of edge
-		std::cout << "weight = " << std::get<1>(x)->second[1]<< "\n"; //gets weight of edge
-	}
-	*/
   // GENERATE LANE MAP
   if (LANE_DEBUG) {
     printf("  >> createLaneMap\n");
