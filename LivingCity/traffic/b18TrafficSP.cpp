@@ -122,12 +122,8 @@ std::vector<std::array<abm::graph::vertex_t, 2>> B18TrafficSP::read_od_pairs_fro
   RoadGraphB2018::totalNumPeople = RoadGraphB2018::demandB2018.size();
   if (nagents != std::numeric_limits<int>::max())
     od_pairs.resize(nagents);
-
-  B18TrafficSP::numberOfPeopleRouted = 0;
   return od_pairs;
 }
-
-uint B18TrafficSP::numberOfPeopleRouted = 0;
 
 // Read OD pairs file format
 std::vector<float> B18TrafficSP::read_dep_times(
@@ -148,7 +144,7 @@ std::vector<float> B18TrafficSP::read_dep_times(
     }
   }
   if (count_outside_filter > 0) {
-    std::cout << "WARNING: Filtering " << count_outside_filter << " trips outside the input time range.";
+    std::cout << "WARNING: Filtering " << count_outside_filter << " trips outside the input time range." << std::endl;
   }
   return dep_time_vec;
 }
@@ -232,8 +228,6 @@ std::vector<personPath> B18TrafficSP::RoutingWrapper (
   if (all_od_pairs_.size() != dep_times.size())
     throw std::runtime_error("RoutingWrapper received od_pairs and dep_times with different sizes.");
   
-
-  std::cout << "numberOfPeopleRouted " << B18TrafficSP::numberOfPeopleRouted << std::endl;
 
   // --------------------------- preprocessing ---------------------------
   std::vector<abm::graph::vertex_t> filtered_od_pairs_sources_;
@@ -334,9 +328,11 @@ std::vector<uint> B18TrafficSP::convertPathsToCUDAFormat(std::vector<personPath>
       personPathLength++;
     }
     allPathsInEdgesCUDAFormat.emplace_back(END_OF_PATH);
+    trafficPersonVec[aPersonPath.person_id].path_length_cpu = aPersonPath.pathInVertexes.size() - 1; // not including END_OF_PATH
 
     if(aPersonPath.pathInVertexes.size() == 1) {
       assert(allPathsInEdgesCUDAFormat[trafficPersonVec[aPersonPath.person_id].indexPathInit] == END_OF_PATH);
+      assert(trafficPersonVec[aPersonPath.person_id].path_length_cpu == 0);
     }
     assert(trafficPersonVec[aPersonPath.person_id].indexPathInit != INIT_EDGE_INDEX_NOT_SET);
   }

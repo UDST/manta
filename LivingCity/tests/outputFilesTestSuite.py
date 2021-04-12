@@ -1,61 +1,72 @@
 """ This file contains system tests that consider LivingCity as a black box,
     where inputs are given and outputs are validated.
-    Requirements under linux:
-    - Python 3.6.5
-    - pytest 6.1.1
-    - pytest-cov 2.10.1
-    - pytest-remotedata 0.3.2
-"""
-from utils import *
-from utils import route_csv_string_to_list
+    
+    Tests are divided in Shallow and Deep tests. Shallow tests are fast (a couple of minutes at most),
+    while deep tests are more exhaustive and take longer. Shallow tests are executed for all simulated
+    people while deep tests are executed for a small set of people given by `test_setup.deep_testing_people`.
 
+    Pytest ensures that each test runs automatically for all Setups given by the global variable `pytest.test_setups`.
+    In addition, it ensures its simulation runs before each test, if it was not run before.
+    This allows the user to run a specific test, i.e.
+    `pytest -x -s tests/outputFilesTestSuite.py::test06_last_edge_of_trip_should_go_to_end_intersection`
+
+    In the context of each test, the variable `test_setup` has all input and output variables regarding its setup.
+    Therefore, no additional reading from the disk is necessary, since all output files are already loaded in memory.
+    Since these variables are shared between tests, they should not be modified in the scope of the tests, only read.
+"""
+
+from utils import *
+import threading
 
 class TestSetup:
-    def __init__(self, name = "test", parameters = {}, edges_path="berkeley_2018/new_full_network/edges.csv",
-                 network_path="berkeley_2018/new_full_network/", distance_epsilon = 500,
-                 people_to_test = 1000, run_simulation = True,
-                 verbose = False):
+    def __init__(self, name = "test", parameters = {},
+                 network_path="berkeley_2018/new_full_network/", distance_epsilon = 1,
+                 deep_testing_people = 1000, run_simulation = True,
+                 verbose = False, number_of_threads = 20):
         self.name = name
         self.parameters = parameters
-        self.edges_path = edges_path
         self.network_path = network_path
         self.distance_epsilon = distance_epsilon
-        self.people_to_test = people_to_test
+        self.deep_testing_people = deep_testing_people
         self.run_simulation = run_simulation
         self.verbose = verbose
         self.has_run = False
-        self.pd_route = None
-        self.pd_people = None
-        self.pd_edges = None
-        self.pd_indexPathInit = None
+        self.df_route = None
+        self.df_people = None
+        self.df_edges = None
+        self.df_indexPathInit = None
         self.start_hr=parameters["START_HR"]
         self.end_hr=parameters["END_HR"]
+        self.number_of_threads = number_of_threads
 
-# ============= All setups on which the tests will run =============
-
-
-setup_static_5to7 = TestSetup("_static_60m_5to7", parameters={"REROUTE_INCREMENT": 0, "PREV_PATHS": "False",
-                                           "START_HR": 5, "END_HR": 7, "OD_DEMAND_FILENAME": "od_demand_5to7.csv"},
-              run_simulation=False, people_to_test=list(range(1000)))
+# ============= Setups on which the tests will run =============
+setup_static_5to7 = TestSetup("_static_5to7", parameters={"REROUTE_INCREMENT": 0, "PREV_PATHS": "False",
+                                           "START_HR": 5, "END_HR": 7, "OD_DEMAND_FILENAME": "od_demand_5to12.csv"},
+              run_simulation=True)
 
 setup_dyn_60m_5to7 = TestSetup("_dyn_60m_5to7", parameters={"REROUTE_INCREMENT": 60, "PREV_PATHS": "False",
-                                           "START_HR": 5, "END_HR": 7, "OD_DEMAND_FILENAME": "od_demand_5to7.csv"},
-              run_simulation=False, people_to_test=list(range(1000)))
+                                           "START_HR": 5, "END_HR": 7, "OD_DEMAND_FILENAME": "od_demand_5to12.csv"},
+              run_simulation=True)
 
-setup_dyn_60m_5to7_no_invalid_trips_no_edge_cases = TestSetup("_dyn_60m_5to7", parameters={"REROUTE_INCREMENT": 60, "PREV_PATHS": "False",
-                                           "START_HR": 5, "END_HR": 7,
-                                           "OD_DEMAND_FILENAME": "od_demand_5to7_no_invalid_trips_no_edge_cases.csv"},
-              run_simulation=False, people_to_test=list(range(1000)))
+setup_static_5to12 = TestSetup("_static_5to12", parameters={"REROUTE_INCREMENT": 0, "PREV_PATHS": "False",
+                                           "START_HR": 5, "END_HR": 12, "OD_DEMAND_FILENAME": "od_demand_5to12.csv"},
+              run_simulation=True)
 
-pytest.test_setups = [setup_dyn_60m_5to7_no_invalid_trips_no_edge_cases]
-    #TestSetup("_dyn_60m", parameters={"REROUTE_INCREMENT": 60, "PREV_PATHS": "False", "START_HR": 5, "END_HR":7, \
-    #        "OD_DEMAND_FILENAME": "od_demand_5to7_no_invalid_trips_no_edge_cases.csv"},
-    #        run_simulation=False, people_to_test=list(range(100)))#,
-#    TestSetup("_dyn_60m_5to7", parameters={"REROUTE_INCREMENT": 60, "PREV_PATHS": "False", "START_HR": 5, "END_HR":7, \
-#            "OD_DEMAND_FILENAME": "od_demand_5to7_no_invalid_trips_no_edge_cases.csv"}, run_simulation=True,
-#            people_to_test=list(range(1000)))
+setup_dyn_60m_5to12 = TestSetup("_dyn_60m_5to12", parameters={"REROUTE_INCREMENT": 60, "PREV_PATHS": "False",
+                                           "START_HR": 5, "END_HR": 12, "OD_DEMAND_FILENAME": "od_demand_5to12.csv"},
+              run_simulation=True)
 
-# to do: assert all names and all configurations are differnet
+setup_dyn_15m_5to12 = TestSetup("_dyn_15m_5to12", parameters={"REROUTE_INCREMENT": 15, "PREV_PATHS": "False",
+                                           "START_HR": 5, "END_HR": 12, "OD_DEMAND_FILENAME": "od_demand_5to12.csv"},
+              run_simulation=True)
+
+# Premade subsets you can test on
+all_test_setups = [setup_static_5to7, setup_dyn_60m_5to7, setup_static_5to12, setup_dyn_60m_5to12, setup_dyn_15m_5to12]
+dynamic_test_setups = [setup_dyn_60m_5to7, setup_dyn_60m_5to12, setup_dyn_15m_5to12]
+static_test_setups = [setup_static_5to7, setup_static_5to12]
+
+# Initialize test_setups as a list with the setups you want to test
+pytest.test_setups = all_test_setups
 
 # ======================================
 
@@ -90,231 +101,304 @@ def run_all_test_setups(request):
         else:
             log("Skipping the simulation")
 
-        log("Loading output csv files for testing...")
-        current_test_setup.pd_people = pd.read_csv("0_people{}to{}_{}.csv". \
+        log("Loading output csv files...")
+        current_test_setup.df_people = pd.read_csv("0_people{}to{}_{}.csv". \
             format(current_test_setup.start_hr, current_test_setup.end_hr, current_test_setup.name))
 
-        current_test_setup.pd_edges = pd.read_csv(current_test_setup.network_path + "edges.csv")
+        current_test_setup.df_edges = pd.read_csv(current_test_setup.network_path + "edges.csv")
 
-        current_test_setup.pd_route = pd.read_csv("0_route{}to{}_{}.csv". \
-            format(current_test_setup.start_hr, current_test_setup.end_hr, current_test_setup.name), delimiter=':')
+        current_test_setup.df_route = pd.read_csv("0_route{}to{}_{}.csv". \
+            format(current_test_setup.start_hr, current_test_setup.end_hr, current_test_setup.name), delimiter=":")
 
-        current_test_setup.pd_indexPathInit = pd.read_csv("0_indexPathInit{}to{}_{}.csv". \
+        current_test_setup.df_indexPathInit = pd.read_csv("0_indexPathInit{}to{}_{}.csv". \
             format(current_test_setup.start_hr, current_test_setup.end_hr, current_test_setup.name))
 
-        if current_test_setup.people_to_test == 'all':
-            log("Testing all people...")
-            current_test_setup.people_to_test = list(range(1, len(current_test_setup.pd_people)))
-        elif type(current_test_setup.people_to_test) == int:
-            log("(Since testing for > 2 million people takes several hours, it is tested on {} random people).".\
-                format(current_test_setup.people_to_test))
-            current_test_setup.people_to_test = random.sample(range(1, len(current_test_setup.pd_people)),
-                                                                current_test_setup.people_to_test)
+        # ======== deep people to test ========
+        if current_test_setup.deep_testing_people == 'all':
+            log("Deep testing all people.")
+            current_test_setup.deep_testing_people = list(range(len(current_test_setup.df_people)))
+        elif type(current_test_setup.deep_testing_people) == int:
+            log("Deep testing on {} random people.".\
+                format(current_test_setup.deep_testing_people))
+            current_test_setup.deep_testing_people = random.sample(range(len(current_test_setup.df_people)),
+                                                                current_test_setup.deep_testing_people)
         else:
-            assert type(current_test_setup.people_to_test) == list, "people_to_test should either be 'all', a number or a list."
-
-    log("Finished all setups")
+            assert type(current_test_setup.deep_testing_people) == list, "deep_testing_people should either be 'all', a number or a list."
+        deep_testing_people_indexes = pd.DataFrame(current_test_setup.deep_testing_people)
+        deep_testing_people_indexes.columns = ['p']
+        current_test_setup.df_deep_testing_people = pd.merge(current_test_setup.df_people, deep_testing_people_indexes)
+        log("Finished setup {}.".format(current_test_setup.name))
+        log("_____________________________")
 
     return
 
 @pytest.mark.parametrize("test_setup", pytest.test_setups)
-def test01_all_output_files_should_have_the_same_length(run_all_test_setups, test_setup):
-    log("Test 01: All output files should have the same length for setup {}".format(test_setup.name))
-    assert len(test_setup.pd_people) == len(test_setup.pd_route)
-    log("Passed test 01")
+def test_01_all_output_files_should_have_the_same_length(run_all_test_setups, test_setup):
+    log("Test 01 (shallow) | Setup {}. All output files should have the same length.".format(test_setup.name))
+    assert len(test_setup.df_people) == len(test_setup.df_route)
+    log("Passed")
 
 @pytest.mark.parametrize("test_setup", pytest.test_setups)
-def test_02_distance_in_people_file_should_match_the_sum_of_the_edges_in_the_route_file(run_all_test_setups, test_setup):
-    log("Test 02: The distance in the people file should match the sum of the edges" + \
-        " in the route file with a certain margin for setup {}".format(test_setup.name))
-    df_people_to_test = pd.DataFrame(test_setup.people_to_test)
-    df_people_to_test.columns = ['p']
+def test_02_number_of_edges_in_people_file_should_match_for_cpu_and_gpu(run_all_test_setups, test_setup):
+    log("Test 02 (shallow) | Setup {}. The number in the people file should match between CPU and GPU".format(test_setup.name))
+
+    mismatch_people = test_setup.df_people[(test_setup.df_people['path_length_cpu'] !=
+                                            test_setup.df_people['path_length_gpu']) & (test_setup.df_people['active'] != 1)]
+
+    assert mismatch_people.empty
+
+    log("Passed")
+
+@pytest.mark.parametrize("test_setup", pytest.test_setups)
+def test_03_all_unfinished_trips_should_have_same_last_time_simulated(run_all_test_setups, test_setup):
+    log("Test 03 (shallow) | Setup {}. Unfinished trips should have as last_time_simulated the same value because they were interrupted"\
+    .format(test_setup.name))
+
+    unfinished_trips = test_setup.df_people[test_setup.df_people['active'] == 1]
+
+    assert len(unfinished_trips) == 0 or len(unfinished_trips['last_time_simulated'].value_counts()) == 1
+
+    log("Passed")
+
+@pytest.mark.parametrize("test_setup", pytest.test_setups)
+def test_04a_distance_in_people_file_should_match_the_distance_in_the_route_file(run_all_test_setups, test_setup):
+    log("Test 04a (shallow) | Setup {}. The distance in the people file should match the distance".format(test_setup.name) + \
+        " outputted in the route file with a margin of {}.".format(test_setup.distance_epsilon))
+
+    joined_distances = test_setup.df_people.merge(test_setup.df_deep_testing_people).join(test_setup.df_route, lsuffix='_people', rsuffix='_route')
+    mismatch_people = joined_distances[abs(joined_distances['distance_people'] - joined_distances['distance_people']) > test_setup.distance_epsilon]
+    error_message = str(len(mismatch_people)) + " people have a mismatch in their distance."
+
+    assert len(mismatch_people) == 0, error_message
+    log("Passed")
+
+@pytest.mark.parametrize("test_setup", pytest.test_setups)
+def test_04b_distance_in_people_file_should_match_the_sum_of_the_edges_in_the_route_file(run_all_test_setups, test_setup):
+    log("Test 04b (deep) | Setup {}. The distance in the people file should match the sum of the edges".format(test_setup.name) + \
+        " in the route file with a margin of {}.".format(test_setup.distance_epsilon))
+
     mismatch_people = {}
-    for _, row in tqdm(pd.merge(test_setup.pd_route, df_people_to_test).iterrows()):
-        person_id = str(row["p"])
+    df_people_to_iterate = pd.merge(test_setup.df_people, test_setup.df_deep_testing_people)
 
-        active = int(test_setup.pd_people[test_setup.pd_people['p'] == int(person_id)]['active'].iloc[0])
-        lastTimeSimulated = int(test_setup.pd_people[test_setup.pd_people['p'] == int(person_id)]['lastTimeSimulated'].iloc[0])
+    def test04b_thread(start, end):
+        df_people_chunk = df_people_to_iterate[start:end]
+        for _, row in df_people_chunk.iterrows():
+            person_id = int(row["p"])
 
-        if not int(person_id) in test_setup.people_to_test:
-            continue
+            active = int(float(df_people_chunk[df_people_chunk['p'] == int(float(person_id))]['active'].iloc[0]))
+            last_time_simulated = int(df_people_chunk[df_people_chunk['p'] == int(float(person_id))]['last_time_simulated'].iloc[0])
 
-        route = str(row["route"])
-        route = route.replace("[", "").replace("]", "")
-        route = route.split(",")
-        route = route[:-1]  # delete last extra comma
+            if not int(float(person_id)) in test_setup.deep_testing_people:
+                continue
 
-        distance_sum_of_edges = 0
-        for edge_id in route:
-            distance_sum_of_edges += test_setup.pd_edges[test_setup.pd_edges['uniqueid'] == int(edge_id)]["length"].iloc[0]
+            route = str(test_setup.df_route[test_setup.df_route['p'] == person_id]['route'].iloc[0])
+            route = route.replace("[", "").replace("]", "")
+            route = route.split(",")
 
-        distance_people_info = test_setup.pd_people[test_setup.pd_people['p'] == int(person_id)]['distance'].iloc[0]
+            duplicated_edges = test_setup.df_edges[test_setup.df_edges.duplicated(subset=['osmid_u', 'osmid_v'])]
 
-        if test_setup.verbose:
-            print("Person_id: {} distance_sum_of_edges: {}, distance_people_info: {}, active: {}".format(person_id, distance_sum_of_edges, distance_people_info, active))
-        
-        if (active == 2 and abs(distance_people_info - distance_sum_of_edges) > test_setup.distance_epsilon):
-            mismatch_people[person_id] = {"distance_people_info": distance_people_info,
-                                        "distance_sum_of_edges": distance_sum_of_edges,
-                                        "active": active,
-                                        "lastTimeSimulated": lastTimeSimulated}
+            distance_traffic_simulator = int(test_setup.df_route[test_setup.df_route['p'] == person_id]['distance'].iloc[0])
+
+            distance_sum_of_edges = 0
+            if route == ['']:
+                distance_sum_of_edges = 0
+            else:
+                for edge_id in route:
+                    try:
+                        distance_sum_of_edges += test_setup.df_edges[test_setup.df_edges['uniqueid'] == int(float(edge_id))]["length"].iloc[0]
+                    except:
+                        st()
+
+
+            distance_people_info = df_people_chunk[df_people_chunk['p'] == int(float(person_id))]['distance'].iloc[0]
+
+            if test_setup.verbose:
+                print("Person_id: {} distance_sum_of_edges: {}, distance_people_info: {}, active: {}".format(person_id, distance_sum_of_edges, distance_people_info, active))
+            
+            if (active == 2 and abs(distance_people_info - distance_sum_of_edges) > test_setup.distance_epsilon):
+                mismatch_people[person_id] = {"distance_people_info": distance_people_info,
+                                            "distance_sum_of_edges": distance_sum_of_edges,
+                                            "active": active,
+                                            "last_time_simulated": last_time_simulated,
+                                            "distance_traffic_simulator": distance_traffic_simulator}
+
+        error_message = str(len(mismatch_people)) + " people have a mismatch in their distance."
+
+        assert len(mismatch_people) == 0, error_message
+
+    thread_list = []
+    people_count = 0
+    chunk_size = int(len(test_setup.df_people) / test_setup.number_of_threads)
+    last_chunk_size = int(len(test_setup.df_people) / test_setup.number_of_threads + \
+                      len(test_setup.df_people) % test_setup.number_of_threads)
+    for i in range(test_setup.number_of_threads):
+        end = int(people_count + last_chunk_size if (i == test_setup.number_of_threads - 1) else people_count + chunk_size)
+        thread = threading.Thread(target=test04b_thread, args=(people_count, end))
+        thread_list.append(thread)
+        thread_list[i].start()
+        people_count += chunk_size
+
+    for thread in thread_list:
+        thread.join()
 
     error_message = str(len(mismatch_people)) + " people have a mismatch in their distance."
     assert len(mismatch_people) == 0, error_message
 
-    log("Passed test 02")
-
-@pytest.mark.parametrize("test_setup", pytest.test_setups)
-def test03_first_edge_of_trip_should_come_from_init_intersection(run_all_test_setups, test_setup):
-    log("Test 03: The first edge of each trip should come from the init intersection for setup {}".format(test_setup.name))
-    number_of_empty_routes = 0
-    for person_id in test_setup.people_to_test:
-        init_intersection_according_to_people_file = \
-            int(test_setup.pd_people[test_setup.pd_people['p'] == person_id]['init_intersection'].iloc[0])
-        route_list = route_csv_string_to_list(str(test_setup.pd_route[test_setup.pd_route['p'] == person_id]['route'].iloc[0]))
-        if route_list == []:
-            number_of_empty_routes += 1
-            continue
-        first_edge = int(route_list[0])
-        init_intersection_according_to_route_and_edges_csv = \
-            int(test_setup.pd_edges[test_setup.pd_edges['uniqueid'] == first_edge]['osmid_u'])
-
-        assert init_intersection_according_to_people_file == init_intersection_according_to_route_and_edges_csv, \
-            "Initial intersections do not match! According to the peoples' file, init intersection is " + \
-            str(init_intersection_according_to_people_file) + \
-            " but according to the routes' and edges files, the init intersection is " + \
-            str(init_intersection_according_to_route_and_edges_csv) + \
-            " for person " + str(person_id)
-
-    log("Number of empty routes skipped: {}".format(number_of_empty_routes))
-
-    log("Passed test 03")
-
-@pytest.mark.parametrize("test_setup", pytest.test_setups)
-def test04_last_edge_of_trip_should_go_to_end_intersection(run_all_test_setups, test_setup):
-    log("Test 04: The last edge of each trip should end at the end intersection for setup {}".format(test_setup.name))
-    number_of_empty_routes = 0
-    for person_id in test_setup.people_to_test:
-        end_intersection_according_to_people_file = \
-            int(test_setup.pd_people[test_setup.pd_people['p'] == person_id]['end_intersection'].iloc[0])
-        route_list = route_csv_string_to_list(str(test_setup.pd_route[test_setup.pd_route['p'] == person_id]['route'].iloc[0]))
-        if route_list == []:
-            number_of_empty_routes += 1
-            continue
-
-        last_edge = int(route_list[-1])
-        end_intersection_according_to_route_and_edges_csv = \
-            int(test_setup.pd_edges[test_setup.pd_edges['uniqueid'] == last_edge]['osmid_v'])
-
-        assert end_intersection_according_to_people_file == end_intersection_according_to_route_and_edges_csv, \
-            "End intersections do not match! According to the peoples' file, end intersection is " + \
-            str(end_intersection_according_to_people_file) + \
-            " but according to the routes' and edges files, the end intersection is " + \
-            str(end_intersection_according_to_route_and_edges_csv) + \
-            " for person " + str(person_id)
-    log("Number of empty routes skipped: {}".format(number_of_empty_routes))
-    log("Passed test 04")
-
-@pytest.mark.parametrize("test_setup", pytest.test_setups)
-def test_05_each_edge_of_trip_should_connect_to_the_following_edge(run_all_test_setups, test_setup):
-    log("Test 05: Each edge of each trip should connect to the following edge for setup {}".format(test_setup.name))
-    number_of_empty_routes = 0
-    for person_id in tqdm(test_setup.people_to_test):
-        route_list = route_csv_string_to_list(str(test_setup.pd_route[test_setup.pd_route['p'] == person_id]['route'].iloc[0]))
-        if route_list == []:
-            number_of_empty_routes += 1
-            continue
-
-        for first_edge_index in range(len(route_list)-1):
-            first_edge = int(route_list[first_edge_index])
-            first_edge_end_intersection = int(test_setup.pd_edges.loc[test_setup.pd_edges['uniqueid'] == first_edge]['osmid_v'])
-
-            second_edge = int(route_list[first_edge_index + 1])
-            second_edge_init_intersection = int(test_setup.pd_edges.loc[test_setup.pd_edges['uniqueid'] == second_edge]['osmid_u'])
-            
-            error_message = "route for person {} does is not a valid path. Route is {} but edge {} and {} are not" + \
-                "connected in the network. Edge {} finishes at intersection {} but edge {} starts at intersection {}" \
-                .format(person_id, route_list, first_edge, second_edge, first_edge,
-                first_edge_end_intersection, second_edge, second_edge_init_intersection)
-                
-            assert first_edge_end_intersection == second_edge_init_intersection, error_message
-    log("Number of empty routes skipped: {}".format(number_of_empty_routes))
-    log("Passed test 05")
-
-# An empty route at the route file and a nan avg speed at the people file both mean that the trip has not finished
-@pytest.mark.parametrize("test_setup", pytest.test_setups)
-def no_test_06_empty_routes_should_match_nan_avg_speed_and_same_origin_and_destination(run_all_test_setups, test_setup):
-    log("Test 06: People with empty routes should have nan avg speed for test setup {}".format(test_setup))
-
-    people_with_nan_avg_speed = test_setup.pd_people[np.isnan(test_setup.pd_people['avg_v(mph)'])]
-    log("Found {} people with NaN avg speed".format(len(people_with_nan_avg_speed)))
-
-    people_with_empty_routes = test_setup.pd_route[test_setup.pd_route['route'] == '[]']
-    log("Found {} people with empty routes".format(len(people_with_empty_routes)))
-
-    error_message = 'The people with empty routes are not the same people that have NaN avg_v(mph). They should be the same.'
-
-    assert len(people_with_nan_avg_speed) == len(people_with_empty_routes), error_message
-    assert (people_with_nan_avg_speed['p'].isin(people_with_empty_routes['p'])\
-        .value_counts() == len(people_with_empty_routes)).bool(), error_message
-    assert (people_with_empty_routes['p'].isin(people_with_nan_avg_speed['p'])\
-        .value_counts() == len(people_with_empty_routes)).bool(), error_message
-    log("They match.")
     log("Passed")
 
 @pytest.mark.parametrize("test_setup", pytest.test_setups)
-def no_test_07_empty_routes_should_match_nan_avg_speed_and_same_origin_and_destination(run_all_test_setups, test_setup):
-    log("Test 06: People with empty routes should have nan avg speed for test setup {}".format(test_setup))
+def test_05_first_edge_of_trip_should_come_from_init_intersection(run_all_test_setups, test_setup):
+    log("Test 05 (deep) | Setup {}. The first edge of each trip should come from the init intersection.".format(test_setup.name))
+    mismatch_people = {}
+    
+    def test05_thread(start, end):
+        df_people_chunk = test_setup.df_deep_testing_people[start:end]
+        for _, row in df_people_chunk.iterrows():
+            person_id = int(row["p"])
 
-    people_with_nan_avg_speed = test_setup.pd_people[np.isnan(test_setup.pd_people['avg_v(mph)'])]
-    log("Found {} people with NaN avg speed".format(len(people_with_nan_avg_speed)))
+            init_intersection_according_to_people_file = \
+                int(df_people_chunk[df_people_chunk['p'] == person_id]['init_intersection'].iloc[0])
+            route_list = route_csv_string_to_list(str(test_setup.df_route[test_setup.df_route['p'] == person_id]['route'].iloc[0]))
+            if route_list == []:
+                continue
+            first_edge = int(route_list[0])
+            init_intersection_according_to_route_and_edges_csv = \
+                int(test_setup.df_edges[test_setup.df_edges['uniqueid'] == first_edge]['osmid_u'])
 
-    people_with_empty_routes = test_setup.pd_route[test_setup.pd_route['route'] == '[]']
-    log("Found {} people with empty routes".format(len(people_with_empty_routes)))
+            if init_intersection_according_to_people_file != init_intersection_according_to_route_and_edges_csv:
+                mismatch_people[person_id] = {"init_intersection_according_to_people_file": init_intersection_according_to_people_file,
+                                            "init_intersection_according_to_route_and_edges_csv" : init_intersection_according_to_route_and_edges_csv}
 
-    error_message = 'The people with empty routes are not the same people that have NaN avg_v(mph). They should be the same.'
+    thread_list = []
+    people_count = 0
+    chunk_size = int(len(test_setup.df_people) / test_setup.number_of_threads)
+    last_chunk_size = int(len(test_setup.df_people) / test_setup.number_of_threads + \
+                      len(test_setup.df_people) % test_setup.number_of_threads)
+    for i in range(test_setup.number_of_threads):
+        end = int(people_count + last_chunk_size if (i == test_setup.number_of_threads - 1) else people_count + chunk_size)
+        thread = threading.Thread(target=test05_thread, args=(people_count, end))
+        thread_list.append(thread)
+        thread_list[i].start()
+        people_count += chunk_size
 
-    assert len(people_with_nan_avg_speed) == len(people_with_empty_routes), error_message
-    st()
-    assert (people_with_nan_avg_speed['p'].isin(people_with_empty_routes['p'])\
-        .value_counts() == len(people_with_empty_routes)).bool(), error_message
-    assert (people_with_empty_routes['p'].isin(people_with_nan_avg_speed['p'])\
-        .value_counts() == len(people_with_empty_routes)).bool(), error_message
-    log("They match.")
+    for thread in thread_list:
+        thread.join()
+
+    error_message = str(len(mismatch_people)) + " people have a mismatch in their initial edge and intersection."
+    assert len(mismatch_people) == 0, error_message
+
     log("Passed")
 
 @pytest.mark.parametrize("test_setup", pytest.test_setups)
-def deprecated_test_07_first_edge_of_trip_should_be_the_correct_initial_edge(run_all_test_setups, test_setup):
-    log("Testing if the first edge of each trip is the correct initial edge...")
-    number_of_empty_routes = 0
-    for person_id in test_setup.people_to_test:
-        if person_id == 0:
-            continue
-        route_list = route_csv_string_to_list(str(test_setup.pd_route.iloc[person_id][1]))
-        if route_list == []:
-            number_of_empty_routes += 1
-            continue
+def test_06_last_edge_of_trip_should_go_to_end_intersection(run_all_test_setups, test_setup):
+    log("Test 06 (deep) | Setup {}. The last edge of each trip should end at the end intersection.".format(test_setup.name))
+    mismatch_people = {}
         
-        init_edge_according_to_route_file = int(route_list[0])
+    def test06_thread(start, end):
+        df_people_chunk = test_setup.df_deep_testing_people[start:end]
+        for _, row in df_people_chunk.iterrows():
+            person_id = int(row["p"])
 
-        init_edge_according_to_person_to_init_edge = int(test_setup.pd_indexPathInit[test_setup.pd_indexPathInit['p'] == person_id]['indexPathInit'].iloc[0])
+            end_intersection_according_to_people_file = \
+                int(test_setup.df_people[test_setup.df_people['p'] == person_id]['end_intersection'].iloc[0])
+            route_list = route_csv_string_to_list(str(test_setup.df_route[test_setup.df_route['p'] == person_id]['route'].iloc[0]))
+            if route_list == []:
+                continue
 
-        assert init_edge_according_to_route_file == init_edge_according_to_person_to_init_edge, \
-            "Initial edges do not match! For person " + str(person_id) + ", according to the routes' file, init edge is " + \
-            str(init_edge_according_to_route_file) + \
-            " but according to the person to init file, the init edge is " + \
-            str(init_edge_according_to_person_to_init_edge)
-    log("Number of empty routes skipped: {}".format(number_of_empty_routes))
+            last_edge = int(route_list[-1])
+            end_intersection_according_to_route_and_edges_csv = \
+                int(test_setup.df_edges[test_setup.df_edges['uniqueid'] == last_edge]['osmid_v'])
+
+            if end_intersection_according_to_people_file != end_intersection_according_to_route_and_edges_csv:
+                mismatch_people[person_id] = {"end_intersection_according_to_people_file": end_intersection_according_to_people_file,
+                                            "end_intersection_according_to_route_and_edges_csv" : end_intersection_according_to_route_and_edges_csv}
+
+
+    thread_list = []
+    people_count = 0
+    chunk_size = int(len(test_setup.df_people) / test_setup.number_of_threads)
+    last_chunk_size = int(len(test_setup.df_people) / test_setup.number_of_threads + \
+                      len(test_setup.df_people) % test_setup.number_of_threads)
+    for i in range(test_setup.number_of_threads):
+        end = int(people_count + last_chunk_size if (i == test_setup.number_of_threads - 1) else people_count + chunk_size)
+        thread = threading.Thread(target=test06_thread, args=(people_count, end))
+        thread_list.append(thread)
+        thread_list[i].start()
+        people_count += chunk_size
+
+    for thread in thread_list:
+        thread.join()
+
+    error_message = str(len(mismatch_people)) + " people have a mismatch in their end edge and intersection."
+    assert len(mismatch_people) == 0, error_message
 
     log("Passed")
+
+@pytest.mark.parametrize("test_setup", pytest.test_setups)
+def test_07_each_edge_of_trip_should_connect_to_the_following_edge(run_all_test_setups, test_setup):
+    log("Test 07 (deep) | Setup {}. Each edge of each trip should connect to the following edge.".format(test_setup.name))
+    mismatch_people = {}
+    
+    def test07_thread(start, end):
+        df_people_chunk = test_setup.df_deep_testing_people[start:end]
+        for _, row in df_people_chunk.iterrows():
+            person_id = int(row["p"])
+
+            route_list = route_csv_string_to_list(str(test_setup.df_route[test_setup.df_route['p'] == person_id]['route'].iloc[0]))
+            if route_list == []:
+                continue
+
+            for first_edge_index in range(len(route_list)-1):
+                first_edge = int(route_list[first_edge_index])
+                first_edge_end_intersection = int(test_setup.df_edges.loc[test_setup.df_edges['uniqueid'] == first_edge]['osmid_v'])
+
+                second_edge = int(route_list[first_edge_index + 1])
+                second_edge_init_intersection = int(test_setup.df_edges.loc[test_setup.df_edges['uniqueid'] == second_edge]['osmid_u'])
+                
+                error_message = "route for person {} does is not a valid path. Route is {} but edge {} and {} are not" + \
+                    "connected in the network. Edge {} finishes at intersection {} but edge {} starts at intersection {}" \
+                    .format(person_id, route_list, first_edge, second_edge, first_edge,
+                    first_edge_end_intersection, second_edge, second_edge_init_intersection)
+                    
+                if first_edge_end_intersection != second_edge_init_intersection:
+                    mismatch_people[person_id] = error_message
+
+    thread_list = []
+    people_count = 0
+    chunk_size = int(len(test_setup.df_people) / test_setup.number_of_threads)
+    last_chunk_size = int(len(test_setup.df_people) / test_setup.number_of_threads + \
+                      len(test_setup.df_people) % test_setup.number_of_threads)
+    for i in range(test_setup.number_of_threads):
+        end = int(people_count + last_chunk_size if (i == test_setup.number_of_threads - 1) else people_count + chunk_size)
+        thread = threading.Thread(target=test07_thread, args=(people_count, end))
+        thread_list.append(thread)
+        thread_list[i].start()
+        people_count += chunk_size
+
+    for thread in thread_list:
+        thread.join()
+
+    assert len(mismatch_people) == 0
+    log("Passed")
+
 
 @pytest.mark.parametrize("test_setup", pytest.test_setups)
 def test_08_indexPathInit_should_have_all_different_values(run_all_test_setups, test_setup):
-    log("Testing if indexPathInit has all different values...")
+    log("Test 08 (shallow) | Setup {}. Testing if indexPathInit has all different values...".format(test_setup.name))
 
-    assert not test_setup.pd_indexPathInit['indexPathInit'].duplicated().any(), \
+    assert not test_setup.df_indexPathInit['indexPathInit'].duplicated().any(), \
         "All indexPathInit values should be different"
 
     log("Passed")
 
-# to do: write a test that checks distance.value_counts
+
+@pytest.mark.parametrize("test_setup", pytest.test_setups)
+def test_09_distances_shouldnt_have_too_many_repeated_values(run_all_test_setups, test_setup):
+    log("Test 09 (shallow) | Setup {}. Testing if the travel distances are different...".format(test_setup.name))
+    
+    distance_values = test_setup.df_people['distance'].value_counts().tolist()[1:10]
+    
+    assert all([dist < len(test_setup.df_people) / 10 for dist in distance_values]), \
+        "Too many repeated values" + test_setup.df_people['distance'].value_counts()
+
+    log("Passed")

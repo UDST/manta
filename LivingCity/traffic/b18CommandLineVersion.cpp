@@ -108,7 +108,6 @@ void B18CommandLineVersion::runB18Simulation() {
   if (showBenchmarks){
     Benchmarker::enableShowBenchmarks();
   }
-  std::cout << "end of path " << END_OF_PATH << std::endl;
 
   Benchmarker loadNetwork("Load_network", true);
   Benchmarker loadODDemandData("Load_OD_demand_data", true);
@@ -130,9 +129,7 @@ void B18CommandLineVersion::runB18Simulation() {
   const std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_ = B18TrafficSP::read_od_pairs_from_file(odFileName, startSimulationH, endSimulationH);
   const std::vector<float> dep_times = B18TrafficSP::read_dep_times(odFileName, startSimulationH, endSimulationH);
   loadODDemandData.stopAndEndBenchmark();
-  std::vector<float> filtered_dep_times_;
-  std::vector<uint> indexPathVecOrder = std::vector<uint>();
-  std::cout << "indexPathVecOrder initialization size " << indexPathVecOrder.size() << std::endl;
+  
   if (useSP) {
 	  //make the graph from edges file and load the OD demand from od file
 	  printf("# of OD pairs = %d\n", all_od_pairs_.size());

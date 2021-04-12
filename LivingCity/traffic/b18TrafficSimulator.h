@@ -130,7 +130,8 @@ class B18TrafficSimulator {
     const std::vector<uint>& edgeIdToLaneMapNum,
     int numOfPass,
     const std::shared_ptr<abm::Graph>& graph_,
-    int start_time, int end_time);
+    int start_time, int end_time,
+    const std::vector<LC::B18EdgeData>& edgesData);
     
 #ifdef B18_RUN_WITH_GUI
   void render(VBORenderManager &rendManager);

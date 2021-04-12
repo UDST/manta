@@ -30,6 +30,7 @@ def write_options_file(params):
                         "SHOW_BENCHMARKS=false",\
                         "OD_DEMAND_FILENAME=od_demand_5to12.csv",\
                         "REROUTE_INCREMENT=15",\
+                        "RUN_UNIT_TESTS=false",\
                         " "])
 
     for (parameter_name, parameter_value) in params.items():
@@ -48,7 +49,8 @@ def length_of_csv(csv_file, delimiter):
         return sum(1 for row in file_object)
 
 def route_csv_string_to_list(route_csv_string):
+    if route_csv_string == '[]':
+        return []
     route_csv_string = route_csv_string.replace("[", "").replace("]", "")
     route_list = route_csv_string.split(",")
-    route_list = route_list[:-1]  # delete last extra comma
     return route_list
