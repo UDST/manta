@@ -58,15 +58,11 @@ LC::B18EdgeData *edgesData_d;
 uint edgesData_d_size;
 uint laneMap_d_size;
 uint trafficLights_d_size;
+uint accSpeedPerLinePerTimeInterval_d_size;
+uint numVehPerLinePerTimeInterval_d_size;
 
 __constant__ bool calculatePollution = true;
 __constant__ float cellSize = 1.0f;
-
-//__constant__ float deltaTime = 0.5f;
-//const float deltaTimeH = 0.5f;
-
-//const uint numStepsPerSample = 30.0f / deltaTimeH; //each min
-//const uint numStepsTogether = 12; //change also in density (10 per hour)
 
 uchar *laneMap_d;
 bool readFirstMapC=true;
@@ -140,10 +136,14 @@ void b18InitCUDA(
     accSpeedPerLinePerTimeInterval.resize(numSamples * trafficLights.size());
     numVehPerLinePerTimeInterval.resize(numSamples * trafficLights.size());
     size_t sizeAcc = accSpeedPerLinePerTimeInterval.size() * sizeof(float);
-    if (fistInitialization)gpuErrchk(cudaMalloc((void **) &accSpeedPerLinePerTimeInterval_d, sizeAcc));   // Allocate array on device
-    if (fistInitialization)gpuErrchk(cudaMalloc((void **) &numVehPerLinePerTimeInterval_d, sizeAcc));   // Allocate array on device
+    if (fistInitialization)
+      gpuErrchk(cudaMalloc((void **) &accSpeedPerLinePerTimeInterval_d, sizeAcc));   // Allocate array on device
+    if (fistInitialization)
+      gpuErrchk(cudaMalloc((void **) &numVehPerLinePerTimeInterval_d, sizeAcc));   // Allocate array on device
     gpuErrchk(cudaMemset(&accSpeedPerLinePerTimeInterval_d[0], 0, sizeAcc));
     gpuErrchk(cudaMemset(&numVehPerLinePerTimeInterval_d[0], 0, sizeAcc));
+    accSpeedPerLinePerTimeInterval_d_size = sizeAcc;
+    numVehPerLinePerTimeInterval_d_size = sizeAcc;
   }
   printMemoryUsage();
 }
@@ -217,7 +217,7 @@ void b18GetDataCUDA(std::vector<LC::B18TrafficPerson>& trafficPersonVec, std::ve
 
    // CHECK FORWARD
    //printf("initShift %u numOfCells %u\n",initShift,numOfCells);
-   for (ushort b = initShift - 1; (b < numOfCells) && (found == false); b++) { //NOTE -1 to make sure there is none in at the same level
+   for (ushort b = initShift - 1; (b < numOfCells) && (!found); b++) { //NOTE -1 to make sure there is none in at the same level
      const uint posToSample = mapToReadShift +
       kMaxMapWidthM * (laneToCheck +
       (((int) (b / kMaxMapWidthM)) * numLinesEdge)) + b % kMaxMapWidthM;
@@ -232,7 +232,7 @@ void b18GetDataCUDA(std::vector<LC::B18TrafficPerson>& trafficPersonVec, std::ve
      }
    }
 
-   if (found == false) {
+   if (!found) {
      if (trafficLightState == 0x00) { //red
        //found=true;
        gap_a = gap_b = 1000.0f; //force to change to the line without vehicle
@@ -241,7 +241,7 @@ void b18GetDataCUDA(std::vector<LC::B18TrafficPerson>& trafficPersonVec, std::ve
      }
    }
 
-   if (found == false) {
+   if (!found) {
      gap_a = 1000.0f;
    }
 
@@ -249,7 +249,7 @@ void b18GetDataCUDA(std::vector<LC::B18TrafficPerson>& trafficPersonVec, std::ve
    found = false;
 
    //printf("2initShift %u numOfCells %u\n",initShift,numOfCells);
-   for (int b = initShift + 1; (b >= 0) && (found == false); b--) {  // NOTE +1 to make sure there is none in at the same level
+   for (int b = initShift + 1; (b >= 0) && (!found); b--) {  // NOTE +1 to make sure there is none in at the same level
      //laneChar = laneMap[mapToReadShift + maxWidth * (laneToCheck) + b];
      const uint posToSample = mapToReadShift +
       kMaxMapWidthM * (laneToCheck +
@@ -265,7 +265,7 @@ void b18GetDataCUDA(std::vector<LC::B18TrafficPerson>& trafficPersonVec, std::ve
    }
 
    //printf("3initShift %u numOfCells %u\n",initShift,numOfCells);
-   if (found == false) {
+   if (!found) {
      gap_b = 1000.0f;
    }
   }//
@@ -291,7 +291,7 @@ __device__ void calculateLaneCarShouldBe(
 
     if ((procEdge & kMaskLaneMap) == curEdgeLane) { //current edge 0xFFFFF
       currentEdgeFound = true;
-      if (exitFound == false) {
+      if (!exitFound) {
         numExitToTake = 0;
       }
       continue;
@@ -299,10 +299,10 @@ __device__ void calculateLaneCarShouldBe(
 
     if ((procEdge & kMaskInEdge) == 0x0) { //out edge 0x800000
       numExists++;
-      if (currentEdgeFound == true) {
+      if (currentEdgeFound) {
         numExitToTake++;
       }
-      if (currentEdgeFound == false && exitFound == false) {
+      if (!currentEdgeFound && !exitFound) {
         numExitToTake++;
       }
     }
@@ -511,10 +511,6 @@ __global__ void kernel_trafficSimulation(
   //2.1. check if person should still wait or should start
   if (trafficPersonVec[p].active == 0) {
     //1.2 find first edge
-    /*if (trafficPersonVec[p].indexPathInit == INIT_EDGE_INDEX_NOT_SET) {
-      printf("Person %d has init edge %d\n", p, trafficPersonVec[p].indexPathInit);
-    }*/
-    //printf("Person %d initializing...\n", p);
     assert(trafficPersonVec[p].indexPathInit != INIT_EDGE_INDEX_NOT_SET);
     trafficPersonVec[p].indexPathCurr = trafficPersonVec[p].indexPathInit; // reset index.
     int indexFirstEdge = trafficPersonVec[p].indexPathCurr;
@@ -542,7 +538,7 @@ __global__ void kernel_trafficSimulation(
 
     ushort numCellsEmptyToBePlaced = simParameters.s_0;
     ushort countEmptyCells = 0;
-    for (ushort b = initShift; (b < numOfCells) && (placed == false); b++) {
+    for (ushort b = initShift; (b < numOfCells) && (!placed); b++) {
       ushort lN = edgesData[firstEdge].numLines - 1; //just right lane
       int laneMapPosition = mapToReadShift + kMaxMapWidthM * (firstEdge + lN) + b;
       assert(laneMapPosition < laneMap_d_size);
@@ -565,7 +561,7 @@ __global__ void kernel_trafficSimulation(
       break;
     }
 
-    if (placed == false) { //not posible to start now
+    if (!placed) { //not posible to start now
       return;
     }
 
@@ -587,14 +583,8 @@ __global__ void kernel_trafficSimulation(
     trafficPersonVec[p].path_length_gpu = 0;
 
     trafficPersonVec[p].prevEdge = firstEdge;
-
-
-    //printf("Person %d finished initializing.\n", p);
     return;
   }
-
-
-  //printf("Person %d moving...\n", p);
 
   // set up next edge info
   int indexCurrentEdge = trafficPersonVec[p].indexPathCurr;
@@ -659,7 +649,7 @@ __global__ void kernel_trafficSimulation(
   ushort byteInLine = (ushort) floor(trafficPersonVec[p].posInLaneM);
   ushort numOfCells = ceil((edgesData[currentEdge].length - intersectionClearance)); //intersectionClearance hardcoded to 7.8f - why?
 
-  for (ushort b = byteInLine + 2; (b < numOfCells) && (found == false) && (numCellsCheck > 0); b++, numCellsCheck--) {
+  for (ushort b = byteInLine + 2; (b < numOfCells) && (!found) && (numCellsCheck > 0); b++, numCellsCheck--) {
     // ShiftRead + WIDTH * (width number * # lanes + # laneInEdge) + b  TODO(pavan): WHAT IS THIS?
     //TODO(pavan): double check what mapToReadShift is printing out
     assert(trafficPersonVec[p].indexPathCurr < indexPathVec_d_size);
@@ -682,7 +672,7 @@ __global__ void kernel_trafficSimulation(
 
   // NEXT LINE
   // e) MOVING ALONG IN THE NEXT EDGE
-  if (found == false && numCellsCheck > 0) { //check if in next line
+  if (!found && numCellsCheck > 0) { //check if in next line
     if ((nextEdge != END_OF_PATH) &&
       (edgesData[currentEdge].nextIntersMapped !=
         trafficPersonVec[p].end_intersection)) { // we haven't arrived to destination (check next line)
@@ -697,7 +687,7 @@ __global__ void kernel_trafficSimulation(
       //printf("2trafficPersonVec[p].numOfLaneInEdge %u\n",trafficPersonVec[p].numOfLaneInEdge);
       ushort numOfCells = ceil(edgesData[nextEdge].length);
 
-      for (ushort b = 0; (b < numOfCells) && (found == false) && (numCellsCheck > 0); b++, numCellsCheck--) {
+      for (ushort b = 0; (b < numOfCells) && (!found) && (numCellsCheck > 0); b++, numCellsCheck--) {
         const uint posToSample = mapToReadShift + kMaxMapWidthM * (nextEdge + nextEdgeLaneToBe) + b; // b18 not changed since we check first width
         assert(posToSample < laneMap_d_size);
         laneChar = laneMap[posToSample];
@@ -714,7 +704,7 @@ __global__ void kernel_trafficSimulation(
 
 
   float s_star;
-  if (found == true && delta_v > 0) { //car in front and slower than us
+  if (found && delta_v > 0) { //car in front and slower than us
     // 2.1.2 calculate dv_dt
     s_star = simParameters.s_0 + max(0.0f,
       (trafficPersonVec[p].v * trafficPersonVec[p].T + (trafficPersonVec[p].v *
@@ -741,7 +731,6 @@ __global__ void kernel_trafficSimulation(
     const float coStep = -0.064 + 0.0056 * speedMph + 0.00026 * (speedMph - 50.0f) * (speedMph - 50.0f);
 
     if (coStep > 0) {
-      // coStep *= deltaTime; // we just compute it each second
       trafficPersonVec[p].co += coStep;
     }
     // Gas Consumption
@@ -828,7 +817,7 @@ __global__ void kernel_trafficSimulation(
       // next thing is not a traffic light
       // skip if there is one lane (avoid to do this)
       // skip if it is the last edge
-      if (nextVehicleIsATrafficLight == false &&
+      if (!nextVehicleIsATrafficLight &&
         edgesData[currentEdge].numLines > 1 && nextEdge != END_OF_PATH) {
         ////////////////////////////////////////////////////
         // LC 1 update lane changing status
@@ -859,7 +848,7 @@ __global__ void kernel_trafficSimulation(
             bool rightLane = trafficPersonVec[p].numOfLaneInEdge <
               edgesData[currentEdge].numLines - 1; //at least one lane
 
-            if (leftLane == true && rightLane == true) {
+            if (leftLane && rightLane) {
               if (int(trafficPersonVec[p].v) % 2 == 0) { // pseudo random
                 leftLane = false;
               } else {
@@ -867,7 +856,7 @@ __global__ void kernel_trafficSimulation(
               }
             }
             ushort laneToCheck;
-            if (leftLane == true) {
+            if (leftLane) {
               laneToCheck = trafficPersonVec[p].numOfLaneInEdge - 1;
             } else {
               laneToCheck = trafficPersonVec[p].numOfLaneInEdge + 1;
@@ -902,7 +891,7 @@ __global__ void kernel_trafficSimulation(
                 }
               }
 
-              if (acceptLC == true && gap_b != 1000.0f) {
+              if (acceptLC && gap_b != 1000.0f) {
                 g_bn_D = max(simParameters.s_0, simParameters.s_0 + b1B * v_b * 3.0f + b2B * (v_b * 3.0f - trafficPersonVec[p].v));
 
                 if (gap_b < g_bn_D) { //gap smaller than critical gap
@@ -910,7 +899,7 @@ __global__ void kernel_trafficSimulation(
                 }
               }
 
-              if (acceptLC == true) {
+              if (acceptLC) {
                 trafficPersonVec[p].numOfLaneInEdge = laneToCheck; // CHANGE LINE
               }
             }
@@ -963,22 +952,22 @@ __global__ void kernel_trafficSimulation(
               leftLane = true;
             }
 
-            if (rightLane == true &&
+            if (rightLane &&
               trafficPersonVec[p].numOfLaneInEdge + 1 >= edgesData[currentEdge].numLines) {
               printf("ERROR: RT laneToCheck>=edgeNumLanes\n");
             }
 
-            if (leftLane == true && trafficPersonVec[p].numOfLaneInEdge == 0) {
+            if (leftLane && trafficPersonVec[p].numOfLaneInEdge == 0) {
               printf("ERROR %u: LT laneToCheck>=edgeNumLanes OK %u-%u NE %u\n",
                 p, trafficPersonVec[p].LC_initOKLanes, trafficPersonVec[p].LC_endOKLanes,
                 currentEdge);
             }
           }
 
-          if (leftLane == true || rightLane == true) {
+          if (leftLane || rightLane) {
 
             // choose lane (if necessary)
-            if (leftLane == true && rightLane == true) {
+            if (leftLane && rightLane) {
               if ((int) (trafficPersonVec[p].posInLaneM) % 2 == 0) { //pseudo random
                 leftLane = false;
               } else {
@@ -986,7 +975,7 @@ __global__ void kernel_trafficSimulation(
               }
             }
             ushort laneToCheck;
-            if (leftLane == true) {
+            if (leftLane) {
               laneToCheck = trafficPersonVec[p].numOfLaneInEdge - 1;
             } else {
               laneToCheck = trafficPersonVec[p].numOfLaneInEdge + 1;
@@ -1028,7 +1017,7 @@ __global__ void kernel_trafficSimulation(
                 }
               }
 
-              if (acceptLC == true && gap_b != 1000.0f) {
+              if (acceptLC && gap_b != 1000.0f) {
                 g_bn_M = max(simParameters.s_0, simParameters.s_0 + (b1B * v_b * 3.0f + b2B * (v_b * 3.0f -
                   trafficPersonVec[p].v)));
 
@@ -1037,7 +1026,7 @@ __global__ void kernel_trafficSimulation(
                 }
               }
 
-              if (acceptLC == true) {
+              if (acceptLC) {
                 trafficPersonVec[p].numOfLaneInEdge = laneToCheck; // CHANGE LINE
               }
             }
@@ -1177,17 +1166,32 @@ __global__ void kernel_sampleTraffic(
   uint *indexPathVec,
   int indexPathVec_d_size,
   float *accSpeedPerLinePerTimeInterval,
-  float *numVehPerLinePerTimeInterval, //this could have been int
+  uint accSpeedPerLinePerTimeInterval_d_size,
+  float *numVehPerLinePerTimeInterval,
+  uint numVehPerLinePerTimeInterval_d_size,
   uint offset)
   {
   int p = blockIdx.x * blockDim.x + threadIdx.x;
-  if (p < numPeople) {//CUDA check (inside margins)
-    if (trafficPersonVec[p].active == 1) { // just active
-      assert(trafficPersonVec[p].indexPathCurr < indexPathVec_d_size);
-      int edgeNum = indexPathVec[trafficPersonVec[p].indexPathCurr];
-      accSpeedPerLinePerTimeInterval[edgeNum + offset] += trafficPersonVec[p].v / 3.0f;
-      numVehPerLinePerTimeInterval[edgeNum + offset]++;
+  if (p >= numPeople) {
+    //CUDA check (inside margins)
+    return;
+  }
+
+  if (trafficPersonVec[p].active == 1 && trafficPersonVec[p].indexPathCurr != END_OF_PATH) {
+    assert(trafficPersonVec[p].indexPathCurr < indexPathVec_d_size);
+    int edgeNum = indexPathVec[trafficPersonVec[p].indexPathCurr];
+    if(edgeNum + offset >= accSpeedPerLinePerTimeInterval_d_size){
+      printf("edgeNum %i, offset %i, exceeds accSpeedPerLinePerTimeInterval_d_size");
     }
+    printf("accSpeedPerLinePerTimeInterval_d_size %d\n", accSpeedPerLinePerTimeInterval_d_size);
+    assert(edgeNum + offset < accSpeedPerLinePerTimeInterval_d_size);
+    accSpeedPerLinePerTimeInterval[edgeNum + offset] += trafficPersonVec[p].v / 3.0f;
+    if(edgeNum + offset >= numVehPerLinePerTimeInterval_d_size){
+      printf("edgeNum %i, offset %i, exceeds numVehPerLinePerTimeInterval_d_size");
+    }
+    printf("accSpeedPerLinePerTimeInterval_d_size %d\n", numVehPerLinePerTimeInterval_d_size);
+    assert(edgeNum + offset < numVehPerLinePerTimeInterval_d_size);
+    numVehPerLinePerTimeInterval[edgeNum + offset]++;
   }
 }
 __global__ void kernel_resetPeople(
@@ -1252,14 +1256,4 @@ void b18SimulateTrafficCUDA(float currentTime,
   cudaDeviceSynchronize();
   gpuErrchk(cudaPeekAtLastError());
   peopleBench.stopMeasuring();
-
-  // Sample if necessary.
-  /*if ((((float) ((int) currentTime)) == (currentTime)) &&
-    ((int) currentTime % ((int) 30)) == 0) { //3min //(sample double each 3min)
-    int samplingNumber = (currentTime - startTime) / (30 * numStepsTogether);
-    uint offset = numIntersections * samplingNumber;
-    //printf("Sample %d\n", samplingNumber);
-    kernel_sampleTraffic << < ceil(numPeople / 1024.0f), 1024 >> > (numPeople, trafficPersonVec_d, indexPathVec_d, indexPathVec_d_size, accSpeedPerLinePerTimeInterval_d, numVehPerLinePerTimeInterval_d, offset);
-    gpuErrchk(cudaPeekAtLastError());
-  }*/
 }//

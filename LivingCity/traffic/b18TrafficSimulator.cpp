@@ -370,6 +370,8 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
         progress += 0.1;
       }
       b18GetDataCUDA(trafficPersonVec, edgesData);
+      b18GetSampleTrafficCUDA(accSpeedPerLinePerTimeInterval,
+                            numVehPerLinePerTimeInterval);
 
       for (int i = 0; i < trafficPersonVec.size(); i++) {
         if ((trafficPersonVec[i].time_departure < currentBatchEndTimeSecs && trafficPersonVec[i].active == 0) ||
@@ -417,13 +419,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
     }
 
     // 3. Finish
-
-    Benchmarker getDataCudatrafficPersonAndEdgesData("Get data trafficPersonVec and edgesData (second time)");
     b18GetDataCUDA(trafficPersonVec, edgesData);
-    getDataCudatrafficPersonAndEdgesData.startMeasuring();
-    getDataCudatrafficPersonAndEdgesData.stopAndEndBenchmark();
-    b18GetSampleTrafficCUDA(accSpeedPerLinePerTimeInterval,
-                            numVehPerLinePerTimeInterval);
     // debug
     float totalNumSteps = 0;
     float totalCO = 0;
