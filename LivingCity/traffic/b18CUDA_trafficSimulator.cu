@@ -488,7 +488,8 @@ __device__ const float calculateCOStep(float personVelocity) {
 }
 
 __device__ const float calculateGasConsumption(const float a, const float v) {
-  // TODO: Specify the source for this formula here
+  // Formula comes from the paper "Architecture for Modular Microsimulation of Real Estate Markets and Transportation"
+  // Section 6.3.4 Vehicle energy consumption and pollution estimates formula (9)
   const float Pea = a > 0.0f ? (0.472f*1.680f*a*a*v) : 0.0f;
   return 0.666f + 0.072f*(0.269f*v + 0.000672f*(v*v*v) + 0.0171f*(v*v) + 1.680f*a*v + Pea);
 }
