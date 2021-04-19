@@ -66,7 +66,7 @@ dynamic_test_setups = [setup_dyn_60m_5to7, setup_dyn_60m_5to12, setup_dyn_15m_5t
 static_test_setups = [setup_static_5to7, setup_static_5to12]
 
 # Initialize test_setups as a list with the setups you want to test
-pytest.test_setups = [all_test_setups]
+pytest.test_setups = all_test_setups
 
 # ======================================
 
