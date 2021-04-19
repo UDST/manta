@@ -4,11 +4,30 @@ Microsimulation Analysis for Network Traffic Assignment. MANTA employs a highly 
 
 ![](https://github.com/UDST/manta/blob/main/bay_bridge_trips.png)
 
+## Initial checks
+
+```bash
+sudo apt update
+sudo apt install qtchooser
+sudo apt-get install qt5-default
+sudo apt-get install libglew-dev
+sudo apt-get install build-essential
+sudo apt-get install libfontconfig1
+sudo apt-get install mesa-common-dev
+sudo apt-get install wget
+sudo apt-get install pciutils
+sudo apt install git
+```
+
 ## Dependencies
 
- - Boost 1.59
- - OpenCV (used versions: 3.2.0 in Ubuntu)
- - CUDA (used versions: 9.0 in Ubuntu)
+ - Boost 1.59 
+ ```bash 
+ wget http://sourceforge.net/projects/boost/files/boost/1.59.0/boost_1_59_0.tar.gz
+ sudo tar xf boost_1_59_0.tar.gz -C /usr/local
+ ```
+ 
+ - CUDA (used versions: 9.0 in Ubuntu) (If you are using Google Cloud Platform, please follow these [instructions](https://cloud.google.com/compute/docs/gpus/install-drivers-gpu#ubuntu-driver-steps))
  - g++ (used versions: 6.4.0 in Ubuntu)
  - Qt5 (used versions: 5.9.5 in Ubuntu)
  - qmake (used versions: 3.1 in Ubuntu)
@@ -19,8 +38,9 @@ Microsimulation Analysis for Network Traffic Assignment. MANTA employs a highly 
  - psutil (used versions: 5.7.2 in Ubuntu) 
  - xlwt (used versions: 1.3.0 in Ubuntu)
 
-
 ## Installation & Compilation
+
+### Manual installation
 
 Once the necessary dependencies are installed, you can use the following lines to make sure the
 correct versions of each one are used:
@@ -39,11 +59,11 @@ Clone the repo in your home directory with:
 git clone git@github.com:udst/manta.git ~/manta && cd ~/manta
 ```
 
-Clone the [Pandana repository](https://github.com/UDST/pandana) to your home directory and switch to the `vectorized-paths` branch. This is necessary since MANTA now uses a fast contraction hierarchies framework for shortest path routing. Previously implemented shortest path frameworks include Johnson's all pairs shortest path and a parallelized Dijkstra's priority queue.
+Clone the [Pandana repository](https://github.com/UDST/pandana) to your home directory stay on the `main` branch, since MANTA now uses a fast contraction hierarchies framework for shortest path routing. Previously implemented shortest path frameworks include Johnson's all pairs shortest path and a parallelized Dijkstra's priority queue.
 
 Create `Makefile` and compile with:
 ```bash
-sudo qmake LivingCity/LivingCity.pro && sudo make -j
+sudo qmake LivingCity/LivingCity.pro
 ```
 
 Importantly, because MANTA uses a shared library from Pandana, a Pandana makefile must be created (to create a shared object file) and the MANTA makefile must be modified.
@@ -83,6 +103,35 @@ MANTA `Makefile`:
 2. Add `-L/home/{YOUR_USERNAME}/pandana/src -lchrouting` to `LIBS`.
 3. Run `sudo make -j`.
 
+
+### Run with Docker
+
+1.  Make sure that you have Docker, its NVidia container toolkit and the necessary permissions:
+```bash
+sudo apt install docker.io
+sudo groupadd docker
+sudo usermod -aG docker {YOUR_USERNAME}
+sudo apt-get install -y nvidia-container-toolkit
+```
+
+2. You can either pull and run our built image
+```bash
+docker pull gcr.io/blissful-jet-303616/manta:latest
+docker run -it --rm --gpus all -v "$PWD":/manta -w /manta gcr.io/blissful-jet-303616/manta:latest  bash
+```
+Or build it yourself
+```bash
+docker build -t manta:latest .
+docker run -it --rm --gpus all -v "$PWD":/manta -w /manta manta:latest bash
+```
+
+3. Once inside the container, compile and run
+```bash
+qmake LivingCity/LivingCity.pro
+make
+cd LivingCity
+./LivingCity
+```
 
 ## Data
 
