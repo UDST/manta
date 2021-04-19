@@ -21,3 +21,13 @@ Makefile
 *.csv
 *.bin
 
+# Benchmarking outputs
+*.png
+*.txt
+*.xls
+*.json
+
+# Swap files
+*.swp
+
+

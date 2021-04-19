@@ -16,7 +16,7 @@ unix {
     exists("/usr/include/pandana/src") {
       INCLUDEPATH += /usr/include/pandana/src
       LIBS += -L/usr/include/pandana/src -lchrouting
-      message("Found Pandana insallation at /usr/include.")
+      message("Found Pandana installation at /usr/include.")
     } else {
       message("Pandana not found at /usr/include. Please manually include it in the produced Makefile.")
     }

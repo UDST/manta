@@ -91,6 +91,7 @@ all_resource_names = ["cpu_used", "mem_used", "gpu_memory_used", "Elapsed_time_(
     4. Save these combinations at benchmarks.csv
 """
 def benchmark_one_run(number_of_run, benchmark_name, params):
+    network_path = params['NETWORK_PATH']
     # ============== Run the simulation while polling the resources
     resources_timestamps_idle = { \
         "cpu_used": psutil.cpu_percent(), \
@@ -438,10 +439,17 @@ def parse_input_arguments():
 
 def experiment_increasing_demand_trips():
     runs = 1
-    for end in [6, 12, 18]:
+    # create all csvs from the 0to24 one
+    full_trips = pd.read_csv("../berkeley_2018/new_full_network/activity_od_demand_0to24_new.csv")
+    for end in [3, 9, 15, 21]:
+        print("running for {} ...".format(end))
+        full_trips[full_trips["dep_time"] < end * 3600].to_csv("activity_od_demand_0to{}_new.csv".format(end))
+
+    # run the simulations
+    for end in range(6, 24, 3):
         od_demand = "activity_od_demand_0to{}_new.csv".format(end)
-        name = "benchmarking_mainbranch_gcp_0to{}".format(end)
-        benchmark_multiple_runs_and_save_csv(runs, name, {"OD_DEMAND_FILENAME": od_demand, "START_HR":"0", "END_HR": str(end))
+        name = "benchmarking_mainbranch_3090_0to{}".format(end)
+        benchmark_multiple_runs_and_save_csv(runs, name, {"NETWORK_PATH":"berkeley_2018/new_full_network/", "OD_DEMAND_FILENAME": od_demand, "START_HR":"0", "END_HR": str(end)})
         load_csv_and_generate_benchmark_report(name, all_in_one_plot = True)
 
 
