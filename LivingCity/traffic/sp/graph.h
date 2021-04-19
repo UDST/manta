@@ -27,7 +27,7 @@
 #include "config.h"
 
 namespace abm {
-  struct Edge_vals {
+  struct EdgeProperties {
     float length;
     float lanes;
     float max_speed_limit_mps; // meters per second
@@ -40,7 +40,7 @@ class Graph {
   public:
   //! Edge {{v1, v2}, weight}
   using Edge =
-      std::pair<std::pair<graph::vertex_t, graph::vertex_t>, abm::Edge_vals>;
+      std::pair<std::pair<graph::vertex_t, graph::vertex_t>, abm::EdgeProperties>;
 
   //! Construct directed / undirected graph
   //! \param[in] directed Defines if the graph is directed or not
@@ -74,15 +74,13 @@ class Graph {
   //! \param[in] vertex2 ID of vertex2
   //! \param[in] weight Weight of edge connecting vertex 1 and 2
   //! \param[in] edge_id ID of edge
-  //void add_edge(graph::vertex_t vertex1, graph::vertex_t vertex2,
-  //              graph::weight_t weight, graph::vertex_t edgeid, int lanes, int speed_mph);
-  void add_edge(graph::vertex_t vertex1, graph::vertex_t vertex2, Edge_vals edge_vals, graph::vertex_t edgeid);
+  void add_edge(const graph::vertex_t vertex1, const graph::vertex_t vertex2, const float length, const float lanes,
+    const float max_speed_limit_mps, const graph::vertex_t edgeid);
   //! Update edge of a graph
   //! \param[in] vertex1 ID of vertex1
   //! \param[in] vertex2 ID of vertex2
   //! \param[in] weight Weight of edge connecting vertex 1 and 2
-  void update_edge(graph::vertex_t vertex1, graph::vertex_t vertex2,
-                   graph::weight_t weight);
+  void update_edge(graph::vertex_t vertex1, graph::vertex_t vertex2, graph::weight_t weight);
 
   //! Remove edge from graph
   //! \param[in] vertex1 ID of vertex1

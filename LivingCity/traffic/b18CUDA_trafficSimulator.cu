@@ -26,6 +26,8 @@
 ///////////////////////////////
 // CONSTANTS
 
+#define MINIMUM_NUMBER_OF_CARS_TO_MEASURE_SPEED 5
+
 __constant__ float intersectionClearance = 7.8f; //TODO(pavan): WHAT IS THIS?
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
@@ -174,18 +176,15 @@ void b18updateStructuresCUDA(
 }
 
 void b18FinishCUDA(void){
-  //////////////////////////////
-  // FINISH
   cudaFree(trafficPersonVec_d);
   cudaFree(indexPathVec_d);
   cudaFree(edgesData_d);
   cudaFree(laneMap_d);
   cudaFree(intersections_d);
   cudaFree(trafficLights_d);
-
   cudaFree(accSpeedPerLinePerTimeInterval_d);
   cudaFree(numVehPerLinePerTimeInterval_d);
-}//
+}
 
 void b18GetDataCUDA(std::vector<LC::B18TrafficPerson>& trafficPersonVec, std::vector<LC::B18EdgeData> &edgesData){
   // copy back people
@@ -475,7 +474,24 @@ __device__ void calculateLaneCarShouldBe(
 
       break;
   }
-}//
+}
+
+__device__ float meters_per_second_to_miles_per_hour(float meters_per_second) {
+  return meters_per_second * 2.2369362920544;
+}
+
+__device__ const float calculateCOStep(float personVelocity) {
+  // Formula comes from the paper "Designing Large-Scale Interactive Traffic Animations for Urban Modeling"
+  // Section 4.4 Traffic Indicators
+  const float personVelocityMPH = meters_per_second_to_miles_per_hour(personVelocity);
+  return -0.064 + 0.0056 * personVelocityMPH + 0.00026 * (personVelocityMPH - 50.0f) * (personVelocityMPH - 50.0f);
+}
+
+__device__ const float calculateGasConsumption(const float a, const float v) {
+  // TODO: Specify the source for this formula here
+  const float Pea = a > 0.0f ? (0.472f*1.680f*a*a*v) : 0.0f;
+  return 0.666f + 0.072f*(0.269f*v + 0.000672f*(v*v*v) + 0.0171f*(v*v) + 1.680f*a*v + Pea);
+}
 
  // Kernel that executes on the CUDA device
 __global__ void kernel_trafficSimulation(
@@ -507,7 +523,6 @@ __global__ void kernel_trafficSimulation(
     return;
   }
 
-  ///////////////////////////////
   //2.1. check if person should still wait or should start
   if (trafficPersonVec[p].active == 0) {
     //1.2 find first edge
@@ -602,7 +617,6 @@ __global__ void kernel_trafficSimulation(
     trafficPersonVec[p].LC_endOKLanes = 0xFF;
   }
 
-  ///////////////////////////////
   //2. it is moving
   trafficPersonVec[p].num_steps++;
   trafficPersonVec[p].last_time_simulated = fmaxf(currentTime, trafficPersonVec[p].last_time_simulated);
@@ -620,7 +634,7 @@ __global__ void kernel_trafficSimulation(
     // We filter whenever elapsed_s == 0, which means the time granularity was not enough to measure the speed
     // We also filter whenever 0 > elapsed_s > 5, because it causes manual_v to turn extraordinarily high
     assert(trafficPersonVec[p].prevEdge < edgesData_d_size);
-    if (elapsed_s > 5) {
+    if (elapsed_s > MINIMUM_NUMBER_OF_CARS_TO_MEASURE_SPEED) {
       trafficPersonVec[p].manual_v = edgesData[trafficPersonVec[p].prevEdge].length / elapsed_s;
       edgesData[trafficPersonVec[p].prevEdge].curr_iter_num_cars += 1;
       edgesData[trafficPersonVec[p].prevEdge].curr_cum_vel += trafficPersonVec[p].manual_v;
@@ -635,7 +649,6 @@ __global__ void kernel_trafficSimulation(
   // www.vwi.tu-dresden.de/~treiber/MicroApplet/IDM.html
   // IDM
   float thirdTerm = 0;
-  ///////////////////////////////////////////////////
   // 2.1.1 Find front car
   int numCellsCheck = max(30.0f, trafficPersonVec[p].v * deltaTime * 2); //30 or double of the speed*time
   
@@ -706,12 +719,18 @@ __global__ void kernel_trafficSimulation(
   float s_star;
   if (found && delta_v > 0) { //car in front and slower than us
     // 2.1.2 calculate dv_dt
+    // The following operation is taken from Designing Large-Scale Interactive Traffic Animations for Urban Modeling
+    // Section 4.3.1. Car-Following Model formula (2)
     s_star = simParameters.s_0 + max(0.0f,
       (trafficPersonVec[p].v * trafficPersonVec[p].T + (trafficPersonVec[p].v *
       delta_v) / (2 * sqrtf(trafficPersonVec[p].a * trafficPersonVec[p].b))));
     thirdTerm = powf(((s_star) / (s)), 2);
   }
 
+  // The following operation is taken from Designing Large-Scale Interactive Traffic Animations for Urban Modeling
+  // Section 4.3.1. Car-Following Model formula (1)
+  // And also Architecture for Modular Microsimulation of Real Estate Markets and Transportation
+  // Section 6.3.2 Per-vehicle and traffic control simulation formula (7)
   float dv_dt = trafficPersonVec[p].a * (1.0f - std::pow((
     trafficPersonVec[p].v / edgesData[currentEdge].maxSpeedMperSec), 4) - thirdTerm);
 
@@ -726,22 +745,13 @@ __global__ void kernel_trafficSimulation(
   trafficPersonVec[p].cum_v += trafficPersonVec[p].v;
 
   if (calculatePollution && ((float(currentTime) == int(currentTime)))) { // enabled and each second (assuming deltaTime 0.5f)
-    // CO Calculation
-    const float speedMph = trafficPersonVec[p].v * 2.2369362920544; //mps to mph
-    const float coStep = -0.064 + 0.0056 * speedMph + 0.00026 * (speedMph - 50.0f) * (speedMph - 50.0f);
-
+    const float coStep = calculateCOStep(trafficPersonVec[p].v);
     if (coStep > 0) {
       trafficPersonVec[p].co += coStep;
     }
-    // Gas Consumption
-    const float a = dv_dt;
-    const float v = trafficPersonVec[p].v; // in mps
-    const float Pea = a > 0.0f ? (0.472f*1.680f*a*a*v) : 0.0f;
-    const float gasStep = 0.666f + 0.072f*(0.269f*v + 0.000672f*(v*v*v) + 0.0171f*(v*v) + 1.680f*a*v + Pea);
-    trafficPersonVec[p].gas += gasStep; // *= deltaTime // we just compute it each second
+    trafficPersonVec[p].gas += calculateGasConsumption(dv_dt, trafficPersonVec[p].v);
   }
 
-  //////////////////////////////////////////////
   if (trafficPersonVec[p].v == 0) { //if not moving not do anything else
     ushort posInLineCells = (ushort) (trafficPersonVec[p].posInLaneM);
     const uint posToSample = mapToWriteShift +
@@ -753,12 +763,9 @@ __global__ void kernel_trafficSimulation(
     laneMap[posToSample] = 0;
     return;
   }
-  //////////
 
-  ///////////////////////////////
   // COLOR
   trafficPersonVec[p].color = p << 8;
-  ////////////////////////////////
 
   // STOP (check if it is a stop if it can go through)
   trafficPersonVec[p].posInLaneM = trafficPersonVec[p].posInLaneM + numMToMove;
@@ -784,6 +791,7 @@ __global__ void kernel_trafficSimulation(
         trafficPersonVec[p].numOfLaneInEdge = edgesData[nextEdge].numLines - 1; //change line if there are less roads
       }
 
+      //TODO: Test if the following line is doing the conversion wrong
       uchar vInMpS = (uchar) (trafficPersonVec[p].v * 3); //speed in m/s to fit in uchar
       ushort posInLineCells = (ushort) (trafficPersonVec[p].posInLaneM);
       const uint posToSample = mapToWriteShift + kMaxMapWidthM *
@@ -808,7 +816,6 @@ __global__ void kernel_trafficSimulation(
     assert(currentEdge < edgesData_d_size);
     assert(nextEdge < edgesData_d_size || nextEdge == END_OF_PATH);
 
-    ////////////////////////////////////////////////////////
     // LANE CHANGING (happens when we are not reached the intersection)
     if (trafficPersonVec[p].v > 3.0f && trafficPersonVec[p].num_steps % 5 == 0) {
       //at least 10km/h to try to change lane
@@ -836,7 +843,6 @@ __global__ void kernel_trafficSimulation(
 
         }
 
-        ////////////////////////////////////////////////////
         // LC 2 NOT MANDATORY STATE
         if (trafficPersonVec[p].LC_stateofLaneChanging == 0) {
           // discretionary change: v slower than the current road limit and deccelerating and moving
@@ -908,7 +914,6 @@ __global__ void kernel_trafficSimulation(
 
         }// Discretionary
 
-        ////////////////////////////////////////////////////
         // LC 3 *MANDATORY* STATE
         if (trafficPersonVec[p].LC_stateofLaneChanging == 1) {
           // LC 3.1 Calculate the correct lanes
@@ -1035,7 +1040,6 @@ __global__ void kernel_trafficSimulation(
       }//at least two lanes and not stopped by traffic light
     }
 
-    ///////////////////////////////////////////////////////
     uchar vInMpS = (uchar) (trafficPersonVec[p].v * 3); //speed in m/s to fit in uchar
     ushort posInLineCells = (ushort) (trafficPersonVec[p].posInLaneM);
     const uint posToSample = mapToWriteShift +
@@ -1154,7 +1158,6 @@ __global__ void kernel_intersectionOneSimulation(
 
       intersections[i].nextEvent = currentTime + deltaEvent;
     }
-    //////////////////////////////////////////////////////
   }
    
  }//
@@ -1180,16 +1183,10 @@ __global__ void kernel_sampleTraffic(
   if (trafficPersonVec[p].active == 1 && trafficPersonVec[p].indexPathCurr != END_OF_PATH) {
     assert(trafficPersonVec[p].indexPathCurr < indexPathVec_d_size);
     int edgeNum = indexPathVec[trafficPersonVec[p].indexPathCurr];
-    if(edgeNum + offset >= accSpeedPerLinePerTimeInterval_d_size){
-      printf("edgeNum %i, offset %i, exceeds accSpeedPerLinePerTimeInterval_d_size");
-    }
-    printf("accSpeedPerLinePerTimeInterval_d_size %d\n", accSpeedPerLinePerTimeInterval_d_size);
+
     assert(edgeNum + offset < accSpeedPerLinePerTimeInterval_d_size);
     accSpeedPerLinePerTimeInterval[edgeNum + offset] += trafficPersonVec[p].v / 3.0f;
-    if(edgeNum + offset >= numVehPerLinePerTimeInterval_d_size){
-      printf("edgeNum %i, offset %i, exceeds numVehPerLinePerTimeInterval_d_size");
-    }
-    printf("accSpeedPerLinePerTimeInterval_d_size %d\n", numVehPerLinePerTimeInterval_d_size);
+
     assert(edgeNum + offset < numVehPerLinePerTimeInterval_d_size);
     numVehPerLinePerTimeInterval[edgeNum + offset]++;
   }
@@ -1227,13 +1224,12 @@ void b18SimulateTrafficCUDA(float currentTime,
   int threadsPerBlock) {
   intersectionBench.startMeasuring();
   const uint numStepsTogether = 12; //change also in density (10 per hour)
-  ////////////////////////////////////////////////////////////
   // 1. CHANGE MAP: set map to use and clean the other
-  if(readFirstMapC==true){
+  if (readFirstMapC==true) {
     mapToReadShift=0;
     mapToWriteShift=halfLaneMap;
     gpuErrchk(cudaMemset(&laneMap_d[halfLaneMap], -1, halfLaneMap*sizeof(unsigned char)));//clean second half
-  }else{
+  } else {
     mapToReadShift=halfLaneMap;
     mapToWriteShift=0;
     gpuErrchk(cudaMemset(&laneMap_d[0], -1, halfLaneMap*sizeof(unsigned char)));//clean first half
@@ -1256,4 +1252,4 @@ void b18SimulateTrafficCUDA(float currentTime,
   cudaDeviceSynchronize();
   gpuErrchk(cudaPeekAtLastError());
   peopleBench.stopMeasuring();
-}//
+}

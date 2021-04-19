@@ -63,9 +63,9 @@ class B18TrafficSimulator {
   B18TrafficOD b18TrafficOD;
   B18TrafficLaneMap b18TrafficLaneMap;
 
-  void printFullProgressBar();
+  void printFullProgressBar(void) const;
 
-  void printProgressBar(float progress);
+  void printProgressBar(const float progress) const;
 
   void simulateInCPU_MultiPass(int numOfPasses,
                                float startTimeH, float endTimeH, bool useJohnsonRouting);
@@ -73,12 +73,13 @@ class B18TrafficSimulator {
                              bool useJohnsonRouting);
   void simulateInCPU(float startTimeH, float endTimeH);
 
-  void updateEdgeImpedances(const std::shared_ptr<abm::Graph>& graph_, int increment_index);
+  void updateEdgeImpedances(const std::shared_ptr<abm::Graph>& graph_, const int increment_index);
   
-  void simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
-    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_, const parameters & simParameters,
-    const int rerouteIncrementMins, std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs,
-    std::vector<float> dep_times, const std::string networkPathSP);
+  void simulateInGPU(const int numOfPasses, const float startTimeH, const float endTimeH,
+    const bool useJohnsonRouting, const bool useSP, const std::shared_ptr<abm::Graph>& graph_,
+    const parameters & simParameters, const int rerouteIncrementMins,
+    const std::vector<std::array<abm::graph::vertex_t, 2>>& all_od_pairs,
+    const std::vector<float>& dep_times, const std::string & networkPathSP);
 
   // Lanes
   std::vector<uint> edgeIdToLaneMapNum;
@@ -106,8 +107,8 @@ class B18TrafficSimulator {
   void createB2018People(float startTime, float endTime, int limitNumPeople, bool addRandomPeople, bool useSP);
   
   void createB2018PeopleSP(
-    float startTime, float endTime, int limitNumPeople, bool addRandomPeople,
-    const std::shared_ptr<abm::Graph>& graph_, std::vector<float> dep_times);
+    const float startTime, const float endTime, const int limitNumPeople, const bool addRandomPeople,
+    const std::shared_ptr<abm::Graph>& graph_, const std::vector<float> & dep_times);
 
   void resetPeopleJobANDintersections();
   void saveODToFile() {}; // TODO
@@ -128,9 +129,9 @@ class B18TrafficSimulator {
     const std::vector<personPath>& allPaths,
     const std::vector<uint>& allPathsInEdgesCUDAFormat,
     const std::vector<uint>& edgeIdToLaneMapNum,
-    int numOfPass,
+    const int numOfPass,
     const std::shared_ptr<abm::Graph>& graph_,
-    int start_time, int end_time,
+    const int start_time, const int end_time,
     const std::vector<LC::B18EdgeData>& edgesData);
     
 #ifdef B18_RUN_WITH_GUI

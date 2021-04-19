@@ -200,7 +200,7 @@ unix {
   # GPU architecture
   CUDA_ARCH = sm_50
   # NVCC flags
-  NVCCFLAGS = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-options=-v -Xcompiler -fopenmp
+  NVCCFLAGS = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-options=-v -Xcompiler -fopenmp --expt-relaxed-constexpr
   # Path to libraries
   LIBS += -lcudart -lcuda -lgomp
   QMAKE_CXXFLAGS += -fopenmp -w

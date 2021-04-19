@@ -38,40 +38,44 @@ class B18TrafficSP {
                                                           const std::vector<std::array<abm::graph::vertex_t, 2>>& od_pairs);
 
   static std::vector<std::array<abm::graph::vertex_t, 2>> make_od_pairs(std::vector<B18TrafficPerson> trafficPersonVec,
-                                                                        int nagents);
+                                                                        const int nagents);
 
   static std::vector<std::array<abm::graph::vertex_t, 2>> read_od_pairs_from_file(
     const std::string& filename,
     const float startSimulationH, const float endSimulationH,
-    int nagents = std::numeric_limits<int>::max());
+    const int nagents = std::numeric_limits<int>::max());
 
   static void read_od_pairs_from_structure(
     const std::vector<std::array<abm::graph::vertex_t, 2>>& od_pairs,
-    const float startSimulationH, const float endSimulationH,
-    int nagents = std::numeric_limits<int>::max());
+    const float startSimulationH, const float endSimulationH);
   
   static std::vector<float> read_dep_times(const std::string& filename,
                                           const float startSimulationH,
                                           const float endSimulationH);
 
-  static std::vector<abm::graph::edge_id_t> loadPrevPathsFromFile(const std::string networkPathSP);
+  static const std::vector<abm::graph::edge_id_t> loadPrevPathsFromFile(const std::string & networkPathSP);
 
   static std::vector<personPath> RoutingWrapper (
-    const std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs_,
+    const std::vector<std::array<abm::graph::vertex_t, 2>> & all_od_pairs_,
     const std::shared_ptr<abm::Graph>& street_graph,
     const std::vector<float>& dep_times,
     const float currentBatchStartTimeSecs,
     const float currentBatchEndTimeSecs,
-    int reroute_batch_number,
+    const int reroute_batch_number,
     std::vector<LC::B18TrafficPerson>& trafficPersonVec);
 
   static void initialize_person_to_init_edge(
     std::vector<abm::graph::edge_id_t>& all_paths,
     const std::shared_ptr<abm::Graph>& street_graph);
 
-  static void filterODByTimeRange(
-    const std::vector<std::array<abm::graph::vertex_t, 2>> od_pairs,
-    const std::vector<float> dep_times_in_seconds,
+  static const void edgePreprocessingForRouting(
+  std::vector<std::vector<long>>& edges_routing,
+  std::vector<std::vector<double>> & edge_weights_routing,
+  const std::shared_ptr<abm::Graph>& street_graph);
+
+  static void filterODByTimeRange (
+    const std::vector<std::array<abm::graph::vertex_t, 2>> & od_pairs,
+    const std::vector<float> & dep_times_in_seconds,
     const float currentBatchStartTimeSecs,
     const float currentBatchEndTimeSecs,
     std::vector<abm::graph::vertex_t>& filtered_od_pairs_sources_,
@@ -79,8 +83,9 @@ class B18TrafficSP {
     std::vector<float>& filtered_dep_times_,
     std::vector<uint>& pathsOrder);
 
-  static std::vector<uint> convertPathsToCUDAFormat(std::vector<personPath> pathsInVertexes,
-    std::vector<uint> &edgeIdToLaneMapNum,
+  static std::vector<uint> convertPathsToCUDAFormat (
+    const std::vector<personPath>& pathsInVertexes,
+    const std::vector<uint> &edgeIdToLaneMapNum,
     const std::shared_ptr<abm::Graph>& graph_,
     std::vector<B18TrafficPerson>& trafficPersonVec);
 
