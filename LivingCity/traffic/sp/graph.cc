@@ -2,14 +2,25 @@
 #include <string>
 #include <cassert>
 
-// Add edge
-inline void abm::Graph::add_edge(
-  abm::graph::vertex_t vertex1, abm::graph::vertex_t vertex2,
-  abm::Edge_vals edge_vals,
-  abm::graph::vertex_t edgeid = std::numeric_limits<abm::graph::vertex_t>::max()) {
+inline void abm::Graph::add_edge(const graph::vertex_t vertex_from, const graph::vertex_t vertex_to,
+  const float length, const float lanes, const float max_speed_limit_mps,
+  const graph::vertex_t edgeid = std::numeric_limits<abm::graph::vertex_t>::max()) {
+  
+  EdgeProperties newEdgeProperties;
+  newEdgeProperties.length = length;
+  newEdgeProperties.max_speed_limit_mps = max_speed_limit_mps;
+  newEdgeProperties.lanes = lanes;
+  newEdgeProperties.weight = length / max_speed_limit_mps;
 
-  edge_vals.weight = edge_vals.length / edge_vals.max_speed_limit_mps;
-  //edge_vals.weight = edge_vals.length;
+  graph::vertex_t vertex1, vertex2;
+  if (this->directed_) {
+    vertex1 = vertex_from;
+    vertex2 = vertex_to;
+  } else {
+    // if the graph is not directed we index first by the smallest
+    vertex1 = std::min(vertex_from, vertex_to);
+    vertex2 = std::max(vertex_from, vertex_to);
+  }
 
   // Create a map of vertices
   if (vertices_.find(vertex1) == vertices_.end())
@@ -17,23 +28,21 @@ inline void abm::Graph::add_edge(
   if (vertices_.find(vertex2) == vertices_.end())
     vertices_[vertex2] = vertices_.size();
 
-  if (!this->directed_)
-    if (vertex1 > vertex2) std::swap(vertex1, vertex2);
 
   // Create an edge
-  auto edge = std::make_shared<Graph::Edge>(std::make_pair(std::make_pair(vertex1, vertex2), edge_vals));
+  auto edge = std::make_shared<Graph::Edge>(std::make_pair(std::make_pair(vertex1, vertex2), newEdgeProperties));
   edges_[std::make_tuple(vertex1, vertex2)] = edge;
   edge_pointer_to_vertices_[edge] = std::make_tuple(vertex1, vertex2);
 
   // Add edge id
   if (edgeid == std::numeric_limits<abm::graph::vertex_t>::max()) {
     edge_ids_[vertex1][vertex2] = this->edgeid_;
-    edge_costs_[this->edgeid_] = edge_vals.weight;
+    edge_costs_[this->edgeid_] = newEdgeProperties.weight;
     this->edgeid_ += 1;
   } else {
     edge_ids_[vertex1][vertex2] = edgeid;
     edge_ids_to_vertices[edgeid] = std::make_tuple(vertex1, vertex2);
-    edge_costs_[edgeid] = edge_vals.weight;
+    edge_costs_[edgeid] = newEdgeProperties.weight;
   }
 
   // Vertex 1
@@ -146,27 +155,21 @@ bool abm::Graph::read_graph_osm(const std::string& filename) {
   try {
     csvio::CSVReader<8> in(filename);
     in.read_header(csvio::ignore_extra_column, "uniqueid", "osmid_u", "osmid_v", "length", "lanes", "speed_mph", "u", "v");
-    abm::Edge_vals edge_vals;
     abm::graph::vertex_t nvertices = 0;
     float length, lanes, speed_mph;
-    //int lanes, speed_mph;
-    //while (in.read_row(edgeid, v1, v2, weight, lanes, speed_mph)) {
-    //while (in.read_row(edgeid, v1, v2, edge_vals[0], edge_vals[1], edge_vals[2])) {
     abm::graph::vertex_t index = 0;
     abm::graph::edge_id_t edgeid;
     abm::graph::vertex_t osmid_v1, osmid_v2, v1, v2;
     while (in.read_row(edgeid, osmid_v1, osmid_v2, length, lanes, speed_mph, v1, v2)) {
-	    
-      edge_vals.length = length;
-	    edge_vals.lanes = lanes;
-	    edge_vals.max_speed_limit_mps = ( speed_mph / 3600 ) * 1609.34; //convert from mph to meters/second
+      // todo: create a function for the following conversion
+	    float max_speed_limit_mps = ( speed_mph / 3600 ) * 1609.34; //convert from mph to meters/second
 
       //Don't add if there is already an edge with the same vertices
       if (edges_.find(std::make_pair(v1, v2)) == edges_.end()) {
         if (this->edge_ids_.size() <= v1){
           std::cout << v1 << " is bigger than the size, which is " << this->edge_ids_.size() << std::endl;
         }
-        this->add_edge(v1, v2, edge_vals, edgeid);
+        this->add_edge(v1, v2, length, lanes, max_speed_limit_mps, edgeid);
       }
       ++nvertices;
 

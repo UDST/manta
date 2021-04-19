@@ -1,9 +1,10 @@
 #include <climits>
+#include <limits>
 
 #ifndef _ABM_CONFIG_H_
 #define _ABM_CONFIG_H_
-#define INIT_EDGE_INDEX_NOT_SET 0xffffffff // max int value
-#define END_OF_PATH 0xffffffff // max int value
+#define INIT_EDGE_INDEX_NOT_SET std::numeric_limits<int>::max() // max int value
+#define END_OF_PATH std::numeric_limits<int>::max() // max int value
 #define FLOAT_COMPARISON_EPSILON 0.0001
 
 namespace abm {

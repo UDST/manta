@@ -66,7 +66,7 @@ dynamic_test_setups = [setup_dyn_60m_5to7, setup_dyn_60m_5to12, setup_dyn_15m_5t
 static_test_setups = [setup_static_5to7, setup_static_5to12]
 
 # Initialize test_setups as a list with the setups you want to test
-pytest.test_setups = all_test_setups
+pytest.test_setups = [setup_dyn_60m_5to7]
 
 # ======================================
 
@@ -291,7 +291,7 @@ def test_05_first_edge_of_trip_should_come_from_init_intersection(run_all_test_s
 
 @pytest.mark.parametrize("test_setup", pytest.test_setups)
 def test_06_last_edge_of_trip_should_go_to_end_intersection(run_all_test_setups, test_setup):
-    log("Test 06 (deep) | Setup {}. The last edge of each trip should end at the end intersection.".format(test_setup.name))
+    log("Test 06 (deep) | Setup {}. The last edge of each trip should finish at the end intersection.".format(test_setup.name))
     mismatch_people = {}
         
     def test06_thread(start, end):

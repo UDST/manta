@@ -135,7 +135,7 @@ void B18CommandLineVersion::runB18Simulation() {
 	  printf("# of OD pairs = %d\n", all_od_pairs_.size());
     const float startTimeMins = startSimulationH * 60;
     const float endTimeMins = startTimeMins + rerouteIncrementMins;
-    cout << "startTime: " << startTimeMins << ", endTime: " << endTimeMins << endl;
+    std::cout << "startTime: " << startTimeMins << ", endTime: " << endTimeMins << std::endl;
     b18TrafficSimulator.createB2018PeopleSP(startSimulationH, endSimulationH, limitNumPeople, addRandomPeople, street_graph, dep_times);
   } else {
     RoadGraphB2018::loadB2018RoadGraph(cg.roadGraph, networkPath);
@@ -155,7 +155,4 @@ void B18CommandLineVersion::runB18Simulation() {
   }
 
 }
-
-
-
 }  // LC

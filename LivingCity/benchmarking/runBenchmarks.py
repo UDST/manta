@@ -446,8 +446,6 @@ def experiment_increasing_demand_trips():
 
 
 if __name__ == "__main__":
-    experiment_increasing_demand_trips()
-    sys.exit()
     argument_values = parse_input_arguments()
     benchmark_multiple_runs_and_save_csv(argument_values['number_of_runs'],
                                         benchmark_name = argument_values['benchmark_name'])

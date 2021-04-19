@@ -74,8 +74,9 @@ void B18TrafficSimulator::createB2018People(float startTime, float endTime, int 
       simRoadGraph->myRoadGraph_BI, limitNumPeople, addRandomPeople);
 }
 
-void B18TrafficSimulator::createB2018PeopleSP(float startTime, float endTime, int limitNumPeople,
-    bool addRandomPeople, const std::shared_ptr<abm::Graph>& graph_, std::vector<float> dep_times) {
+void B18TrafficSimulator::createB2018PeopleSP(
+  const float startTime, const float endTime, const int limitNumPeople, const bool addRandomPeople,
+  const std::shared_ptr<abm::Graph>& graph_, const std::vector<float> & dep_times) {
   b18TrafficOD.resetTrafficPersonJob(trafficPersonVec);
   b18TrafficOD.loadB18TrafficPeopleSP(startTime, endTime, trafficPersonVec,
       graph_, limitNumPeople, addRandomPeople, dep_times);
@@ -108,7 +109,7 @@ void B18TrafficSimulator::generateCarPaths(bool useJohnsonRouting) { //
 
 }//
 
-void B18TrafficSimulator::printFullProgressBar() {
+void B18TrafficSimulator::printFullProgressBar() const {
   float progress = 1;
   int barWidth = 70;
   std::cout << "[";
@@ -119,7 +120,7 @@ void B18TrafficSimulator::printFullProgressBar() {
   std::cout << "] 100%" << std::endl;
 }
 
-void B18TrafficSimulator::printProgressBar(float progress) {
+void B18TrafficSimulator::printProgressBar(const float progress) const {
   int barWidth = 70;
   std::cout << "[";
   int pos = barWidth * progress;
@@ -139,7 +140,7 @@ void B18TrafficSimulator::printProgressBar(float progress) {
 
 void B18TrafficSimulator::updateEdgeImpedances(
   const std::shared_ptr<abm::Graph>& graph_,
-  int increment_index) {
+  const int increment_index) {
 
   int index = 0;
   int avg_edge_vel_size = graph_->edges_.size();
@@ -147,15 +148,15 @@ void B18TrafficSimulator::updateEdgeImpedances(
   for (auto const& x : graph_->edges_) {
     int ind = edgeDescToLaneMapNumSP[x.second];
     float new_impedance;
-    if (edgesData[ind].curr_cum_vel != 0) {
-      avg_edge_vel[index] = edgesData[ind].curr_cum_vel / edgesData[ind].curr_iter_num_cars;// * 2.23694;
-      new_impedance = edgesData[ind].length / avg_edge_vel[index];
-      auto cum_vel = edgesData[ind].curr_cum_vel;
-      auto num_cars = edgesData[ind].curr_iter_num_cars;
+    if (edgesData.at(ind).curr_cum_vel != 0) {
+      avg_edge_vel[index] = edgesData.at(ind).curr_cum_vel / edgesData.at(ind).curr_iter_num_cars;// * 2.23694;
+      new_impedance = edgesData.at(ind).length / avg_edge_vel[index];
+      auto cum_vel = edgesData.at(ind).curr_cum_vel;
+      auto num_cars = edgesData.at(ind).curr_iter_num_cars;
       auto avg_edge_vel_index = avg_edge_vel[index];
     } else {
-      abm::Edge_vals edge_vals = x.second->second;
-      new_impedance = edgesData[ind].length / edge_vals.max_speed_limit_mps; // no one transited - default impedance
+      abm::EdgeProperties anEdgeProperties = x.second->second;
+      new_impedance = edgesData.at(ind).length / anEdgeProperties.max_speed_limit_mps; // no one transited - default impedance
     }
     auto vertex_from = std::get<0>(std::get<0>(x));
     auto vertex_to = std::get<1>(std::get<0>(x));
@@ -178,10 +179,11 @@ void B18TrafficSimulator::updateEdgeImpedances(
 //////////////////////////////////////////////////
 // GPU
 //////////////////////////////////////////////////
-void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
-    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_, const parameters & simParameters,
-    const int rerouteIncrementMins, std::vector<std::array<abm::graph::vertex_t, 2>> all_od_pairs,
-    std::vector<float> dep_times, const std::string networkPathSP) {
+void B18TrafficSimulator::simulateInGPU(const int numOfPasses, const float startTimeH, const float endTimeH,
+    const bool useJohnsonRouting, const bool useSP, const std::shared_ptr<abm::Graph>& graph_,
+    const parameters & simParameters,
+    const int rerouteIncrementMins, const std::vector<std::array<abm::graph::vertex_t, 2>> & all_od_pairs,
+    const std::vector<float> & dep_times, const std::string & networkPathSP) {
   
   std::vector<personPath> allPathsInVertexes;
       
@@ -334,7 +336,7 @@ void B18TrafficSimulator::simulateInGPU(int numOfPasses, float startTimeH, float
 
       auto currentBatchPathsInVertexes = B18TrafficSP::RoutingWrapper(all_od_pairs, graph_, dep_times,
                                             currentBatchStartTimeSecs, currentBatchEndTimeSecs,
-                                            increment_index, trafficPersonVec);
+                                            (const int) increment_index, trafficPersonVec);
     
       allPathsInVertexes.insert(std::end(allPathsInVertexes), std::begin(currentBatchPathsInVertexes), std::end(currentBatchPathsInVertexes));
 
@@ -1785,7 +1787,7 @@ void B18TrafficSimulator::simulateInCPU_Onepass(float startTimeH,
   //estimate traffic density
   calculateAndDisplayTrafficDensity(0);
   savePeopleAndRoutes(0);
-}//
+}
 
 
 void B18TrafficSimulator::simulateInCPU(float startTimeH, float endTimeH) {
@@ -2572,9 +2574,9 @@ void B18TrafficSimulator::savePeopleAndRoutesSP(
   const std::vector<personPath>& allPathsInVertexes,
   const std::vector<uint>& allPathsInEdgesCUDAFormat,
   const std::vector<uint>& edgeIdToLaneMapNum,
-  int numOfPass,
+  const int numOfPass,
   const std::shared_ptr<abm::Graph>& graph_,
-  int start_time, int end_time,
+  const int start_time, const int end_time,
   const std::vector<LC::B18EdgeData>& edgesData) {
 
   std::cout << "Saving output files..." << std::endl; 

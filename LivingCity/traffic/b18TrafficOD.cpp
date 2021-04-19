@@ -484,7 +484,7 @@ void B18TrafficOD::loadB18TrafficPeopleSP(
     float startTimeH, float endTimeH,
     std::vector<B18TrafficPerson> &trafficPersonVec, // out
     const std::shared_ptr<abm::Graph>& graph_,
-    const int limitNumPeople, const bool addRandomPeople, std::vector<float> dep_times) {
+    const int limitNumPeople, const bool addRandomPeople, const std::vector<float> dep_times) {
 
   trafficPersonVec.clear();
   QTime timer;
