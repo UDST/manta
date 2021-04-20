@@ -209,6 +209,19 @@ void B18TrafficSP::filterODByTimeRange(
   }
 }
 
+std::string convertSecondsToTime(const float seconds) {
+  std::string strHour = std::to_string(int(seconds) / 3600);
+  std::string strMin = std::to_string(int(seconds) / 60 % 60);
+
+  if (strHour.size() == 1)
+    strHour = "0" + strHour;
+  
+  if (strMin.size() == 1)
+    strMin = "0" + strMin;
+
+  return strHour + ":" + strMin;
+}
+
 const std::vector<abm::graph::edge_id_t> B18TrafficSP::loadPrevPathsFromFile(
   const std::string & networkPathSP){
 
@@ -261,9 +274,9 @@ std::vector<personPath> B18TrafficSP::RoutingWrapper (
                                     pathsOrder);
   
   std::cout << "Simulating trips with dep_time between "
-    << int(currentBatchStartTimeSecs/3600) << ":" << int(currentBatchStartTimeSecs) % 3600
+    << convertSecondsToTime(currentBatchStartTimeSecs)
     << "(" << currentBatchStartTimeSecs / 60 << " in minutes)"
-    << " and " << int(currentBatchEndTimeSecs/3600) << ":" << int(currentBatchEndTimeSecs) % 3600
+    << " and " << convertSecondsToTime(currentBatchEndTimeSecs)
     << "(" << currentBatchEndTimeSecs / 60 << " in minutes)" << std::flush;
   std::cout << ". Trips in this time range: " << filtered_od_pairs_sources_.size() << "/" << dep_times.size() << std::endl;
 
