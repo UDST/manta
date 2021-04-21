@@ -185,15 +185,21 @@ unix {
     CUDA_DIR = /usr/local/cuda-11.2
     message("Found CUDA 11.2 installation, using CUDA 11.2.")
   } else {
-    CUDA_DIR = /usr/local/cuda-9.0
-    message("CUDA 11.2 not found, defaulting to 9.0 instead.")
+    exists("/usr/local/cuda-10.1") {
+      CUDA_DIR = /usr/local/cuda-10.1
+      message("Found CUDA 10.1 installation, using CUDA 10.1.")
+    } else {
+      CUDA_DIR = /usr/local/cuda-9.0
+      message("CUDA 11.2 or 10.1 not found, defaulting to 9.0 instead.")
+    }
   }
+  #CUDA_DIR = /usr/local/cuda-11.2
   INCLUDEPATH += $$CUDA_DIR/include
   QMAKE_LIBDIR += $$CUDA_DIR/lib64
   # GPU architecture
   CUDA_ARCH = sm_50
   # NVCC flags
-  NVCCFLAGS = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-options=-v -Xcompiler -fopenmp
+  NVCCFLAGS = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-options=-v -Xcompiler -fopenmp --expt-relaxed-constexpr
   # Path to libraries
   LIBS += -lcudart -lcuda -lgomp
   QMAKE_CXXFLAGS += -fopenmp -w

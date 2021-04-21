@@ -35,9 +35,8 @@ class RoadGraphB2018 {
     RoadGraph &inRoadGraph,
     QString networkPath);
   
-  static std::string loadABMGraph(
+  static void loadABMGraph(
     const std::string& networkPath,
-    const std::string& odDemandPath,
     const std::shared_ptr<abm::Graph>& graph_,
     int start_time, int end_time);
 

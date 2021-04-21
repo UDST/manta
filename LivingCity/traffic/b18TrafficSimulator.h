@@ -2,7 +2,7 @@
 *		@desc Class that contains the traffic simulator b2018.
 *		@author igaciad
 ************************************************************************************************/
-
+#pragma once
 #ifndef LC_B18_TRAFFIC_SIMULATOR_H
 #define LC_B18_TRAFFIC_SIMULATOR_H
 
@@ -17,6 +17,7 @@
 #endif
 
 #include "b18GridPollution.h"
+#include "accessibility.h"
 
 
 namespace LC {
@@ -62,18 +63,23 @@ class B18TrafficSimulator {
   B18TrafficOD b18TrafficOD;
   B18TrafficLaneMap b18TrafficLaneMap;
 
+  void printFullProgressBar(void) const;
+
+  void printProgressBar(const float progress) const;
+
   void simulateInCPU_MultiPass(int numOfPasses,
                                float startTimeH, float endTimeH, bool useJohnsonRouting);
   void simulateInCPU_Onepass(float startTimeH, float endTimeH,
                              bool useJohnsonRouting);
   void simulateInCPU(float startTimeH, float endTimeH);
 
-  //void simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
-  //                   bool useJohnsonRouting, bool useSP);
+  void updateEdgeImpedances(const std::shared_ptr<abm::Graph>& graph_, const int increment_index);
   
-  void simulateInGPU(int numOfPasses, float startTimeH, float endTimeH,
-    bool useJohnsonRouting, bool useSP, const std::shared_ptr<abm::Graph>& graph_,
-    std::vector<abm::graph::edge_id_t> paths_SP, const parameters & simParameters);
+  void simulateInGPU(const int numOfPasses, const float startTimeH, const float endTimeH,
+    const bool useJohnsonRouting, const bool useSP, const std::shared_ptr<abm::Graph>& graph_,
+    const parameters & simParameters, const int rerouteIncrementMins,
+    const std::vector<std::array<abm::graph::vertex_t, 2>>& all_od_pairs,
+    const std::vector<float>& dep_times, const std::string & networkPathSP);
 
   // Lanes
   std::vector<uint> edgeIdToLaneMapNum;
@@ -92,6 +98,7 @@ class B18TrafficSimulator {
   // People
   std::vector<B18TrafficPerson> trafficPersonVec;
   std::vector<uint> indexPathVec;
+  std::vector<uint> indexPathVecOrder;
 
 #ifdef B18_RUN_WITH_GUI
   void createRandomPeople(float startTime, float endTime, int numberPeople,
@@ -99,11 +106,14 @@ class B18TrafficSimulator {
 #endif
   void createB2018People(float startTime, float endTime, int limitNumPeople, bool addRandomPeople, bool useSP);
   
-  void createB2018PeopleSP(float startTime, float endTime, int limitNumPeople, bool addRandomPeople, const std::shared_ptr<abm::Graph>& graph_, std::vector<float> dep_times);
+  void createB2018PeopleSP(
+    const float startTime, const float endTime, const int limitNumPeople, const bool addRandomPeople,
+    const std::shared_ptr<abm::Graph>& graph_, const std::vector<float> & dep_times);
 
   void resetPeopleJobANDintersections();
   void saveODToFile() {}; // TODO
   void loadODFromFile() {};
+
 
   // Traffic lights
   std::vector<uchar> trafficLights;
@@ -115,10 +125,14 @@ class B18TrafficSimulator {
 
   void calculateAndDisplayTrafficDensity(int numOfPass);
   void savePeopleAndRoutes(int numOfPass);
-  void savePeopleAndRoutesSP(int numOfPass,
+  void savePeopleAndRoutesSP(
+    const std::vector<personPath>& allPaths,
+    const std::vector<uint>& allPathsInEdgesCUDAFormat,
+    const std::vector<uint>& edgeIdToLaneMapNum,
+    const int numOfPass,
     const std::shared_ptr<abm::Graph>& graph_,
-    const std::vector<abm::graph::edge_id_t>& paths_SP,
-    int start_time, int end_time);
+    const int start_time, const int end_time,
+    const std::vector<LC::B18EdgeData>& edgesData);
     
 #ifdef B18_RUN_WITH_GUI
   void render(VBORenderManager &rendManager);
