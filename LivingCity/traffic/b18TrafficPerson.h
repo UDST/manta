@@ -20,7 +20,7 @@ struct B18TrafficPerson {
   float dist_traveled = 0;
   float last_time_simulated = 0;
   float avg_speed1 = 0;
-  float avg_speed2 = 0:
+  float avg_speed2 = 0;
   float avg_speed3 = 0;
   float avg_speed4 = 0;
   float avg_speed5 = 0;
