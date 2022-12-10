@@ -2482,6 +2482,28 @@ void writePeopleFile(
       streamP << "," << trafficPersonVec[p].time_departure;
       streamP << "," << trafficPersonVec[p].num_steps * deltaTime;
       streamP << "," << trafficPersonVec[p].co;
+      streamP << "," << trafficPersonVec[p].avg_speed7;
+      streamP << "," << trafficPersonVec[p].avg_speed7;
+			streamP << "," << trafficPersonVec[p].avg_speed7;
+			streamP << "," << trafficPersonVec[p].avg_speed7;
+			streamP << "," << trafficPersonVec[p].avg_speed7;
+			streamP << "," << trafficPersonVec[p].avg_speed7;
+			streamP << "," << trafficPersonVec[p].avg_speed7;
+			streamP << "," << trafficPersonVec[p].prevEdge1;
+			streamP << "," << trafficPersonVec[p].prevEdge2;
+			streamP << "," << trafficPersonVec[p].prevEdge3;
+			streamP << "," << trafficPersonVec[p].prevEdge4;
+			streamP << "," << trafficPersonVec[p].prevEdge5;
+			streamP << "," << trafficPersonVec[p].prevEdge6;
+			streamP << "," << trafficPersonVec[p].prevEdge7;
+			streamP << "," << trafficPersonVec[p].travel_time1;
+			streamP << "," << trafficPersonVec[p].travel_time2;
+			streamP << "," << trafficPersonVec[p].travel_time3;
+			streamP << "," << trafficPersonVec[p].travel_time4;
+			streamP << "," << trafficPersonVec[p].travel_time5;
+			streamP << "," << trafficPersonVec[p].travel_time6;
+			streamP << "," << trafficPersonVec[p].travel_time7;
+			
       streamP << "," << trafficPersonVec[p].gas;
       streamP << "," << trafficPersonVec[p].dist_traveled;
       streamP << "," << trafficPersonVec[p].a;
