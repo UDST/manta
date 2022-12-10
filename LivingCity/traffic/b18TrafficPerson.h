@@ -19,11 +19,30 @@ struct B18TrafficPerson {
   float time_departure;
   float dist_traveled = 0;
   float last_time_simulated = 0;
-  float avg_speed1;
-  float avg_speed2:
-  float avg_speed3;
-  float avg_speed4;
-  float avg_speed5;
+  float avg_speed1 = 0;
+  float avg_speed2 = 0:
+  float avg_speed3 = 0;
+  float avg_speed4 = 0;
+  float avg_speed5 = 0;
+  float avg_speed6 = 0;
+  float avg_speed7 = 0;
+  unsigned int prevEdge1 = 0;
+  unsigned int prevEdge2 = 0;
+  unsigned int prevEdge3 = 0;
+  unsigned int prevEdge4 = 0;
+  unsigned int prevEdge5 = 0;
+  unsigned int prevEdge6 = 0;
+  unsigned int prevEdge7 = 0;
+  float travel_time1 = 0;
+  float travel_time2 = 0;
+  float travel_time3 = 0;
+  float travel_time4 = 0;
+  float travel_time5 = 0;
+  float travel_time6 = 0;
+  float travel_time7 = 0;
+  
+  
+  
   
 
   unsigned short active;//0 inactive 1 active 2 finished
