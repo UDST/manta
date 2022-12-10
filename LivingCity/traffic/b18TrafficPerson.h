@@ -19,6 +19,12 @@ struct B18TrafficPerson {
   float time_departure;
   float dist_traveled = 0;
   float last_time_simulated = 0;
+  float avg_speed1;
+  float avg_speed2:
+  float avg_speed3;
+  float avg_speed4;
+  float avg_speed5;
+  
 
   unsigned short active;//0 inactive 1 active 2 finished
   unsigned short numOfLaneInEdge;//number of lane in that edge
