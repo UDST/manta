@@ -533,7 +533,10 @@ __global__ void kernel_trafficSimulation(
     }
     trafficPersonVec[p].indexPathCurr = trafficPersonVec[p].indexPathInit; // reset index.
     int indexFirstEdge = trafficPersonVec[p].indexPathCurr;
-    assert(indexFirstEdge < indexPathVec_d_size);
+//     assert(indexFirstEdge < indexPathVec_d_size);
+    if (indexFirstEdge < indexPathVec_d_size) {
+      return;
+    }
     uint firstEdge = indexPathVec[indexFirstEdge];
 
     trafficPersonVec[p].last_time_simulated = currentTime;
