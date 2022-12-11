@@ -527,13 +527,13 @@ __global__ void kernel_trafficSimulation(
   //2.1. check if person should still wait or should start
   if (trafficPersonVec[p].active == 0) {
     //1.2 find first edge
-//     assert(trafficPersonVec[p].indexPathInit != INIT_EDGE_INDEX_NOT_SET);
+    assert(trafficPersonVec[p].indexPathInit != INIT_EDGE_INDEX_NOT_SET);
     if (trafficPersonVec[p].indexPathInit != INIT_EDGE_INDEX_NOT_SET) {
       return;
     }
     trafficPersonVec[p].indexPathCurr = trafficPersonVec[p].indexPathInit; // reset index.
     int indexFirstEdge = trafficPersonVec[p].indexPathCurr;
-//     assert(indexFirstEdge < indexPathVec_d_size);
+    assert(indexFirstEdge < indexPathVec_d_size);
     if (indexFirstEdge < indexPathVec_d_size) {
       return;
     }
@@ -1342,6 +1342,6 @@ void b18SimulateTrafficCUDA(float currentTime,
     edgesData_d, edgesData_d_size, laneMap_d, laneMap_d_size,
     intersections_d, trafficLights_d, trafficLights_d_size, deltaTime, simParameters);
   cudaDeviceSynchronize();
-//   gpuErrchk(cudaPeekAtLastError());
+  gpuErrchk(cudaPeekAtLastError());
   peopleBench.stopMeasuring();
 }
