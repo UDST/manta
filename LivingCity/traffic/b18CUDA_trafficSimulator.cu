@@ -1342,6 +1342,6 @@ void b18SimulateTrafficCUDA(float currentTime,
     edgesData_d, edgesData_d_size, laneMap_d, laneMap_d_size,
     intersections_d, trafficLights_d, trafficLights_d_size, deltaTime, simParameters);
   cudaDeviceSynchronize();
-  gpuErrchk(cudaPeekAtLastError());
+//   gpuErrchk(cudaPeekAtLastError());
   peopleBench.stopMeasuring();
 }
