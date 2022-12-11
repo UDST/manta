@@ -527,7 +527,7 @@ __global__ void kernel_trafficSimulation(
   //2.1. check if person should still wait or should start
   if (trafficPersonVec[p].active == 0) {
     //1.2 find first edge
-    assert(trafficPersonVec[p].indexPathInit != INIT_EDGE_INDEX_NOT_SET);
+//     assert(trafficPersonVec[p].indexPathInit != INIT_EDGE_INDEX_NOT_SET);
     trafficPersonVec[p].indexPathCurr = trafficPersonVec[p].indexPathInit; // reset index.
     int indexFirstEdge = trafficPersonVec[p].indexPathCurr;
     assert(indexFirstEdge < indexPathVec_d_size);
