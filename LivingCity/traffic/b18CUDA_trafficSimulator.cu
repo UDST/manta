@@ -631,37 +631,38 @@ __global__ void kernel_trafficSimulation(
   if (currentEdge == trafficPersonVec[p].nextEdge) {
     trafficPersonVec[p].end_time_on_prev_edge = currentTime - deltaTime;
     float elapsed_s = (trafficPersonVec[p].end_time_on_prev_edge - trafficPersonVec[p].start_time_on_prev_edge); //multiply by delta_time to get seconds elapsed (not half seconds)
-    if (currentTime == 21600) {
+    printf(int(currentTime));
+    if (int(currentTime) == 21600) {
       trafficPersonVec[p].avg_speed1 = edgesData[trafficPersonVec[p].prevEdge].length / elapsed_s;
       trafficPersonVec[p].prevEdge1 = trafficPersonVec[p].prevEdge;
       trafficPersonVec[p].travel_time1 = elapsed_s;
     } 
-    if (currentTime == 25200) {
+    if (int(currentTime) == 25200) {
       trafficPersonVec[p].avg_speed2 = edgesData[trafficPersonVec[p].prevEdge].length / elapsed_s;
       trafficPersonVec[p].prevEdge2 = trafficPersonVec[p].prevEdge;
       trafficPersonVec[p].travel_time2 = elapsed_s;
     } 
-    if (currentTime == 28800) {
+    if (int(currentTime) == 28800) {
       trafficPersonVec[p].avg_speed3 = edgesData[trafficPersonVec[p].prevEdge].length / elapsed_s;
       trafficPersonVec[p].prevEdge3 = trafficPersonVec[p].prevEdge;
       trafficPersonVec[p].travel_time3 = elapsed_s;
     }
-    if (currentTime == 32400) {
+    if (int(currentTime) == 32400) {
       trafficPersonVec[p].avg_speed4 = edgesData[trafficPersonVec[p].prevEdge].length / elapsed_s;
       trafficPersonVec[p].prevEdge4 = trafficPersonVec[p].prevEdge;
       trafficPersonVec[p].travel_time4 = elapsed_s;
     }
-    if (currentTime == 36000) {
+    if (int(currentTime) == 36000) {
       trafficPersonVec[p].avg_speed5 = edgesData[trafficPersonVec[p].prevEdge].length / elapsed_s;
       trafficPersonVec[p].prevEdge5 = trafficPersonVec[p].prevEdge;
       trafficPersonVec[p].travel_time5 = elapsed_s;
     }
-    if (currentTime == 39600) {
+    if (int(currentTime) == 39600) {
       trafficPersonVec[p].avg_speed6 = edgesData[trafficPersonVec[p].prevEdge].length / elapsed_s;
       trafficPersonVec[p].prevEdge6 = trafficPersonVec[p].prevEdge;
       trafficPersonVec[p].travel_time6 = elapsed_s;
     }
-    if (currentTime == 43200) {
+    if (int(currentTime) == 43200) {
       trafficPersonVec[p].avg_speed7 = edgesData[trafficPersonVec[p].prevEdge].length / elapsed_s;
       trafficPersonVec[p].prevEdge7 = trafficPersonVec[p].prevEdge;
       trafficPersonVec[p].travel_time7 = elapsed_s;
