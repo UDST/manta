@@ -2473,7 +2473,7 @@ void writePeopleFile(
   if (peopleFile.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
     std::cout << "> Saving People file... (size " << trafficPersonVec.size() << ")" << std::endl;
     QTextStream streamP(&peopleFile);
-    streamP << "p,init_intersection,end_intersection,time_departure,num_steps,co,gas,distance,a,b,T,avg_v(mph),active,last_time_simulated,path_length_cpu,path_length_gpu\n";
+    streamP << "p,init_intersection,end_intersection,time_departure,num_steps,co,avg_speed1,avg_speed2,avg_speed3,avg_speed4,avg_speed5,avg_speed6,avg_speed7,prevEdge1,prevEdge2,prevEdge3,prevEdge4,prevEdge5,prevEdge6,prevEdge7,travel_time1, travel_time2,travel_time3,travel_time4,travel_time5,travel_time6,travel_time7,gas,distance,a,b,T,avg_v(mph),active,last_time_simulated,path_length_cpu,path_length_gpu\n";
 
     for (int p = 0; p < trafficPersonVec.size(); p++) {
       streamP << p;
@@ -2482,12 +2482,12 @@ void writePeopleFile(
       streamP << "," << trafficPersonVec[p].time_departure;
       streamP << "," << trafficPersonVec[p].num_steps * deltaTime;
       streamP << "," << trafficPersonVec[p].co;
-      streamP << "," << trafficPersonVec[p].avg_speed7;
-      streamP << "," << trafficPersonVec[p].avg_speed7;
-			streamP << "," << trafficPersonVec[p].avg_speed7;
-			streamP << "," << trafficPersonVec[p].avg_speed7;
-			streamP << "," << trafficPersonVec[p].avg_speed7;
-			streamP << "," << trafficPersonVec[p].avg_speed7;
+      streamP << "," << trafficPersonVec[p].avg_speed1;
+      streamP << "," << trafficPersonVec[p].avg_speed2;
+			streamP << "," << trafficPersonVec[p].avg_speed3;
+			streamP << "," << trafficPersonVec[p].avg_speed4;
+			streamP << "," << trafficPersonVec[p].avg_speed5;
+			streamP << "," << trafficPersonVec[p].avg_speed6;
 			streamP << "," << trafficPersonVec[p].avg_speed7;
 			streamP << "," << trafficPersonVec[p].prevEdge1;
 			streamP << "," << trafficPersonVec[p].prevEdge2;
