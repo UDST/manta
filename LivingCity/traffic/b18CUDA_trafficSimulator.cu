@@ -631,7 +631,7 @@ __global__ void kernel_trafficSimulation(
   if (currentEdge == trafficPersonVec[p].nextEdge) {
     trafficPersonVec[p].end_time_on_prev_edge = currentTime - deltaTime;
     float elapsed_s = (trafficPersonVec[p].end_time_on_prev_edge - trafficPersonVec[p].start_time_on_prev_edge); //multiply by delta_time to get seconds elapsed (not half seconds)
-    printf("currentTime: %.0f", currentTime);
+//     printf("currentTime: %.0f", currentTime);
     if (int(currentTime) == 21600) {
       trafficPersonVec[p].avg_speed1 = edgesData[trafficPersonVec[p].prevEdge].length / elapsed_s;
       trafficPersonVec[p].prevEdge1 = trafficPersonVec[p].prevEdge;
