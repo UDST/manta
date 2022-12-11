@@ -528,15 +528,15 @@ __global__ void kernel_trafficSimulation(
   if (trafficPersonVec[p].active == 0) {
     //1.2 find first edge
     assert(trafficPersonVec[p].indexPathInit != INIT_EDGE_INDEX_NOT_SET);
-    if (trafficPersonVec[p].indexPathInit != INIT_EDGE_INDEX_NOT_SET) {
-      return;
-    }
+//     if (trafficPersonVec[p].indexPathInit != INIT_EDGE_INDEX_NOT_SET) {
+//       return;
+//     }
     trafficPersonVec[p].indexPathCurr = trafficPersonVec[p].indexPathInit; // reset index.
     int indexFirstEdge = trafficPersonVec[p].indexPathCurr;
     assert(indexFirstEdge < indexPathVec_d_size);
-    if (indexFirstEdge < indexPathVec_d_size) {
-      return;
-    }
+//     if (indexFirstEdge < indexPathVec_d_size) {
+//       return;
+//     }
     uint firstEdge = indexPathVec[indexFirstEdge];
 
     trafficPersonVec[p].last_time_simulated = currentTime;
