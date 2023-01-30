@@ -650,7 +650,7 @@ __global__ void kernel_trafficSimulation(
     } else {
       switch (trafficPersonVec[p].window_flag) {
         case 2:
-            if ((elapsed_s > 0.0) & (elapsed_s != trafficPersonVec[p].travel_time1)) {
+            if ((elapsed_s > 0.0) && (elapsed_s != trafficPersonVec[p].travel_time1)) {
               trafficPersonVec[p].avg_speed2 = edgesData[trafficPersonVec[p].prevEdge].length / elapsed_s;
               trafficPersonVec[p].prevEdge2 = trafficPersonVec[p].prevEdge;
               trafficPersonVec[p].travel_time2 = elapsed_s;
@@ -658,7 +658,7 @@ __global__ void kernel_trafficSimulation(
               trafficPersonVec[p].window_flag++;
             }
         case 3:
-            if (elapsed_s > 0.0 & (elapsed_s != trafficPersonVec[p].travel_time2)) {
+            if ((elapsed_s > 0.0) && (elapsed_s != trafficPersonVec[p].travel_time2)) {
               trafficPersonVec[p].avg_speed3 = edgesData[trafficPersonVec[p].prevEdge].length / elapsed_s;
               trafficPersonVec[p].prevEdge3 = trafficPersonVec[p].prevEdge;
               trafficPersonVec[p].travel_time3 = elapsed_s;
@@ -666,7 +666,7 @@ __global__ void kernel_trafficSimulation(
               trafficPersonVec[p].window_flag++;
             }
         case 4:
-            if (elapsed_s > 0.0 & (elapsed_s != trafficPersonVec[p].travel_time3)) {
+            if ((elapsed_s > 0.0) && (elapsed_s != trafficPersonVec[p].travel_time3)) {
               trafficPersonVec[p].avg_speed4 = edgesData[trafficPersonVec[p].prevEdge].length / elapsed_s;
               trafficPersonVec[p].prevEdge4 = trafficPersonVec[p].prevEdge;
               trafficPersonVec[p].travel_time4 = elapsed_s;
@@ -674,7 +674,7 @@ __global__ void kernel_trafficSimulation(
               trafficPersonVec[p].window_flag++;
             }
         case 5:
-            if (elapsed_s > 0.0 & (elapsed_s != trafficPersonVec[p].travel_time4)) {
+            if ((elapsed_s > 0.0) && (elapsed_s != trafficPersonVec[p].travel_time4)) {
               trafficPersonVec[p].avg_speed5 = edgesData[trafficPersonVec[p].prevEdge].length / elapsed_s;
               trafficPersonVec[p].prevEdge5 = trafficPersonVec[p].prevEdge;
               trafficPersonVec[p].travel_time5 = elapsed_s;
@@ -682,7 +682,7 @@ __global__ void kernel_trafficSimulation(
               trafficPersonVec[p].window_flag++;
             }
         case 6:
-            if (elapsed_s > 0.0 & (elapsed_s != trafficPersonVec[p].travel_time5)) {
+            if ((elapsed_s > 0.0) && (elapsed_s != trafficPersonVec[p].travel_time5)) {
               trafficPersonVec[p].avg_speed6 = edgesData[trafficPersonVec[p].prevEdge].length / elapsed_s;
               trafficPersonVec[p].prevEdge6 = trafficPersonVec[p].prevEdge;
               trafficPersonVec[p].travel_time6 = elapsed_s;
@@ -690,7 +690,7 @@ __global__ void kernel_trafficSimulation(
               trafficPersonVec[p].window_flag++;
             }
         case 7:
-            if (elapsed_s > 0.0 & (elapsed_s != trafficPersonVec[p].travel_time6)) {
+            if ((elapsed_s > 0.0) && (elapsed_s != trafficPersonVec[p].travel_time6)) {
               trafficPersonVec[p].avg_speed7 = edgesData[trafficPersonVec[p].prevEdge].length / elapsed_s;
               trafficPersonVec[p].prevEdge7 = trafficPersonVec[p].prevEdge;
               trafficPersonVec[p].travel_time7 = elapsed_s;
