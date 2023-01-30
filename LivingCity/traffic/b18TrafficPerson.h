@@ -16,6 +16,7 @@ namespace LC {
 struct B18TrafficPerson {
   unsigned int init_intersection;
   unsigned int end_intersection;
+  unsigned int window_flag = 1;
   float time_departure;
   float dist_traveled = 0;
   float last_time_simulated = 0;
@@ -40,6 +41,13 @@ struct B18TrafficPerson {
   float travel_time5 = 0;
   float travel_time6 = 0;
   float travel_time7 = 0;
+  float end_time_on_prev_edge1 = 0;
+  float end_time_on_prev_edge2 = 0;
+  float end_time_on_prev_edge3 = 0;
+  float end_time_on_prev_edge4 = 0;
+  float end_time_on_prev_edge5 = 0;
+  float end_time_on_prev_edge6 = 0;
+  float end_time_on_prev_edge7 = 0;
   
   
   
