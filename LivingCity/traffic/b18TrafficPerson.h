@@ -7,7 +7,9 @@
 *		@author igaciad
 *
 ************************************************************************************************/
-
+using namespace std;
+#include <vector>
+#include <thrust/device_vector.h>
 #ifndef LC_B18_TRAFFIC_PERSON_H
 #define LC_B18_TRAFFIC_PERSON_H
 
@@ -16,42 +18,14 @@ namespace LC {
 struct B18TrafficPerson {
   unsigned int init_intersection;
   unsigned int end_intersection;
-  unsigned int window_flag = 1;
+  unsigned int window_flag = 0;
   float time_departure;
   float dist_traveled = 0;
   float last_time_simulated = 0;
-  float avg_speed1 = 0;
-  float avg_speed2 = 0;
-  float avg_speed3 = 0;
-  float avg_speed4 = 0;
-  float avg_speed5 = 0;
-  float avg_speed6 = 0;
-  float avg_speed7 = 0;
-  unsigned int prevEdge1 = 0;
-  unsigned int prevEdge2 = 0;
-  unsigned int prevEdge3 = 0;
-  unsigned int prevEdge4 = 0;
-  unsigned int prevEdge5 = 0;
-  unsigned int prevEdge6 = 0;
-  unsigned int prevEdge7 = 0;
-  float travel_time1 = 0;
-  float travel_time2 = 0;
-  float travel_time3 = 0;
-  float travel_time4 = 0;
-  float travel_time5 = 0;
-  float travel_time6 = 0;
-  float travel_time7 = 0;
-  float end_time_on_prev_edge1 = 0;
-  float end_time_on_prev_edge2 = 0;
-  float end_time_on_prev_edge3 = 0;
-  float end_time_on_prev_edge4 = 0;
-  float end_time_on_prev_edge5 = 0;
-  float end_time_on_prev_edge6 = 0;
-  float end_time_on_prev_edge7 = 0;
-  
-  
-  
-  
+  float avg_speed[100];
+  unsigned int  prevEdge_array[100];
+  float  travel_time[100];
+  float  end_time_on_prev_edge_array[100];
 
   unsigned short active;//0 inactive 1 active 2 finished
   unsigned short numOfLaneInEdge;//number of lane in that edge
